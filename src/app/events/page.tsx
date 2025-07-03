@@ -1,7 +1,7 @@
 
 'use client';
 
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Calendar, MapPin, PlusCircle, MoreHorizontal, Archive, Trash2, Edit } from "lucide-react"
 import { currentUser } from "@/lib/mock-data";
@@ -123,10 +123,22 @@ export default function EventsPage() {
             ))}
           </div>
         ) : (
-          <Card>
-            <CardContent className="p-10 text-center text-muted-foreground">
-              You have no active events. Create one to get started!
+          <Card className="text-center">
+            <CardHeader>
+                <CardTitle>No Active Events</CardTitle>
+                <CardDescription>Create an event to engage with your audience.</CardDescription>
+            </CardHeader>
+            <CardContent className="flex justify-center items-center p-10">
+                <Calendar className="h-16 w-16 text-muted-foreground" />
             </CardContent>
+            <CardFooter>
+                <Button asChild className="w-full">
+                    <Link href="/events/create">
+                      <PlusCircle className="mr-2 h-4 w-4" />
+                      Create Your First Event
+                    </Link>
+                </Button>
+            </CardFooter>
           </Card>
         )}
         

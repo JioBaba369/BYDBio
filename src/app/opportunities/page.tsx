@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -106,10 +107,22 @@ export default function OpportunitiesPage() {
             ))}
           </div>
         ) : (
-          <Card>
-            <CardContent className="p-10 text-center text-muted-foreground">
-              No active job opportunities posted at the moment.
+          <Card className="text-center">
+            <CardHeader>
+                <CardTitle>No Opportunities Yet</CardTitle>
+                <CardDescription>Post your first opportunity to attract talent.</CardDescription>
+            </CardHeader>
+            <CardContent className="flex justify-center items-center p-10">
+                <Briefcase className="h-16 w-16 text-muted-foreground" />
             </CardContent>
+            <CardFooter>
+                <Button asChild className="w-full">
+                    <Link href="/opportunities/create">
+                      <PlusCircle className="mr-2 h-4 w-4" />
+                      Post Your First Opportunity
+                    </Link>
+                </Button>
+            </CardFooter>
           </Card>
         )}
         

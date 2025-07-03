@@ -1,10 +1,11 @@
+
 'use client';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { currentUser } from "@/lib/mock-data";
 import Image from "next/image";
-import { PlusCircle, MoreHorizontal, Edit, Trash2, Archive } from "lucide-react";
+import { PlusCircle, MoreHorizontal, Edit, Trash2, Archive, Tags } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { Listing } from "@/lib/users";
@@ -98,10 +99,22 @@ export default function ListingsPage() {
             ))}
           </div>
         ) : (
-          <Card>
-            <CardContent className="p-10 text-center text-muted-foreground">
-              You haven't created any active listings yet.
+          <Card className="text-center">
+            <CardHeader>
+                <CardTitle>No Listings Yet</CardTitle>
+                <CardDescription>Get started by creating your first listing.</CardDescription>
+            </CardHeader>
+            <CardContent className="flex justify-center items-center p-10">
+                <Tags className="h-16 w-16 text-muted-foreground" />
             </CardContent>
+            <CardFooter>
+                <Button asChild className="w-full">
+                    <Link href="/listings/create">
+                      <PlusCircle className="mr-2 h-4 w-4" />
+                      Create Your First Listing
+                    </Link>
+                </Button>
+            </CardFooter>
           </Card>
         )}
 

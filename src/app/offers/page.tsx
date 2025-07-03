@@ -3,7 +3,7 @@
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Tag, Calendar, PlusCircle, MoreHorizontal, Edit, Archive, Trash2 } from "lucide-react"
+import { Tag, Calendar, PlusCircle, MoreHorizontal, Edit, Archive, Trash2, DollarSign } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { currentUser } from "@/lib/mock-data";
 import { format, parseISO } from "date-fns";
@@ -124,10 +124,22 @@ export default function OffersPage() {
             ))}
           </div>
         ) : (
-          <Card>
-            <CardContent className="p-10 text-center text-muted-foreground">
-              You have no active offers. Create one to get started!
+          <Card className="text-center">
+            <CardHeader>
+                <CardTitle>No Active Offers</CardTitle>
+                <CardDescription>Create an offer to attract customers.</CardDescription>
+            </CardHeader>
+            <CardContent className="flex justify-center items-center p-10">
+                <DollarSign className="h-16 w-16 text-muted-foreground" />
             </CardContent>
+            <CardFooter>
+                <Button asChild className="w-full">
+                    <Link href="/offers/create">
+                      <PlusCircle className="mr-2 h-4 w-4" />
+                      Create Your First Offer
+                    </Link>
+                </Button>
+            </CardFooter>
           </Card>
         )}
 
