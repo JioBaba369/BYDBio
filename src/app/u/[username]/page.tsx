@@ -25,9 +25,7 @@ const userProfile = {
     { title: "GitHub", url: "#", icon: <Github className="h-5 w-5" /> },
     { title: "Twitter / X", url: "#", icon: <Twitter className="h-5 w-5" /> },
   ],
-  jobs: [
-    { title: "Lead UI/UX Designer", company: "Innovate Co.", location: "Remote", type: "Full-time" },
-  ],
+  jobs: [],
   events: [],
   offers: []
 };

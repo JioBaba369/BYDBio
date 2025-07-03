@@ -3,10 +3,7 @@ import { Button } from "@/components/ui/button"
 import { Tag } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 
-const offers = [
-  { title: "50% off Framer Pro", description: "Get 50% off your first year of Framer Pro.", category: "Software" },
-  { title: "Free Design Asset Pack", description: "Download a pack of 100+ UI icons for free.", category: "Assets" },
-];
+const offers: { title: string; description: string; category: string }[] = [];
 
 export default function OffersPage() {
   return (
@@ -15,22 +12,30 @@ export default function OffersPage() {
         <h1 className="text-3xl font-bold font-headline">Offers</h1>
         <p className="text-muted-foreground">Discover curated offers and deals.</p>
       </div>
-      <div className="grid gap-6 md:grid-cols-2">
-        {offers.map((offer, index) => (
-          <Card key={index}>
-            <CardHeader>
-              <CardTitle>{offer.title}</CardTitle>
-              <CardDescription>{offer.description}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Badge variant="secondary"><Tag className="mr-1 h-3 w-3" />{offer.category}</Badge>
-            </CardContent>
-            <CardFooter>
-              <Button className="w-full">Claim Offer</Button>
-            </CardFooter>
-          </Card>
-        ))}
-      </div>
+      {offers.length > 0 ? (
+        <div className="grid gap-6 md:grid-cols-2">
+          {offers.map((offer, index) => (
+            <Card key={index}>
+              <CardHeader>
+                <CardTitle>{offer.title}</CardTitle>
+                <CardDescription>{offer.description}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Badge variant="secondary"><Tag className="mr-1 h-3 w-3" />{offer.category}</Badge>
+              </CardContent>
+              <CardFooter>
+                <Button className="w-full">Claim Offer</Button>
+              </CardFooter>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <Card>
+          <CardContent className="p-10 text-center text-muted-foreground">
+            There are no offers available right now.
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

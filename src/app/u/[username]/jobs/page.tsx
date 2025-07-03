@@ -5,10 +5,7 @@ import { Briefcase, MapPin, ArrowLeft } from "lucide-react"
 import Link from "next/link"
 
 // Mock data for a specific user
-const userJobs = [
-  { title: "Lead UI/UX Designer", company: "Innovate Co.", location: "Remote", type: "Full-time" },
-  { title: "Frontend Developer (React)", company: "Tech Solutions", location: "San Francisco, CA", type: "Contract" },
-];
+const userJobs: { title: string; company: string; location: string; type: string }[] = [];
 
 export default function UserJobsPage({ params }: { params: { username: string } }) {
   // In a real app, you would fetch the user's name based on params.username
