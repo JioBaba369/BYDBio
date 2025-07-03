@@ -1,3 +1,4 @@
+
 import type { Metadata } from 'next';
 import { allUsers } from '@/lib/users';
 import UserProfilePage from './user-profile';
@@ -69,3 +70,5 @@ export default function PublicProfilePageWrapper({ params }: { params: { usernam
 
     return <UserProfilePage userProfileData={userProfileData} />;
 }
+
+    

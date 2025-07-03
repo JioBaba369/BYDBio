@@ -85,3 +85,5 @@ export default function PublicBusinessPage({ params }: { params: { businessId: s
 
     return <BusinessPageClient business={business} author={author} />;
 }
+
+    
