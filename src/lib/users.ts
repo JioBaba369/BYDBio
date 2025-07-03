@@ -60,6 +60,7 @@ export type Business = {
   website?: string;
   address?: string;
   imageUrl?: string | null;
+  logoUrl?: string | null;
   status: 'active' | 'archived';
 };
 

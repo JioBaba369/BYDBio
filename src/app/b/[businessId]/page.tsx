@@ -41,55 +41,70 @@ export default function PublicBusinessPage() {
                 </Button>
                 <Card>
                     {business.imageUrl && (
-                         <div className="overflow-hidden rounded-t-lg">
+                         <div className="overflow-hidden rounded-t-lg h-52 sm:h-64 bg-muted">
                             <Image 
                                 src={business.imageUrl} 
                                 alt={business.name} 
                                 width={1200} 
                                 height={400} 
-                                className="w-full object-cover h-64"
+                                className="w-full h-full object-cover"
                                 data-ai-hint="office storefront"
                             />
                         </div>
                     )}
-                    <CardHeader className="p-6">
-                        <CardTitle className="text-3xl font-bold font-headline">{business.name}</CardTitle>
-                        <CardDescription className="text-base pt-2">{business.description}</CardDescription>
-                    </CardHeader>
-                    <CardContent className="p-6 pt-0 grid md:grid-cols-2 gap-x-8 gap-y-6">
-                        <div className="space-y-4">
-                            <h3 className="font-semibold text-lg">Contact Information</h3>
-                            <div className="space-y-3 text-muted-foreground">
-                                {business.address && (
-                                    <div className="flex items-start gap-3">
-                                        <MapPin className="h-5 w-5 mt-1 text-primary flex-shrink-0" />
-                                        <span>{business.address}</span>
-                                    </div>
-                                )}
-                                {business.email && (
-                                    <a href={`mailto:${business.email}`} className="flex items-center gap-3 hover:text-primary">
-                                        <Mail className="h-5 w-5 text-primary flex-shrink-0" />
-                                        <span>{business.email}</span>
-                                    </a>
-                                )}
-                                {business.phone && (
-                                    <a href={`tel:${business.phone}`} className="flex items-center gap-3 hover:text-primary">
-                                        <Phone className="h-5 w-5 text-primary flex-shrink-0" />
-                                        <span>{business.phone}</span>
-                                    </a>
-                                )}
-                                {business.website && (
-                                    <a href={business.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 hover:text-primary">
-                                        <Globe className="h-5 w-5 text-primary flex-shrink-0" />
-                                        <span>{business.website.replace(/^https?:\/\//, '')}</span>
-                                    </a>
-                                )}
+                    <CardContent className="p-6">
+                         <div className="flex flex-col sm:flex-row items-start gap-6 -mt-16">
+                            {business.logoUrl && (
+                                <Image
+                                    src={business.logoUrl}
+                                    alt={`${business.name} logo`}
+                                    width={120}
+                                    height={120}
+                                    className="rounded-full border-4 border-background bg-background shrink-0"
+                                    data-ai-hint="logo"
+                                />
+                            )}
+                            <div className="pt-16 flex-1">
+                                <CardTitle className="text-3xl font-bold font-headline">{business.name}</CardTitle>
+                                <CardDescription className="text-base pt-2">{business.description}</CardDescription>
                             </div>
                         </div>
-                        <div className="space-y-4">
-                            <h3 className="font-semibold text-lg">Location</h3>
-                            <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
-                                <p className="text-sm text-muted-foreground">[Map Placeholder]</p>
+
+                        <div className="mt-8 grid md:grid-cols-2 gap-x-8 gap-y-6">
+                            <div className="space-y-4">
+                                <h3 className="font-semibold text-lg">Contact Information</h3>
+                                <div className="space-y-3 text-muted-foreground">
+                                    {business.address && (
+                                        <div className="flex items-start gap-3">
+                                            <MapPin className="h-5 w-5 mt-1 text-primary flex-shrink-0" />
+                                            <span>{business.address}</span>
+                                        </div>
+                                    )}
+                                    {business.email && (
+                                        <a href={`mailto:${business.email}`} className="flex items-center gap-3 hover:text-primary">
+                                            <Mail className="h-5 w-5 text-primary flex-shrink-0" />
+                                            <span>{business.email}</span>
+                                        </a>
+                                    )}
+                                    {business.phone && (
+                                        <a href={`tel:${business.phone}`} className="flex items-center gap-3 hover:text-primary">
+                                            <Phone className="h-5 w-5 text-primary flex-shrink-0" />
+                                            <span>{business.phone}</span>
+                                        </a>
+                                    )}
+                                    {business.website && (
+                                        <a href={business.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 hover:text-primary">
+                                            <Globe className="h-5 w-5 text-primary flex-shrink-0" />
+                                            <span>{business.website.replace(/^https?:\/\//, '')}</span>
+                                        </a>
+                                    )}
+                                </div>
+                            </div>
+                            <div className="space-y-4">
+                                <h3 className="font-semibold text-lg">Location</h3>
+                                <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
+                                    <p className="text-sm text-muted-foreground">[Map Placeholder]</p>
+                                </div>
                             </div>
                         </div>
                     </CardContent>

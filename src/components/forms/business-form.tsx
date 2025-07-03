@@ -23,6 +23,7 @@ const businessFormSchema = z.object({
   website: z.string().url({ message: "Please enter a valid URL." }).optional().or(z.literal('')),
   address: z.string().optional(),
   imageUrl: z.string().optional().nullable(),
+  logoUrl: z.string().optional().nullable(),
 })
 
 export type BusinessFormValues = z.infer<typeof businessFormSchema>
@@ -35,8 +36,11 @@ interface BusinessFormProps {
 
 export function BusinessForm({ defaultValues, onSubmit, isSaving }: BusinessFormProps) {
   const [imageToCrop, setImageToCrop] = useState<string | null>(null);
+  const [logoToCrop, setLogoToCrop] = useState<string | null>(null);
   const [isCropperOpen, setIsCropperOpen] = useState(false);
+  const [isLogoCropperOpen, setIsLogoCropperOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const logoFileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   
   const form = useForm<BusinessFormValues>({
@@ -46,6 +50,7 @@ export function BusinessForm({ defaultValues, onSubmit, isSaving }: BusinessForm
   })
   
   const watchedImageUrl = form.watch("imageUrl");
+  const watchedLogoUrl = form.watch("logoUrl");
 
   const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -54,6 +59,19 @@ export function BusinessForm({ defaultValues, onSubmit, isSaving }: BusinessForm
       reader.addEventListener('load', () => {
         setImageToCrop(reader.result as string);
         setIsCropperOpen(true);
+      });
+      reader.readAsDataURL(file);
+      e.target.value = '';
+    }
+  };
+  
+  const onLogoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const file = e.target.files[0];
+      const reader = new FileReader();
+      reader.addEventListener('load', () => {
+        setLogoToCrop(reader.result as string);
+        setIsLogoCropperOpen(true);
       });
       reader.readAsDataURL(file);
       e.target.value = '';
@@ -69,6 +87,15 @@ export function BusinessForm({ defaultValues, onSubmit, isSaving }: BusinessForm
     });
   }
 
+  const handleLogoCropComplete = (url: string) => {
+    form.setValue('logoUrl', url, { shouldDirty: true });
+    setIsLogoCropperOpen(false);
+    toast({
+      title: "Logo updated",
+      description: "The new logo has been set.",
+    });
+  }
+
   return (
     <>
       <ImageCropper
@@ -77,6 +104,14 @@ export function BusinessForm({ defaultValues, onSubmit, isSaving }: BusinessForm
         onOpenChange={setIsCropperOpen}
         onCropComplete={handleCropComplete}
         aspectRatio={2/1}
+      />
+      <ImageCropper
+        imageSrc={logoToCrop}
+        open={isLogoCropperOpen}
+        onOpenChange={setIsLogoCropperOpen}
+        onCropComplete={handleLogoCropComplete}
+        aspectRatio={1}
+        isRound={true}
       />
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
@@ -205,6 +240,30 @@ export function BusinessForm({ defaultValues, onSubmit, isSaving }: BusinessForm
                                 className="hidden"
                                 accept="image/png, image/jpeg"
                                 onChange={onFileChange}
+                            />
+                        </CardContent>
+                    </Card>
+                    <Card>
+                         <CardHeader>
+                            <CardTitle>Business Logo</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="aspect-square w-full flex items-center justify-center">
+                                {watchedLogoUrl ? (
+                                    <Image src={watchedLogoUrl} alt="Business logo" width={160} height={160} className="object-contain rounded-full w-40 h-40" />
+                                ) : (
+                                    <p className="text-sm text-muted-foreground">No logo</p>
+                                )}
+                            </div>
+                            <Button type="button" variant="outline" className="w-full" onClick={() => logoFileInputRef.current?.click()}>
+                                <Upload className="mr-2 h-4 w-4" /> Change Logo
+                            </Button>
+                            <input
+                                type="file"
+                                ref={logoFileInputRef}
+                                className="hidden"
+                                accept="image/png, image/jpeg"
+                                onChange={onLogoFileChange}
                             />
                         </CardContent>
                     </Card>

@@ -15,7 +15,8 @@ const userBusinesses: Business[] = [
     phone: '+1 (555) 555-1234',
     website: 'https://acme.design',
     address: '123 Design St, San Francisco, CA 94105',
-    imageUrl: 'https://placehold.co/600x400.png',
+    imageUrl: 'https://placehold.co/1200x400.png',
+    logoUrl: 'https://placehold.co/200x200.png',
     status: 'active',
   },
   {
@@ -26,7 +27,8 @@ const userBusinesses: Business[] = [
     website: 'https://sidehustleicons.com',
     address: 'Remote',
     phone: '',
-    imageUrl: 'https://placehold.co/600x400.png',
+    imageUrl: 'https://placehold.co/1200x400.png',
+    logoUrl: 'https://placehold.co/200x200.png',
     status: 'active',
   },
   {
@@ -37,7 +39,8 @@ const userBusinesses: Business[] = [
     website: 'https://archive.example.com',
     address: 'N/A',
     phone: '',
-    imageUrl: 'https://placehold.co/600x400.png',
+    imageUrl: 'https://placehold.co/1200x400.png',
+    logoUrl: 'https://placehold.co/200x200.png',
     status: 'archived',
   }
 ];
