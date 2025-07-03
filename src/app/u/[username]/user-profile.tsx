@@ -21,6 +21,10 @@ import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { format, parseISO } from "date-fns";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 
 
 // Add isLiked to post type for this component's state
@@ -30,6 +34,13 @@ type UserProfileWithLikes = User & { posts: PostWithLike[] };
 interface UserProfilePageProps {
   userProfileData: User;
 }
+
+const contactFormSchema = z.object({
+  name: z.string().min(1, "Name is required."),
+  email: z.string().email("Please enter a valid email address."),
+  message: z.string().min(10, "Message must be at least 10 characters long."),
+});
+type ContactFormValues = z.infer<typeof contactFormSchema>;
 
 // This component safely formats the date on the client-side to prevent hydration errors.
 function ClientFormattedDate({ dateString, formatStr }: { dateString: string; formatStr: string }) {
@@ -69,31 +80,25 @@ export default function UserProfilePage({ userProfileData }: UserProfilePageProp
   }, []);
 
   const { toast } = useToast();
-  const [contactName, setContactName] = useState('');
-  const [contactEmail, setContactEmail] = useState('');
-  const [contactMessage, setContactMessage] = useState('');
+  
+  const contactForm = useForm<ContactFormValues>({
+    resolver: zodResolver(contactFormSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      message: "",
+    },
+  });
 
-  const handleContactSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!contactName || !contactEmail || !contactMessage) {
-        toast({
-            title: "Incomplete Form",
-            description: "Please fill out all fields.",
-            variant: "destructive",
-        });
-        return;
-    }
-
+  const handleContactSubmit = async (data: ContactFormValues) => {
     try {
       // In a real app, this would be an API call
-      console.log({ name: contactName, email: contactEmail, message: contactMessage });
+      console.log(data);
       toast({
         title: "Message Sent!",
         description: "Thanks for reaching out. I'll get back to you soon.",
       });
-      setContactName('');
-      setContactEmail('');
-      setContactMessage('');
+      contactForm.reset();
     } catch (error) {
        console.error("Contact form submission error:", error);
        toast({
@@ -331,24 +336,53 @@ export default function UserProfilePage({ userProfileData }: UserProfilePageProp
         <Card className="bg-background/80 backdrop-blur-sm p-6 sm:p-8 shadow-2xl rounded-2xl border-primary/10">
           <div className="text-center">
             <h2 className="text-xl font-bold font-headline mb-4">Contact Me</h2>
-            <form onSubmit={handleContactSubmit} className="space-y-4 text-left">
-                <div>
-                    <Label htmlFor="contact-name" className="text-muted-foreground">Name</Label>
-                    <Input id="contact-name" type="text" placeholder="Your Name" value={contactName} onChange={(e) => setContactName(e.target.value)} required className="bg-background/80" />
-                </div>
-                <div>
-                    <Label htmlFor="contact-email" className="text-muted-foreground">Email</Label>
-                    <Input id="contact-email" type="email" placeholder="Your Email" value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} required className="bg-background/80" />
-                </div>
-                <div>
-                    <Label htmlFor="contact-message" className="text-muted-foreground">Message</Label>
-                    <Textarea id="contact-message" placeholder="Your message..." value={contactMessage} onChange={(e) => setContactMessage(e.target.value)} required rows={4} className="bg-background/80" />
-                </div>
-                <Button type="submit" className="w-full font-bold">
-                    <Send className="mr-2 h-4 w-4" />
-                    Send Message
-                </Button>
-            </form>
+            <Form {...contactForm}>
+              <form onSubmit={contactForm.handleSubmit(handleContactSubmit)} className="space-y-4 text-left">
+                  <FormField
+                      control={contactForm.control}
+                      name="name"
+                      render={({ field }) => (
+                          <FormItem>
+                          <FormLabel className="text-muted-foreground">Name</FormLabel>
+                          <FormControl>
+                              <Input placeholder="Your Name" {...field} className="bg-background/80" />
+                          </FormControl>
+                          <FormMessage />
+                          </FormItem>
+                      )}
+                  />
+                  <FormField
+                      control={contactForm.control}
+                      name="email"
+                      render={({ field }) => (
+                          <FormItem>
+                          <FormLabel className="text-muted-foreground">Email</FormLabel>
+                          <FormControl>
+                              <Input type="email" placeholder="Your Email" {...field} className="bg-background/80" />
+                          </FormControl>
+                          <FormMessage />
+                          </FormItem>
+                      )}
+                  />
+                  <FormField
+                      control={contactForm.control}
+                      name="message"
+                      render={({ field }) => (
+                          <FormItem>
+                          <FormLabel className="text-muted-foreground">Message</FormLabel>
+                          <FormControl>
+                              <Textarea placeholder="Your message..." rows={4} {...field} className="bg-background/80" />
+                          </FormControl>
+                          <FormMessage />
+                          </FormItem>
+                      )}
+                  />
+                  <Button type="submit" className="w-full font-bold" disabled={contactForm.formState.isSubmitting}>
+                      <Send className="mr-2 h-4 w-4" />
+                      {contactForm.formState.isSubmitting ? "Sending..." : "Send Message"}
+                  </Button>
+              </form>
+            </Form>
           </div>
         </Card>
 
