@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { UserPlus, UserCheck } from "lucide-react";
+import { UserPlus, UserCheck, UserMinus } from "lucide-react";
 import { useState } from "react";
 
 const followers = [
@@ -59,6 +59,13 @@ export default function ConnectionsPage() {
         );
     }
 
+    const handleRemoveFollower = (userId: string) => {
+        // Remove the user from your followers list.
+        setFollowersList(prevList => prevList.filter(user => user.id !== userId));
+        // Also remove them from your 'following' list if you were following them.
+        setFollowingList(prevList => prevList.filter(user => user.id !== userId));
+    };
+
 
   return (
     <div className="space-y-6">
@@ -87,10 +94,16 @@ export default function ConnectionsPage() {
                                     <p className="text-sm text-muted-foreground">@{user.handle}</p>
                                 </div>
                             </div>
-                             <Button size="sm" variant={user.following ? 'secondary' : 'default'} onClick={() => handleFollowerToggle(user.id)}>
-                                {user.following ? <UserCheck className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
-                                {user.following ? 'Following' : 'Follow'}
-                            </Button>
+                            <div className="flex items-center gap-2">
+                                <Button size="sm" variant={user.following ? 'secondary' : 'default'} onClick={() => handleFollowerToggle(user.id)}>
+                                    {user.following ? <UserCheck className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
+                                    {user.following ? 'Following' : 'Follow'}
+                                </Button>
+                                <Button size="sm" variant="outline" className="text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={() => handleRemoveFollower(user.id)}>
+                                    <UserMinus className="mr-2 h-4 w-4" />
+                                    Remove
+                                </Button>
+                            </div>
                         </CardContent>
                     </Card>
                 ))}
