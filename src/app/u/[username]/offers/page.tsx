@@ -6,10 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
 
 // Mock data for a specific user
-const userOffers = [
-  { title: "Portfolio Review Session", description: "Book a 1-on-1 portfolio review session with me.", category: "Service" },
-  { title: "UI Kit 20% Off", description: "Get my latest UI kit with a 20% discount.", category: "Digital Product" },
-];
+const userOffers: { title: string; description: string; category: string }[] = [];
 
 export default function UserOffersPage({ params }: { params: { username: string } }) {
   // In a real app, you would fetch the user's name based on params.username
@@ -26,22 +23,30 @@ export default function UserOffersPage({ params }: { params: { username: string 
         <h1 className="text-3xl font-bold font-headline">Offers from {userName}</h1>
         <p className="text-muted-foreground">Exclusive deals and services.</p>
       </div>
-      <div className="grid gap-6 md:grid-cols-2">
-        {userOffers.map((offer, index) => (
-          <Card key={index}>
-            <CardHeader>
-              <CardTitle>{offer.title}</CardTitle>
-              <CardDescription>{offer.description}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Badge variant="secondary"><Tag className="mr-1 h-3 w-3" />{offer.category}</Badge>
-            </CardContent>
-            <CardFooter>
-              <Button className="w-full">Claim Offer</Button>
-            </CardFooter>
-          </Card>
-        ))}
-      </div>
+      {userOffers.length > 0 ? (
+        <div className="grid gap-6 md:grid-cols-2">
+          {userOffers.map((offer, index) => (
+            <Card key={index}>
+              <CardHeader>
+                <CardTitle>{offer.title}</CardTitle>
+                <CardDescription>{offer.description}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Badge variant="secondary"><Tag className="mr-1 h-3 w-3" />{offer.category}</Badge>
+              </CardContent>
+              <CardFooter>
+                <Button className="w-full">Claim Offer</Button>
+              </CardFooter>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <Card>
+          <CardContent className="p-10 text-center text-muted-foreground">
+            This user doesn't have any active offers right now.
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

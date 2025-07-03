@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from "react";
@@ -29,12 +28,8 @@ const userProfile = {
   jobs: [
     { title: "Lead UI/UX Designer", company: "Innovate Co.", location: "Remote", type: "Full-time" },
   ],
-  events: [
-    { title: "Design Systems Meetup", date: "December 1, 2024", location: "Online" },
-  ],
-  offers: [
-     { title: "Portfolio Review Session", description: "Book a 1-on-1 portfolio review session with me.", category: "Service" },
-  ]
+  events: [],
+  offers: []
 };
 
 export default function LinkInBioPage({ params }: { params: { username: string } }) {
@@ -45,7 +40,7 @@ export default function LinkInBioPage({ params }: { params: { username: string }
   const [contactEmail, setContactEmail] = useState('');
   const [contactMessage, setContactMessage] = useState('');
 
-  const handleContactSubmit = (e: React.FormEvent) => {
+  const handleContactSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!contactName || !contactEmail || !contactMessage) {
         toast({
@@ -55,14 +50,25 @@ export default function LinkInBioPage({ params }: { params: { username: string }
         });
         return;
     }
-    console.log({ name: contactName, email: contactEmail, message: contactMessage });
-    toast({
-      title: "Message Sent!",
-      description: "Thanks for reaching out. I'll get back to you soon.",
-    });
-    setContactName('');
-    setContactEmail('');
-    setContactMessage('');
+
+    try {
+      // In a real app, this would be an API call
+      console.log({ name: contactName, email: contactEmail, message: contactMessage });
+      toast({
+        title: "Message Sent!",
+        description: "Thanks for reaching out. I'll get back to you soon.",
+      });
+      setContactName('');
+      setContactEmail('');
+      setContactMessage('');
+    } catch (error) {
+       console.error("Contact form submission error:", error);
+       toast({
+        title: "Error Sending Message",
+        description: "Something went wrong. Please try again later.",
+        variant: "destructive",
+      });
+    }
   };
 
 
@@ -105,16 +111,18 @@ export default function LinkInBioPage({ params }: { params: { username: string }
 
           <div className="mt-8 space-y-8">
             {/* Jobs Section */}
-            {jobs.length > 0 && (
-              <div>
-                <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-xl font-bold font-headline">Latest Jobs</h2>
+            <div>
+              <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-xl font-bold font-headline">Latest Jobs</h2>
+                  {jobs.length > 0 && (
                     <Button asChild variant="link" className="text-primary pr-0">
                         <Link href={`/u/${params.username}/jobs`}>View all</Link>
                     </Button>
-                </div>
-                <div className="grid gap-4">
-                    {jobs.slice(0, 1).map((job, index) => (
+                  )}
+              </div>
+              <div className="grid gap-4">
+                  {jobs.length > 0 ? (
+                    jobs.slice(0, 1).map((job, index) => (
                       <Card key={index} className="shadow-none">
                         <CardHeader>
                             <CardTitle className="text-lg">{job.title}</CardTitle>
@@ -129,22 +137,30 @@ export default function LinkInBioPage({ params }: { params: { username: string }
                             </div>
                         </CardContent>
                       </Card>
-                    ))}
-                </div>
+                    ))
+                  ) : (
+                    <Card className="shadow-none">
+                      <CardContent className="p-6 text-center text-muted-foreground">
+                        No jobs posted yet.
+                      </CardContent>
+                    </Card>
+                  )}
               </div>
-            )}
+            </div>
 
             {/* Events Section */}
-            {events.length > 0 && (
-              <div>
-                <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-xl font-bold font-headline">Upcoming Events</h2>
+            <div>
+              <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-xl font-bold font-headline">Upcoming Events</h2>
+                  {events.length > 0 && (
                     <Button asChild variant="link" className="text-primary pr-0">
                         <Link href={`/u/${params.username}/events`}>View all</Link>
                     </Button>
-                </div>
-                <div className="grid gap-4">
-                    {events.slice(0, 1).map((event, index) => (
+                  )}
+              </div>
+              <div className="grid gap-4">
+                  {events.length > 0 ? (
+                    events.slice(0, 1).map((event, index) => (
                         <Card key={index} className="shadow-none">
                           <CardHeader>
                               <CardTitle className="text-lg">{event.title}</CardTitle>
@@ -158,22 +174,30 @@ export default function LinkInBioPage({ params }: { params: { username: string }
                               </div>
                           </CardContent>
                         </Card>
-                    ))}
-                </div>
+                    ))
+                  ) : (
+                    <Card className="shadow-none">
+                      <CardContent className="p-6 text-center text-muted-foreground">
+                        No upcoming events.
+                      </CardContent>
+                    </Card>
+                  )}
               </div>
-            )}
+            </div>
             
             {/* Offers Section */}
-            {offers.length > 0 && (
-              <div>
-                <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-xl font-bold font-headline">Active Offers</h2>
+            <div>
+              <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-xl font-bold font-headline">Active Offers</h2>
+                  {offers.length > 0 && (
                     <Button asChild variant="link" className="text-primary pr-0">
                         <Link href={`/u/${params.username}/offers`}>View all</Link>
                     </Button>
-                </div>
-                <div className="grid gap-4">
-                    {offers.slice(0, 1).map((offer, index) => (
+                  )}
+              </div>
+              <div className="grid gap-4">
+                  {offers.length > 0 ? (
+                    offers.slice(0, 1).map((offer, index) => (
                         <Card key={index} className="shadow-none">
                           <CardHeader>
                             <CardTitle className="text-lg">{offer.title}</CardTitle>
@@ -183,10 +207,16 @@ export default function LinkInBioPage({ params }: { params: { username: string }
                             <Badge variant="secondary"><Tag className="mr-1 h-3 w-3" />{offer.category}</Badge>
                           </CardContent>
                         </Card>
-                    ))}
-                </div>
+                    ))
+                  ) : (
+                    <Card className="shadow-none">
+                      <CardContent className="p-6 text-center text-muted-foreground">
+                        No active offers right now.
+                      </CardContent>
+                    </Card>
+                  )}
               </div>
-            )}
+            </div>
           </div>
 
           <div className="mt-8">

@@ -25,27 +25,35 @@ export default function UserJobsPage({ params }: { params: { username: string } 
         <h1 className="text-3xl font-bold font-headline">Job Listings by {userName}</h1>
         <p className="text-muted-foreground">Opportunities currently available.</p>
       </div>
-      <div className="grid gap-6 md:grid-cols-2">
-        {userJobs.map((job, index) => (
-          <Card key={index}>
-            <CardHeader>
-              <CardTitle>{job.title}</CardTitle>
-              <CardDescription>{job.company}</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <div className="flex items-center text-sm text-muted-foreground">
-                <MapPin className="mr-2 h-4 w-4" /> {job.location}
-              </div>
-              <div className="flex items-center text-sm text-muted-foreground">
-                <Briefcase className="mr-2 h-4 w-4" /> {job.type}
-              </div>
+      {userJobs.length > 0 ? (
+        <div className="grid gap-6 md:grid-cols-2">
+          {userJobs.map((job, index) => (
+            <Card key={index}>
+              <CardHeader>
+                <CardTitle>{job.title}</CardTitle>
+                <CardDescription>{job.company}</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <div className="flex items-center text-sm text-muted-foreground">
+                  <MapPin className="mr-2 h-4 w-4" /> {job.location}
+                </div>
+                <div className="flex items-center text-sm text-muted-foreground">
+                  <Briefcase className="mr-2 h-4 w-4" /> {job.type}
+                </div>
+              </CardContent>
+              <CardFooter>
+                <Button className="w-full">View Details</Button>
+              </CardFooter>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <Card>
+            <CardContent className="p-10 text-center text-muted-foreground">
+                This user hasn't posted any jobs yet.
             </CardContent>
-            <CardFooter>
-              <Button className="w-full">View Details</Button>
-            </CardFooter>
-          </Card>
-        ))}
-      </div>
+        </Card>
+      )}
     </div>
   );
 }

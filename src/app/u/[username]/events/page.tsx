@@ -5,10 +5,7 @@ import { Calendar, MapPin, ArrowLeft } from "lucide-react"
 import Link from "next/link"
 
 // Mock data for a specific user
-const userEvents = [
-  { title: "Design Systems Meetup", date: "December 1, 2024", location: "Online" },
-  { title: "Web3 & The Creator Economy", date: "November 5, 2024", location: "San Francisco, CA" },
-];
+const userEvents: { title: string; date: string; location: string }[] = [];
 
 export default function UserEventsPage({ params }: { params: { username: string } }) {
   // In a real app, you would fetch the user's name based on params.username
@@ -25,26 +22,34 @@ export default function UserEventsPage({ params }: { params: { username: string 
         <h1 className="text-3xl font-bold font-headline">Events by {userName}</h1>
         <p className="text-muted-foreground">Upcoming events and workshops.</p>
       </div>
-      <div className="grid gap-6 md:grid-cols-2">
-        {userEvents.map((event, index) => (
-          <Card key={index}>
-            <CardHeader>
-              <CardTitle>{event.title}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <div className="flex items-center text-sm text-muted-foreground">
-                <Calendar className="mr-2 h-4 w-4" /> {event.date}
-              </div>
-              <div className="flex items-center text-sm text-muted-foreground">
-                <MapPin className="mr-2 h-4 w-4" /> {event.location}
-              </div>
-            </CardContent>
-            <CardFooter>
-              <Button className="w-full">Learn More</Button>
-            </CardFooter>
-          </Card>
-        ))}
-      </div>
+      {userEvents.length > 0 ? (
+        <div className="grid gap-6 md:grid-cols-2">
+          {userEvents.map((event, index) => (
+            <Card key={index}>
+              <CardHeader>
+                <CardTitle>{event.title}</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <div className="flex items-center text-sm text-muted-foreground">
+                  <Calendar className="mr-2 h-4 w-4" /> {event.date}
+                </div>
+                <div className="flex items-center text-sm text-muted-foreground">
+                  <MapPin className="mr-2 h-4 w-4" /> {event.location}
+                </div>
+              </CardContent>
+              <CardFooter>
+                <Button className="w-full">Learn More</Button>
+              </CardFooter>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <Card>
+          <CardContent className="p-10 text-center text-muted-foreground">
+            This user hasn't posted any events yet.
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
