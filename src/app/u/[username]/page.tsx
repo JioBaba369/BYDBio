@@ -30,7 +30,7 @@ const userProfile = {
   offers: []
 };
 
-export default function LinkInBioPage({ params }: { params: { username: string } }) {
+export default function LinkInBioPage({ params }: { params: { username:string } }) {
   // In a real app, you would fetch user data based on params.username
   const { name, avatarUrl, bio, links, subscribers, jobs, events, offers } = userProfile;
   const { toast } = useToast();
@@ -109,56 +109,46 @@ export default function LinkInBioPage({ params }: { params: { username: string }
 
           <div className="mt-8 space-y-8">
             {/* Jobs Section */}
-            <div>
-              <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-xl font-bold font-headline">Latest Jobs</h2>
-                  {jobs.length > 0 && (
+            {jobs.length > 0 && (
+              <div>
+                <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-xl font-bold font-headline">Latest Jobs</h2>
                     <Button asChild variant="link" className="text-primary pr-0">
                         <Link href={`/u/${params.username}/jobs`}>View all</Link>
                     </Button>
-                  )}
-              </div>
-              <div className="grid gap-4">
-                  {jobs.length > 0 ? (
-                    jobs.slice(0, 1).map((job, index) => (
-                      <Card key={index} className="shadow-none">
-                        <CardHeader>
-                            <CardTitle className="text-lg">{job.title}</CardTitle>
-                            <CardDescription>{job.company}</CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-2 text-sm">
-                            <div className="flex items-center text-muted-foreground">
-                                <MapPin className="mr-2 h-4 w-4" /> {job.location}
-                            </div>
-                            <div className="flex items-center text-muted-foreground">
-                                <Briefcase className="mr-2 h-4 w-4" /> {job.type}
-                            </div>
-                        </CardContent>
-                      </Card>
-                    ))
-                  ) : (
-                    <Card className="shadow-none">
-                      <CardContent className="p-6 text-center text-muted-foreground">
-                        No jobs posted yet.
+                </div>
+                <div className="grid gap-4">
+                  {jobs.slice(0, 1).map((job, index) => (
+                    <Card key={index} className="shadow-none">
+                      <CardHeader>
+                          <CardTitle className="text-lg">{job.title}</CardTitle>
+                          <CardDescription>{job.company}</CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-2 text-sm">
+                          <div className="flex items-center text-muted-foreground">
+                              <MapPin className="mr-2 h-4 w-4" /> {job.location}
+                          </div>
+                          <div className="flex items-center text-muted-foreground">
+                              <Briefcase className="mr-2 h-4 w-4" /> {job.type}
+                          </div>
                       </CardContent>
                     </Card>
-                  )}
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Events Section */}
-            <div>
-              <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-xl font-bold font-headline">Upcoming Events</h2>
-                  {events.length > 0 && (
+            {events.length > 0 && (
+              <div>
+                <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-xl font-bold font-headline">Upcoming Events</h2>
                     <Button asChild variant="link" className="text-primary pr-0">
                         <Link href={`/u/${params.username}/events`}>View all</Link>
                     </Button>
-                  )}
-              </div>
-              <div className="grid gap-4">
-                  {events.length > 0 ? (
-                    events.slice(0, 1).map((event, index) => (
+                </div>
+                <div className="grid gap-4">
+                    {events.slice(0, 1).map((event, index) => (
                         <Card key={index} className="shadow-none">
                           <CardHeader>
                               <CardTitle className="text-lg">{event.title}</CardTitle>
@@ -172,30 +162,22 @@ export default function LinkInBioPage({ params }: { params: { username: string }
                               </div>
                           </CardContent>
                         </Card>
-                    ))
-                  ) : (
-                    <Card className="shadow-none">
-                      <CardContent className="p-6 text-center text-muted-foreground">
-                        No upcoming events.
-                      </CardContent>
-                    </Card>
-                  )}
+                    ))}
+                </div>
               </div>
-            </div>
+            )}
             
             {/* Offers Section */}
-            <div>
-              <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-xl font-bold font-headline">Active Offers</h2>
-                  {offers.length > 0 && (
+            {offers.length > 0 && (
+              <div>
+                <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-xl font-bold font-headline">Active Offers</h2>
                     <Button asChild variant="link" className="text-primary pr-0">
                         <Link href={`/u/${params.username}/offers`}>View all</Link>
                     </Button>
-                  )}
-              </div>
-              <div className="grid gap-4">
-                  {offers.length > 0 ? (
-                    offers.slice(0, 1).map((offer, index) => (
+                </div>
+                <div className="grid gap-4">
+                    {offers.slice(0, 1).map((offer, index) => (
                         <Card key={index} className="shadow-none">
                           <CardHeader>
                             <CardTitle className="text-lg">{offer.title}</CardTitle>
@@ -205,16 +187,10 @@ export default function LinkInBioPage({ params }: { params: { username: string }
                             <Badge variant="secondary"><Tag className="mr-1 h-3 w-3" />{offer.category}</Badge>
                           </CardContent>
                         </Card>
-                    ))
-                  ) : (
-                    <Card className="shadow-none">
-                      <CardContent className="p-6 text-center text-muted-foreground">
-                        No active offers right now.
-                      </CardContent>
-                    </Card>
-                  )}
+                    ))}
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           <div className="mt-8">
