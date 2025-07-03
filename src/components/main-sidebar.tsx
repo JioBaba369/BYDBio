@@ -21,7 +21,9 @@ import {
   CreditCard,
   DollarSign,
   LayoutDashboard,
+  LogOut,
   MessageSquare,
+  Settings,
   Share,
   User,
   Search,
@@ -39,11 +41,13 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Input } from './ui/input';
 import { currentUser } from '@/lib/mock-data';
+import { useToast } from '@/hooks/use-toast';
 
 export function MainSidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const [searchQuery, setSearchQuery] = React.useState('');
+  const { toast } = useToast();
 
   const isActive = (path: string) => {
     if (path === '/') {
@@ -57,6 +61,14 @@ export function MainSidebar() {
     if (searchQuery.trim()) {
       router.push(`/search?q=${searchQuery.trim()}`);
     }
+  };
+
+  const handleLogout = () => {
+    toast({
+      title: 'Logged Out',
+      description: 'You have been successfully logged out.',
+    });
+    // In a real app, you would also redirect or clear auth state.
   };
 
   return (
@@ -196,10 +208,23 @@ export function MainSidebar() {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>Profile</DropdownMenuItem>
-            <DropdownMenuItem>Settings</DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/profile" className="cursor-pointer">
+                  <User className="mr-2 h-4 w-4" />
+                  <span>Profile</span>
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/settings" className="cursor-pointer">
+                  <Settings className="mr-2 h-4 w-4" />
+                  <span>Settings</span>
+                </Link>
+              </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>Log out</DropdownMenuItem>
+            <DropdownMenuItem onSelect={handleLogout} className="cursor-pointer">
+              <LogOut className="mr-2 h-4 w-4" />
+              <span>Log out</span>
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </SidebarFooter>
