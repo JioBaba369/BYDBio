@@ -1,3 +1,5 @@
+'use client';
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -8,8 +10,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Link, PlusCircle, Trash2, User, CreditCard, Link2, Upload, Phone, Mail, Globe, MapPin, Building, Linkedin } from "lucide-react"
 import HashtagSuggester from "@/components/ai/hashtag-suggester"
 import Image from "next/image"
+import { useState } from "react";
 
 export default function ProfilePage() {
+  const [bio, setBio] = useState("Senior Product Designer at Acme Inc. Crafting user-centric experiences that bridge business goals and user needs.");
+
   return (
     <div className="space-y-6">
       <div>
@@ -50,10 +55,9 @@ export default function ProfilePage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="bio">Bio</Label>
-                <Textarea id="bio" rows={5} defaultValue="Senior Product Designer at Acme Inc. Crafting user-centric experiences that bridge business goals and user needs." />
-                <HashtagSuggester content="Senior Product Designer at Acme Inc. Crafting user-centric experiences that bridge business goals and user needs." onSelectHashtag={(tag) => {
-                  const bio = document.getElementById('bio') as HTMLTextAreaElement;
-                  bio.value += ` ${tag}`;
+                <Textarea id="bio" rows={5} value={bio} onChange={(e) => setBio(e.target.value)} />
+                <HashtagSuggester content={bio} onSelectHashtag={(tag) => {
+                  setBio(prev => prev + ` ${tag}`);
                 }} />
               </div>
               <Button>Save Changes</Button>

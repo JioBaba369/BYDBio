@@ -1,3 +1,5 @@
+'use client';
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
@@ -5,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Heart, Image as ImageIcon, MessageCircle, MoreHorizontal, Share2 } from "lucide-react"
 import Image from "next/image"
 import HashtagSuggester from "@/components/ai/hashtag-suggester"
+import { useState } from "react";
 
 const feedItems = [
   {
@@ -36,6 +39,8 @@ const feedItems = [
 ];
 
 export default function FeedPage() {
+  const [postContent, setPostContent] = useState('');
+
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <h1 className="text-3xl font-bold font-headline">Status Feed</h1>
@@ -52,10 +57,11 @@ export default function FeedPage() {
                 id="new-post"
                 placeholder="What's on your mind?"
                 className="w-full text-base border-0 focus-visible:ring-0 ring-offset-0 p-0"
+                value={postContent}
+                onChange={(e) => setPostContent(e.target.value)}
               />
-               <HashtagSuggester content="" onSelectHashtag={(tag) => {
-                  const postInput = document.getElementById('new-post') as HTMLTextAreaElement;
-                  postInput.value += ` ${tag}`;
+               <HashtagSuggester content={postContent} onSelectHashtag={(tag) => {
+                  setPostContent(prev => prev + ` ${tag}`);
                 }} />
             </div>
           </div>
