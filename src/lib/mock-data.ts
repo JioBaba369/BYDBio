@@ -12,6 +12,8 @@ export const currentUser = {
   subscribers: "12.5k", // This would be calculated in a real app
   links: [
     { title: "Personal Website", url: "https://janedoe.design", icon: 'Globe' },
+    { title: "Email Me", url: "mailto:jane.doe@example.com", icon: 'Mail' },
+    { title: "Call Me", url: "tel:+15551234567", icon: 'Phone' },
     { title: "LinkedIn", url: "https://linkedin.com/in/janedoe", icon: 'Linkedin' },
     { title: "GitHub", url: "https://github.com/janedoe", icon: 'Github' },
     { title: "Twitter / X", url: "https://twitter.com/janedoe", icon: 'Twitter' },
@@ -27,8 +29,8 @@ export const currentUser = {
     company: "Acme Inc.",
     phone: "+1 (555) 123-4567",
     email: "jane.doe@acme.com",
-    website: "janedoe.design",
-    linkedin: "linkedin.com/in/janedoe",
+    website: "https://janedoe.design",
+    linkedin: "https://www.linkedin.com/in/janedoe",
     location: "San Francisco, CA",
   }
 };

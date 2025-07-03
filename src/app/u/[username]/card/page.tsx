@@ -92,13 +92,13 @@ END:VCARD`;
               <Mail className="w-4 h-4 text-primary/80" />
               <span>{email}</span>
             </a>
-            <a href={`https://${website}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 hover:text-primary transition-colors">
+            <a href={website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 hover:text-primary transition-colors">
               <Globe className="w-4 h-4 text-primary/80" />
-              <span>{website}</span>
+              <span>{website.replace(/^https?:\/\//, '')}</span>
             </a>
-            <a href={`https://${linkedin}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 hover:text-primary transition-colors">
+            <a href={linkedin} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 hover:text-primary transition-colors">
               <Linkedin className="w-4 h-4 text-primary/80" />
-              <span>{linkedin}</span>
+              <span>{linkedin.replace(/^https?:\/\//, '')}</span>
             </a>
             <div className="flex items-center gap-3">
               <MapPin className="w-4 h-4 text-primary/80" />
