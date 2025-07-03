@@ -8,11 +8,14 @@ import Link from "next/link"
 import { Logo } from "@/components/logo";
 import { currentUser } from "@/lib/mock-data";
 import ShareButton from "@/components/share-button";
+import { useParams } from "next/navigation";
 
 
-export default function UserJobsPage({ params }: { params: { username: string } }) {
+export default function UserJobsPage() {
+  const params = useParams();
+  const username = typeof params.username === 'string' ? params.username : '';
   // In a real app, you would fetch user data based on params.username
-  const user = params.username === currentUser.username ? currentUser : null;
+  const user = username === currentUser.username ? currentUser : null;
 
   if (!user) {
     // A real app would have a proper 404 page.
@@ -24,7 +27,7 @@ export default function UserJobsPage({ params }: { params: { username: string } 
   return (
     <div className="space-y-6 max-w-4xl mx-auto py-8 px-4">
        <Button asChild variant="ghost" className="pl-0">
-        <Link href={`/u/${params.username}`} className="inline-flex items-center gap-2 text-primary hover:underline">
+        <Link href={`/u/${username}`} className="inline-flex items-center gap-2 text-primary hover:underline">
             <ArrowLeft className="h-4 w-4" />
             Back to {userName}'s Profile
         </Link>

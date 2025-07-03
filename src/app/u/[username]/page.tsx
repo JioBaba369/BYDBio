@@ -2,6 +2,7 @@
 'use client';
 
 import { useState } from "react";
+import { useParams } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,10 +20,13 @@ import ShareButton from "@/components/share-button";
 import { linkIcons } from "@/lib/link-icons";
 import Image from "next/image";
 
-export default function LinkInBioPage({ params }: { params: { username:string } }) {
+export default function LinkInBioPage() {
+  const params = useParams();
+  const username = typeof params.username === 'string' ? params.username : '';
+
   // In a real app, you would fetch user data based on params.username
   // For now, we'll use our mock data if the username matches.
-  const userProfile = params.username === currentUser.username ? currentUser : null;
+  const userProfile = username === currentUser.username ? currentUser : null;
 
   const { toast } = useToast();
   const [contactName, setContactName] = useState('');
@@ -117,7 +121,7 @@ export default function LinkInBioPage({ params }: { params: { username:string } 
                 <div className="flex justify-between items-center mb-4">
                     <h2 className="text-xl font-bold font-headline">Products & Services</h2>
                     <Button asChild variant="link" className="text-primary pr-0">
-                        <Link href={`/u/${params.username}/listings`}>View all</Link>
+                        <Link href={`/u/${username}/listings`}>View all</Link>
                     </Button>
                 </div>
                 <div className="grid gap-4">
@@ -146,7 +150,7 @@ export default function LinkInBioPage({ params }: { params: { username:string } 
                 <div className="flex justify-between items-center mb-4">
                     <h2 className="text-xl font-bold font-headline">Latest Jobs</h2>
                     <Button asChild variant="link" className="text-primary pr-0">
-                        <Link href={`/u/${params.username}/jobs`}>View all</Link>
+                        <Link href={`/u/${username}/jobs`}>View all</Link>
                     </Button>
                 </div>
                 <div className="grid gap-4">
@@ -176,7 +180,7 @@ export default function LinkInBioPage({ params }: { params: { username:string } 
                 <div className="flex justify-between items-center mb-4">
                     <h2 className="text-xl font-bold font-headline">Upcoming Events</h2>
                     <Button asChild variant="link" className="text-primary pr-0">
-                        <Link href={`/u/${params.username}/events`}>View all</Link>
+                        <Link href={`/u/${username}/events`}>View all</Link>
                     </Button>
                 </div>
                 <div className="grid gap-4">
@@ -205,7 +209,7 @@ export default function LinkInBioPage({ params }: { params: { username:string } 
                 <div className="flex justify-between items-center mb-4">
                     <h2 className="text-xl font-bold font-headline">Active Offers</h2>
                     <Button asChild variant="link" className="text-primary pr-0">
-                        <Link href={`/u/${params.username}/offers`}>View all</Link>
+                        <Link href={`/u/${username}/offers`}>View all</Link>
                     </Button>
                 </div>
                 <div className="grid gap-4">
@@ -248,7 +252,7 @@ export default function LinkInBioPage({ params }: { params: { username:string } 
           </div>
 
           <div className="text-center mt-8">
-             <a href={`/u/${params.username}/card`} className="text-sm text-primary hover:underline font-semibold">
+             <a href={`/u/${username}/card`} className="text-sm text-primary hover:underline font-semibold">
                 View Digital Business Card
              </a>
           </div>

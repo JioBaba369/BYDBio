@@ -11,10 +11,13 @@ import { useEffect, useState } from "react";
 import QRCode from "qrcode.react";
 import { currentUser } from "@/lib/mock-data";
 import ShareButton from "@/components/share-button";
+import { useParams } from "next/navigation";
 
-export default function BusinessCardPage({ params }: { params: { username: string } }) {
+export default function BusinessCardPage() {
+  const params = useParams();
+  const username = typeof params.username === 'string' ? params.username : '';
   // In a real app, you would fetch data based on params.username
-  const user = params.username === currentUser.username ? currentUser : null;
+  const user = username === currentUser.username ? currentUser : null;
 
   const [qrCodeValue, setQrCodeValue] = useState('');
 
