@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from "react";
@@ -14,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Logo } from "@/components/logo";
 import { currentUser } from "@/lib/mock-data";
+import ShareButton from "@/components/share-button";
 
 export default function LinkInBioPage({ params }: { params: { username:string } }) {
   // In a real app, you would fetch user data based on params.username
@@ -74,6 +76,9 @@ export default function LinkInBioPage({ params }: { params: { username:string } 
             </Avatar>
             <h1 className="font-headline text-3xl font-bold text-foreground">{name}</h1>
             <p className="mt-2 text-muted-foreground font-body">{bio}</p>
+             <div className="mt-4">
+              <ShareButton />
+            </div>
             <div className="mt-6 flex w-full items-center gap-4">
               <Button className="flex-1 font-bold">Follow</Button>
               <div className="text-center p-2 rounded-md bg-muted/50 w-28">

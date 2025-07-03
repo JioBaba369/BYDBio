@@ -1,10 +1,13 @@
 
+'use client';
+
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Briefcase, MapPin, ArrowLeft } from "lucide-react"
 import Link from "next/link"
 import { Logo } from "@/components/logo";
 import { currentUser } from "@/lib/mock-data";
+import ShareButton from "@/components/share-button";
 
 
 export default function UserJobsPage({ params }: { params: { username: string } }) {
@@ -26,9 +29,12 @@ export default function UserJobsPage({ params }: { params: { username: string } 
             Back to {userName}'s Profile
         </Link>
        </Button>
-      <div>
-        <h1 className="text-3xl font-bold font-headline">Job Listings by {userName}</h1>
-        <p className="text-muted-foreground">Opportunities currently available.</p>
+      <div className="flex justify-between items-start">
+        <div>
+            <h1 className="text-3xl font-bold font-headline">Job Listings by {userName}</h1>
+            <p className="text-muted-foreground">Opportunities currently available.</p>
+        </div>
+        <ShareButton />
       </div>
       {userJobs.length > 0 ? (
         <div className="grid gap-6 md:grid-cols-2">

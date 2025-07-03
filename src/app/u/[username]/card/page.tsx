@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -9,6 +10,7 @@ import { Logo } from "@/components/logo";
 import { useEffect, useState } from "react";
 import QRCode from "qrcode.react";
 import { currentUser } from "@/lib/mock-data";
+import ShareButton from "@/components/share-button";
 
 export default function BusinessCardPage({ params }: { params: { username: string } }) {
   // In a real app, you would fetch data based on params.username
@@ -55,7 +57,10 @@ END:VCARD`;
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-muted/40 p-4">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-muted/40 p-4 space-y-4">
+       <div className="w-full max-w-sm flex justify-end">
+        <ShareButton />
+      </div>
       <Card className="w-full max-w-sm overflow-hidden rounded-2xl shadow-xl">
         <div className="bg-primary h-24" />
         <div className="flex justify-center -mt-16">

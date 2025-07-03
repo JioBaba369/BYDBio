@@ -1,4 +1,6 @@
 
+'use client';
+
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Tag, ArrowLeft } from "lucide-react"
@@ -6,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
 import { Logo } from "@/components/logo"
 import { currentUser } from "@/lib/mock-data";
+import ShareButton from "@/components/share-button";
 
 
 export default function UserOffersPage({ params }: { params: { username: string } }) {
@@ -27,9 +30,12 @@ export default function UserOffersPage({ params }: { params: { username: string 
             Back to {userName}'s Profile
         </Link>
       </Button>
-      <div>
-        <h1 className="text-3xl font-bold font-headline">Offers from {userName}</h1>
-        <p className="text-muted-foreground">Exclusive deals and services.</p>
+      <div className="flex justify-between items-start">
+        <div>
+            <h1 className="text-3xl font-bold font-headline">Offers from {userName}</h1>
+            <p className="text-muted-foreground">Exclusive deals and services.</p>
+        </div>
+        <ShareButton />
       </div>
       {userOffers.length > 0 ? (
         <div className="grid gap-6 md:grid-cols-2">

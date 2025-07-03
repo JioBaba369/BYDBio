@@ -1,10 +1,13 @@
 
+'use client';
+
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Calendar, MapPin, ArrowLeft } from "lucide-react"
 import Link from "next/link"
 import { Logo } from "@/components/logo";
 import { currentUser } from "@/lib/mock-data";
+import ShareButton from "@/components/share-button";
 
 export default function UserEventsPage({ params }: { params: { username: string } }) {
   // In a real app, you would fetch user data based on params.username
@@ -25,9 +28,12 @@ export default function UserEventsPage({ params }: { params: { username: string 
               Back to {userName}'s Profile
           </Link>
         </Button>
-      <div>
-        <h1 className="text-3xl font-bold font-headline">Events by {userName}</h1>
-        <p className="text-muted-foreground">Upcoming events and workshops.</p>
+      <div className="flex justify-between items-start">
+        <div>
+            <h1 className="text-3xl font-bold font-headline">Events by {userName}</h1>
+            <p className="text-muted-foreground">Upcoming events and workshops.</p>
+        </div>
+        <ShareButton />
       </div>
       {userEvents.length > 0 ? (
         <div className="grid gap-6 md:grid-cols-2">
