@@ -27,9 +27,7 @@ const initialFeedItems = initialUsers.flatMap(user =>
       handle: user.handle
     }
   }))
-)
-// A real app would sort by a real date object
-.sort(() => Math.random() - 0.5); // Random sort for variety
+);
 
 export default function FeedPage() {
   const [postContent, setPostContent] = useState('');
