@@ -103,7 +103,9 @@ export function MainSidebar() {
           </form>
         </SidebarGroup>
         <SidebarMenu>
-            <SidebarGroupLabel>Main</SidebarGroupLabel>
+            <SidebarMenuItem>
+              <SidebarGroupLabel>Main</SidebarGroupLabel>
+            </SidebarMenuItem>
             <SidebarMenuItem>
               <Link href="/" className={cn(sidebarMenuButtonVariants())} data-active={isActive('/')}>
                 <LayoutDashboard />
@@ -129,8 +131,13 @@ export function MainSidebar() {
               </Link>
             </SidebarMenuItem>
           
-          <SidebarSeparator className="my-1" />
-            <SidebarGroupLabel>Content</SidebarGroupLabel>
+            <SidebarMenuItem>
+              <SidebarSeparator className="my-1" />
+            </SidebarMenuItem>
+
+            <SidebarMenuItem>
+              <SidebarGroupLabel>Content</SidebarGroupLabel>
+            </SidebarMenuItem>
             <SidebarMenuItem>
               <Link href="/profile" className={cn(sidebarMenuButtonVariants())} data-active={isActive('/profile')}>
                 <User />
@@ -174,8 +181,13 @@ export function MainSidebar() {
               </Link>
             </SidebarMenuItem>
 
-          <SidebarSeparator className="my-1" />
-            <SidebarGroupLabel>Public Pages</SidebarGroupLabel>
+            <SidebarMenuItem>
+              <SidebarSeparator className="my-1" />
+            </SidebarMenuItem>
+            
+            <SidebarMenuItem>
+              <SidebarGroupLabel>Public Pages</SidebarGroupLabel>
+            </SidebarMenuItem>
            <SidebarMenuItem>
             <Link href={`/u/${currentUser.username}`} className={cn(sidebarMenuButtonVariants())} data-active={isActive(`/u/${currentUser.username}`)}>
               <Share />
