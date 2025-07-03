@@ -31,6 +31,7 @@ import {
   Tags,
   CalendarDays,
   Building2,
+  Bell,
 } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -119,6 +120,16 @@ export function MainSidebar() {
                 icon={<Users />}
               >
                 Connections
+              </SidebarMenuButton>
+            </Link>
+          </SidebarMenuItem>
+           <SidebarMenuItem>
+            <Link href="/notifications">
+              <SidebarMenuButton
+                isActive={isActive('/notifications')}
+                icon={<Bell />}
+              >
+                Notifications
               </SidebarMenuButton>
             </Link>
           </SidebarMenuItem>
