@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -7,12 +8,30 @@ import { currentUser } from "@/lib/mock-data";
 import { format, parseISO } from "date-fns";
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { Event } from "@/lib/users";
 import { useToast } from "@/hooks/use-toast";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
 import { Badge } from "@/components/ui/badge";
+
+// This component safely formats the date on the client-side to prevent hydration errors.
+function ClientFormattedDate({ dateString }: { dateString: string }) {
+  const [formattedDate, setFormattedDate] = useState('');
+
+  useEffect(() => {
+    // This effect runs only on the client, after the initial render.
+    setFormattedDate(format(parseISO(dateString), "PPP p"));
+  }, [dateString]);
+
+  // Render a placeholder or nothing until the client-side formatting is complete.
+  if (!formattedDate) {
+    return <span>...</span>;
+  }
+
+  return <>{formattedDate}</>;
+}
+
 
 export default function EventsPage() {
   const [events, setEvents] = useState<Event[]>(currentUser.events);
@@ -91,7 +110,7 @@ export default function EventsPage() {
                 </CardHeader>
                 <CardContent className="space-y-2 flex-grow">
                   <div className="flex items-center text-sm text-muted-foreground">
-                    <Calendar className="mr-2 h-4 w-4" /> {format(parseISO(event.date), "PPP p")}
+                    <Calendar className="mr-2 h-4 w-4" /> <ClientFormattedDate dateString={event.date} />
                   </div>
                   <div className="flex items-center text-sm text-muted-foreground">
                     <MapPin className="mr-2 h-4 w-4" /> {event.location}
@@ -139,7 +158,7 @@ export default function EventsPage() {
                   </CardHeader>
                    <CardContent className="space-y-2 flex-grow">
                     <div className="flex items-center text-sm text-muted-foreground">
-                      <Calendar className="mr-2 h-4 w-4" /> {format(parseISO(event.date), "PPP p")}
+                      <Calendar className="mr-2 h-4 w-4" /> <ClientFormattedDate dateString={event.date} />
                     </div>
                     <div className="flex items-center text-sm text-muted-foreground">
                       <MapPin className="mr-2 h-4 w-4" /> {event.location}
