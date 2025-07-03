@@ -24,6 +24,7 @@ import QrScanner from "@/components/qr-scanner";
 import { currentUser } from "@/lib/mock-data";
 import { allUsers as initialAllUsers } from "@/lib/users";
 import Link from "next/link";
+import { saveAs } from "file-saver";
 
 // Define a user type for clarity
 type User = (typeof initialAllUsers)[0] & { isFollowedByCurrentUser?: boolean };
@@ -85,15 +86,9 @@ export default function ConnectionsPage() {
     const handleSaveVCard = () => {
         if (!scannedVCardData) return;
         const blob = new Blob([scannedVCardData], { type: "text/vcard;charset=utf-8" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
         const nameMatch = scannedVCardData.match(/FN:(.*)/);
         const name = nameMatch ? nameMatch[1].trim().split(';')[0].replace(/ /g, '_') : 'contact';
-        a.download = `${name}.vcf`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        saveAs(blob, `${name}.vcf`);
         setScannedVCardData(null);
         toast({
             title: "Contact Saved",
