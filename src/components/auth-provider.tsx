@@ -5,7 +5,7 @@ import { createContext, useContext, useState, useEffect, type ReactNode } from '
 import { onAuthStateChanged, type User as FirebaseUser } from 'firebase/auth';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
-import type { User as AppUser } from '@/lib/users';
+import { createUserProfileIfNotExists, type User as AppUser } from '@/lib/users';
 import { usePathname, useRouter } from 'next/navigation';
 
 interface AuthContextType {
@@ -53,14 +53,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setFirebaseUser(fbUser);
         const userDocRef = doc(db, 'users', fbUser.uid);
         
-        snapshotUnsubscribe = onSnapshot(userDocRef, (doc) => {
+        snapshotUnsubscribe = onSnapshot(userDocRef, async (doc) => {
             if (doc.exists()) {
                 setUser({ ...doc.data(), email: fbUser.email } as AppUser);
+                setLoading(false);
             } else {
-                console.error("No user profile found in Firestore for UID:", fbUser.uid);
-                setUser(null);
+                try {
+                    console.log(`No user profile found for UID: ${fbUser.uid}. Creating one now.`);
+                    await createUserProfileIfNotExists(fbUser);
+                    // The onSnapshot listener will be re-triggered with the new data,
+                    // so we wait for the next snapshot instead of setting state here.
+                } catch (creationError) {
+                    console.error("Failed to create user profile on-the-fly:", creationError);
+                    setUser(null); // Can't proceed if creation fails
+                    setLoading(false);
+                }
             }
-            setLoading(false);
         }, (error) => {
             console.error("Error fetching user profile:", error);
             setUser(null);

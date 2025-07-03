@@ -1,6 +1,7 @@
 
-import { collection, query, where, getDocs, limit } from "firebase/firestore";
+import { collection, query, where, getDocs, limit, doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import type { User as FirebaseUser } from "firebase/auth";
 
 // In a real app, this data would come from a database.
 // It's defined here for demonstration purposes.
@@ -123,6 +124,43 @@ export type User = {
   rsvpedEventIds?: string[];
   uid: string;
   email?: string;
+};
+
+/**
+ * Creates a user profile in Firestore if one doesn't already exist.
+ * This prevents overwriting data on subsequent logins.
+ * @param user The user object from Firebase Authentication.
+ * @param additionalData Additional data to include in the profile, like the name from the sign-up form.
+ */
+export const createUserProfileIfNotExists = async (user: FirebaseUser, additionalData?: { name?: string }) => {
+    const userDocRef = doc(db, "users", user.uid);
+    const userDoc = await getDoc(userDocRef);
+
+    if (!userDoc.exists()) {
+        const username = user.email?.split('@')[0] || `user${user.uid.substring(0,5)}`;
+        // In a real app, you might want to check if this username is unique and handle collisions.
+        await setDoc(userDocRef, {
+            uid: user.uid,
+            email: user.email,
+            name: additionalData?.name || user.displayName || "New User",
+            username: username,
+            handle: username,
+            avatarUrl: user.photoURL || `https://placehold.co/200x200.png`,
+            avatarFallback: (additionalData?.name || user.displayName)?.charAt(0).toUpperCase() || 'U',
+            bio: "",
+            following: [],
+            subscribers: 0,
+            links: [],
+            jobs: [],
+            events: [],
+            offers: [],
+            listings: [],
+            posts: [],
+            businesses: [],
+            rsvpedEventIds: [],
+            businessCard: {},
+        });
+    }
 };
 
 export async function getUserByUsername(username: string): Promise<User | null> {
