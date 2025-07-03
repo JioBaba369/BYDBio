@@ -1,5 +1,6 @@
 'use client';
 
+import * as React from 'react';
 import {
   Sidebar,
   SidebarContent,
@@ -13,7 +14,9 @@ import { Logo } from './logo';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import {
   Briefcase,
+  Calendar,
   ChevronDown,
+  DollarSign,
   LayoutDashboard,
   MessageSquare,
   Share,
@@ -32,7 +35,25 @@ import {
 
 export function MainSidebar() {
   const pathname = usePathname();
-  const isActive = (path: string) => pathname === path;
+  const [hash, setHash] = React.useState('');
+
+  React.useEffect(() => {
+    const onHashChange = () => {
+      setHash(window.location.hash);
+    };
+    onHashChange(); // Set initial hash
+    window.addEventListener('hashchange', onHashChange);
+    return () => {
+      window.removeEventListener('hashchange', onHashChange);
+    };
+  }, []);
+
+  const isActive = (path: string, linkHash?: string) => {
+    if (path === '/opportunities' && linkHash) {
+      return pathname === path && (hash || '#jobs') === linkHash;
+    }
+    return pathname === path;
+  };
 
   return (
     <Sidebar>
@@ -72,12 +93,32 @@ export function MainSidebar() {
             </Link>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <Link href="/opportunities">
+            <Link href="/opportunities#jobs">
               <SidebarMenuButton
-                isActive={isActive('/opportunities')}
+                isActive={isActive('/opportunities', '#jobs')}
                 icon={<Briefcase />}
               >
-                Opportunities
+                Jobs
+              </SidebarMenuButton>
+            </Link>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <Link href="/opportunities#events">
+              <SidebarMenuButton
+                isActive={isActive('/opportunities', '#events')}
+                icon={<Calendar />}
+              >
+                Events
+              </SidebarMenuButton>
+            </Link>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <Link href="/opportunities#offers">
+              <SidebarMenuButton
+                isActive={isActive('/opportunities', '#offers')}
+                icon={<DollarSign />}
+              >
+                Offers
               </SidebarMenuButton>
             </Link>
           </SidebarMenuItem>

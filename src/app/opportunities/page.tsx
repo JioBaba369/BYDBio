@@ -1,3 +1,6 @@
+'use client';
+
+import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -18,6 +21,31 @@ const offers = [
 ];
 
 export default function OpportunitiesPage() {
+  const [activeTab, setActiveTab] = useState('jobs');
+
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash.replace('#', '');
+      if (['jobs', 'events', 'offers'].includes(hash)) {
+        setActiveTab(hash);
+      } else {
+        setActiveTab('jobs');
+      }
+    };
+
+    handleHashChange();
+    window.addEventListener('hashchange', handleHashChange);
+
+    return () => {
+      window.removeEventListener('hashchange', handleHashChange);
+    };
+  }, []);
+
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    window.history.pushState(null, '', `#${value}`);
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -25,7 +53,7 @@ export default function OpportunitiesPage() {
         <p className="text-muted-foreground">Discover curated jobs, events, and offers to boost your career.</p>
       </div>
 
-      <Tabs defaultValue="jobs" className="w-full">
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="jobs"><Briefcase className="mr-2 h-4 w-4"/>Jobs</TabsTrigger>
           <TabsTrigger value="events"><Calendar className="mr-2 h-4 w-4"/>Events</TabsTrigger>
