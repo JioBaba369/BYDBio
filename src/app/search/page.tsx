@@ -326,7 +326,7 @@ export default function SearchPage() {
                             </CardContent>
                             <CardFooter>
                                 <Button asChild className="w-full">
-                                    <Link href={`/u/${item.author.handle}#events`}>Learn More</Link>
+                                    <Link href={`/events/${item.id}`}>Learn More</Link>
                                 </Button>
                             </CardFooter>
                         </Card>

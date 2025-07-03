@@ -7,8 +7,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Send, Briefcase, Calendar, Tag, MapPin, Heart, MessageCircle, DollarSign, Building2, Tags, ExternalLink, Globe } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
@@ -25,6 +23,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 
 
 // Add isLiked to post type for this component's state
@@ -192,7 +191,7 @@ export default function UserProfilePage({ userProfileData }: UserProfilePageProp
                         {offers.length > 0 && <TabsTrigger value="offers">Offers</TabsTrigger>}
                     </TabsList>
 
-                    <TabsContent value="posts" className="space-y-4">
+                    <TabsContent value="posts" className="space-y-4 pt-4">
                         {posts.map((post) => (
                             <Card key={post.id} className="shadow-none border">
                             <CardContent className="p-4">
@@ -217,7 +216,7 @@ export default function UserProfilePage({ userProfileData }: UserProfilePageProp
                             </Card>
                         ))}
                     </TabsContent>
-                     <TabsContent value="businesses" className="space-y-4">
+                     <TabsContent value="businesses" className="space-y-4 pt-4">
                         {businesses.map((item) => (
                            <Card key={item.id} className="flex flex-col shadow-none border">
                             {item.imageUrl &&
@@ -248,7 +247,7 @@ export default function UserProfilePage({ userProfileData }: UserProfilePageProp
                         </Card>
                         ))}
                     </TabsContent>
-                    <TabsContent value="listings" className="space-y-4">
+                    <TabsContent value="listings" className="space-y-4 pt-4">
                         {listings.map((item) => (
                             <Card key={item.id} className="flex flex-col shadow-none border">
                                 <div className="overflow-hidden rounded-t-lg">
@@ -268,7 +267,7 @@ export default function UserProfilePage({ userProfileData }: UserProfilePageProp
                             </Card>
                         ))}
                     </TabsContent>
-                    <TabsContent value="jobs" className="space-y-4">
+                    <TabsContent value="jobs" className="space-y-4 pt-4">
                         {jobs.map((job) => (
                             <Card key={job.id} className="shadow-none border">
                                 <CardHeader>
@@ -289,7 +288,7 @@ export default function UserProfilePage({ userProfileData }: UserProfilePageProp
                             </Card>
                         ))}
                     </TabsContent>
-                    <TabsContent value="events" className="space-y-4">
+                    <TabsContent value="events" className="space-y-4 pt-4">
                         {events.map((event) => (
                              <Card key={event.id} className="shadow-none border">
                                 <CardHeader>
@@ -311,7 +310,7 @@ export default function UserProfilePage({ userProfileData }: UserProfilePageProp
                             </Card>
                         ))}
                     </TabsContent>
-                    <TabsContent value="offers" className="space-y-4">
+                    <TabsContent value="offers" className="space-y-4 pt-4">
                          {offers.map((offer) => (
                             <Card key={offer.id} className="shadow-none border">
                                 <CardHeader>
