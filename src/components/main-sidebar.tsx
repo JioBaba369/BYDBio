@@ -42,7 +42,7 @@ export function MainSidebar() {
       <SidebarContent>
         <SidebarMenu>
           <SidebarMenuItem>
-            <Link href="/" legacyBehavior passHref>
+            <Link href="/">
               <SidebarMenuButton
                 isActive={isActive('/')}
                 icon={<LayoutDashboard />}
@@ -52,7 +52,7 @@ export function MainSidebar() {
             </Link>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <Link href="/profile" legacyBehavior passHref>
+            <Link href="/profile">
               <SidebarMenuButton
                 isActive={isActive('/profile')}
                 icon={<User />}
@@ -62,7 +62,7 @@ export function MainSidebar() {
             </Link>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <Link href="/feed" legacyBehavior passHref>
+            <Link href="/feed">
               <SidebarMenuButton
                 isActive={isActive('/feed')}
                 icon={<MessageSquare />}
@@ -72,7 +72,7 @@ export function MainSidebar() {
             </Link>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <Link href="/opportunities" legacyBehavior passHref>
+            <Link href="/opportunities">
               <SidebarMenuButton
                 isActive={isActive('/opportunities')}
                 icon={<Briefcase />}
@@ -82,7 +82,7 @@ export function MainSidebar() {
             </Link>
           </SidebarMenuItem>
            <SidebarMenuItem>
-            <Link href="/u/janedoe" legacyBehavior passHref>
+            <Link href="/u/janedoe">
               <SidebarMenuButton
                 icon={<Share />}
               >
