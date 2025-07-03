@@ -1,13 +1,16 @@
 import { Globe, Linkedin, Github, Twitter } from "lucide-react";
+import { allUsers } from "./users";
+
+// This would be determined by authentication in a real app
+const CURRENT_USER_ID = 'user1'; 
+
+const fullCurrentUser = allUsers.find(u => u.id === CURRENT_USER_ID)!;
 
 export const currentUser = {
-  name: "Jane Doe",
-  username: "janedoe",
+  ...fullCurrentUser,
   email: "jane.doe@example.com",
-  avatarUrl: "https://placehold.co/200x200.png",
-  avatarFallback: "JD",
   bio: "Senior Product Designer at Acme Inc. Crafting user-centric experiences that bridge business goals and user needs. Passionate about design systems and accessibility.",
-  subscribers: "12.5k",
+  subscribers: "12.5k", // This would be calculated in a real app
   links: [
     { title: "Personal Website", url: "https://janedoe.design", icon: Globe },
     { title: "LinkedIn", url: "https://linkedin.com/in/janedoe", icon: Linkedin },

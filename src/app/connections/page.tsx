@@ -6,80 +6,76 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UserPlus, UserCheck, UserMinus, QrCode } from "lucide-react";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import QrScanner from "@/components/qr-scanner";
+import { currentUser } from "@/lib/mock-data";
+import { allUsers as initialAllUsers } from "@/lib/users";
 
-const followers = [
-  { id: 'user2', name: "John Smith", handle: "johnsmith", avatarUrl: "https://placehold.co/100x100.png", following: true },
-  { id: 'user3', name: "Alex Johnson", handle: "alexj", avatarUrl: "https://placehold.co/100x100.png", following: false },
-  { id: 'user4', name: "Maria Garcia", handle: "mariag", avatarUrl: "https://placehold.co/100x100.png", following: true },
-];
-
-const following = [
-    { id: 'user2', name: "John Smith", handle: "johnsmith", avatarUrl: "https://placehold.co/100x100.png", following: true },
-    { id: 'user4', name: "Maria Garcia", handle: "mariag", avatarUrl: "https://placehold.co/100x100.png", following: true },
-    { id: 'user5', name: "Chris Lee", handle: "chrisl", avatarUrl: "https://placehold.co/100x100.png", following: true },
-];
+// Define a user type for clarity
+type User = (typeof initialAllUsers)[0] & { isFollowedByCurrentUser?: boolean };
 
 export default function ConnectionsPage() {
-    const [followersList, setFollowersList] = useState(followers);
-    const [followingList, setFollowingList] = useState(following);
+    const [allUsers, setAllUsers] = useState<User[]>(initialAllUsers);
     const [isScannerOpen, setIsScannerOpen] = useState(false);
     const router = useRouter();
     const { toast } = useToast();
 
+    // Memoize lists to avoid re-calculation on every render
+    const { followersList, followingList } = useMemo(() => {
+        const me = allUsers.find(u => u.id === currentUser.id)!;
 
+        // Users who are following the current user
+        const followers = allUsers
+            .filter(u => u.following.includes(currentUser.id))
+            .map(u => ({
+                ...u,
+                // Check if the current user is following them back
+                isFollowedByCurrentUser: me.following.includes(u.id)
+            }));
+
+        // Users the current user is following
+        const following = allUsers.filter(u => me.following.includes(u.id));
+
+        return { followersList: followers, followingList: following };
+    }, [allUsers]);
+    
     // This is a mock function. In a real app, this would be an API call.
-    const toggleFollowInList = (listSetter: React.Dispatch<React.SetStateAction<any[]>>, userId: string) => {
-        listSetter(prevList =>
-            prevList.map(user =>
-                user.id === userId ? { ...user, following: !user.following } : user
-            )
-        );
-    };
-
-    const handleFollowerToggle = (userId: string) => {
-        toggleFollowInList(setFollowersList, userId);
-        // Also update the 'following' list if the user is in it
-        setFollowingList(prevList => {
-            const userExists = prevList.some(u => u.id === userId);
-            const userDetails = followersList.find(u => u.id === userId);
-            if (userExists) {
-                return prevList.filter(u => u.id !== userId);
-            } else if (userDetails) {
-                return [...prevList, {...userDetails, following: true}];
-            }
-            return prevList;
+    // It updates the client-side state, which will be lost on refresh.
+    const toggleFollow = (userIdToToggle: string) => {
+        setAllUsers(prevUsers => {
+            return prevUsers.map(user => {
+                if (user.id === currentUser.id) {
+                    const following = user.following.includes(userIdToToggle)
+                        ? user.following.filter(id => id !== userIdToToggle)
+                        : [...user.following, userIdToToggle];
+                    return { ...user, following };
+                }
+                return user;
+            });
         });
     };
 
-    const handleFollowingToggle = (userId: string) => {
-        // Unfollowing from the 'following' list removes them.
-        setFollowingList(prevList => prevList.filter(user => user.id !== userId));
-        // Update their state in the 'followers' list if they are present.
-        setFollowersList(prevList =>
-            prevList.map(user =>
-                user.id === userId ? { ...user, following: false } : user
-            )
-        );
-    }
-
-    const handleRemoveFollower = (userId: string) => {
-        // Remove the user from your followers list.
-        setFollowersList(prevList => prevList.filter(user => user.id !== userId));
-        // Also remove them from your 'following' list if you were following them.
-        setFollowingList(prevList => prevList.filter(user => user.id !== userId));
+    const removeFollower = (followerIdToRemove: string) => {
+         setAllUsers(prevUsers => {
+            return prevUsers.map(user => {
+                if (user.id === followerIdToRemove) {
+                    const following = user.following.filter(id => id !== currentUser.id);
+                    return { ...user, following };
+                }
+                return user;
+            });
+        });
     };
 
-    const handleQrScanSuccess = (decodedText: string, decodedResult: any) => {
+
+    const handleQrScanSuccess = (decodedText: string) => {
       try {
         const url = new URL(decodedText);
         const pathParts = url.pathname.split('/');
         
-        // Expecting a URL like /u/[username] or /u/[username]/card
         if (pathParts.length >= 3 && pathParts[1] === 'u') {
           const username = pathParts[2];
           toast({
@@ -149,11 +145,11 @@ export default function ConnectionsPage() {
                                 </div>
                             </div>
                             <div className="flex items-center gap-2">
-                                <Button size="sm" variant={user.following ? 'secondary' : 'default'} onClick={() => handleFollowerToggle(user.id)}>
-                                    {user.following ? <UserCheck className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
-                                    {user.following ? 'Following' : 'Follow'}
+                                <Button size="sm" variant={user.isFollowedByCurrentUser ? 'secondary' : 'default'} onClick={() => toggleFollow(user.id)}>
+                                    {user.isFollowedByCurrentUser ? <UserCheck className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
+                                    {user.isFollowedByCurrentUser ? 'Following' : 'Follow Back'}
                                 </Button>
-                                <Button size="sm" variant="outline" className="text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={() => handleRemoveFollower(user.id)}>
+                                <Button size="sm" variant="outline" className="text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={() => removeFollower(user.id)}>
                                     <UserMinus className="mr-2 h-4 w-4" />
                                     Remove
                                 </Button>
@@ -178,7 +174,7 @@ export default function ConnectionsPage() {
                                     <p className="text-sm text-muted-foreground">@{user.handle}</p>
                                 </div>
                             </div>
-                            <Button size="sm" variant="secondary" onClick={() => handleFollowingToggle(user.id)}>
+                            <Button size="sm" variant="secondary" onClick={() => toggleFollow(user.id)}>
                                 <UserCheck className="mr-2 h-4 w-4" />
                                 Unfollow
                             </Button>

@@ -7,21 +7,25 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { UserPlus, UserCheck, Search as SearchIcon } from "lucide-react";
 import { useState, useMemo } from 'react';
+import { allUsers as initialUsers } from '@/lib/users';
+import { currentUser } from '@/lib/mock-data';
 
-const allUsers = [
-  { id: 'user1', name: "Jane Doe", handle: "janedoe", avatarUrl: "https://placehold.co/100x100.png", following: false },
-  { id: 'user2', name: "John Smith", handle: "johnsmith", avatarUrl: "https://placehold.co/100x100.png", following: true },
-  { id: 'user3', name: "Alex Johnson", handle: "alexj", avatarUrl: "https://placehold.co/100x100.png", following: false },
-  { id: 'user4', name: "Maria Garcia", handle: "mariag", avatarUrl: "https://placehold.co/100x100.png", following: true },
-  { id: 'user5', name: "Chris Lee", handle: "chrisl", avatarUrl: "https://placehold.co/100x100.png", following: false },
-  { id: 'user6', name: "Patricia Williams", handle: "patriciaw", avatarUrl: "https://placehold.co/100x100.png", following: false },
-  { id: 'user7', name: "Michael Brown", handle: "mikeb", avatarUrl: "https://placehold.co/100x100.png", following: false },
-];
+// We need to map the full user list to include whether the current user follows them
+const mapUsersWithFollowingState = (users: typeof initialUsers, me: typeof currentUser) => {
+    return users
+      .filter(u => u.id !== me.id) // Exclude current user from search results
+      .map(user => ({
+        ...user,
+        isFollowedByCurrentUser: me.following.includes(user.id),
+      }));
+}
 
 export default function SearchPage() {
   const searchParams = useSearchParams();
   const query = searchParams.get('q');
-  const [users, setUsers] = useState(allUsers);
+  
+  // State to hold the mapped users, initialized with the current following state
+  const [users, setUsers] = useState(mapUsersWithFollowingState(initialUsers, currentUser));
 
   const filteredUsers = useMemo(() => {
     if (!query) {
@@ -33,10 +37,12 @@ export default function SearchPage() {
     );
   }, [query, users]);
 
+  // This is a mock function. In a real app this would be an API call.
+  // This will only affect the client state and will be reset on page refresh.
   const toggleFollow = (userId: string) => {
     setUsers(prevUsers =>
       prevUsers.map(user =>
-        user.id === userId ? { ...user, following: !user.following } : user
+        user.id === userId ? { ...user, isFollowedByCurrentUser: !user.isFollowedByCurrentUser } : user
       )
     );
   };
@@ -70,9 +76,9 @@ export default function SearchPage() {
                     <p className="text-sm text-muted-foreground">@{user.handle}</p>
                   </div>
                 </div>
-                <Button size="sm" variant={user.following ? 'secondary' : 'default'} onClick={() => toggleFollow(user.id)}>
-                  {user.following ? <UserCheck className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
-                  {user.following ? 'Following' : 'Follow'}
+                <Button size="sm" variant={user.isFollowedByCurrentUser ? 'secondary' : 'default'} onClick={() => toggleFollow(user.id)}>
+                  {user.isFollowedByCurrentUser ? <UserCheck className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
+                  {user.isFollowedByCurrentUser ? 'Following' : 'Follow'}
                 </Button>
               </CardContent>
             </Card>
