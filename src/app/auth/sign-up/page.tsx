@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useForm } from "react-hook-form";
@@ -12,9 +13,9 @@ import { Github } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createUserWithEmailAndPassword, GithubAuthProvider, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { createUserWithEmailAndPassword, GithubAuthProvider, GoogleAuthProvider, signInWithPopup, type User as FirebaseUser } from "firebase/auth";
 import { auth, db } from "@/lib/firebase";
-import { doc, setDoc } from "firebase/firestore";
+import { doc, setDoc, getDoc } from "firebase/firestore";
 
 const signUpSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
@@ -23,6 +24,44 @@ const signUpSchema = z.object({
 });
 
 type SignUpFormValues = z.infer<typeof signUpSchema>;
+
+
+/**
+ * Creates a user profile in Firestore if one doesn't already exist.
+ * This prevents overwriting data on subsequent logins with different providers.
+ * @param user The user object from Firebase Authentication.
+ * @param additionalData Additional data to include in the profile, like the name from the sign-up form.
+ */
+const createUserProfileIfNotExists = async (user: FirebaseUser, additionalData?: { name?: string }) => {
+    const userDocRef = doc(db, "users", user.uid);
+    const userDoc = await getDoc(userDocRef);
+
+    if (!userDoc.exists()) {
+        const username = user.email?.split('@')[0] || `user${user.uid.substring(0,5)}`;
+        // In a real app, you might want to check if this username is unique and handle collisions.
+        await setDoc(userDocRef, {
+            uid: user.uid,
+            email: user.email,
+            name: additionalData?.name || user.displayName || "New User",
+            username: username,
+            handle: username,
+            avatarUrl: user.photoURL || `https://placehold.co/200x200.png`,
+            avatarFallback: (additionalData?.name || user.displayName)?.charAt(0).toUpperCase() || 'U',
+            bio: "",
+            following: [],
+            subscribers: 0,
+            links: [],
+            jobs: [],
+            events: [],
+            offers: [],
+            listings: [],
+            posts: [],
+            businesses: [],
+            rsvpedEventIds: [],
+            businessCard: {},
+        });
+    }
+};
 
 export default function SignUpPage() {
     const { toast } = useToast();
@@ -45,25 +84,7 @@ export default function SignUpPage() {
       const user = userCredential.user;
 
       // Create a full user profile in Firestore.
-      await setDoc(doc(db, "users", user.uid), {
-        uid: user.uid,
-        email: user.email,
-        name: data.name,
-        username: user.email?.split('@')[0] || `user${user.uid.substring(0,5)}`,
-        avatarUrl: user.photoURL || `https://placehold.co/200x200.png`,
-        avatarFallback: data.name.charAt(0).toUpperCase(),
-        bio: "",
-        following: [],
-        subscribers: "0",
-        links: [],
-        jobs: [],
-        events: [],
-        offers: [],
-        listings: [],
-        posts: [],
-        businesses: [],
-        rsvpedEventIds: [],
-      });
+      await createUserProfileIfNotExists(user, { name: data.name });
 
       toast({
         title: "Account Created",
@@ -87,15 +108,8 @@ export default function SignUpPage() {
       const userCredential = await signInWithPopup(auth, provider);
       const user = userCredential.user;
 
-      // Create or update user profile in Firestore
-      await setDoc(doc(db, "users", user.uid), {
-        uid: user.uid,
-        email: user.email,
-        name: user.displayName,
-        username: user.email?.split('@')[0] || `user${user.uid.substring(0,5)}`,
-        avatarUrl: user.photoURL || `https://placehold.co/200x200.png`,
-        avatarFallback: user.displayName?.charAt(0).toUpperCase() || 'U',
-      }, { merge: true }); // Use merge: true to avoid overwriting all data if the user already exists.
+      // Create user profile in Firestore if it doesn't exist
+      await createUserProfileIfNotExists(user);
 
        toast({
         title: "Account Created",
