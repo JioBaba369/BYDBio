@@ -24,6 +24,7 @@ import { cn } from "@/lib/utils";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import BioGenerator from "@/components/ai/bio-generator";
 
 
 const linksFormSchema = z.object({
@@ -233,12 +234,17 @@ export default function ProfilePage() {
                   <Button variant="outline"><Upload className="mr-2 h-4 w-4"/> Change Photo</Button>
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="bio">Bio</Label>
-                <Textarea id="bio" rows={5} value={bio} onChange={(e) => setBio(e.target.value)} />
-                <HashtagSuggester content={bio} onSelectHashtag={(tag) => {
-                  setBio(prev => prev + ` ${tag}`);
-                }} />
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="bio">Bio</Label>
+                  <Textarea id="bio" rows={3} value={bio} onChange={(e) => setBio(e.target.value)} placeholder="Tell everyone a little bit about yourself..." />
+                </div>
+                <BioGenerator onSelectBio={setBio} />
+                <div className="space-y-2">
+                    <HashtagSuggester content={bio} onSelectHashtag={(tag) => {
+                      setBio(prev => `${prev.trim()} ${tag}`);
+                    }} />
+                </div>
               </div>
               <Button>Save Changes</Button>
             </CardContent>
