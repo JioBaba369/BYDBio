@@ -11,6 +11,7 @@ import {
   SidebarMenuItem,
   SidebarGroup,
   sidebarMenuButtonVariants,
+  SidebarSeparator,
 } from '@/components/ui/sidebar';
 import { Logo } from './logo';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
@@ -56,13 +57,11 @@ export function MainSidebar() {
   const { toast } = useToast();
 
   const isActive = (path: string) => {
-    if (path === '/') {
+    // Exact match for dashboard and the main bio page
+    if (path === '/' || path === `/u/${currentUser.username}`) {
       return pathname === path;
     }
-    // For the public page, we want an exact match, not a prefix match
-    if (path.startsWith('/u/')) {
-        return pathname === path;
-    }
+    // Prefix match for all other pages
     return pathname.startsWith(path);
   };
 
@@ -123,6 +122,9 @@ export function MainSidebar() {
               Notifications
             </Link>
           </SidebarMenuItem>
+          
+          <SidebarSeparator className="my-1" />
+
           <SidebarMenuItem>
             <Link href="/profile" className={cn(sidebarMenuButtonVariants())} data-active={isActive('/profile')}>
               <User />
@@ -165,6 +167,9 @@ export function MainSidebar() {
               Offers
             </Link>
           </SidebarMenuItem>
+
+          <SidebarSeparator className="my-1" />
+
            <SidebarMenuItem>
             <Link href={`/u/${currentUser.username}`} className={cn(sidebarMenuButtonVariants())} data-active={isActive(`/u/${currentUser.username}`)}>
               <Share />
