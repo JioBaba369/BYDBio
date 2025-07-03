@@ -109,7 +109,7 @@ export default function ListingsPage() {
                         </div>
                     </div>
                     <Button asChild variant="outline" className="w-full">
-                        <Link href="#">
+                        <Link href={`/l/${item.id}`}>
                             <ExternalLink className="mr-2 h-4 w-4" />
                             View Listing
                         </Link>

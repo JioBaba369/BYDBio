@@ -130,7 +130,9 @@ export default function OffersPage() {
                             <span>{offer.claims?.toLocaleString() ?? 0} claims</span>
                         </div>
                     </div>
-                    <Button className="w-full">Claim Offer</Button>
+                    <Button asChild className="w-full">
+                        <Link href={`/offer/${offer.id}`}>Claim Offer</Link>
+                    </Button>
                 </CardFooter>
               </Card>
             ))}

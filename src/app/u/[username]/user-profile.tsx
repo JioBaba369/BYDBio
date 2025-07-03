@@ -7,7 +7,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Send, Briefcase, Calendar, Tag, MapPin, Heart, MessageCircle, DollarSign, Building2, Tags, ExternalLink, Globe } from "lucide-react";
-import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
@@ -24,6 +23,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 
 
 // Add isLiked to post type for this component's state
@@ -72,7 +72,7 @@ export default function UserProfilePage({ userProfileData }: UserProfilePageProp
 
   useEffect(() => {
     const hash = window.location.hash.replace('#', '');
-    const validTabs = ['posts', 'businesses', 'listings', 'jobs', 'events', 'offers'];
+    const validTabs = ['posts', 'businesses', 'listings', 'jobs', 'events', 'offers', 'contact'];
     if (hash && validTabs.includes(hash)) {
       setActiveTab(hash);
     }
@@ -180,7 +180,7 @@ export default function UserProfilePage({ userProfileData }: UserProfilePageProp
         </Card>
         
         {hasContent && (
-            <Card className="bg-background/80 backdrop-blur-sm p-4 sm:p-6 shadow-2xl rounded-2xl border-primary/10">
+            <Card id="content" className="bg-background/80 backdrop-blur-sm p-4 sm:p-6 shadow-2xl rounded-2xl border-primary/10">
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                     <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 h-auto flex-wrap">
                         {posts.length > 0 && <TabsTrigger value="posts">Updates</TabsTrigger>}
@@ -262,7 +262,9 @@ export default function UserProfilePage({ userProfileData }: UserProfilePageProp
                                 </CardContent>
                                 <CardFooter className="flex justify-between items-center">
                                 <p className="font-bold text-lg">{item.price}</p>
-                                <Button>View</Button>
+                                <Button asChild>
+                                  <Link href={`/l/${item.id}`}>View</Link>
+                                </Button>
                                 </CardFooter>
                             </Card>
                         ))}
@@ -283,7 +285,9 @@ export default function UserProfilePage({ userProfileData }: UserProfilePageProp
                                     </div>
                                 </CardContent>
                                  <CardFooter>
-                                    <Button className="w-full">View Details</Button>
+                                    <Button asChild className="w-full">
+                                      <Link href={`/o/${job.id}`}>View Details</Link>
+                                    </Button>
                                  </CardFooter>
                             </Card>
                         ))}
@@ -325,7 +329,9 @@ export default function UserProfilePage({ userProfileData }: UserProfilePageProp
                                   </div>
                                 </CardContent>
                                 <CardFooter>
-                                    <Button className="w-full">Claim Offer</Button>
+                                    <Button asChild className="w-full">
+                                      <Link href={`/offer/${offer.id}`}>Claim Offer</Link>
+                                    </Button>
                                 </CardFooter>
                             </Card>
                          ))}
@@ -334,7 +340,7 @@ export default function UserProfilePage({ userProfileData }: UserProfilePageProp
             </Card>
         )}
 
-        <Card className="bg-background/80 backdrop-blur-sm p-6 sm:p-8 shadow-2xl rounded-2xl border-primary/10">
+        <Card id="contact" className="bg-background/80 backdrop-blur-sm p-6 sm:p-8 shadow-2xl rounded-2xl border-primary/10">
           <div className="text-center">
             <h2 className="text-xl font-bold font-headline mb-4">Contact Me</h2>
             <Form {...contactForm}>

@@ -113,7 +113,9 @@ export default function OpportunitiesPage() {
                             <span>{job.applicants?.toLocaleString() ?? 0} applicants</span>
                         </div>
                     </div>
-                    <Button className="w-full">View Details</Button>
+                    <Button asChild className="w-full">
+                      <Link href={`/o/${job.id}`}>View Details</Link>
+                    </Button>
                 </CardFooter>
               </Card>
             ))}
