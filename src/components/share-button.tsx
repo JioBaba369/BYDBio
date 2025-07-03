@@ -15,11 +15,9 @@ import { Share2, Copy, QrCode } from 'lucide-react';
 import QRCode from 'qrcode.react';
 
 
-interface ShareButtonComponentProps {
-    size?: ButtonProps['size'];
-}
+interface ShareButtonProps extends Omit<ButtonProps, 'children' | 'onClick'> {}
 
-export default function ShareButton({ size }: ShareButtonComponentProps) {
+export default function ShareButton({ ...props }: ShareButtonProps) {
   const { toast } = useToast();
   const [url, setUrl] = useState('');
   const [isQrDialogOpen, setIsQrDialogOpen] = useState(false);
@@ -57,9 +55,9 @@ export default function ShareButton({ size }: ShareButtonComponentProps) {
     <Dialog open={isQrDialogOpen} onOpenChange={setIsQrDialogOpen}>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline" size={size}>
-            <Share2 className="mr-2 h-5 w-5" />
-            Share
+          <Button variant="outline" {...props}>
+            <Share2 />
+            {props.size !== 'icon' && <span>Share</span>}
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
@@ -87,3 +85,4 @@ export default function ShareButton({ size }: ShareButtonComponentProps) {
     </Dialog>
   );
 }
+
