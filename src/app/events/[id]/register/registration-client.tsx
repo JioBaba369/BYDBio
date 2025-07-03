@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -32,6 +32,17 @@ export default function EventRegistrationClient({ event, author }: EventRegistra
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [formattedDate, setFormattedDate] = useState('...');
+  const [formattedDateTime, setFormattedDateTime] = useState('...');
+
+  useEffect(() => {
+    // This effect runs only on the client, after initial render, to prevent hydration errors.
+    if (event.date) {
+      const dateObj = parseISO(event.date);
+      setFormattedDate(format(dateObj, "PPP"));
+      setFormattedDateTime(format(dateObj, "PPP 'at' p"));
+    }
+  }, [event.date]);
 
   const form = useForm<RegistrationFormValues>({
     resolver: zodResolver(registrationSchema),
@@ -73,7 +84,7 @@ export default function EventRegistrationClient({ event, author }: EventRegistra
                         Hosted by {author.name}
                     </p>
                     <p className="text-sm text-muted-foreground">
-                        {format(parseISO(event.date), "PPP 'at' p")}
+                        {formattedDateTime}
                     </p>
                 </CardContent>
                 <CardFooter>
@@ -95,7 +106,7 @@ export default function EventRegistrationClient({ event, author }: EventRegistra
         <CardHeader>
           <CardTitle>Register for Event</CardTitle>
           <CardDescription>
-            You're registering for <span className="font-semibold">{event.title}</span> on {format(parseISO(event.date), "PPP")}.
+            You're registering for <span className="font-semibold">{event.title}</span> on {formattedDate}.
           </CardDescription>
         </CardHeader>
         <CardContent>
