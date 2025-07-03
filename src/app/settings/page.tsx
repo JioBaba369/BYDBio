@@ -1,98 +1,183 @@
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+'use client';
+
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { currentUser } from "@/lib/mock-data";
+import { useTheme } from "next-themes";
+import Link from "next/link";
+import { Monitor, Moon, Sun } from "lucide-react";
 
 export default function SettingsPage() {
-  return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-bold font-headline">Settings</h1>
-        <p className="text-muted-foreground">
-          Manage your account settings and preferences.
-        </p>
-      </div>
-      <Card>
-        <CardHeader>
-          <CardTitle>Account</CardTitle>
-          <CardDescription>
-            Update your account details.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" defaultValue="jane.doe@example.com" />
-          </div>
-          <Button>Update Email</Button>
-          <Separator />
-           <div className="space-y-2">
-            <Label>Password</Label>
-            <Button variant="outline">Change Password</Button>
-          </div>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader>
-          <CardTitle>Notifications</CardTitle>
-          <CardDescription>
-            Manage how you receive notifications.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-           <div className="flex items-center justify-between">
+    const { setTheme, theme } = useTheme();
+
+    return (
+        <div className="space-y-6">
             <div>
-              <Label htmlFor="new-follower">New Followers</Label>
-              <p className="text-sm text-muted-foreground">
-                Notify me when someone new follows me.
-              </p>
+                <h1 className="text-2xl sm:text-3xl font-bold font-headline">Settings</h1>
+                <p className="text-muted-foreground">
+                    Manage your account settings, appearance, and preferences.
+                </p>
             </div>
-            <Switch id="new-follower" defaultChecked />
-          </div>
-          <Separator />
-           <div className="flex items-center justify-between">
-            <div>
-              <Label htmlFor="post-likes">Post Likes & Comments</Label>
-              <p className="text-sm text-muted-foreground">
-                Notify me when someone engages with my posts.
-              </p>
-            </div>
-            <Switch id="post-likes" defaultChecked/>
-          </div>
-           <Separator />
-           <div className="flex items-center justify-between">
-            <div>
-              <Label htmlFor="offers-updates">Offers & Updates</Label>
-              <p className="text-sm text-muted-foreground">
-                Receive emails about new features and special offers.
-              </p>
-            </div>
-            <Switch id="offers-updates" />
-          </div>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader>
-          <CardTitle>Danger Zone</CardTitle>
-          <CardDescription>
-            Manage your account data and visibility.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="font-medium">Delete Account</p>
-              <p className="text-sm text-muted-foreground">
-                Permanently delete your account and all of your content.
-              </p>
-            </div>
-            <Button variant="destructive">Delete My Account</Button>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
+            <Tabs defaultValue="profile" className="w-full">
+                <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4">
+                    <TabsTrigger value="profile">Profile</TabsTrigger>
+                    <TabsTrigger value="appearance">Appearance</TabsTrigger>
+                    <TabsTrigger value="notifications">Notifications</TabsTrigger>
+                    <TabsTrigger value="security">Security</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="profile">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Public Profile</CardTitle>
+                            <CardDescription>
+                                This is your public information. Update it on the Profile Editor page.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="name">Name</Label>
+                                <Input id="name" defaultValue={currentUser.name} disabled />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="email">Email</Label>
+                                <Input id="email" type="email" defaultValue={currentUser.email} disabled />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="username">Username</Label>
+                                <Input id="username" defaultValue={currentUser.username} disabled />
+                            </div>
+                        </CardContent>
+                        <CardFooter>
+                           <Button asChild>
+                                <Link href="/profile">Edit Profile</Link>
+                           </Button>
+                        </CardFooter>
+                    </Card>
+                </TabsContent>
+
+                <TabsContent value="appearance">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Appearance</CardTitle>
+                            <CardDescription>
+                                Customize the look and feel of the app. Your selection will be saved for your next visit.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <RadioGroup
+                                value={theme}
+                                onValueChange={setTheme}
+                                className="grid max-w-md grid-cols-1 sm:grid-cols-3 gap-8 pt-2"
+                            >
+                                <Label className="relative cursor-pointer rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground [&:has([data-state=checked])]:border-primary">
+                                    <RadioGroupItem value="light" className="sr-only" />
+                                    <div className="flex flex-col items-center justify-between rounded-md p-2">
+                                        <Sun className="h-8 w-8" />
+                                        <span className="block w-full p-2 text-center font-normal">Light</span>
+                                    </div>
+                                </Label>
+                                <Label className="relative cursor-pointer rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground [&:has([data-state=checked])]:border-primary">
+                                    <RadioGroupItem value="dark" className="sr-only" />
+                                    <div className="flex flex-col items-center justify-between rounded-md p-2">
+                                        <Moon className="h-8 w-8" />
+                                        <span className="block w-full p-2 text-center font-normal">Dark</span>
+                                    </div>
+                                </Label>
+                                <Label className="relative cursor-pointer rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground [&:has([data-state=checked])]:border-primary">
+                                    <RadioGroupItem value="system" className="sr-only" />
+                                    <div className="flex flex-col items-center justify-between rounded-md p-2">
+                                        <Monitor className="h-8 w-8" />
+                                        <span className="block w-full p-2 text-center font-normal">System</span>
+                                    </div>
+                                </Label>
+                            </RadioGroup>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+
+                <TabsContent value="notifications">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Notifications</CardTitle>
+                            <CardDescription>
+                                Manage how you receive notifications.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-6">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <Label htmlFor="new-follower" className="font-normal">New Followers</Label>
+                                    <p className="text-sm text-muted-foreground">
+                                        Notify me when someone new follows me.
+                                    </p>
+                                </div>
+                                <Switch id="new-follower" defaultChecked />
+                            </div>
+                            <Separator />
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <Label htmlFor="post-likes" className="font-normal">Post Likes & Comments</Label>
+                                    <p className="text-sm text-muted-foreground">
+                                        Notify me when someone engages with my posts.
+                                    </p>
+                                </div>
+                                <Switch id="post-likes" defaultChecked/>
+                            </div>
+                            <Separator />
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <Label htmlFor="offers-updates" className="font-normal">Offers & Updates</Label>
+                                    <p className="text-sm text-muted-foreground">
+                                        Receive emails about new features and special offers.
+                                    </p>
+                                </div>
+                                <Switch id="offers-updates" />
+                            </div>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+
+                <TabsContent value="security">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Security</CardTitle>
+                            <CardDescription>
+                                Manage your account security and data.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-6">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="font-medium">Change Password</p>
+                                    <p className="text-sm text-muted-foreground">
+                                        It's a good idea to use a strong password that you're not using elsewhere.
+                                    </p>
+                                </div>
+                                <Button variant="outline">Change Password</Button>
+                            </div>
+                            <Separator />
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="font-medium text-destructive">Delete Account</p>
+                                    <p className="text-sm text-muted-foreground">
+                                        Permanently delete your account and all of your content. This action is not reversible.
+                                    </p>
+                                </div>
+                                <Button variant="destructive">Delete My Account</Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+
+            </Tabs>
+        </div>
+    );
 }
