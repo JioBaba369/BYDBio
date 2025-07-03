@@ -3,17 +3,66 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Globe, Linkedin, Mail, Phone, MapPin } from "lucide-react";
+import { Download, Printer, Save } from "lucide-react";
 import Link from "next/link";
 import { Logo } from "@/components/logo";
 import QRCode from "qrcode.react";
 import { currentUser } from "@/lib/mock-data";
 import ShareButton from "@/components/share-button";
 import { useParams } from "next/navigation";
+import { useRef, forwardRef } from 'react';
+import { toPng } from 'html-to-image';
+import type { User } from "@/lib/users";
+
+// Specific card preview component to isolate the printable/savable area
+const BusinessCardPreview = forwardRef<HTMLDivElement, { user: User, vCardData: string }>(({ user, vCardData }, ref) => {
+  const { name, avatarUrl, avatarFallback, businessCard } = user;
+  const { title, company } = businessCard;
+
+  return (
+    <div
+      id="business-card"
+      ref={ref}
+      className="relative w-[337.5px] h-[212.5px] bg-card text-card-foreground rounded-2xl shadow-xl border overflow-hidden flex flex-col font-sans"
+    >
+      {/* Lanyard Hole */}
+      <div className="absolute top-3 left-1/2 -translate-x-1/2 h-3 w-6 rounded-full bg-background ring-1 ring-inset ring-foreground/20 z-20"></div>
+      
+      {/* Header section */}
+      <div className="relative h-[35%] w-full bg-muted flex-shrink-0">
+        <div className="absolute -bottom-12 left-1/2 -translate-x-1/2">
+          <Avatar className="w-24 h-24 border-4 border-card shadow-md">
+            <AvatarImage src={avatarUrl} alt={name} data-ai-hint="woman smiling"/>
+            <AvatarFallback>{avatarFallback}</AvatarFallback>
+          </Avatar>
+        </div>
+      </div>
+
+      {/* Body Section */}
+      <div className="flex-grow flex flex-col justify-between items-center text-center p-4 pt-14">
+        <div>
+          <h1 className="font-headline text-xl font-bold">{name}</h1>
+          <p className="text-primary font-medium text-sm">{title}</p>
+          <p className="text-muted-foreground text-xs">{company}</p>
+        </div>
+
+        <div className="flex justify-center">
+            {vCardData ? (
+              <QRCode value={vCardData} size={70} bgColor="transparent" fgColor="hsl(var(--foreground))" level="Q" />
+            ) : (
+              <div className="w-[70px] h-[70px] bg-gray-200 animate-pulse rounded-md" />
+            )}
+        </div>
+      </div>
+    </div>
+  );
+});
+BusinessCardPreview.displayName = 'BusinessCardPreview';
+
 
 export default function BusinessCardPage() {
   const params = useParams();
+  const cardRef = useRef<HTMLDivElement>(null);
   const username = typeof params.username === 'string' ? params.username : '';
   // In a real app, you would fetch data based on params.username
   const user = username === currentUser.username ? currentUser : null;
@@ -23,7 +72,7 @@ export default function BusinessCardPage() {
     return <div>User not found.</div>
   }
 
-  const { name, avatarUrl, avatarFallback, businessCard } = user;
+  const { name, businessCard } = user;
   const { title, company, phone, email, website, linkedin, location } = businessCard;
 
 
@@ -50,66 +99,82 @@ END:VCARD`;
     URL.revokeObjectURL(url);
   };
 
-  return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-muted/40 p-4 space-y-4">
-       <div className="w-full max-w-sm flex justify-end">
-        <ShareButton />
-      </div>
-      <Card className="w-full max-w-sm overflow-hidden rounded-2xl shadow-xl">
-        <div className="bg-primary h-24" />
-        <div className="flex justify-center -mt-16">
-          <Avatar className="w-32 h-32 border-4 border-background rounded-full">
-            <AvatarImage src={avatarUrl} alt={name} data-ai-hint="woman smiling"/>
-            <AvatarFallback>{avatarFallback}</AvatarFallback>
-          </Avatar>
-        </div>
-        <CardContent className="text-center p-6">
-          <h1 className="font-headline text-xl sm:text-2xl font-bold">{name}</h1>
-          <p className="text-primary font-medium">{title}</p>
-          <p className="text-muted-foreground text-sm">{company}</p>
+  const handleSaveAsImage = () => {
+    if (cardRef.current === null) {
+      return
+    }
 
-          <div className="mt-6 flex justify-center">
-            {vCardData ? (
-              <QRCode value={vCardData} size={180} bgColor="#ffffff" fgColor="#000000" level="Q" />
-            ) : (
-              <div className="w-[180px] h-[180px] bg-gray-200 animate-pulse rounded-lg" />
-            )}
-          </div>
-          <p className="text-xs text-muted-foreground mt-2">Scan to save contact</p>
-          
-          <div className="text-left mt-6 space-y-3 text-sm">
-            <a href={`tel:${phone}`} className="flex items-center gap-3 hover:text-primary transition-colors">
-              <Phone className="w-4 h-4 text-primary/80" />
-              <span>{phone}</span>
-            </a>
-            <a href={`mailto:${email}`} className="flex items-center gap-3 hover:text-primary transition-colors">
-              <Mail className="w-4 h-4 text-primary/80" />
-              <span>{email}</span>
-            </a>
-            <a href={website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 hover:text-primary transition-colors">
-              <Globe className="w-4 h-4 text-primary/80" />
-              <span>{website.replace(/^https?:\/\//, '')}</span>
-            </a>
-            <a href={linkedin} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 hover:text-primary transition-colors">
-              <Linkedin className="w-4 h-4 text-primary/80" />
-              <span>{linkedin.replace(/^https?:\/\//, '')}</span>
-            </a>
-            <div className="flex items-center gap-3">
-              <MapPin className="w-4 h-4 text-primary/80" />
-              <span>{location}</span>
-            </div>
-          </div>
-          
-          <Button className="mt-8 w-full font-bold" onClick={handleSaveToContacts}>
-            Save to Contacts
-          </Button>
-        </CardContent>
-      </Card>
-      <div className="mt-6 text-center">
+    toPng(cardRef.current, { cacheBust: true, pixelRatio: 3 })
+      .then((dataUrl) => {
+        const link = document.createElement('a')
+        link.download = `${name.split(' ').join('_')}_card.png`
+        link.href = dataUrl
+        link.click()
+      })
+      .catch((err) => {
+        console.log(err)
+      })
+  }
+
+  const handlePrint = () => {
+    window.print();
+  }
+
+  return (
+    <>
+    <style jsx global>{`
+      @media print {
+        body {
+          background-color: white !important;
+        }
+        .no-print {
+          display: none !important;
+        }
+        #printable-area {
+          margin: 0;
+          padding: 0;
+          width: 100vw;
+          height: 100vh;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+        }
+        #business-card {
+          width: 3.375in;
+          height: 2.125in;
+          box-shadow: none;
+          border-width: 1px;
+          border-color: #e5e7eb;
+        }
+      }
+    `}</style>
+    <div className="flex flex-col items-center justify-center min-h-screen bg-muted/40 p-4 space-y-6">
+      <div id="printable-area">
+        <BusinessCardPreview ref={cardRef} user={user} vCardData={vCardData} />
+      </div>
+      
+      <div className="flex flex-wrap items-center justify-center gap-2 no-print">
+        <ShareButton />
+        <Button onClick={handleSaveAsImage} variant="outline">
+          <Download className="mr-2 h-4 w-4" />
+          Save as Image
+        </Button>
+        <Button onClick={handleSaveToContacts} variant="outline">
+          <Save className="mr-2 h-4 w-4" />
+          Save Contact
+        </Button>
+        <Button onClick={handlePrint} variant="outline">
+            <Printer className="mr-2 h-4 w-4" />
+            Print
+        </Button>
+      </div>
+
+      <div className="mt-6 text-center no-print">
           <Link href="/" className="text-sm text-muted-foreground hover:text-primary flex items-center gap-2">
               Powered by <Logo className="text-lg text-foreground" />
           </Link>
       </div>
     </div>
+    </>
   );
 }
