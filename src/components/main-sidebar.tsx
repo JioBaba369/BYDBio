@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -9,6 +10,7 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
+  SidebarGroup,
 } from '@/components/ui/sidebar';
 import { Logo } from './logo';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
@@ -21,8 +23,10 @@ import {
   MessageSquare,
   Share,
   User,
+  Search,
+  Users,
 } from 'lucide-react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   DropdownMenu,
@@ -32,16 +36,19 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Input } from './ui/input';
 
 export function MainSidebar() {
   const pathname = usePathname();
+  const router = useRouter();
   const [hash, setHash] = React.useState('');
+  const [searchQuery, setSearchQuery] = React.useState('');
 
   React.useEffect(() => {
     const onHashChange = () => {
       setHash(window.location.hash);
     };
-    onHashChange(); // Set initial hash
+    onHashChange();
     window.addEventListener('hashchange', onHashChange);
     return () => {
       window.removeEventListener('hashchange', onHashChange);
@@ -49,10 +56,20 @@ export function MainSidebar() {
   }, []);
 
   const isActive = (path: string, linkHash?: string) => {
-    if (path === '/opportunities' && linkHash) {
+    if (linkHash) {
       return pathname === path && (hash || '#jobs') === linkHash;
     }
-    return pathname === path;
+    if (path === '/') {
+      return pathname === path;
+    }
+    return pathname.startsWith(path);
+  };
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      router.push(`/search?q=${searchQuery.trim()}`);
+    }
   };
 
   return (
@@ -61,6 +78,17 @@ export function MainSidebar() {
         <Logo />
       </SidebarHeader>
       <SidebarContent>
+        <SidebarGroup>
+          <form onSubmit={handleSearchSubmit} className="relative">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search users..."
+              className="w-full pl-8"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </form>
+        </SidebarGroup>
         <SidebarMenu>
           <SidebarMenuItem>
             <Link href="/">
@@ -89,6 +117,16 @@ export function MainSidebar() {
                 icon={<MessageSquare />}
               >
                 Status Feed
+              </SidebarMenuButton>
+            </Link>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <Link href="/connections">
+              <SidebarMenuButton
+                isActive={isActive('/connections')}
+                icon={<Users />}
+              >
+                Connections
               </SidebarMenuButton>
             </Link>
           </SidebarMenuItem>
@@ -125,6 +163,7 @@ export function MainSidebar() {
            <SidebarMenuItem>
             <Link href="/u/janedoe">
               <SidebarMenuButton
+                isActive={isActive('/u/janedoe')}
                 icon={<Share />}
               >
                 Public Page

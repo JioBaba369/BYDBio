@@ -1,0 +1,126 @@
+
+'use client';
+
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { UserPlus, UserCheck } from "lucide-react";
+import { useState } from "react";
+
+const followers = [
+  { id: 'user2', name: "John Smith", handle: "johnsmith", avatarUrl: "https://placehold.co/100x100.png", following: true },
+  { id: 'user3', name: "Alex Johnson", handle: "alexj", avatarUrl: "https://placehold.co/100x100.png", following: false },
+  { id: 'user4', name: "Maria Garcia", handle: "mariag", avatarUrl: "https://placehold.co/100x100.png", following: true },
+];
+
+const following = [
+    { id: 'user2', name: "John Smith", handle: "johnsmith", avatarUrl: "https://placehold.co/100x100.png", following: true },
+    { id: 'user4', name: "Maria Garcia", handle: "mariag", avatarUrl: "https://placehold.co/100x100.png", following: true },
+    { id: 'user5', name: "Chris Lee", handle: "chrisl", avatarUrl: "https://placehold.co/100x100.png", following: true },
+];
+
+export default function ConnectionsPage() {
+    const [followersList, setFollowersList] = useState(followers);
+    const [followingList, setFollowingList] = useState(following);
+
+    // This is a mock function. In a real app, this would be an API call.
+    const toggleFollowInList = (listSetter: React.Dispatch<React.SetStateAction<any[]>>, userId: string) => {
+        listSetter(prevList =>
+            prevList.map(user =>
+                user.id === userId ? { ...user, following: !user.following } : user
+            )
+        );
+    };
+
+    const handleFollowerToggle = (userId: string) => {
+        toggleFollowInList(setFollowersList, userId);
+        // Also update the 'following' list if the user is in it
+        setFollowingList(prevList => {
+            const userExists = prevList.some(u => u.id === userId);
+            const userDetails = followers.find(u => u.id === userId);
+            if (userExists) {
+                return prevList.filter(u => u.id !== userId);
+            } else if (userDetails) {
+                return [...prevList, {...userDetails, following: true}];
+            }
+            return prevList;
+        });
+    };
+
+    const handleFollowingToggle = (userId: string) => {
+        // Unfollowing from the 'following' list removes them.
+        setFollowingList(prevList => prevList.filter(user => user.id !== userId));
+        // Update their state in the 'followers' list if they are present.
+        setFollowersList(prevList =>
+            prevList.map(user =>
+                user.id === userId ? { ...user, following: false } : user
+            )
+        );
+    }
+
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold font-headline">Connections</h1>
+        <p className="text-muted-foreground">Manage your followers and who you follow.</p>
+      </div>
+
+      <Tabs defaultValue="followers" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="followers">Followers ({followersList.length})</TabsTrigger>
+          <TabsTrigger value="following">Following ({followingList.length})</TabsTrigger>
+        </TabsList>
+        <TabsContent value="followers">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {followersList.map((user) => (
+                    <Card key={user.id}>
+                        <CardContent className="p-4 flex items-center justify-between gap-4">
+                            <div className="flex items-center gap-4">
+                                <Avatar>
+                                    <AvatarImage src={user.avatarUrl} data-ai-hint="person portrait" />
+                                    <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                                </Avatar>
+                                <div>
+                                    <p className="font-semibold">{user.name}</p>
+                                    <p className="text-sm text-muted-foreground">@{user.handle}</p>
+                                </div>
+                            </div>
+                             <Button size="sm" variant={user.following ? 'secondary' : 'default'} onClick={() => handleFollowerToggle(user.id)}>
+                                {user.following ? <UserCheck className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
+                                {user.following ? 'Following' : 'Follow'}
+                            </Button>
+                        </CardContent>
+                    </Card>
+                ))}
+            </div>
+        </TabsContent>
+        <TabsContent value="following">
+             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {followingList.map((user) => (
+                    <Card key={user.id}>
+                        <CardContent className="p-4 flex items-center justify-between gap-4">
+                            <div className="flex items-center gap-4">
+                                <Avatar>
+                                    <AvatarImage src={user.avatarUrl} data-ai-hint="person portrait" />
+                                    <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                                </Avatar>
+                                <div>
+                                    <p className="font-semibold">{user.name}</p>
+                                    <p className="text-sm text-muted-foreground">@{user.handle}</p>
+                                </div>
+                            </div>
+                            <Button size="sm" variant="secondary" onClick={() => handleFollowingToggle(user.id)}>
+                                <UserCheck className="mr-2 h-4 w-4" />
+                                Unfollow
+                            </Button>
+                        </CardContent>
+                    </Card>
+                ))}
+            </div>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
