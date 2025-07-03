@@ -92,7 +92,7 @@ export default function LinkInBioPage({ params }: { params: { username:string } 
 
           <div className="mt-8 flex flex-col space-y-4">
             {links.map((link, index) => {
-                const Icon = linkIcons[link.icon];
+                const Icon = linkIcons[link.icon as keyof typeof linkIcons];
                 return (
                   <a
                     key={index}
