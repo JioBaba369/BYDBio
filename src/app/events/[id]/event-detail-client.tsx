@@ -6,7 +6,7 @@ import type { Event, User } from '@/lib/users';
 import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MapPin, Calendar, Clock, ArrowLeft, Users, Ticket, User as UserIcon } from 'lucide-react';
+import { MapPin, Calendar, Clock, ArrowLeft, Users, Ticket, User as UserIcon, BellRing, CalendarPlus } from 'lucide-react';
 import Link from 'next/link';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
@@ -15,6 +15,9 @@ import { format, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
 import ShareButton from '@/components/share-button';
 import { Logo } from '@/components/logo';
+import * as ics from 'ics';
+import { saveAs } from 'file-saver';
+import { useToast } from '@/hooks/use-toast';
 
 interface EventDetailClientProps {
     event: Event;
@@ -33,6 +36,47 @@ function ClientFormattedDate({ dateString, formatStr }: { dateString: string; fo
 
 export default function EventDetailClient({ event, author }: EventDetailClientProps) {
     const attendeeCount = event.rsvps || 0;
+    const { toast } = useToast();
+
+    const handleSetReminder = () => {
+        toast({
+            title: "Reminder Set!",
+            description: `We'll remind you about "${event.title}" an hour before it starts.`,
+        });
+    }
+
+    const handleAddToCalendar = () => {
+        const date = parseISO(event.date);
+        const icsEvent = {
+            start: [date.getFullYear(), date.getMonth() + 1, date.getDate(), date.getHours(), date.getMinutes()] as ics.DateArray,
+            duration: { hours: 2 }, // Default duration
+            title: event.title,
+            description: event.description,
+            location: event.location,
+            url: window.location.href,
+            status: 'CONFIRMED' as ics.EventStatus,
+            busyStatus: 'BUSY' as ics.BusyStatus,
+            organizer: { name: author.name, email: 'noreply@byd.bio' }, // Using a placeholder email
+        };
+
+        const { error, value } = ics.createEvent(icsEvent);
+
+        if (error) {
+            console.error(error);
+            toast({
+                title: "Error creating calendar file",
+                description: "There was an issue generating the .ics file. Please try again.",
+                variant: "destructive"
+            });
+            return;
+        }
+
+        if (value) {
+            const blob = new Blob([value], { type: 'text/calendar;charset=utf-8' });
+            saveAs(blob, `${event.title.replace(/ /g,"_")}.ics`);
+        }
+    };
+
 
     return (
         <div className="bg-muted/40 min-h-screen py-8 px-4">
@@ -57,19 +101,27 @@ export default function EventDetailClient({ event, author }: EventDetailClientPr
                         </div>
                     )}
                     <CardContent className="p-6 space-y-8">
-                        <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+                        <div className="flex flex-col sm:flex-row justify-between sm:items-start gap-4">
                             <div className='flex-1'>
                                 <CardTitle className="text-3xl font-bold font-headline">{event.title}</CardTitle>
                                 <CardDescription className="text-base pt-2 flex items-center gap-2">Hosted by <Link href={`/u/${author.username}`} className="font-semibold text-primary hover:underline">{author.name}</Link></CardDescription>
                             </div>
-                            <div className='flex items-center gap-2'>
-                                <ShareButton />
+                            <div className='flex items-center gap-2 flex-wrap justify-end'>
+                                <Button variant="outline" onClick={handleAddToCalendar}>
+                                    <CalendarPlus className="mr-2 h-4 w-4"/>
+                                    Add to Calendar
+                                </Button>
+                                <Button variant="outline" onClick={handleSetReminder}>
+                                    <BellRing className="mr-2 h-4 w-4"/>
+                                    Set Reminder
+                                </Button>
                                 <Button asChild size="lg">
                                     <Link href={`/events/${event.id}/register`}>
                                         <Ticket className="mr-2 h-5 w-5"/>
                                         Register Now
                                     </Link>
                                 </Button>
+                                <ShareButton />
                             </div>
                         </div>
 

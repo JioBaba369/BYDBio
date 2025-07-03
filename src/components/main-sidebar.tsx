@@ -35,6 +35,7 @@ import {
   Building2,
   Bell,
   BookUser,
+  BookText,
 } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -158,6 +159,14 @@ export function MainSidebar() {
               <Link href="/calendar">
                 <CalendarDays />
                 <span>Content Calendar</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild tooltip="Diary" isActive={isActive('/diary')}>
+              <Link href="/diary">
+                <BookText />
+                <span>Diary</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
