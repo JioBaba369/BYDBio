@@ -168,7 +168,7 @@ export function MainSidebar() {
            <SidebarMenuItem>
             <Link href={`/u/${currentUser.username}`} className={cn(sidebarMenuButtonVariants())} data-active={isActive(`/u/${currentUser.username}`)}>
               <Share />
-              Public Page
+              Bio Page
             </Link>
           </SidebarMenuItem>
           <SidebarMenuItem>
@@ -180,7 +180,7 @@ export function MainSidebar() {
           <SidebarMenuItem>
             <Link href={`/u/${currentUser.username}/bio`} className={cn(sidebarMenuButtonVariants())} data-active={isActive(`/u/${currentUser.username}/bio`)}>
               <BookUser />
-              Bio Card
+              Links Page
             </Link>
           </SidebarMenuItem>
         </SidebarMenu>

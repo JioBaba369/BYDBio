@@ -358,7 +358,7 @@ export default function UserProfilePage({ userProfileData }: UserProfilePageProp
                 View Digital Business Card
                 </a>
                 <a href={`/u/${username}/bio`} className="text-sm text-primary hover:underline font-semibold">
-                View Bio Card
+                View Links Page
                 </a>
             </div>
 
