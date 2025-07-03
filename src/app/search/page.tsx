@@ -9,6 +9,7 @@ import { UserPlus, UserCheck, Search as SearchIcon } from "lucide-react";
 import { useState, useMemo } from 'react';
 import { allUsers as initialUsers } from '@/lib/users';
 import { currentUser } from '@/lib/mock-data';
+import Link from 'next/link';
 
 // We need to map the full user list to include whether the current user follows them
 const mapUsersWithFollowingState = (users: typeof initialUsers, me: typeof currentUser) => {
@@ -66,7 +67,7 @@ export default function SearchPage() {
           {filteredUsers.map(user => (
             <Card key={user.id}>
               <CardContent className="p-4 flex items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
+                <Link href={`/u/${user.handle}`} className="flex items-center gap-4 hover:underline">
                   <Avatar>
                     <AvatarImage src={user.avatarUrl} data-ai-hint="person portrait" />
                     <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
@@ -75,7 +76,7 @@ export default function SearchPage() {
                     <p className="font-semibold">{user.name}</p>
                     <p className="text-sm text-muted-foreground">@{user.handle}</p>
                   </div>
-                </div>
+                </Link>
                 <Button size="sm" variant={user.isFollowedByCurrentUser ? 'secondary' : 'default'} onClick={() => toggleFollow(user.id)}>
                   {user.isFollowedByCurrentUser ? <UserCheck className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
                   {user.isFollowedByCurrentUser ? 'Following' : 'Follow'}

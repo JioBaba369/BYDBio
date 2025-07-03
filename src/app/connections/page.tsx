@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import QrScanner from "@/components/qr-scanner";
 import { currentUser } from "@/lib/mock-data";
 import { allUsers as initialAllUsers } from "@/lib/users";
+import Link from "next/link";
 
 // Define a user type for clarity
 type User = (typeof initialAllUsers)[0] & { isFollowedByCurrentUser?: boolean };
@@ -146,7 +147,7 @@ export default function ConnectionsPage() {
                     <Card key={user.id}>
                         <CardContent className="p-4">
                             <div className="flex items-center justify-between gap-4">
-                                <div className="flex items-center gap-4">
+                                <Link href={`/u/${user.handle}`} className="flex items-center gap-4 hover:underline">
                                     <Avatar>
                                         <AvatarImage src={user.avatarUrl} data-ai-hint="person portrait" />
                                         <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
@@ -155,7 +156,7 @@ export default function ConnectionsPage() {
                                         <p className="font-semibold">{user.name}</p>
                                         <p className="text-sm text-muted-foreground">@{user.handle}</p>
                                     </div>
-                                </div>
+                                </Link>
                                 <div className="flex items-center gap-2 flex-shrink-0">
                                     <Button size="sm" variant={user.isFollowedByCurrentUser ? 'secondary' : 'default'} onClick={() => toggleFollow(user.id)}>
                                         {user.isFollowedByCurrentUser ? <UserCheck className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
@@ -181,7 +182,7 @@ export default function ConnectionsPage() {
                     <Card key={user.id}>
                         <CardContent className="p-4">
                             <div className="flex items-center justify-between gap-4">
-                                 <div className="flex items-center gap-4">
+                                 <Link href={`/u/${user.handle}`} className="flex items-center gap-4 hover:underline">
                                     <Avatar>
                                         <AvatarImage src={user.avatarUrl} data-ai-hint="person portrait" />
                                         <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
@@ -190,7 +191,7 @@ export default function ConnectionsPage() {
                                         <p className="font-semibold">{user.name}</p>
                                         <p className="text-sm text-muted-foreground">@{user.handle}</p>
                                     </div>
-                                </div>
+                                </Link>
                                 <Button size="sm" variant="secondary" onClick={() => toggleFollow(user.id)}>
                                     <UserCheck className="mr-2 h-4 w-4" />
                                     Unfollow

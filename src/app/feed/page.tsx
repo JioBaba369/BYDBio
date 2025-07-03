@@ -13,6 +13,7 @@ import { currentUser } from "@/lib/mock-data";
 import { allUsers as initialUsers } from "@/lib/users";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
 
 // Combine user data with their posts for the feed, adding a liked state
 const initialFeedItems = initialUsers.flatMap(user =>
@@ -126,7 +127,7 @@ export default function FeedPage() {
           <Card key={item.id}>
             <CardHeader className="p-4">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
+                <Link href={`/u/${item.author.handle}`} className="flex items-center gap-3 hover:underline">
                   <Avatar>
                     <AvatarImage src={item.author.avatarUrl} data-ai-hint="person portrait"/>
                     <AvatarFallback>{item.author.name.charAt(0)}</AvatarFallback>
@@ -135,7 +136,7 @@ export default function FeedPage() {
                     <p className="font-semibold">{item.author.name}</p>
                     <p className="text-sm text-muted-foreground">@{item.author.handle} · {item.timestamp}</p>
                   </div>
-                </div>
+                </Link>
                 <Button variant="ghost" size="icon">
                   <MoreHorizontal className="h-5 w-5" />
                 </Button>
