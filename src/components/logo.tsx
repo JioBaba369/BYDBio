@@ -8,8 +8,8 @@ export function Logo({ className }: { className?: string }) {
         <Share2 className="h-5 w-5 text-primary" />
       </div>
       <div>
-        <span>BYD.Bio</span>
-        <p className="text-xs font-normal text-muted-foreground -mt-1 leading-tight">Build Your Dream Bio</p>
+        <div>BYD.Bio</div>
+        <div className="text-xs font-normal text-muted-foreground -mt-1 leading-tight">Build Your Dream Bio</div>
       </div>
     </div>
   );
