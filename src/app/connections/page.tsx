@@ -37,22 +37,25 @@ export default function ConnectionsPage() {
     const { toast } = useToast();
 
     // Memoize lists to avoid re-calculation on every render
-    const { followersList, followingList } = useMemo(() => {
+    const { followersList, followingList, suggestedList } = useMemo(() => {
         const me = allUsers.find(u => u.id === currentUser.id)!;
+        const myFollowingIds = new Set(me.following);
 
         // Users who are following the current user
         const followers = allUsers
-            .filter(u => u.following.includes(currentUser.id))
+            .filter(u => u.following.includes(currentUser.id) && u.id !== currentUser.id)
             .map(u => ({
                 ...u,
-                // Check if the current user is following them back
-                isFollowedByCurrentUser: me.following.includes(u.id)
+                isFollowedByCurrentUser: myFollowingIds.has(u.id)
             }));
 
         // Users the current user is following
-        const following = allUsers.filter(u => me.following.includes(u.id));
+        const following = allUsers.filter(u => myFollowingIds.has(u.id));
 
-        return { followersList: followers, followingList: following };
+        // Users the current user is NOT following (and is not themselves)
+        const suggested = allUsers.filter(u => u.id !== currentUser.id && !myFollowingIds.has(u.id));
+
+        return { followersList: followers, followingList: following, suggestedList: suggested };
     }, [allUsers]);
     
     // This is a mock function. In a real app, this would be an API call.
@@ -204,9 +207,10 @@ export default function ConnectionsPage() {
         </div>
 
         <Tabs defaultValue="followers" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="followers">Followers ({followersList.length})</TabsTrigger>
             <TabsTrigger value="following">Following ({followingList.length})</TabsTrigger>
+            <TabsTrigger value="suggestions">Suggestions ({suggestedList.length})</TabsTrigger>
           </TabsList>
           <TabsContent value="followers">
               <div className="flex flex-col gap-4">
@@ -265,6 +269,35 @@ export default function ConnectionsPage() {
                                 </Button>
                             </div>
                              {user.bio && (
+                                <p className="text-sm text-muted-foreground mt-3 pt-3 border-t">{user.bio}</p>
+                            )}
+                        </CardContent>
+                    </Card>
+                ))}
+            </div>
+        </TabsContent>
+        <TabsContent value="suggestions">
+            <div className="grid md:grid-cols-2 gap-4">
+                {suggestedList.map((user) => (
+                    <Card key={user.id}>
+                        <CardContent className="p-4">
+                            <div className="flex items-center justify-between gap-4">
+                                <Link href={`/u/${user.handle}`} className="flex items-center gap-4 hover:underline flex-1 truncate">
+                                    <Avatar>
+                                        <AvatarImage src={user.avatarUrl} data-ai-hint="person portrait" />
+                                        <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                                    </Avatar>
+                                    <div className="truncate">
+                                        <p className="font-semibold truncate">{user.name}</p>
+                                        <p className="text-sm text-muted-foreground truncate">@{user.handle}</p>
+                                    </div>
+                                </Link>
+                                <Button size="sm" variant="default" onClick={() => toggleFollow(user.id)} className="shrink-0">
+                                    <UserPlus className="mr-2 h-4 w-4" />
+                                    Follow
+                                </Button>
+                            </div>
+                            {user.bio && (
                                 <p className="text-sm text-muted-foreground mt-3 pt-3 border-t">{user.bio}</p>
                             )}
                         </CardContent>
