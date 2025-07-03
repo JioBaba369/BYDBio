@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button"
 import { Briefcase, MapPin, PlusCircle } from "lucide-react"
 import { currentUser } from "@/lib/mock-data";
+import Image from "next/image";
 
 export default function JobsPage() {
   const { jobs } = currentUser;
@@ -21,12 +22,17 @@ export default function JobsPage() {
       {jobs.length > 0 ? (
         <div className="grid gap-6 md:grid-cols-2">
           {jobs.map((job, index) => (
-            <Card key={index}>
+            <Card key={index} className="flex flex-col">
+              {job.imageUrl && (
+                <div className="overflow-hidden rounded-t-lg">
+                  <Image src={job.imageUrl} alt={job.title} width={600} height={400} className="w-full object-cover aspect-video" data-ai-hint="office workspace" />
+                </div>
+              )}
               <CardHeader>
                 <CardTitle>{job.title}</CardTitle>
                 <CardDescription>{job.company}</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-2">
+              <CardContent className="space-y-2 flex-grow">
                 <div className="flex items-center text-sm text-muted-foreground">
                   <MapPin className="mr-2 h-4 w-4" /> {job.location}
                 </div>

@@ -25,6 +25,23 @@ type Offer = {
   description: string;
   category: string;
   releaseDate: string;
+  imageUrl: string | null;
+};
+
+type Job = {
+  title: string;
+  company: string;
+  location: string;
+  type: string;
+  postingDate: string;
+  imageUrl: string | null;
+};
+
+type Event = {
+  title: string;
+  date: string;
+  location: string;
+  imageUrl: string | null;
 };
 
 type User = {
@@ -35,8 +52,8 @@ type User = {
   avatarUrl: string;
   avatarFallback: string;
   following: string[]; // Array of user IDs this user follows
-  jobs: { title: string; company: string; location: string; type: string, postingDate: string }[];
-  events: { title: string; date: string; location: string }[];
+  jobs: Job[];
+  events: Event[];
   offers: Offer[];
   listings: Listing[];
   posts: Post[];
@@ -52,14 +69,14 @@ export const allUsers: User[] = [
     avatarFallback: 'JD',
     following: ['user2', 'user4', 'user5'],
     jobs: [
-       { title: 'UX/UI Designer', company: 'Creative Solutions', location: 'Remote', type: 'Full-time', postingDate: '2024-08-20T09:00:00Z' },
+       { title: 'UX/UI Designer', company: 'Creative Solutions', location: 'Remote', type: 'Full-time', postingDate: '2024-08-20T09:00:00Z', imageUrl: 'https://placehold.co/600x400.png' },
     ],
     events: [
-        { title: 'Design Thinking Workshop', date: '2024-08-15T14:00:00Z', location: 'Online' },
+        { title: 'Design Thinking Workshop', date: '2024-08-15T14:00:00Z', location: 'Online', imageUrl: 'https://placehold.co/600x400.png' },
     ],
     offers: [
-        { title: '1-on-1 Portfolio Review', description: 'Get expert feedback on your design portfolio.', category: 'Consulting', releaseDate: '2024-09-01T10:00:00Z' },
-        { title: 'Early-Bird Discount: Web Design Course', description: 'Get 20% off my upcoming masterclass.', category: 'Discount', releaseDate: '2024-09-10T00:00:00Z' },
+        { title: '1-on-1 Portfolio Review', description: 'Get expert feedback on your design portfolio.', category: 'Consulting', releaseDate: '2024-09-01T10:00:00Z', imageUrl: 'https://placehold.co/600x400.png' },
+        { title: 'Early-Bird Discount: Web Design Course', description: 'Get 20% off my upcoming masterclass.', category: 'Discount', releaseDate: '2024-09-10T00:00:00Z', imageUrl: 'https://placehold.co/600x400.png' },
     ],
     listings: [
         { id: 'listing1', title: 'Minimalist Icon Set', description: 'A pack of 200+ clean, modern icons for your next project.', price: '$25', imageUrl: 'https://placehold.co/600x400.png', category: 'Digital Asset', publishDate: '2024-08-25T09:00:00Z' },

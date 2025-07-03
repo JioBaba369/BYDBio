@@ -5,6 +5,7 @@ import { Tag, Calendar, PlusCircle } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { currentUser } from "@/lib/mock-data";
 import { format, parseISO } from "date-fns";
+import Image from "next/image";
 
 export default function OffersPage() {
   const { offers } = currentUser;
@@ -23,12 +24,17 @@ export default function OffersPage() {
       {offers.length > 0 ? (
         <div className="grid gap-6 md:grid-cols-2">
           {offers.map((offer, index) => (
-            <Card key={index}>
+            <Card key={index} className="flex flex-col">
+              {offer.imageUrl && (
+                <div className="overflow-hidden rounded-t-lg">
+                  <Image src={offer.imageUrl} alt={offer.title} width={600} height={400} className="w-full object-cover aspect-video" data-ai-hint="special offer" />
+                </div>
+              )}
               <CardHeader>
                 <CardTitle>{offer.title}</CardTitle>
                 <CardDescription>{offer.description}</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-2">
+              <CardContent className="space-y-2 flex-grow">
                 <Badge variant="secondary"><Tag className="mr-1 h-3 w-3" />{offer.category}</Badge>
                  <div className="flex items-center pt-2 text-sm text-muted-foreground">
                   <Calendar className="mr-2 h-4 w-4" /> 

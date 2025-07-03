@@ -11,6 +11,7 @@ import { format, parseISO, isSameDay, startOfMonth, endOfMonth, startOfWeek, end
 import { Search, MapPin, Tag, Briefcase, DollarSign, X, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { VariantProps } from 'class-variance-authority';
+import Image from 'next/image';
 
 type CalendarItem = {
   type: 'Event' | 'Offer' | 'Job' | 'Listing';
@@ -22,6 +23,7 @@ type CalendarItem = {
   company?: string;
   jobType?: string;
   price?: string;
+  imageUrl?: string | null;
 };
 
 export default function CalendarPage() {
@@ -37,6 +39,7 @@ export default function CalendarPage() {
       title: event.title,
       description: `Event at ${event.location}`,
       location: event.location,
+      imageUrl: event.imageUrl,
     }));
     const offers = currentUser.offers.map(offer => ({
       type: 'Offer' as const,
@@ -44,6 +47,7 @@ export default function CalendarPage() {
       title: offer.title,
       description: offer.description,
       category: offer.category,
+      imageUrl: offer.imageUrl,
     }));
     const jobs = currentUser.jobs.map(job => ({
         type: 'Job' as const,
@@ -53,6 +57,7 @@ export default function CalendarPage() {
         company: job.company,
         jobType: job.type,
         location: job.location,
+        imageUrl: job.imageUrl,
     }));
     const listings = currentUser.listings.map(listing => ({
         type: 'Listing' as const,
@@ -61,6 +66,7 @@ export default function CalendarPage() {
         description: listing.description,
         category: listing.category,
         price: listing.price,
+        imageUrl: listing.imageUrl,
     }));
     return [...events, ...offers, ...jobs, ...listings].sort((a, b) => a.date.getTime() - b.date.getTime());
   }, []);
@@ -216,7 +222,12 @@ export default function CalendarPage() {
                 itemsForSelectedDate.length > 0 ? (
                     <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {itemsForSelectedDate.map((item, index) => (
-                            <Card key={index} className="shadow-sm">
+                            <Card key={index} className="shadow-sm flex flex-col">
+                                {item.imageUrl && (
+                                  <div className="overflow-hidden rounded-t-lg">
+                                    <Image src={item.imageUrl} alt={item.title} width={600} height={400} className="w-full object-cover aspect-video" data-ai-hint="office laptop" />
+                                  </div>
+                                )}
                                 <CardHeader className="p-4 pb-2">
                                     <div className="flex justify-between items-start">
                                         <div>
@@ -226,7 +237,7 @@ export default function CalendarPage() {
                                         <Badge variant={getBadgeVariant(item.type)}>{item.type}</Badge>
                                     </div>
                                 </CardHeader>
-                                <CardContent className="p-4 pt-2 space-y-2 text-sm text-muted-foreground">
+                                <CardContent className="p-4 pt-2 space-y-2 text-sm text-muted-foreground flex-grow">
                                     <div className="flex items-center gap-2">
                                         <Clock className="h-4 w-4" />
                                         <span>{format(item.date, 'p')}</span>

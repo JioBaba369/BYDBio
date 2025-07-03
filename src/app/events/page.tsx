@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Calendar, MapPin, PlusCircle } from "lucide-react"
 import { currentUser } from "@/lib/mock-data";
 import { format, parseISO } from "date-fns";
+import Image from "next/image";
 
 export default function EventsPage() {
   const { events } = currentUser;
@@ -22,11 +23,16 @@ export default function EventsPage() {
       {events.length > 0 ? (
         <div className="grid gap-6 md:grid-cols-2">
           {events.map((event, index) => (
-            <Card key={index}>
+            <Card key={index} className="flex flex-col">
+              {event.imageUrl && (
+                <div className="overflow-hidden rounded-t-lg">
+                  <Image src={event.imageUrl} alt={event.title} width={600} height={400} className="w-full object-cover aspect-video" data-ai-hint="event poster" />
+                </div>
+              )}
               <CardHeader>
                 <CardTitle>{event.title}</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-2">
+              <CardContent className="space-y-2 flex-grow">
                 <div className="flex items-center text-sm text-muted-foreground">
                   <Calendar className="mr-2 h-4 w-4" /> {format(parseISO(event.date), "PPP p")}
                 </div>
