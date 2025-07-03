@@ -3,7 +3,7 @@
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Briefcase, MapPin, PlusCircle, MoreHorizontal, Edit, Archive, Trash2 } from "lucide-react"
+import { Briefcase, MapPin, PlusCircle, MoreHorizontal, Edit, Archive, Trash2, Eye, Users } from "lucide-react"
 import { currentUser } from "@/lib/mock-data";
 import Image from "next/image";
 import Link from "next/link";
@@ -13,6 +13,7 @@ import type { Job } from "@/lib/users";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
 import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 
 export default function OpportunitiesPage() {
   const [jobs, setJobs] = useState<Job[]>(currentUser.jobs);
@@ -100,8 +101,19 @@ export default function OpportunitiesPage() {
                     <Briefcase className="mr-2 h-4 w-4" /> {job.type}
                   </div>
                 </CardContent>
-                <CardFooter>
-                  <Button className="w-full">View Details</Button>
+                <Separator/>
+                <CardFooter className="flex-col items-start gap-4 pt-4">
+                    <div className="flex justify-between w-full">
+                        <div className="flex items-center text-sm font-medium">
+                            <Eye className="mr-2 h-4 w-4 text-primary" />
+                            <span>{job.views?.toLocaleString() ?? 0} views</span>
+                        </div>
+                        <div className="flex items-center text-sm font-medium">
+                            <Users className="mr-2 h-4 w-4 text-primary" />
+                            <span>{job.applicants?.toLocaleString() ?? 0} applicants</span>
+                        </div>
+                    </div>
+                    <Button className="w-full">View Details</Button>
                 </CardFooter>
               </Card>
             ))}

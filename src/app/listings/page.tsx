@@ -5,13 +5,14 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { currentUser } from "@/lib/mock-data";
 import Image from "next/image";
-import { PlusCircle, MoreHorizontal, Edit, Trash2, Archive, Tags } from "lucide-react";
+import { PlusCircle, MoreHorizontal, Edit, Trash2, Archive, Tags, Eye, MousePointerClick, ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { Listing } from "@/lib/users";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
+import { Separator } from "@/components/ui/separator";
 
 export default function ListingsPage() {
   const [listings, setListings] = useState<Listing[]>(currentUser.listings);
@@ -90,10 +91,29 @@ export default function ListingsPage() {
                   </DropdownMenu>
                 </CardHeader>
                 <CardContent className="flex-grow">
-                  <Badge variant="secondary">{item.category}</Badge>
+                  <div className="flex justify-between items-center">
+                    <Badge variant="secondary">{item.category}</Badge>
+                    <p className="font-bold text-lg">{item.price}</p>
+                  </div>
                 </CardContent>
-                <CardFooter className="flex justify-between items-center">
-                  <p className="font-bold text-lg">{item.price}</p>
+                <Separator />
+                <CardFooter className="flex-col items-start gap-4 pt-4">
+                    <div className="flex justify-between w-full">
+                        <div className="flex items-center text-sm font-medium">
+                            <Eye className="mr-2 h-4 w-4 text-primary" />
+                            <span>{item.views?.toLocaleString() ?? 0} views</span>
+                        </div>
+                        <div className="flex items-center text-sm font-medium">
+                            <MousePointerClick className="mr-2 h-4 w-4 text-primary" />
+                            <span>{item.clicks?.toLocaleString() ?? 0} clicks</span>
+                        </div>
+                    </div>
+                    <Button asChild variant="outline" className="w-full">
+                        <Link href="#">
+                            <ExternalLink className="mr-2 h-4 w-4" />
+                            View Listing
+                        </Link>
+                    </Button>
                 </CardFooter>
               </Card>
             ))}
@@ -146,11 +166,11 @@ export default function ListingsPage() {
                     </DropdownMenu>
                   </CardHeader>
                   <CardContent className="flex-grow">
-                    <Badge variant="secondary">{item.category}</Badge>
+                     <div className="flex justify-between items-center">
+                        <Badge variant="secondary">{item.category}</Badge>
+                        <p className="font-bold text-lg">{item.price}</p>
+                    </div>
                   </CardContent>
-                  <CardFooter className="flex justify-between items-center">
-                    <p className="font-bold text-lg">{item.price}</p>
-                  </CardFooter>
                 </Card>
               ))}
             </div>

@@ -3,7 +3,7 @@
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Tag, Calendar, PlusCircle, MoreHorizontal, Edit, Archive, Trash2, DollarSign } from "lucide-react"
+import { Tag, Calendar, PlusCircle, MoreHorizontal, Edit, Archive, Trash2, DollarSign, Eye, Gift } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { currentUser } from "@/lib/mock-data";
 import { format, parseISO } from "date-fns";
@@ -14,6 +14,7 @@ import type { Offer } from "@/lib/users";
 import { useToast } from "@/hooks/use-toast";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
+import { Separator } from "@/components/ui/separator";
 
 // This component safely formats the date on the client-side to prevent hydration errors.
 function ClientFormattedDate({ dateString }: { dateString: string }) {
@@ -117,8 +118,19 @@ export default function OffersPage() {
                     <span>Releases: <ClientFormattedDate dateString={offer.releaseDate} /></span>
                   </div>
                 </CardContent>
-                <CardFooter>
-                  <Button className="w-full">Claim Offer</Button>
+                <Separator />
+                <CardFooter className="flex-col items-start gap-4 pt-4">
+                    <div className="flex justify-between w-full">
+                        <div className="flex items-center text-sm font-medium">
+                            <Eye className="mr-2 h-4 w-4 text-primary" />
+                            <span>{offer.views?.toLocaleString() ?? 0} views</span>
+                        </div>
+                        <div className="flex items-center text-sm font-medium">
+                            <Gift className="mr-2 h-4 w-4 text-primary" />
+                            <span>{offer.claims?.toLocaleString() ?? 0} claims</span>
+                        </div>
+                    </div>
+                    <Button className="w-full">Claim Offer</Button>
                 </CardFooter>
               </Card>
             ))}

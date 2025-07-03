@@ -11,6 +11,8 @@ export type Listing = {
   category: string;
   publishDate: string;
   status: 'active' | 'archived';
+  views?: number;
+  clicks?: number;
 };
 
 export type Post = {
@@ -30,6 +32,8 @@ export type Offer = {
   releaseDate: string;
   imageUrl: string | null;
   status: 'active' | 'archived';
+  views?: number;
+  claims?: number;
 };
 
 export type Job = {
@@ -41,6 +45,8 @@ export type Job = {
   postingDate: string;
   imageUrl: string | null;
   status: 'active' | 'archived';
+  views?: number;
+  applicants?: number;
 };
 
 export type Event = {
@@ -50,6 +56,8 @@ export type Event = {
   location: string;
   imageUrl: string | null;
   status: 'active' | 'archived';
+  views?: number;
+  rsvps?: number;
 };
 
 export type Business = {
@@ -179,18 +187,22 @@ export const allUsers: User[] = [
         location: "San Francisco, CA",
     },
     jobs: [
-       { id: 'job1', title: 'UX/UI Designer', company: 'Creative Solutions', location: 'Remote', type: 'Full-time', postingDate: '2024-08-20T09:00:00Z', imageUrl: 'https://placehold.co/600x400.png', status: 'active' },
+       { id: 'job1', title: 'UX/UI Designer', company: 'Creative Solutions', location: 'Remote', type: 'Full-time', postingDate: '2024-08-20T09:00:00Z', imageUrl: 'https://placehold.co/600x400.png', status: 'active', views: 750, applicants: 42 },
+       { id: 'job2', title: 'Frontend Developer', company: 'Tech Innovators', location: 'New York, NY', type: 'Full-time', postingDate: '2024-07-15T09:00:00Z', imageUrl: 'https://placehold.co/600x400.png', status: 'archived', views: 2500, applicants: 120 },
     ],
     events: [
-        { id: 'event1', title: 'Design Thinking Workshop', date: '2024-08-15T14:00:00Z', location: 'Online', imageUrl: 'https://placehold.co/600x400.png', status: 'active' },
+        { id: 'event1', title: 'Design Thinking Workshop', date: '2024-08-15T14:00:00Z', location: 'Online', imageUrl: 'https://placehold.co/600x400.png', status: 'active', views: 1230, rsvps: 88 },
+        { id: 'event2', title: 'Past Tech Meetup', date: '2024-06-20T18:00:00Z', location: 'San Francisco, CA', imageUrl: 'https://placehold.co/600x400.png', status: 'archived', views: 450, rsvps: 50 },
     ],
     offers: [
-        { id: 'offer1', title: '1-on-1 Portfolio Review', description: 'Get expert feedback on your design portfolio.', category: 'Consulting', releaseDate: '2024-09-01T10:00:00Z', imageUrl: 'https://placehold.co/600x400.png', status: 'active' },
-        { id: 'offer2', title: 'Early-Bird Discount: Web Design Course', description: 'Get 20% off my upcoming masterclass.', category: 'Discount', releaseDate: '2024-09-10T00:00:00Z', imageUrl: 'https://placehold.co/600x400.png', status: 'active' },
+        { id: 'offer1', title: '1-on-1 Portfolio Review', description: 'Get expert feedback on your design portfolio.', category: 'Consulting', releaseDate: '2024-09-01T10:00:00Z', imageUrl: 'https://placehold.co/600x400.png', status: 'active', views: 980, claims: 112 },
+        { id: 'offer2', title: 'Early-Bird Discount: Web Design Course', description: 'Get 20% off my upcoming masterclass.', category: 'Discount', releaseDate: '2024-09-10T00:00:00Z', imageUrl: 'https://placehold.co/600x400.png', status: 'active', views: 2100, claims: 450 },
+        { id: 'offer3', title: 'Expired Summer Sale', description: 'This offer is no longer available.', category: 'Sale', releaseDate: '2024-07-31T00:00:00Z', imageUrl: 'https://placehold.co/600x400.png', status: 'archived', views: 5000, claims: 1200 },
     ],
     listings: [
-        { id: 'listing1', title: 'Minimalist Icon Set', description: 'A pack of 200+ clean, modern icons for your next project.', price: '$25', imageUrl: 'https://placehold.co/600x400.png', category: 'Digital Asset', publishDate: '2024-08-25T09:00:00Z', status: 'active' },
-        { id: 'listing2', title: 'Web Design Masterclass', description: 'A 10-hour video course on modern web design principles.', price: '$149', imageUrl: 'https://placehold.co/600x400.png', category: 'Education', publishDate: '2024-08-10T09:00:00Z', status: 'active' },
+        { id: 'listing1', title: 'Minimalist Icon Set', description: 'A pack of 200+ clean, modern icons for your next project.', price: '$25', imageUrl: 'https://placehold.co/600x400.png', category: 'Digital Asset', publishDate: '2024-08-25T09:00:00Z', status: 'active', views: 1800, clicks: 350 },
+        { id: 'listing2', title: 'Web Design Masterclass', description: 'A 10-hour video course on modern web design principles.', price: '$149', imageUrl: 'https://placehold.co/600x400.png', category: 'Education', publishDate: '2024-08-10T09:00:00Z', status: 'active', views: 3200, clicks: 780 },
+        { id: 'listing3', title: 'Old UI Kit', description: 'This UI kit is outdated and no longer for sale.', price: '$49', imageUrl: 'https://placehold.co/600x400.png', category: 'UI Kit', publishDate: '2023-01-10T09:00:00Z', status: 'archived', views: 10000, clicks: 2500 },
     ],
     posts: [
       {
