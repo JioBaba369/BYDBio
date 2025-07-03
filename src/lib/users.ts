@@ -8,6 +8,7 @@ type Listing = {
   price: string;
   imageUrl: string;
   category: string;
+  publishDate: string;
 };
 
 export type Post = {
@@ -34,7 +35,7 @@ type User = {
   avatarUrl: string;
   avatarFallback: string;
   following: string[]; // Array of user IDs this user follows
-  jobs: { title: string; company: string; location: string; type: string }[];
+  jobs: { title: string; company: string; location: string; type: string, postingDate: string }[];
   events: { title: string; date: string; location: string }[];
   offers: Offer[];
   listings: Listing[];
@@ -51,7 +52,7 @@ export const allUsers: User[] = [
     avatarFallback: 'JD',
     following: ['user2', 'user4', 'user5'],
     jobs: [
-       { title: 'UX/UI Designer', company: 'Creative Solutions', location: 'Remote', type: 'Full-time' },
+       { title: 'UX/UI Designer', company: 'Creative Solutions', location: 'Remote', type: 'Full-time', postingDate: '2024-08-20T09:00:00Z' },
     ],
     events: [
         { title: 'Design Thinking Workshop', date: '2024-08-15T14:00:00Z', location: 'Online' },
@@ -61,8 +62,8 @@ export const allUsers: User[] = [
         { title: 'Early-Bird Discount: Web Design Course', description: 'Get 20% off my upcoming masterclass.', category: 'Discount', releaseDate: '2024-09-10T00:00:00Z' },
     ],
     listings: [
-        { id: 'listing1', title: 'Minimalist Icon Set', description: 'A pack of 200+ clean, modern icons for your next project.', price: '$25', imageUrl: 'https://placehold.co/600x400.png', category: 'Digital Asset' },
-        { id: 'listing2', title: 'Web Design Masterclass', description: 'A 10-hour video course on modern web design principles.', price: '$149', imageUrl: 'https://placehold.co/600x400.png', category: 'Education' },
+        { id: 'listing1', title: 'Minimalist Icon Set', description: 'A pack of 200+ clean, modern icons for your next project.', price: '$25', imageUrl: 'https://placehold.co/600x400.png', category: 'Digital Asset', publishDate: '2024-08-25T09:00:00Z' },
+        { id: 'listing2', title: 'Web Design Masterclass', description: 'A 10-hour video course on modern web design principles.', price: '$149', imageUrl: 'https://placehold.co/600x400.png', category: 'Education', publishDate: '2024-08-10T09:00:00Z' },
     ],
     posts: [
       {

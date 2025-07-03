@@ -5,19 +5,23 @@ import { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { Badge, badgeVariants } from '@/components/ui/badge';
 import { currentUser } from '@/lib/mock-data';
-import { format, parseISO, isSameDay, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, addMonths, subMonths } from 'date-fns';
-import { Search, MapPin, Tag, Calendar as CalendarIcon, X, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
+import { format, parseISO, isSameDay, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, addMonths, subMonths, isBefore } from 'date-fns';
+import { Search, MapPin, Tag, Briefcase, DollarSign, X, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import type { VariantProps } from 'class-variance-authority';
 
 type CalendarItem = {
-  type: 'Event' | 'Offer';
+  type: 'Event' | 'Offer' | 'Job' | 'Listing';
   date: Date;
   title: string;
   description: string;
   location?: string;
   category?: string;
+  company?: string;
+  jobType?: string;
+  price?: string;
 };
 
 export default function CalendarPage() {
@@ -41,14 +45,33 @@ export default function CalendarPage() {
       description: offer.description,
       category: offer.category,
     }));
-    return [...events, ...offers].sort((a, b) => a.date.getTime() - b.date.getTime());
+    const jobs = currentUser.jobs.map(job => ({
+        type: 'Job' as const,
+        date: parseISO(job.postingDate),
+        title: job.title,
+        description: `${job.type} at ${job.company}`,
+        company: job.company,
+        jobType: job.type,
+        location: job.location,
+    }));
+    const listings = currentUser.listings.map(listing => ({
+        type: 'Listing' as const,
+        date: parseISO(listing.publishDate),
+        title: listing.title,
+        description: listing.description,
+        category: listing.category,
+        price: listing.price,
+    }));
+    return [...events, ...offers, ...jobs, ...listings].sort((a, b) => a.date.getTime() - b.date.getTime());
   }, []);
 
   const filteredItems = useMemo(() => {
     return calendarItems.filter(item => {
       const searchMatch = searchTerm.length > 1 ?
         item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.description.toLowerCase().includes(searchTerm.toLowerCase())
+        item.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (item.company && item.company.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (item.category && item.category.toLowerCase().includes(searchTerm.toLowerCase()))
         : true;
       
       const locationMatch = locationFilter.length > 1 ?
@@ -76,12 +99,22 @@ export default function CalendarPage() {
     end: endOfWeek(endOfMonth(currentMonth))
   });
   const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  
+  const getBadgeVariant = (type: CalendarItem['type']): VariantProps<typeof badgeVariants>['variant'] => {
+    switch (type) {
+        case 'Event': return 'default';
+        case 'Offer': return 'secondary';
+        case 'Job': return 'destructive';
+        case 'Listing': return 'outline';
+        default: return 'default';
+    }
+  }
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl sm:text-3xl font-bold font-headline">Content Calendar</h1>
-        <p className="text-muted-foreground">View events and offer release days in a calendar format.</p>
+        <p className="text-muted-foreground">View events, offers, jobs, and listings in a calendar format.</p>
       </div>
 
       <Card>
@@ -134,7 +167,9 @@ export default function CalendarPage() {
                     const isCurrentMonth = isSameMonth(day, currentMonth);
                     const isSelected = selectedDate && isSameDay(day, selectedDate);
                     const isToday = isSameDay(day, new Date());
+                    const isPast = isBefore(day, new Date()) && !isToday;
                     const itemsForDay = filteredItems.filter(item => isSameDay(item.date, day));
+                    const hasItems = itemsForDay.length > 0;
 
                     return (
                         <button
@@ -142,20 +177,22 @@ export default function CalendarPage() {
                             onClick={() => setSelectedDate(day)}
                             className={cn(
                                 "aspect-square p-2 text-left align-top overflow-hidden relative border-r border-b border-border transition-colors focus:z-10 focus:ring-2 focus:ring-ring focus:ring-offset-2",
-                                isCurrentMonth ? "bg-background" : "bg-muted/40",
-                                !isSelected && isToday && "bg-accent",
+                                isCurrentMonth ? "bg-background" : "bg-muted/40 text-muted-foreground/80",
                                 !isCurrentMonth && "text-muted-foreground",
                                 isSelected && "bg-primary text-primary-foreground",
-                                isCurrentMonth && !isSelected && "hover:bg-accent/50"
+                                !isSelected && isToday && "bg-accent text-accent-foreground",
+                                hasItems && !isSelected && !isToday && isPast && "bg-muted text-muted-foreground",
+                                hasItems && !isSelected && !isToday && !isPast && "bg-primary/10",
+                                !isSelected && isCurrentMonth && "hover:bg-accent/50"
                             )}
                         >
-                            <span className={cn("font-medium", isSelected ? "text-primary-foreground" : "text-foreground")}>{format(day, 'd')}</span>
+                            <span className={cn("font-medium", isSelected ? "text-primary-foreground" : isToday ? "text-accent-foreground" : "text-foreground")}>{format(day, 'd')}</span>
                              <div className="mt-1 space-y-1 overflow-y-auto text-xs h-[calc(100%-2rem)]">
                                 {itemsForDay.slice(0, 2).map((item, idx) => (
                                     <Badge
                                         key={`${item.title}-${idx}`}
-                                        variant={item.type === 'Event' ? 'default' : 'secondary'}
-                                        className="w-full truncate block text-left text-xs h-auto"
+                                        variant={getBadgeVariant(item.type)}
+                                        className={cn("w-full truncate block text-left text-xs h-auto", isSelected && "bg-background/20 text-foreground" )}
                                     >
                                         {item.title}
                                     </Badge>
@@ -186,7 +223,7 @@ export default function CalendarPage() {
                                             <CardTitle className="text-base">{item.title}</CardTitle>
                                             <CardDescription className="text-xs pt-1">{item.description}</CardDescription>
                                         </div>
-                                        <Badge variant={item.type === 'Event' ? 'default' : 'secondary'}>{item.type}</Badge>
+                                        <Badge variant={getBadgeVariant(item.type)}>{item.type}</Badge>
                                     </div>
                                 </CardHeader>
                                 <CardContent className="p-4 pt-2 space-y-2 text-sm text-muted-foreground">
@@ -206,6 +243,18 @@ export default function CalendarPage() {
                                             <span>{item.category}</span>
                                         </div>
                                     )}
+                                    {item.company && (
+                                        <div className="flex items-center gap-2">
+                                            <Briefcase className="h-4 w-4" />
+                                            <span>{item.company} ({item.jobType})</span>
+                                        </div>
+                                    )}
+                                    {item.price && (
+                                         <div className="flex items-center gap-2">
+                                            <DollarSign className="h-4 w-4" />
+                                            <span className="font-semibold">{item.price}</span>
+                                        </div>
+                                    )}
                                 </CardContent>
                             </Card>
                         ))}
@@ -213,7 +262,7 @@ export default function CalendarPage() {
                 ) : (
                     <Card>
                         <CardContent className="p-6 text-center text-muted-foreground">
-                            No events or offers scheduled for this day.
+                            No items scheduled for this day.
                         </CardContent>
                     </Card>
                 )
