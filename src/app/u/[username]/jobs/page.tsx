@@ -1,0 +1,51 @@
+
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Briefcase, MapPin, ArrowLeft } from "lucide-react"
+import Link from "next/link"
+
+// Mock data for a specific user
+const userJobs = [
+  { title: "Lead UI/UX Designer", company: "Innovate Co.", location: "Remote", type: "Full-time" },
+  { title: "Frontend Developer (React)", company: "Tech Solutions", location: "San Francisco, CA", type: "Contract" },
+];
+
+export default function UserJobsPage({ params }: { params: { username: string } }) {
+  // In a real app, you would fetch the user's name based on params.username
+  const userName = "Jane Doe"; 
+  return (
+    <div className="space-y-6 max-w-4xl mx-auto py-8 px-4">
+       <Button asChild variant="ghost" className="pl-0">
+        <Link href={`/u/${params.username}`} className="inline-flex items-center gap-2 text-primary hover:underline">
+            <ArrowLeft className="h-4 w-4" />
+            Back to {userName}'s Profile
+        </Link>
+       </Button>
+      <div>
+        <h1 className="text-3xl font-bold font-headline">Job Listings by {userName}</h1>
+        <p className="text-muted-foreground">Opportunities currently available.</p>
+      </div>
+      <div className="grid gap-6 md:grid-cols-2">
+        {userJobs.map((job, index) => (
+          <Card key={index}>
+            <CardHeader>
+              <CardTitle>{job.title}</CardTitle>
+              <CardDescription>{job.company}</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <div className="flex items-center text-sm text-muted-foreground">
+                <MapPin className="mr-2 h-4 w-4" /> {job.location}
+              </div>
+              <div className="flex items-center text-sm text-muted-foreground">
+                <Briefcase className="mr-2 h-4 w-4" /> {job.type}
+              </div>
+            </CardContent>
+            <CardFooter>
+              <Button className="w-full">View Details</Button>
+            </CardFooter>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}

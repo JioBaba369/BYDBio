@@ -1,14 +1,17 @@
+
 'use client';
 
 import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Globe, Linkedin, Github, Twitter, Send } from "lucide-react";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Globe, Linkedin, Github, Twitter, Send, Briefcase, Calendar, Tag, MapPin } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import Link from "next/link";
+import { Badge } from "@/components/ui/badge";
 
 // Mock data
 const userProfile = {
@@ -23,11 +26,20 @@ const userProfile = {
     { title: "GitHub", url: "#", icon: <Github className="h-5 w-5" /> },
     { title: "Twitter / X", url: "#", icon: <Twitter className="h-5 w-5" /> },
   ],
+  jobs: [
+    { title: "Lead UI/UX Designer", company: "Innovate Co.", location: "Remote", type: "Full-time" },
+  ],
+  events: [
+    { title: "Design Systems Meetup", date: "December 1, 2024", location: "Online" },
+  ],
+  offers: [
+     { title: "Portfolio Review Session", description: "Book a 1-on-1 portfolio review session with me.", category: "Service" },
+  ]
 };
 
 export default function LinkInBioPage({ params }: { params: { username: string } }) {
   // In a real app, you would fetch user data based on params.username
-  const { name, avatarUrl, bio, links, subscribers } = userProfile;
+  const { name, avatarUrl, bio, links, subscribers, jobs, events, offers } = userProfile;
   const { toast } = useToast();
   const [contactName, setContactName] = useState('');
   const [contactEmail, setContactEmail] = useState('');
@@ -89,6 +101,92 @@ export default function LinkInBioPage({ params }: { params: { username: string }
                 </Button>
               </a>
             ))}
+          </div>
+
+          <div className="mt-8 space-y-8">
+            {/* Jobs Section */}
+            {jobs.length > 0 && (
+              <div>
+                <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-xl font-bold font-headline">Latest Jobs</h2>
+                    <Button asChild variant="link" className="text-primary pr-0">
+                        <Link href={`/u/${params.username}/jobs`}>View all</Link>
+                    </Button>
+                </div>
+                <div className="grid gap-4">
+                    {jobs.slice(0, 1).map((job, index) => (
+                      <Card key={index} className="shadow-none">
+                        <CardHeader>
+                            <CardTitle className="text-lg">{job.title}</CardTitle>
+                            <CardDescription>{job.company}</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-2 text-sm">
+                            <div className="flex items-center text-muted-foreground">
+                                <MapPin className="mr-2 h-4 w-4" /> {job.location}
+                            </div>
+                            <div className="flex items-center text-muted-foreground">
+                                <Briefcase className="mr-2 h-4 w-4" /> {job.type}
+                            </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                </div>
+              </div>
+            )}
+
+            {/* Events Section */}
+            {events.length > 0 && (
+              <div>
+                <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-xl font-bold font-headline">Upcoming Events</h2>
+                    <Button asChild variant="link" className="text-primary pr-0">
+                        <Link href={`/u/${params.username}/events`}>View all</Link>
+                    </Button>
+                </div>
+                <div className="grid gap-4">
+                    {events.slice(0, 1).map((event, index) => (
+                        <Card key={index} className="shadow-none">
+                          <CardHeader>
+                              <CardTitle className="text-lg">{event.title}</CardTitle>
+                          </CardHeader>
+                          <CardContent className="space-y-2">
+                              <div className="flex items-center text-sm text-muted-foreground">
+                                <Calendar className="mr-2 h-4 w-4" /> {event.date}
+                              </div>
+                              <div className="flex items-center text-sm text-muted-foreground">
+                                <MapPin className="mr-2 h-4 w-4" /> {event.location}
+                              </div>
+                          </CardContent>
+                        </Card>
+                    ))}
+                </div>
+              </div>
+            )}
+            
+            {/* Offers Section */}
+            {offers.length > 0 && (
+              <div>
+                <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-xl font-bold font-headline">Active Offers</h2>
+                    <Button asChild variant="link" className="text-primary pr-0">
+                        <Link href={`/u/${params.username}/offers`}>View all</Link>
+                    </Button>
+                </div>
+                <div className="grid gap-4">
+                    {offers.slice(0, 1).map((offer, index) => (
+                        <Card key={index} className="shadow-none">
+                          <CardHeader>
+                            <CardTitle className="text-lg">{offer.title}</CardTitle>
+                            <CardDescription>{offer.description}</CardDescription>
+                          </CardHeader>
+                          <CardContent>
+                            <Badge variant="secondary"><Tag className="mr-1 h-3 w-3" />{offer.category}</Badge>
+                          </CardContent>
+                        </Card>
+                    ))}
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="mt-8">
