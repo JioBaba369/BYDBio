@@ -49,6 +49,13 @@ export type Job = {
   applicants?: number;
 };
 
+export type ItineraryItem = {
+  time: string;
+  title: string;
+  description: string;
+  speaker?: string;
+};
+
 export type Event = {
   id: string;
   title: string;
@@ -60,6 +67,7 @@ export type Event = {
   views?: number;
   rsvps?: number;
   attendees?: { id: string; name: string; avatarUrl: string; }[];
+  itinerary?: ItineraryItem[];
 };
 
 export type Business = {
@@ -208,6 +216,41 @@ export const allUsers: User[] = [
                 { id: 'user4', name: 'Maria Garcia', avatarUrl: 'https://placehold.co/100x100.png' },
                 { id: 'user5', name: 'Chris Lee', avatarUrl: 'https://placehold.co/100x100.png' },
                 { id: 'user6', name: 'Patricia Williams', avatarUrl: 'https://placehold.co/100x100.png' },
+            ],
+            itinerary: [
+                {
+                    time: '09:00 AM',
+                    title: 'Registration & Welcome Coffee',
+                    description: 'Check-in, grab your badge, and enjoy some coffee before we kick off.',
+                },
+                {
+                    time: '10:00 AM',
+                    title: 'Opening Keynote: The Future of Design',
+                    description: 'A look into the upcoming trends and technologies shaping our industry.',
+                    speaker: 'Jane Doe',
+                },
+                {
+                    time: '11:00 AM',
+                    title: 'Breakout Session: Accessibility in Practice',
+                    description: 'Practical tips and techniques for building inclusive products.',
+                    speaker: 'John Smith',
+                },
+                {
+                    time: '12:30 PM',
+                    title: 'Lunch Break',
+                    description: 'Network with fellow attendees over a delicious catered lunch.',
+                },
+                {
+                    time: '02:00 PM',
+                    title: 'Workshop: Prototyping with Next-Gen Tools',
+                    description: 'A hands-on workshop where you\'ll build an interactive prototype.',
+                    speaker: 'Maria Garcia',
+                },
+                {
+                    time: '04:00 PM',
+                    title: 'Closing Remarks & Networking',
+                    description: 'Final thoughts and an opportunity for open networking.',
+                }
             ]
         },
         { 

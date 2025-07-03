@@ -6,7 +6,7 @@ import type { Event, User } from '@/lib/users';
 import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MapPin, Calendar, Clock, ArrowLeft, Users, Ticket } from 'lucide-react';
+import { MapPin, Calendar, Clock, ArrowLeft, Users, Ticket, User as UserIcon } from 'lucide-react';
 import Link from 'next/link';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
@@ -103,9 +103,32 @@ export default function EventDetailClient({ event, author }: EventDetailClientPr
                             <h3 className="font-semibold text-lg mb-2">About this event</h3>
                             <p className="text-muted-foreground whitespace-pre-wrap">{event.description}</p>
                         </div>
+                        
+                        {event.itinerary && event.itinerary.length > 0 && (
+                            <div>
+                                <h3 className="font-semibold text-lg mb-4">Event Schedule</h3>
+                                <div className="relative border-l-2 border-primary/20 ml-2 space-y-8">
+                                    {event.itinerary.map((item, index) => (
+                                        <div key={index} className="relative pl-8">
+                                            <div className="absolute -left-[9px] top-1 h-4 w-4 rounded-full bg-primary border-4 border-background" />
+                                            <p className="font-semibold text-primary">{item.time}</p>
+                                            <h4 className="font-semibold text-lg mt-1">{item.title}</h4>
+                                            {item.speaker && (
+                                                <p className="text-sm text-muted-foreground flex items-center gap-1.5 mt-1">
+                                                    <UserIcon className="h-3.5 w-3.5" />
+                                                    <span>{item.speaker}</span>
+                                                </p>
+                                            )}
+                                            <p className="text-sm text-muted-foreground mt-1">{item.description}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
 
                         {event.attendees && event.attendees.length > 0 && (
                              <div>
+                                <Separator className="my-8" />
                                 <h3 className="font-semibold text-lg mb-2">{attendeeCount} Attendees</h3>
                                 <div className="flex flex-wrap items-center gap-2">
                                      <TooltipProvider>
