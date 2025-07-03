@@ -176,20 +176,22 @@ export default function CalendarPage() {
     return [...ownEvents, ...ownOffers, ...ownJobs, ...ownListings, ...rsvpedEvents].sort((a, b) => a.date.getTime() - b.date.getTime());
   });
 
+  const areFiltersActive = !!searchTerm || !!locationFilter || typeFilters.size < 4;
+
   const filteredItems = useMemo(() => {
     return calendarItems.filter(item => {
       if (!typeFilters.has(item.type)) {
         return false;
       }
 
-      const searchMatch = searchTerm.length > 1 ?
+      const searchMatch = searchTerm.length > 0 ?
         item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (item.company && item.company.toLowerCase().includes(searchTerm.toLowerCase())) ||
         (item.category && item.category.toLowerCase().includes(searchTerm.toLowerCase()))
         : true;
       
-      const locationMatch = locationFilter.length > 1 ?
+      const locationMatch = locationFilter.length > 0 ?
         (item.location && item.location.toLowerCase().includes(locationFilter.toLowerCase()))
         : true;
 
@@ -508,7 +510,10 @@ export default function CalendarPage() {
                   ) : (
                       <Card>
                           <CardContent className="p-6 text-center text-muted-foreground">
-                              No items scheduled for this day.
+                              {areFiltersActive
+                                ? "No items match your filters for this day."
+                                : "No items scheduled for this day."
+                              }
                           </CardContent>
                       </Card>
                   )
