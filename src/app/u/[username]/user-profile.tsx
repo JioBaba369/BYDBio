@@ -285,7 +285,7 @@ export default function UserProfilePage({ userProfileData }: UserProfilePageProp
                                 </CardContent>
                                  <CardFooter>
                                     <Button className="w-full">View Details</Button>
-                                </CardFooter>
+                                 </CardFooter>
                             </Card>
                         ))}
                     </TabsContent>

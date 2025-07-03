@@ -10,7 +10,7 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarGroup,
-  sidebarMenuButtonVariants,
+  SidebarGroupLabel,
   SidebarSeparator,
 } from '@/components/ui/sidebar';
 import { Logo } from './logo';
@@ -49,6 +49,7 @@ import { Input } from './ui/input';
 import { currentUser } from '@/lib/mock-data';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { sidebarMenuButtonVariants } from '@/components/ui/sidebar';
 
 export function MainSidebar() {
   const pathname = usePathname();
@@ -61,8 +62,12 @@ export function MainSidebar() {
     if (path === '/' || path === `/u/${currentUser.username}`) {
       return pathname === path;
     }
+     // Handle special case for /u/[username]/card and /u/[username]/links
+    if (path.includes(`/u/${currentUser.username}/`)) {
+        return pathname === path;
+    }
     // Prefix match for all other pages
-    return pathname.startsWith(path);
+    return pathname.startsWith(path) && path !== '/';
   };
 
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -98,78 +103,79 @@ export function MainSidebar() {
           </form>
         </SidebarGroup>
         <SidebarMenu>
-          <SidebarMenuItem>
-            <Link href="/" className={cn(sidebarMenuButtonVariants())} data-active={isActive('/')}>
-              <LayoutDashboard />
-              Dashboard
-            </Link>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <Link href="/feed" className={cn(sidebarMenuButtonVariants())} data-active={isActive('/feed')}>
-              <MessageSquare />
-              Status Feed
-            </Link>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <Link href="/connections" className={cn(sidebarMenuButtonVariants())} data-active={isActive('/connections')}>
-              <Users />
-              Connections
-            </Link>
-          </SidebarMenuItem>
-           <SidebarMenuItem>
-            <Link href="/notifications" className={cn(sidebarMenuButtonVariants())} data-active={isActive('/notifications')}>
-              <Bell />
-              Notifications
-            </Link>
-          </SidebarMenuItem>
+            <SidebarGroupLabel>Main</SidebarGroupLabel>
+            <SidebarMenuItem>
+              <Link href="/" className={cn(sidebarMenuButtonVariants())} data-active={isActive('/')}>
+                <LayoutDashboard />
+                Dashboard
+              </Link>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <Link href="/feed" className={cn(sidebarMenuButtonVariants())} data-active={isActive('/feed')}>
+                <MessageSquare />
+                Status Feed
+              </Link>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <Link href="/connections" className={cn(sidebarMenuButtonVariants())} data-active={isActive('/connections')}>
+                <Users />
+                Connections
+              </Link>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <Link href="/notifications" className={cn(sidebarMenuButtonVariants())} data-active={isActive('/notifications')}>
+                <Bell />
+                Notifications
+              </Link>
+            </SidebarMenuItem>
           
           <SidebarSeparator className="my-1" />
-
-          <SidebarMenuItem>
-            <Link href="/profile" className={cn(sidebarMenuButtonVariants())} data-active={isActive('/profile')}>
-              <User />
-              Profile Editor
-            </Link>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <Link href="/calendar" className={cn(sidebarMenuButtonVariants())} data-active={isActive('/calendar')}>
-              <CalendarDays />
-              Content Calendar
-            </Link>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <Link href="/businesses" className={cn(sidebarMenuButtonVariants())} data-active={isActive('/businesses')}>
-              <Building2 />
-              My Businesses
-            </Link>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <Link href="/listings" className={cn(sidebarMenuButtonVariants())} data-active={isActive('/listings')}>
-              <Tags />
-              Listings
-            </Link>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <Link href="/opportunities" className={cn(sidebarMenuButtonVariants())} data-active={isActive('/opportunities')}>
-              <Briefcase />
-              Opportunities
-            </Link>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <Link href="/events" className={cn(sidebarMenuButtonVariants())} data-active={isActive('/events')}>
-              <Calendar />
-              Events
-            </Link>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <Link href="/offers" className={cn(sidebarMenuButtonVariants())} data-active={isActive('/offers')}>
-              <DollarSign />
-              Offers
-            </Link>
-          </SidebarMenuItem>
+            <SidebarGroupLabel>Content</SidebarGroupLabel>
+            <SidebarMenuItem>
+              <Link href="/profile" className={cn(sidebarMenuButtonVariants())} data-active={isActive('/profile')}>
+                <User />
+                Profile Editor
+              </Link>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <Link href="/calendar" className={cn(sidebarMenuButtonVariants())} data-active={isActive('/calendar')}>
+                <CalendarDays />
+                Content Calendar
+              </Link>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <Link href="/businesses" className={cn(sidebarMenuButtonVariants())} data-active={isActive('/businesses')}>
+                <Building2 />
+                My Businesses
+              </Link>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <Link href="/listings" className={cn(sidebarMenuButtonVariants())} data-active={isActive('/listings')}>
+                <Tags />
+                Listings
+              </Link>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <Link href="/opportunities" className={cn(sidebarMenuButtonVariants())} data-active={isActive('/opportunities')}>
+                <Briefcase />
+                Opportunities
+              </Link>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <Link href="/events" className={cn(sidebarMenuButtonVariants())} data-active={isActive('/events')}>
+                <Calendar />
+                Events
+              </Link>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <Link href="/offers" className={cn(sidebarMenuButtonVariants())} data-active={isActive('/offers')}>
+                <DollarSign />
+                Offers
+              </Link>
+            </SidebarMenuItem>
 
           <SidebarSeparator className="my-1" />
-
+            <SidebarGroupLabel>Public Pages</SidebarGroupLabel>
            <SidebarMenuItem>
             <Link href={`/u/${currentUser.username}`} className={cn(sidebarMenuButtonVariants())} data-active={isActive(`/u/${currentUser.username}`)}>
               <Share />
