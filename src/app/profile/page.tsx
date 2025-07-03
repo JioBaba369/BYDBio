@@ -230,7 +230,15 @@ export default function ProfilePage() {
 
   const businessCardForm = useForm<BusinessCardFormValues>({
     resolver: zodResolver(businessCardSchema),
-    defaultValues: {},
+    defaultValues: {
+        title: "",
+        company: "",
+        phone: "",
+        email: "",
+        website: "",
+        linkedin: "",
+        location: "",
+    },
     mode: 'onBlur',
   });
 
@@ -252,7 +260,15 @@ export default function ProfilePage() {
         username: user.username || '',
         bio: user.bio || '',
       });
-      businessCardForm.reset(user.businessCard || {});
+      businessCardForm.reset({
+        title: user.businessCard?.title || '',
+        company: user.businessCard?.company || '',
+        phone: user.businessCard?.phone || '',
+        email: user.businessCard?.email || '',
+        website: user.businessCard?.website || '',
+        linkedin: user.businessCard?.linkedin || '',
+        location: user.businessCard?.location || '',
+      });
       linksForm.reset({
         links: user.links.map((link, index) => ({...link, id: `link-${index}`})) || [],
       });
