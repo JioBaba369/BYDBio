@@ -47,6 +47,7 @@ type BusinessCardFormValues = z.infer<typeof businessCardSchema>;
 const linksFormSchema = z.object({
   links: z.array(
     z.object({
+      id: z.string().optional(), // dnd-kit needs an id
       icon: z.enum(availableIconNames, {
         errorMap: () => ({ message: "Please select an icon." }),
       }),
@@ -189,7 +190,7 @@ export default function ProfilePage() {
   const linksForm = useForm<LinksFormValues>({
     resolver: zodResolver(linksFormSchema),
     defaultValues: {
-      links: currentUser.links || [],
+      links: currentUser.links.map((link, index) => ({...link, id: `link-${index}`})) || [],
     },
     mode: 'onBlur',
   });
@@ -504,7 +505,7 @@ END:VCARD`;
                     collisionDetection={closestCenter}
                     onDragEnd={handleDragEnd}
                   >
-                    <SortableContext items={fields.map(f => f.id)} strategy={verticalListSortingStrategy}>
+                    <SortableContext items={fields} strategy={verticalListSortingStrategy}>
                       <div className="space-y-4">
                         {fields.map((field, index) => (
                           <SortableLinkItem
