@@ -16,10 +16,12 @@ import { Monitor, Moon, Sun } from "lucide-react";
 import { useState } from "react";
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
 import { useToast } from "@/hooks/use-toast";
+import { ChangePasswordDialog } from "@/components/change-password-dialog";
 
 export default function SettingsPage() {
     const { setTheme, theme } = useTheme();
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+    const [isChangePasswordDialogOpen, setIsChangePasswordDialogOpen] = useState(false);
     const { toast } = useToast();
 
     const handleDeleteAccount = () => {
@@ -34,6 +36,15 @@ export default function SettingsPage() {
         // In a real app, you would likely redirect the user to a logged-out state.
     };
 
+    const handleChangePassword = () => {
+        // Mock function
+        toast({
+            title: "Password Changed",
+            description: "Your password has been successfully updated.",
+        });
+        setIsChangePasswordDialogOpen(false);
+    };
+
     return (
         <>
             <DeleteConfirmationDialog 
@@ -41,6 +52,11 @@ export default function SettingsPage() {
                 onOpenChange={setIsDeleteDialogOpen}
                 onConfirm={handleDeleteAccount}
                 itemName="account"
+            />
+            <ChangePasswordDialog
+                open={isChangePasswordDialogOpen}
+                onOpenChange={setIsChangePasswordDialogOpen}
+                onConfirm={handleChangePassword}
             />
             <div className="space-y-6">
                 <div>
@@ -185,7 +201,7 @@ export default function SettingsPage() {
                                             It's a good idea to use a strong password that you're not using elsewhere.
                                         </p>
                                     </div>
-                                    <Button variant="outline">Change Password</Button>
+                                    <Button variant="outline" onClick={() => setIsChangePasswordDialogOpen(true)}>Change Password</Button>
                                 </div>
                                 <Separator />
                                 <div className="flex items-center justify-between">
