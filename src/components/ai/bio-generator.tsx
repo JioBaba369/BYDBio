@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -20,8 +21,7 @@ export default function BioGenerator({ onSelectBio }: BioGeneratorProps) {
   const [tone, setTone] = useState('Professional');
   const { toast } = useToast();
 
-  const handleGenerate = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleGenerate = async () => {
     if (!topic) {
         toast({
             title: "Topic is empty",
@@ -66,7 +66,7 @@ export default function BioGenerator({ onSelectBio }: BioGeneratorProps) {
         </p>
       </div>
 
-      <form onSubmit={handleGenerate} className="space-y-4">
+      <div className="space-y-4">
         <div className="grid sm:grid-cols-3 gap-4 items-end">
             <div className="space-y-2 sm:col-span-2">
                 <Label htmlFor="bio-topic">Keywords about you</Label>
@@ -92,11 +92,11 @@ export default function BioGenerator({ onSelectBio }: BioGeneratorProps) {
                 </Select>
             </div>
         </div>
-        <Button type="submit" disabled={loading} size="sm">
+        <Button type="button" onClick={handleGenerate} disabled={loading} size="sm">
           {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
           Generate Suggestions
         </Button>
-      </form>
+      </div>
 
       {suggestions.length > 0 && (
         <div className="space-y-3 pt-4 border-t">
