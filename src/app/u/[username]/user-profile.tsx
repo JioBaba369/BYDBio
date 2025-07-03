@@ -1,0 +1,337 @@
+
+'use client';
+
+import { useState } from "react";
+import type { User, Post } from '@/lib/users';
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Send, Briefcase, Calendar, Tag, MapPin, Heart, MessageCircle } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
+import Link from "next/link";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { Logo } from "@/components/logo";
+import ShareButton from "@/components/share-button";
+import { linkIcons } from "@/lib/link-icons";
+import Image from "next/image";
+import { cn } from "@/lib/utils";
+import { format, parseISO } from "date-fns";
+
+// Add isLiked to post type for this component's state
+type PostWithLike = Post & { isLiked: boolean };
+type UserProfileWithLikes = User & { posts: PostWithLike[] };
+
+interface UserProfilePageProps {
+  userProfileData: User;
+}
+
+export default function UserProfilePage({ userProfileData }: UserProfilePageProps) {
+  const [userProfile, setUserProfile] = useState<UserProfileWithLikes | null>(
+    userProfileData
+      ? {
+          ...userProfileData,
+          posts: userProfileData.posts.map((p) => ({ ...p, isLiked: false })),
+        }
+      : null
+  );
+
+  const { toast } = useToast();
+  const [contactName, setContactName] = useState('');
+  const [contactEmail, setContactEmail] = useState('');
+  const [contactMessage, setContactMessage] = useState('');
+
+  const handleContactSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!contactName || !contactEmail || !contactMessage) {
+        toast({
+            title: "Incomplete Form",
+            description: "Please fill out all fields.",
+            variant: "destructive",
+        });
+        return;
+    }
+
+    try {
+      // In a real app, this would be an API call
+      console.log({ name: contactName, email: contactEmail, message: contactMessage });
+      toast({
+        title: "Message Sent!",
+        description: "Thanks for reaching out. I'll get back to you soon.",
+      });
+      setContactName('');
+      setContactEmail('');
+      setContactMessage('');
+    } catch (error) {
+       console.error("Contact form submission error:", error);
+       toast({
+        title: "Error Sending Message",
+        description: "Something went wrong. Please try again later.",
+        variant: "destructive",
+      });
+    }
+  };
+  
+  const handleLike = (postId: string) => {
+    if (!userProfile) return;
+
+    setUserProfile((prevProfile) => {
+      if (!prevProfile) return null;
+      return {
+        ...prevProfile,
+        posts: prevProfile.posts.map((post) => {
+          if (post.id === postId) {
+            const isLiked = !post.isLiked;
+            const likes = isLiked ? post.likes + 1 : post.likes - 1;
+            return { ...post, isLiked, likes };
+          }
+          return post;
+        }),
+      };
+    });
+  };
+
+  if (!userProfile) {
+    // This case should ideally be handled by the parent server component.
+    return <div>User not found.</div>
+  }
+
+  const { name, username, avatarUrl, avatarFallback, bio, links, subscribers, jobs, events, offers, listings, posts } = userProfile;
+
+  return (
+    <div className="flex justify-center bg-gray-100 dark:bg-gray-900 py-8 px-4">
+      <div className="w-full max-w-md mx-auto">
+        <Card className="bg-background/80 backdrop-blur-sm p-6 sm:p-8 shadow-2xl rounded-2xl border-primary/10">
+          <div className="flex flex-col items-center text-center">
+            <Avatar className="w-24 h-24 mb-4 border-4 border-primary/50">
+              <AvatarImage src={avatarUrl} alt={name} data-ai-hint="woman smiling" />
+              <AvatarFallback>{avatarFallback}</AvatarFallback>
+            </Avatar>
+            <h1 className="font-headline text-3xl font-bold text-foreground">{name}</h1>
+            <p className="mt-2 text-muted-foreground font-body">{bio}</p>
+             <div className="mt-4">
+              <ShareButton />
+            </div>
+            <div className="mt-6 flex w-full items-center gap-4">
+              <Button className="flex-1 font-bold">Follow</Button>
+              <div className="text-center p-2 rounded-md bg-muted/50 w-28">
+                <p className="font-bold text-lg text-foreground">{subscribers}</p>
+                <p className="text-xs text-muted-foreground tracking-wide">Subscribers</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-8 flex flex-col space-y-4">
+            {links.map((link, index) => {
+                const Icon = linkIcons[link.icon as keyof typeof linkIcons];
+                return (
+                  <a
+                    key={index}
+                    href={link.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full"
+                  >
+                    <Button variant="outline" className="w-full h-14 text-base font-semibold justify-start p-4 hover:bg-primary/10 hover:border-primary">
+                      {Icon && <Icon className="h-5 w-5" />}
+                      <span className="flex-1 text-center">{link.title}</span>
+                    </Button>
+                  </a>
+                )
+            })}
+          </div>
+
+          <div className="mt-8 space-y-8">
+            {/* Recent Updates Section */}
+            {posts.length > 0 && (
+              <div>
+                <h2 className="text-xl font-bold font-headline mb-4">Recent Updates</h2>
+                <div className="grid md:grid-cols-2 gap-4">
+                  {posts.slice(0, 2).map((post) => (
+                    <Card key={post.id} className="shadow-none">
+                      <CardContent className="p-4">
+                        <p className="whitespace-pre-wrap text-sm">{post.content}</p>
+                        {post.imageUrl && (
+                          <div className="mt-4 rounded-lg overflow-hidden border">
+                            <Image src={post.imageUrl} alt="Post image" width={600} height={400} className="object-cover" data-ai-hint="office workspace"/>
+                          </div>
+                        )}
+                      </CardContent>
+                      <CardFooter className="flex justify-start items-center gap-4 px-4 pb-4 pt-2 text-sm text-muted-foreground">
+                          <button onClick={() => handleLike(post.id)} className="flex items-center gap-1 hover:text-primary transition-colors">
+                              <Heart className={cn("h-4 w-4", post.isLiked && "fill-red-500 text-red-500")} />
+                              <span>{post.likes}</span>
+                          </button>
+                          <div className="flex items-center gap-1">
+                              <MessageCircle className="h-4 w-4" />
+                              <span>{post.comments}</span>
+                          </div>
+                          <span className="ml-auto text-xs">{post.timestamp}</span>
+                      </CardFooter>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Listings Section */}
+            {listings.length > 0 && (
+              <div>
+                <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-xl font-bold font-headline">Products & Services</h2>
+                    <Button asChild variant="link" className="text-primary pr-0">
+                        <Link href={`/u/${username}/listings`}>View all</Link>
+                    </Button>
+                </div>
+                <div className="grid gap-4">
+                  {listings.slice(0, 1).map((item) => (
+                    <Card key={item.id} className="shadow-none overflow-hidden">
+                       <Image src={item.imageUrl} alt={item.title} width={600} height={400} className="w-full object-cover aspect-[16/9]" data-ai-hint="product design" />
+                      <CardHeader>
+                          <CardTitle className="text-lg">{item.title}</CardTitle>
+                          <CardDescription>{item.description}</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <Badge variant="secondary">{item.category}</Badge>
+                      </CardContent>
+                      <CardFooter>
+                        <Button className="w-full font-bold">{item.price}</Button>
+                      </CardFooter>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {/* Jobs Section */}
+            {jobs.length > 0 && (
+              <div>
+                <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-xl font-bold font-headline">Latest Jobs</h2>
+                    <Button asChild variant="link" className="text-primary pr-0">
+                        <Link href={`/u/${username}/jobs`}>View all</Link>
+                    </Button>
+                </div>
+                <div className="grid md:grid-cols-2 gap-4">
+                  {jobs.slice(0, 2).map((job, index) => (
+                    <Card key={index} className="shadow-none">
+                      <CardHeader>
+                          <CardTitle className="text-lg">{job.title}</CardTitle>
+                          <CardDescription>{job.company}</CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-2 text-sm">
+                          <div className="flex items-center text-muted-foreground">
+                              <MapPin className="mr-2 h-4 w-4" /> {job.location}
+                          </div>
+                          <div className="flex items-center text-muted-foreground">
+                              <Briefcase className="mr-2 h-4 w-4" /> {job.type}
+                          </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Events Section */}
+            {events.length > 0 && (
+              <div>
+                <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-xl font-bold font-headline">Upcoming Events</h2>
+                    <Button asChild variant="link" className="text-primary pr-0">
+                        <Link href={`/u/${username}/events`}>View all</Link>
+                    </Button>
+                </div>
+                <div className="grid md:grid-cols-2 gap-4">
+                    {events.slice(0, 2).map((event, index) => (
+                        <Card key={index} className="shadow-none">
+                          <CardHeader>
+                              <CardTitle className="text-lg">{event.title}</CardTitle>
+                          </CardHeader>
+                          <CardContent className="space-y-2">
+                              <div className="flex items-center text-sm text-muted-foreground">
+                                <Calendar className="mr-2 h-4 w-4" /> {format(parseISO(event.date), "PPP")}
+                              </div>
+                              <div className="flex items-center text-sm text-muted-foreground">
+                                <MapPin className="mr-2 h-4 w-4" /> {event.location}
+                              </div>
+                          </CardContent>
+                        </Card>
+                    ))}
+                </div>
+              </div>
+            )}
+            
+            {/* Offers Section */}
+            {offers.length > 0 && (
+              <div>
+                <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-xl font-bold font-headline">Active Offers</h2>
+                    <Button asChild variant="link" className="text-primary pr-0">
+                        <Link href={`/u/${username}/offers`}>View all</Link>
+                    </Button>
+                </div>
+                <div className="grid md:grid-cols-2 gap-4">
+                    {offers.slice(0, 2).map((offer, index) => (
+                        <Card key={index} className="shadow-none">
+                          <CardHeader>
+                            <CardTitle className="text-lg">{offer.title}</CardTitle>
+                            <CardDescription>{offer.description}</CardDescription>
+                          </CardHeader>
+                          <CardContent>
+                            <Badge variant="secondary"><Tag className="mr-1 h-3 w-3" />{offer.category}</Badge>
+                          </CardContent>
+                        </Card>
+                    ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="mt-8">
+            <h2 className="text-xl font-bold text-center mb-4 font-headline">Contact Me</h2>
+            <form onSubmit={handleContactSubmit} className="space-y-4 text-left">
+                <div>
+                    <Label htmlFor="contact-name" className="text-muted-foreground">Name</Label>
+                    <Input id="contact-name" type="text" placeholder="Your Name" value={contactName} onChange={(e) => setContactName(e.target.value)} required className="bg-background/80" />
+                </div>
+                <div>
+                    <Label htmlFor="contact-email" className="text-muted-foreground">Email</Label>
+                    <Input id="contact-email" type="email" placeholder="Your Email" value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} required className="bg-background/80" />
+                </div>
+                <div>
+                    <Label htmlFor="contact-message" className="text-muted-foreground">Message</Label>
+                    <Textarea id="contact-message" placeholder="Your message..." value={contactMessage} onChange={(e) => setContactMessage(e.target.value)} required rows={4} className="bg-background/80" />
+                </div>
+                <Button type="submit" className="w-full font-bold">
+                    <Send className="mr-2 h-4 w-4" />
+                    Send Message
+                </Button>
+            </form>
+          </div>
+
+          <div className="text-center mt-8">
+             <a href={`/u/${username}/card`} className="text-sm text-primary hover:underline font-semibold">
+                View Digital Business Card
+             </a>
+          </div>
+
+          <Separator className="my-8" />
+          
+          <div className="text-center">
+            <Logo className="justify-center text-foreground" />
+            <p className="mt-2 text-sm text-muted-foreground">
+              Build Your Dream Bio. Your professional hub for profiles, links, and opportunities.
+            </p>
+            <Button asChild className="mt-4 font-bold">
+                <Link href="/">Get Started Free</Link>
+            </Button>
+          </div>
+        </Card>
+      </div>
+    </div>
+  );
+}

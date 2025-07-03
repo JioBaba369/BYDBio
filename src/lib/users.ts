@@ -1,3 +1,4 @@
+
 // In a real app, this data would come from a database.
 // It's defined here for demonstration purposes.
 
@@ -64,7 +65,7 @@ export type Business = {
   status: 'active' | 'archived';
 };
 
-type User = {
+export type User = {
   id: string;
   name: string;
   handle: string;
@@ -79,6 +80,12 @@ type User = {
   listings: Listing[];
   posts: Post[];
   businesses: Business[];
+  subscribers: string;
+  links: {
+    icon: string;
+    title: string;
+    url: string;
+  }[];
 };
 
 const user1Businesses: Business[] = [
@@ -131,6 +138,18 @@ export const allUsers: User[] = [
     avatarFallback: 'JD',
     bio: "Senior Product Designer at Acme Inc. Crafting user-centric experiences that bridge business goals and user needs. Passionate about design systems and accessibility.",
     following: ['user2', 'user4', 'user5'],
+    subscribers: "12.5k",
+    links: [
+        { title: "Personal Website", url: "https://janedoe.design", icon: 'Globe' },
+        { title: "Email Me", url: "mailto:jane.doe@example.com", icon: 'Mail' },
+        { title: "Call Me", url: "tel:+15551234567", icon: 'Phone' },
+        { title: "LinkedIn", url: "https://linkedin.com/in/janedoe", icon: 'Linkedin' },
+        { title: "GitHub", url: "https://github.com/janedoe", icon: 'Github' },
+        { title: "Twitter / X", url: "https://twitter.com/janedoe", icon: 'Twitter' },
+        { title: "Instagram", url: "https://instagram.com/janedoe.designs", icon: 'Instagram' },
+        { title: "Facebook", url: "https://facebook.com/janedoe.creative", icon: 'Facebook' },
+        { title: "YouTube", url: "https://youtube.com/@janedoecreates", icon: 'Youtube' },
+    ],
     jobs: [
        { id: 'job1', title: 'UX/UI Designer', company: 'Creative Solutions', location: 'Remote', type: 'Full-time', postingDate: '2024-08-20T09:00:00Z', imageUrl: 'https://placehold.co/600x400.png', status: 'active' },
     ],
@@ -174,6 +193,8 @@ export const allUsers: User[] = [
     avatarFallback: 'JS',
     bio: "Writer and thought leader on the future of work. Exploring remote collaboration and productivity hacks.",
     following: ['user1', 'user4'],
+    subscribers: "5.1k",
+    links: [],
     jobs: [],
     events: [],
     offers: [],
@@ -199,6 +220,8 @@ export const allUsers: User[] = [
     avatarFallback: 'AJ',
     bio: "Frontend developer passionate about building beautiful and accessible user interfaces with React and Next.js.",
     following: ['user1'],
+    subscribers: "1.2k",
+    links: [],
     jobs: [],
     events: [],
     offers: [],
@@ -215,6 +238,8 @@ export const allUsers: User[] = [
     avatarFallback: 'MG',
     bio: "Web developer and CSS enthusiast. Speaker at Web Dev Conference. Sharing tips on modern web technologies.",
     following: ['user1', 'user2'],
+    subscribers: "8.7k",
+    links: [],
     jobs: [],
     events: [],
     offers: [],
@@ -240,6 +265,8 @@ export const allUsers: User[] = [
     avatarFallback: 'CL',
     bio: "Startup founder and tech investor. Always looking for the next big thing in SaaS and AI.",
     following: [],
+    subscribers: "25k",
+    links: [],
     jobs: [],
     events: [],
     offers: [],
@@ -256,6 +283,8 @@ export const allUsers: User[] = [
     avatarFallback: 'PW',
     bio: "Marketing strategist helping brands grow their online presence. Expert in SEO and content marketing.",
     following: [],
+    subscribers: "4.3k",
+    links: [],
     jobs: [],
     events: [],
     offers: [],
@@ -272,6 +301,8 @@ export const allUsers: User[] = [
     avatarFallback: 'MB',
     bio: "Photographer and videographer. Capturing moments that tell a story. Based in New York.",
     following: [],
+    subscribers: "15.2k",
+    links: [],
     jobs: [],
     events: [],
     offers: [],
