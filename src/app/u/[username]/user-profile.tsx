@@ -328,9 +328,12 @@ export default function UserProfilePage({ userProfileData }: UserProfilePageProp
             </form>
           </div>
 
-          <div className="text-center mt-8">
+          <div className="text-center mt-8 flex flex-col items-center gap-2">
              <a href={`/u/${username}/card`} className="text-sm text-primary hover:underline font-semibold">
                 View Digital Business Card
+             </a>
+             <a href={`/u/${username}/bio`} className="text-sm text-primary hover:underline font-semibold">
+                View Bio Card
              </a>
           </div>
 

@@ -32,6 +32,7 @@ import {
   CalendarDays,
   Building2,
   Bell,
+  BookUser,
 } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -220,6 +221,16 @@ export function MainSidebar() {
                 icon={<CreditCard />}
               >
                 Digital Business Card
+              </SidebarMenuButton>
+            </Link>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <Link href={`/u/${currentUser.username}/bio`}>
+              <SidebarMenuButton
+                isActive={isActive(`/u/${currentUser.username}/bio`)}
+                icon={<BookUser />}
+              >
+                Bio Card
               </SidebarMenuButton>
             </Link>
           </SidebarMenuItem>
