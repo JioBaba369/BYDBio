@@ -19,6 +19,10 @@ import { currentUser } from "@/lib/mock-data";
 import ShareButton from "@/components/share-button";
 import { linkIcons } from "@/lib/link-icons";
 import Image from "next/image";
+import { cn } from "@/lib/utils";
+
+// Add isLiked to post type for this component's state
+type PostWithLike = (typeof currentUser.posts)[0] & { isLiked: boolean };
 
 export default function LinkInBioPage() {
   const params = useParams();
@@ -26,7 +30,16 @@ export default function LinkInBioPage() {
 
   // In a real app, you would fetch user data based on params.username
   // For now, we'll use our mock data if the username matches.
-  const userProfile = username === currentUser.username ? currentUser : null;
+  const userProfileData = username === currentUser.username ? currentUser : null;
+
+  const [userProfile, setUserProfile] = useState(
+    userProfileData
+      ? {
+          ...userProfileData,
+          posts: userProfileData.posts.map((p) => ({ ...p, isLiked: false })),
+        }
+      : null
+  );
 
   const { toast } = useToast();
   const [contactName, setContactName] = useState('');
@@ -62,6 +75,25 @@ export default function LinkInBioPage() {
         variant: "destructive",
       });
     }
+  };
+  
+  const handleLike = (postId: string) => {
+    if (!userProfile) return;
+
+    setUserProfile((prevProfile) => {
+      if (!prevProfile) return null;
+      return {
+        ...prevProfile,
+        posts: prevProfile.posts.map((post) => {
+          if (post.id === postId) {
+            const isLiked = !post.isLiked;
+            const likes = isLiked ? post.likes + 1 : post.likes - 1;
+            return { ...post, isLiked, likes };
+          }
+          return post;
+        }),
+      };
+    });
   };
 
   if (!userProfile) {
@@ -131,10 +163,10 @@ export default function LinkInBioPage() {
                         )}
                       </CardContent>
                       <CardFooter className="flex justify-start items-center gap-4 px-4 pb-4 pt-2 text-sm text-muted-foreground">
-                          <div className="flex items-center gap-1">
-                              <Heart className="h-4 w-4" />
+                          <button onClick={() => handleLike(post.id)} className="flex items-center gap-1 hover:text-primary transition-colors">
+                              <Heart className={cn("h-4 w-4", post.isLiked && "fill-red-500 text-red-500")} />
                               <span>{post.likes}</span>
-                          </div>
+                          </button>
                           <div className="flex items-center gap-1">
                               <MessageCircle className="h-4 w-4" />
                               <span>{post.comments}</span>

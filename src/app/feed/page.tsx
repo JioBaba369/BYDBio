@@ -12,11 +12,13 @@ import { useState, useMemo } from "react";
 import { currentUser } from "@/lib/mock-data";
 import { allUsers as initialUsers } from "@/lib/users";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 
-// Combine user data with their posts for the feed
-const initialFeedItems = initialUsers.flatMap(user => 
+// Combine user data with their posts for the feed, adding a liked state
+const initialFeedItems = initialUsers.flatMap(user =>
   user.posts.map(post => ({
     ...post,
+    isLiked: false, // Initial state: no posts are liked by default
     author: {
       id: user.id,
       name: user.name,
@@ -48,6 +50,7 @@ export default function FeedPage() {
       imageUrl: null, // For now, we don't support image uploads in new posts
       timestamp: "Just now",
       likes: 0,
+      isLiked: false,
       comments: 0,
       author: {
         id: currentUser.id,
@@ -64,6 +67,19 @@ export default function FeedPage() {
       title: "Update Posted!",
       description: "Your new status has been added to the feed.",
     });
+  };
+
+  const handleLike = (postId: string) => {
+    setFeedItems(prevItems =>
+      prevItems.map(item => {
+        if (item.id === postId) {
+          const isLiked = !item.isLiked;
+          const likes = isLiked ? item.likes + 1 : item.likes - 1;
+          return { ...item, isLiked, likes };
+        }
+        return item;
+      })
+    );
   };
 
   const usersToShow = useMemo(() => {
@@ -84,7 +100,7 @@ export default function FeedPage() {
               <AvatarFallback>{currentUser.avatarFallback}</AvatarFallback>
             </Avatar>
             <div className="w-full space-y-2">
-              <Textarea 
+              <Textarea
                 id="new-post"
                 placeholder="What's on your mind?"
                 className="w-full text-base border-0 focus-visible:ring-0 ring-offset-0 p-0"
@@ -134,8 +150,8 @@ export default function FeedPage() {
               )}
             </CardContent>
             <CardFooter className="flex justify-between p-4 border-t">
-              <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground">
-                <Heart className="h-5 w-5" />
+              <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground" onClick={() => handleLike(item.id)}>
+                <Heart className={cn("h-5 w-5", item.isLiked && "fill-red-500 text-red-500")} />
                 <span>{item.likes}</span>
               </Button>
               <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground">
