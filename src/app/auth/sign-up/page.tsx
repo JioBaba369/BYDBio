@@ -11,6 +11,10 @@ import Link from "next/link";
 import { Github } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { createUserWithEmailAndPassword, GithubAuthProvider, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { auth, db } from "@/lib/firebase";
+import { doc, setDoc } from "firebase/firestore";
 
 const signUpSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
@@ -22,6 +26,7 @@ type SignUpFormValues = z.infer<typeof signUpSchema>;
 
 export default function SignUpPage() {
     const { toast } = useToast();
+    const router = useRouter();
     const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<SignUpFormValues>({
@@ -33,19 +38,55 @@ export default function SignUpPage() {
     },
   });
 
-  const onSubmit = (data: SignUpFormValues) => {
+  const onSubmit = async (data: SignUpFormValues) => {
     setIsSubmitting(true);
-    console.log("Sign up data:", data);
-    // Mock API call
-    setTimeout(() => {
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
+      const user = userCredential.user;
+
+      // TODO: Create a full user profile in Firestore.
+      // This is a basic profile, it can be expanded later.
+      await setDoc(doc(db, "users", user.uid), {
+        uid: user.uid,
+        email: user.email,
+        name: data.name,
+        // Add other default fields here
+      });
+
       toast({
         title: "Account Created",
         description: "Welcome! You can now sign in.",
       });
-      // In a real app, you would redirect the user e.g. router.push('/auth/sign-in')
+      router.push('/');
+    } catch (error: any) {
+      console.error("Sign up error:", error);
+      toast({
+        title: "Sign Up Failed",
+        description: error.message || "An unexpected error occurred.",
+        variant: "destructive",
+      });
+    } finally {
       setIsSubmitting(false);
-    }, 1000);
+    }
   };
+
+  const handleSocialSignIn = async (provider: GoogleAuthProvider | GithubAuthProvider) => {
+    try {
+      await signInWithPopup(auth, provider);
+       toast({
+        title: "Sign In Successful",
+        description: "Welcome!",
+      });
+      router.push('/');
+    } catch (error: any) {
+       console.error("Social sign in error:", error);
+       toast({
+        title: "Sign In Failed",
+        description: error.message || "Could not sign in with the selected provider.",
+        variant: "destructive",
+      });
+    }
+  }
   
   const GoogleIcon = () => (
     <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
@@ -115,8 +156,8 @@ export default function SignUpPage() {
           </div>
         </div>
         <div className="grid grid-cols-2 gap-4">
-          <Button variant="outline"><GoogleIcon /> Google</Button>
-          <Button variant="outline"><Github /> GitHub</Button>
+          <Button variant="outline" onClick={() => handleSocialSignIn(new GoogleAuthProvider())}><GoogleIcon /> Google</Button>
+          <Button variant="outline" onClick={() => handleSocialSignIn(new GithubAuthProvider())}><Github /> GitHub</Button>
         </div>
       </CardContent>
       <CardFooter className="justify-center">

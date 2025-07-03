@@ -11,6 +11,9 @@ import Link from "next/link";
 import { Github } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { signInWithEmailAndPassword, GoogleAuthProvider, GithubAuthProvider, signInWithPopup } from "firebase/auth";
+import { auth } from "@/lib/firebase";
 
 const signInSchema = z.object({
   email: z.string().email("Please enter a valid email address."),
@@ -21,6 +24,7 @@ type SignInFormValues = z.infer<typeof signInSchema>;
 
 export default function SignInPage() {
   const { toast } = useToast();
+  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<SignInFormValues>({
@@ -31,19 +35,44 @@ export default function SignInPage() {
     },
   });
 
-  const onSubmit = (data: SignInFormValues) => {
+  const onSubmit = async (data: SignInFormValues) => {
     setIsSubmitting(true);
-    console.log("Sign in data:", data);
-    // Mock API call
-    setTimeout(() => {
+    try {
+      await signInWithEmailAndPassword(auth, data.email, data.password);
       toast({
         title: "Sign In Successful",
         description: "Welcome back!",
       });
-      // In a real app, you would redirect the user e.g. router.push('/')
+      router.push('/');
+    } catch (error: any) {
+      console.error("Sign in error:", error);
+      toast({
+        title: "Sign In Failed",
+        description: error.message || "An unexpected error occurred. Please check your credentials.",
+        variant: "destructive",
+      });
+    } finally {
       setIsSubmitting(false);
-    }, 1000);
+    }
   };
+
+  const handleSocialSignIn = async (provider: GoogleAuthProvider | GithubAuthProvider) => {
+    try {
+      await signInWithPopup(auth, provider);
+       toast({
+        title: "Sign In Successful",
+        description: "Welcome back!",
+      });
+      router.push('/');
+    } catch (error: any) {
+       console.error("Social sign in error:", error);
+       toast({
+        title: "Sign In Failed",
+        description: error.message || "Could not sign in with the selected provider.",
+        variant: "destructive",
+      });
+    }
+  }
   
   const GoogleIcon = () => (
     <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
@@ -105,8 +134,8 @@ export default function SignInPage() {
           </div>
         </div>
         <div className="grid grid-cols-2 gap-4">
-          <Button variant="outline"><GoogleIcon /> Google</Button>
-          <Button variant="outline"><Github /> GitHub</Button>
+          <Button variant="outline" onClick={() => handleSocialSignIn(new GoogleAuthProvider())}><GoogleIcon /> Google</Button>
+          <Button variant="outline" onClick={() => handleSocialSignIn(new GithubAuthProvider())}><Github /> GitHub</Button>
         </div>
       </CardContent>
       <CardFooter className="justify-center">
