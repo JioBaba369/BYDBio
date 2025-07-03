@@ -102,16 +102,6 @@ export function MainSidebar() {
             </Link>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <Link href="/profile">
-              <SidebarMenuButton
-                isActive={isActive('/profile')}
-                icon={<User />}
-              >
-                Profile Editor
-              </SidebarMenuButton>
-            </Link>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
             <Link href="/feed">
               <SidebarMenuButton
                 isActive={isActive('/feed')}
@@ -132,22 +122,12 @@ export function MainSidebar() {
             </Link>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <Link href="/opportunities">
+            <Link href="/profile">
               <SidebarMenuButton
-                isActive={isActive('/opportunities')}
-                icon={<Briefcase />}
+                isActive={isActive('/profile')}
+                icon={<User />}
               >
-                Jobs
-              </SidebarMenuButton>
-            </Link>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <Link href="/events">
-              <SidebarMenuButton
-                isActive={isActive('/events')}
-                icon={<Calendar />}
-              >
-                Events
+                Profile Editor
               </SidebarMenuButton>
             </Link>
           </SidebarMenuItem>
@@ -162,22 +142,42 @@ export function MainSidebar() {
             </Link>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <Link href="/offers">
-              <SidebarMenuButton
-                isActive={isActive('/offers')}
-                icon={<DollarSign />}
-              >
-                Offers
-              </SidebarMenuButton>
-            </Link>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
             <Link href="/listings">
               <SidebarMenuButton
                 isActive={isActive('/listings')}
                 icon={<Tags />}
               >
                 Listings
+              </SidebarMenuButton>
+            </Link>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <Link href="/opportunities">
+              <SidebarMenuButton
+                isActive={isActive('/opportunities')}
+                icon={<Briefcase />}
+              >
+                Opportunities
+              </SidebarMenuButton>
+            </Link>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <Link href="/events">
+              <SidebarMenuButton
+                isActive={isActive('/events')}
+                icon={<Calendar />}
+              >
+                Events
+              </SidebarMenuButton>
+            </Link>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <Link href="/offers">
+              <SidebarMenuButton
+                isActive={isActive('/offers')}
+                icon={<DollarSign />}
+              >
+                Offers
               </SidebarMenuButton>
             </Link>
           </SidebarMenuItem>

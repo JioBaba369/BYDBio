@@ -5,18 +5,18 @@ import { Briefcase, MapPin, PlusCircle } from "lucide-react"
 import { currentUser } from "@/lib/mock-data";
 import Image from "next/image";
 
-export default function JobsPage() {
+export default function OpportunitiesPage() {
   const { jobs } = currentUser;
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold font-headline">Jobs</h1>
-          <p className="text-muted-foreground">Discover curated jobs to boost your career.</p>
+          <h1 className="text-2xl sm:text-3xl font-bold font-headline">Opportunities</h1>
+          <p className="text-muted-foreground">Discover curated job opportunities to boost your career.</p>
         </div>
         <Button>
             <PlusCircle className="mr-2 h-4 w-4" />
-            Post Job
+            Post Opportunity
         </Button>
       </div>
       {jobs.length > 0 ? (
@@ -49,7 +49,7 @@ export default function JobsPage() {
       ) : (
         <Card>
           <CardContent className="p-10 text-center text-muted-foreground">
-            No jobs posted at the moment.
+            No job opportunities posted at the moment.
           </CardContent>
         </Card>
       )}
