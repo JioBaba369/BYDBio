@@ -44,18 +44,30 @@ export default function SignUpPage() {
       const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
       const user = userCredential.user;
 
-      // TODO: Create a full user profile in Firestore.
-      // This is a basic profile, it can be expanded later.
+      // Create a full user profile in Firestore.
       await setDoc(doc(db, "users", user.uid), {
         uid: user.uid,
         email: user.email,
         name: data.name,
-        // Add other default fields here
+        username: user.email?.split('@')[0] || `user${user.uid.substring(0,5)}`,
+        avatarUrl: user.photoURL || `https://placehold.co/200x200.png`,
+        avatarFallback: data.name.charAt(0).toUpperCase(),
+        bio: "",
+        following: [],
+        subscribers: "0",
+        links: [],
+        jobs: [],
+        events: [],
+        offers: [],
+        listings: [],
+        posts: [],
+        businesses: [],
+        rsvpedEventIds: [],
       });
 
       toast({
         title: "Account Created",
-        description: "Welcome! You can now sign in.",
+        description: "Welcome! We're redirecting you to your new profile.",
       });
       router.push('/');
     } catch (error: any) {
@@ -72,24 +84,36 @@ export default function SignUpPage() {
 
   const handleSocialSignIn = async (provider: GoogleAuthProvider | GithubAuthProvider) => {
     try {
-      await signInWithPopup(auth, provider);
+      const userCredential = await signInWithPopup(auth, provider);
+      const user = userCredential.user;
+
+      // Create or update user profile in Firestore
+      await setDoc(doc(db, "users", user.uid), {
+        uid: user.uid,
+        email: user.email,
+        name: user.displayName,
+        username: user.email?.split('@')[0] || `user${user.uid.substring(0,5)}`,
+        avatarUrl: user.photoURL || `https://placehold.co/200x200.png`,
+        avatarFallback: user.displayName?.charAt(0).toUpperCase() || 'U',
+      }, { merge: true }); // Use merge: true to avoid overwriting all data if the user already exists.
+
        toast({
-        title: "Sign In Successful",
-        description: "Welcome!",
+        title: "Account Created",
+        description: "Welcome! We're redirecting you to your new profile.",
       });
       router.push('/');
     } catch (error: any) {
        console.error("Social sign in error:", error);
        toast({
-        title: "Sign In Failed",
-        description: error.message || "Could not sign in with the selected provider.",
+        title: "Sign Up Failed",
+        description: error.message || "Could not sign up with the selected provider.",
         variant: "destructive",
       });
     }
   }
   
   const GoogleIcon = () => (
-    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
+    <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
       <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" /><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" /><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05" /><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" /><path d="M1 1h22v22H1z" fill="none" />
     </svg>
   );
@@ -152,12 +176,12 @@ export default function SignUpPage() {
             <span className="w-full border-t" />
           </div>
           <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
+            <span className="bg-background px-2 text-muted-foreground">Or sign up with</span>
           </div>
         </div>
         <div className="grid grid-cols-2 gap-4">
           <Button variant="outline" onClick={() => handleSocialSignIn(new GoogleAuthProvider())}><GoogleIcon /> Google</Button>
-          <Button variant="outline" onClick={() => handleSocialSignIn(new GithubAuthProvider())}><Github /> GitHub</Button>
+          <Button variant="outline" onClick={() => handleSocialSignIn(new GithubAuthProvider())}><Github className="mr-2" /> GitHub</Button>
         </div>
       </CardContent>
       <CardFooter className="justify-center">
