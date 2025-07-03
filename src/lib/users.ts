@@ -1,7 +1,7 @@
 // In a real app, this data would come from a database.
 // It's defined here for demonstration purposes.
 
-type Listing = {
+export type Listing = {
   id: string;
   title: string;
   description: string;
@@ -9,6 +9,7 @@ type Listing = {
   imageUrl: string;
   category: string;
   publishDate: string;
+  status: 'active' | 'archived';
 };
 
 export type Post = {
@@ -20,28 +21,34 @@ export type Post = {
   comments: number;
 };
 
-type Offer = {
+export type Offer = {
+  id: string;
   title: string;
   description: string;
   category: string;
   releaseDate: string;
   imageUrl: string | null;
+  status: 'active' | 'archived';
 };
 
-type Job = {
+export type Job = {
+  id: string;
   title: string;
   company: string;
   location: string;
   type: string;
   postingDate: string;
   imageUrl: string | null;
+  status: 'active' | 'archived';
 };
 
-type Event = {
+export type Event = {
+  id: string;
   title: string;
   date: string;
   location: string;
   imageUrl: string | null;
+  status: 'active' | 'archived';
 };
 
 type User = {
@@ -69,18 +76,18 @@ export const allUsers: User[] = [
     avatarFallback: 'JD',
     following: ['user2', 'user4', 'user5'],
     jobs: [
-       { title: 'UX/UI Designer', company: 'Creative Solutions', location: 'Remote', type: 'Full-time', postingDate: '2024-08-20T09:00:00Z', imageUrl: 'https://placehold.co/600x400.png' },
+       { id: 'job1', title: 'UX/UI Designer', company: 'Creative Solutions', location: 'Remote', type: 'Full-time', postingDate: '2024-08-20T09:00:00Z', imageUrl: 'https://placehold.co/600x400.png', status: 'active' },
     ],
     events: [
-        { title: 'Design Thinking Workshop', date: '2024-08-15T14:00:00Z', location: 'Online', imageUrl: 'https://placehold.co/600x400.png' },
+        { id: 'event1', title: 'Design Thinking Workshop', date: '2024-08-15T14:00:00Z', location: 'Online', imageUrl: 'https://placehold.co/600x400.png', status: 'active' },
     ],
     offers: [
-        { title: '1-on-1 Portfolio Review', description: 'Get expert feedback on your design portfolio.', category: 'Consulting', releaseDate: '2024-09-01T10:00:00Z', imageUrl: 'https://placehold.co/600x400.png' },
-        { title: 'Early-Bird Discount: Web Design Course', description: 'Get 20% off my upcoming masterclass.', category: 'Discount', releaseDate: '2024-09-10T00:00:00Z', imageUrl: 'https://placehold.co/600x400.png' },
+        { id: 'offer1', title: '1-on-1 Portfolio Review', description: 'Get expert feedback on your design portfolio.', category: 'Consulting', releaseDate: '2024-09-01T10:00:00Z', imageUrl: 'https://placehold.co/600x400.png', status: 'active' },
+        { id: 'offer2', title: 'Early-Bird Discount: Web Design Course', description: 'Get 20% off my upcoming masterclass.', category: 'Discount', releaseDate: '2024-09-10T00:00:00Z', imageUrl: 'https://placehold.co/600x400.png', status: 'active' },
     ],
     listings: [
-        { id: 'listing1', title: 'Minimalist Icon Set', description: 'A pack of 200+ clean, modern icons for your next project.', price: '$25', imageUrl: 'https://placehold.co/600x400.png', category: 'Digital Asset', publishDate: '2024-08-25T09:00:00Z' },
-        { id: 'listing2', title: 'Web Design Masterclass', description: 'A 10-hour video course on modern web design principles.', price: '$149', imageUrl: 'https://placehold.co/600x400.png', category: 'Education', publishDate: '2024-08-10T09:00:00Z' },
+        { id: 'listing1', title: 'Minimalist Icon Set', description: 'A pack of 200+ clean, modern icons for your next project.', price: '$25', imageUrl: 'https://placehold.co/600x400.png', category: 'Digital Asset', publishDate: '2024-08-25T09:00:00Z', status: 'active' },
+        { id: 'listing2', title: 'Web Design Masterclass', description: 'A 10-hour video course on modern web design principles.', price: '$149', imageUrl: 'https://placehold.co/600x400.png', category: 'Education', publishDate: '2024-08-10T09:00:00Z', status: 'active' },
     ],
     posts: [
       {
