@@ -24,7 +24,7 @@ import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalList
 import { CSS } from '@dnd-kit/utilities';
 import BioGenerator from "@/components/ai/bio-generator";
 import ImageCropper from "@/components/image-cropper";
-import { useAuth } from "../auth-provider";
+import { useAuth } from "@/components/auth-provider";
 import { Skeleton } from "@/components/ui/skeleton";
 import { updateUser } from "@/lib/users";
 import { Label } from "@/components/ui/label";
