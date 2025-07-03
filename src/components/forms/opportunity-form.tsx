@@ -74,6 +74,8 @@ export function OpportunityForm({ defaultValues, onSubmit, isSaving }: Opportuni
         open={isCropperOpen}
         onOpenChange={setIsCropperOpen}
         onCropComplete={handleCropComplete}
+        aspectRatio={16/9}
+        isRound={false}
       />
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">

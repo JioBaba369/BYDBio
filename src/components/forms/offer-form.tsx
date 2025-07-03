@@ -83,6 +83,8 @@ export function OfferForm({ defaultValues, onSubmit, isSaving }: OfferFormProps)
         open={isCropperOpen}
         onOpenChange={setIsCropperOpen}
         onCropComplete={handleCropComplete}
+        aspectRatio={16/9}
+        isRound={false}
       />
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">

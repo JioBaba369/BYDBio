@@ -30,6 +30,7 @@ import {
   Users,
   Tags,
   CalendarDays,
+  Building2,
 } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -138,6 +139,16 @@ export function MainSidebar() {
                 icon={<CalendarDays />}
               >
                 Content Calendar
+              </SidebarMenuButton>
+            </Link>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <Link href="/businesses">
+              <SidebarMenuButton
+                isActive={isActive('/businesses')}
+                icon={<Building2 />}
+              >
+                My Businesses
               </SidebarMenuButton>
             </Link>
           </SidebarMenuItem>

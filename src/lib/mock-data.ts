@@ -1,9 +1,46 @@
-import { allUsers } from "./users";
+import { allUsers, Business } from "./users";
 
 // This would be determined by authentication in a real app
 const CURRENT_USER_ID = 'user1'; 
 
 const fullCurrentUser = allUsers.find(u => u.id === CURRENT_USER_ID)!;
+
+// Add mock business data
+const userBusinesses: Business[] = [
+  {
+    id: 'biz1',
+    name: 'Acme Inc. Design Studio',
+    description: 'A full-service design agency specializing in branding, web design, and user experience for tech startups.',
+    email: 'hello@acme.design',
+    phone: '+1 (555) 555-1234',
+    website: 'https://acme.design',
+    address: '123 Design St, San Francisco, CA 94105',
+    imageUrl: 'https://placehold.co/600x400.png',
+    status: 'active',
+  },
+  {
+    id: 'biz2',
+    name: 'Side Hustle Icons',
+    description: 'A digital marketplace for high-quality, handcrafted icon sets for developers and designers.',
+    email: 'support@sidehustleicons.com',
+    website: 'https://sidehustleicons.com',
+    address: 'Remote',
+    phone: '',
+    imageUrl: 'https://placehold.co/600x400.png',
+    status: 'active',
+  },
+  {
+    id: 'biz3',
+    name: 'Archived Ventures',
+    description: 'This is an archived business page for demonstration purposes.',
+    email: 'archive@example.com',
+    website: 'https://archive.example.com',
+    address: 'N/A',
+    phone: '',
+    imageUrl: 'https://placehold.co/600x400.png',
+    status: 'archived',
+  }
+];
 
 export const currentUser = {
   ...fullCurrentUser,
@@ -29,5 +66,6 @@ export const currentUser = {
     website: "https://janedoe.design",
     linkedin: "https://www.linkedin.com/in/janedoe",
     location: "San Francisco, CA",
-  }
+  },
+  businesses: userBusinesses,
 };

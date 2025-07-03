@@ -279,6 +279,8 @@ END:VCARD`;
           setCroppedImageUrl(url);
           setIsCropperOpen(false);
         }}
+        isRound={true}
+        aspectRatio={1}
       />
       <div>
         <h1 className="text-2xl sm:text-3xl font-bold font-headline">Profile Editor</h1>

@@ -51,6 +51,18 @@ export type Event = {
   status: 'active' | 'archived';
 };
 
+export type Business = {
+  id: string;
+  name: string;
+  description: string;
+  email: string;
+  phone?: string;
+  website?: string;
+  address?: string;
+  imageUrl?: string | null;
+  status: 'active' | 'archived';
+};
+
 type User = {
   id: string;
   name: string;
@@ -65,6 +77,7 @@ type User = {
   offers: Offer[];
   listings: Listing[];
   posts: Post[];
+  businesses: Business[];
 };
 
 export const allUsers: User[] = [
@@ -108,7 +121,8 @@ export const allUsers: User[] = [
         likes: 256,
         comments: 24,
       }
-    ]
+    ],
+    businesses: [],
   },
   {
     id: 'user2',
@@ -132,7 +146,8 @@ export const allUsers: User[] = [
         likes: 72,
         comments: 5,
       }
-    ]
+    ],
+    businesses: [],
   },
   {
     id: 'user3',
@@ -148,6 +163,7 @@ export const allUsers: User[] = [
     offers: [],
     listings: [],
     posts: [],
+    businesses: [],
   },
   {
     id: 'user4',
@@ -172,6 +188,7 @@ export const allUsers: User[] = [
         comments: 15,
       }
     ],
+    businesses: [],
   },
   {
     id: 'user5',
@@ -187,6 +204,7 @@ export const allUsers: User[] = [
     offers: [],
     listings: [],
     posts: [],
+    businesses: [],
   },
   {
     id: 'user6',
@@ -202,6 +220,7 @@ export const allUsers: User[] = [
     offers: [],
     listings: [],
     posts: [],
+    businesses: [],
   },
   {
     id: 'user7',
@@ -217,5 +236,6 @@ export const allUsers: User[] = [
     offers: [],
     listings: [],
     posts: [],
+    businesses: [],
   },
 ];

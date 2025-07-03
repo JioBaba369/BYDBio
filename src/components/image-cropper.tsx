@@ -13,9 +13,18 @@ interface ImageCropperProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onCropComplete: (croppedImageUrl: string) => void;
+  aspectRatio?: number;
+  isRound?: boolean;
 }
 
-export default function ImageCropper({ imageSrc, open, onOpenChange, onCropComplete }: ImageCropperProps) {
+export default function ImageCropper({ 
+  imageSrc, 
+  open, 
+  onOpenChange, 
+  onCropComplete, 
+  aspectRatio = 1,
+  isRound = true,
+}: ImageCropperProps) {
   const [crop, setCrop] = useState({ x: 0, y: 0 })
   const [zoom, setZoom] = useState(1)
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null)
@@ -54,7 +63,7 @@ export default function ImageCropper({ imageSrc, open, onOpenChange, onCropCompl
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Crop Your Profile Photo</DialogTitle>
+          <DialogTitle>Crop Your Image</DialogTitle>
           <DialogDescription>
             Adjust the image to get the perfect fit.
           </DialogDescription>
@@ -64,11 +73,11 @@ export default function ImageCropper({ imageSrc, open, onOpenChange, onCropCompl
             image={imageSrc}
             crop={crop}
             zoom={zoom}
-            aspect={1}
+            aspect={aspectRatio}
             onCropChange={setCrop}
             onZoomChange={setZoom}
             onCropComplete={handleCropComplete}
-            cropShape="round"
+            cropShape={isRound ? "round" : "rect"}
             showGrid={false}
           />
         </div>
@@ -85,7 +94,7 @@ export default function ImageCropper({ imageSrc, open, onOpenChange, onCropCompl
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={handleShowCroppedImage}>Save Photo</Button>
+          <Button onClick={handleShowCroppedImage}>Save Image</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
