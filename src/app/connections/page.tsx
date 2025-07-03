@@ -46,7 +46,7 @@ export default function ConnectionsPage() {
         // Also update the 'following' list if the user is in it
         setFollowingList(prevList => {
             const userExists = prevList.some(u => u.id === userId);
-            const userDetails = followers.find(u => u.id === userId);
+            const userDetails = followersList.find(u => u.id === userId);
             if (userExists) {
                 return prevList.filter(u => u.id !== userId);
             } else if (userDetails) {
@@ -74,7 +74,7 @@ export default function ConnectionsPage() {
         setFollowingList(prevList => prevList.filter(user => user.id !== userId));
     };
 
-    const handleQrScanSuccess = (decodedText: string) => {
+    const handleQrScanSuccess = (decodedText: string, decodedResult: any) => {
       try {
         const url = new URL(decodedText);
         const pathParts = url.pathname.split('/');

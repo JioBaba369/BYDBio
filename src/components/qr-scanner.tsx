@@ -1,13 +1,13 @@
+
 'use client';
 
 import { Html5QrcodeScanner, Html5QrcodeScannerState } from 'html5-qrcode';
-import type { QrcodeSuccessCallback } from 'html5-qrcode/esm/core';
 import { useEffect } from 'react';
 
 const qrcodeRegionId = 'html5qr-code-full-region';
 
 interface QrScannerProps {
-  onScanSuccess: QrcodeSuccessCallback;
+  onScanSuccess: (decodedText: string, decodedResult: any) => void;
   onScanFailure?: (error: any) => void;
 }
 
