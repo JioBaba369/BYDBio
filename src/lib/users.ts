@@ -58,6 +58,7 @@ type User = {
   username: string;
   avatarUrl: string;
   avatarFallback: string;
+  bio: string;
   following: string[]; // Array of user IDs this user follows
   jobs: Job[];
   events: Event[];
@@ -74,6 +75,7 @@ export const allUsers: User[] = [
     username: 'janedoe',
     avatarUrl: 'https://placehold.co/200x200.png',
     avatarFallback: 'JD',
+    bio: "Senior Product Designer at Acme Inc. Crafting user-centric experiences that bridge business goals and user needs. Passionate about design systems and accessibility.",
     following: ['user2', 'user4', 'user5'],
     jobs: [
        { id: 'job1', title: 'UX/UI Designer', company: 'Creative Solutions', location: 'Remote', type: 'Full-time', postingDate: '2024-08-20T09:00:00Z', imageUrl: 'https://placehold.co/600x400.png', status: 'active' },
@@ -115,6 +117,7 @@ export const allUsers: User[] = [
     username: 'johnsmith',
     avatarUrl: 'https://placehold.co/100x100.png',
     avatarFallback: 'JS',
+    bio: "Writer and thought leader on the future of work. Exploring remote collaboration and productivity hacks.",
     following: ['user1', 'user4'],
     jobs: [],
     events: [],
@@ -138,6 +141,7 @@ export const allUsers: User[] = [
     username: 'alexj',
     avatarUrl: 'https://placehold.co/100x100.png',
     avatarFallback: 'AJ',
+    bio: "Frontend developer passionate about building beautiful and accessible user interfaces with React and Next.js.",
     following: ['user1'],
     jobs: [],
     events: [],
@@ -152,6 +156,7 @@ export const allUsers: User[] = [
     username: 'mariag',
     avatarUrl: 'https://placehold.co/100x100.png',
     avatarFallback: 'MG',
+    bio: "Web developer and CSS enthusiast. Speaker at Web Dev Conference. Sharing tips on modern web technologies.",
     following: ['user1', 'user2'],
     jobs: [],
     events: [],
@@ -175,6 +180,7 @@ export const allUsers: User[] = [
     username: 'chrisl',
     avatarUrl: 'https://placehold.co/100x100.png',
     avatarFallback: 'CL',
+    bio: "Startup founder and tech investor. Always looking for the next big thing in SaaS and AI.",
     following: [],
     jobs: [],
     events: [],
@@ -189,6 +195,7 @@ export const allUsers: User[] = [
     username: 'patriciaw',
     avatarUrl: 'https://placehold.co/100x100.png',
     avatarFallback: 'PW',
+    bio: "Marketing strategist helping brands grow their online presence. Expert in SEO and content marketing.",
     following: [],
     jobs: [],
     events: [],
@@ -203,6 +210,7 @@ export const allUsers: User[] = [
     username: 'mikeb',
     avatarUrl: 'https://placehold.co/100x100.png',
     avatarFallback: 'MB',
+    bio: "Photographer and videographer. Capturing moments that tell a story. Based in New York.",
     following: [],
     jobs: [],
     events: [],

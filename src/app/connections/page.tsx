@@ -141,54 +141,64 @@ export default function ConnectionsPage() {
           <TabsTrigger value="following">Following ({followingList.length})</TabsTrigger>
         </TabsList>
         <TabsContent value="followers">
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="flex flex-col gap-4">
                 {followersList.map((user) => (
                     <Card key={user.id}>
-                        <CardContent className="p-4 flex items-center justify-between gap-4">
-                            <div className="flex items-center gap-4">
-                                <Avatar>
-                                    <AvatarImage src={user.avatarUrl} data-ai-hint="person portrait" />
-                                    <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                                </Avatar>
-                                <div>
-                                    <p className="font-semibold">{user.name}</p>
-                                    <p className="text-sm text-muted-foreground">@{user.handle}</p>
+                        <CardContent className="p-4">
+                            <div className="flex items-center justify-between gap-4">
+                                <div className="flex items-center gap-4">
+                                    <Avatar>
+                                        <AvatarImage src={user.avatarUrl} data-ai-hint="person portrait" />
+                                        <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                                    </Avatar>
+                                    <div>
+                                        <p className="font-semibold">{user.name}</p>
+                                        <p className="text-sm text-muted-foreground">@{user.handle}</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-2 flex-shrink-0">
+                                    <Button size="sm" variant={user.isFollowedByCurrentUser ? 'secondary' : 'default'} onClick={() => toggleFollow(user.id)}>
+                                        {user.isFollowedByCurrentUser ? <UserCheck className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
+                                        {user.isFollowedByCurrentUser ? 'Following' : 'Follow Back'}
+                                    </Button>
+                                    <Button size="sm" variant="outline" className="text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={() => removeFollower(user.id)}>
+                                        <UserMinus className="mr-2 h-4 w-4" />
+                                        Remove
+                                    </Button>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-2">
-                                <Button size="sm" variant={user.isFollowedByCurrentUser ? 'secondary' : 'default'} onClick={() => toggleFollow(user.id)}>
-                                    {user.isFollowedByCurrentUser ? <UserCheck className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
-                                    {user.isFollowedByCurrentUser ? 'Following' : 'Follow Back'}
-                                </Button>
-                                <Button size="sm" variant="outline" className="text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={() => removeFollower(user.id)}>
-                                    <UserMinus className="mr-2 h-4 w-4" />
-                                    Remove
-                                </Button>
-                            </div>
+                            {user.bio && (
+                                <p className="text-sm text-muted-foreground mt-3 pt-3 border-t">{user.bio}</p>
+                            )}
                         </CardContent>
                     </Card>
                 ))}
             </div>
         </TabsContent>
         <TabsContent value="following">
-             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+             <div className="flex flex-col gap-4">
                 {followingList.map((user) => (
                     <Card key={user.id}>
-                        <CardContent className="p-4 flex items-center justify-between gap-4">
-                            <div className="flex items-center gap-4">
-                                <Avatar>
-                                    <AvatarImage src={user.avatarUrl} data-ai-hint="person portrait" />
-                                    <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                                </Avatar>
-                                <div>
-                                    <p className="font-semibold">{user.name}</p>
-                                    <p className="text-sm text-muted-foreground">@{user.handle}</p>
+                        <CardContent className="p-4">
+                            <div className="flex items-center justify-between gap-4">
+                                 <div className="flex items-center gap-4">
+                                    <Avatar>
+                                        <AvatarImage src={user.avatarUrl} data-ai-hint="person portrait" />
+                                        <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                                    </Avatar>
+                                    <div>
+                                        <p className="font-semibold">{user.name}</p>
+                                        <p className="text-sm text-muted-foreground">@{user.handle}</p>
+                                    </div>
                                 </div>
+                                <Button size="sm" variant="secondary" onClick={() => toggleFollow(user.id)}>
+                                    <UserCheck className="mr-2 h-4 w-4" />
+                                    Unfollow
+                                </Button>
                             </div>
-                            <Button size="sm" variant="secondary" onClick={() => toggleFollow(user.id)}>
-                                <UserCheck className="mr-2 h-4 w-4" />
-                                Unfollow
-                            </Button>
+                             {user.bio && (
+                                <p className="text-sm text-muted-foreground mt-3 pt-3 border-t">{user.bio}</p>
+                            )}
                         </CardContent>
                     </Card>
                 ))}
