@@ -2,9 +2,10 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { cn } from '@/lib/utils';
 import { Toaster } from '@/components/ui/toaster';
-import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
-import { MainSidebar } from '@/components/main-sidebar';
+import { SidebarProvider } from '@/components/ui/sidebar';
 import { ThemeProvider } from '@/components/theme-provider';
+import { AuthProvider } from '@/components/auth-provider';
+import { AppLayout } from '@/components/app-layout';
 
 export const metadata: Metadata = {
   title: 'BYD.Bio - Build Your Dream Bio',
@@ -31,15 +32,14 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <SidebarProvider>
-              <MainSidebar />
-              <SidebarInset className="flex-1">
-                <main className="p-4 sm:p-6 lg:p-8">
+          <AuthProvider>
+            <SidebarProvider>
+                <AppLayout>
                   {children}
-                </main>
-              </SidebarInset>
-            <Toaster />
-          </SidebarProvider>
+                </AppLayout>
+              <Toaster />
+            </SidebarProvider>
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>
