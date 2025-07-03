@@ -262,7 +262,7 @@ export default function LinkInBioPage() {
           <div className="text-center">
             <Logo className="justify-center text-foreground" />
             <p className="mt-2 text-sm text-muted-foreground">
-              Your professional hub for profiles, links, and opportunities.
+              Build Your Dream Bio. Your professional hub for profiles, links, and opportunities.
             </p>
             <Button asChild className="mt-4 font-bold">
                 <Link href="/">Get Started Free</Link>

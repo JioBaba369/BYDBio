@@ -6,8 +6,8 @@ import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { MainSidebar } from '@/components/main-sidebar';
 
 export const metadata: Metadata = {
-  title: 'BYD.Bio',
-  description: 'Your professional hub for profiles, links, and opportunities.',
+  title: 'BYD.Bio - Build Your Dream Bio',
+  description: 'Build Your Dream Bio. Your professional hub for profiles, links, and opportunities.',
 };
 
 export default function RootLayout({
