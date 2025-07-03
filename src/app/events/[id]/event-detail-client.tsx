@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -5,7 +6,7 @@ import type { Event, User } from '@/lib/users';
 import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MapPin, Calendar, Clock, ArrowLeft, Users, Check } from 'lucide-react';
+import { MapPin, Calendar, Clock, ArrowLeft, Users, Ticket } from 'lucide-react';
 import Link from 'next/link';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
@@ -13,7 +14,6 @@ import { Separator } from '@/components/ui/separator';
 import { format, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
 import ShareButton from '@/components/share-button';
-import { useToast } from '@/hooks/use-toast';
 import { Logo } from '@/components/logo';
 
 interface EventDetailClientProps {
@@ -32,18 +32,7 @@ function ClientFormattedDate({ dateString, formatStr }: { dateString: string; fo
 
 
 export default function EventDetailClient({ event, author }: EventDetailClientProps) {
-    const [isRsvpd, setIsRsvpd] = useState(false);
-    const { toast } = useToast();
-
-    const handleRsvp = () => {
-        setIsRsvpd(!isRsvpd);
-        toast({
-            title: isRsvpd ? "You are no longer RSVP'd" : "You've RSVP'd!",
-            description: isRsvpd ? "We've removed you from the guest list." : "We've added you to the guest list. See you there!",
-        });
-    };
-
-    const attendeeCount = (event.rsvps || 0) + (isRsvpd ? 1 : 0);
+    const attendeeCount = event.rsvps || 0;
 
     return (
         <div className="bg-muted/40 min-h-screen py-8 px-4">
@@ -75,9 +64,11 @@ export default function EventDetailClient({ event, author }: EventDetailClientPr
                             </div>
                             <div className='flex items-center gap-2'>
                                 <ShareButton />
-                                <Button onClick={handleRsvp} size="lg" className={cn(isRsvpd && "bg-green-600 hover:bg-green-700")}>
-                                    {isRsvpd ? <Check className="mr-2 h-5 w-5"/> : <Users className="mr-2 h-5 w-5"/>}
-                                    {isRsvpd ? "Attending" : "RSVP"}
+                                <Button asChild size="lg">
+                                    <Link href={`/events/${event.id}/register`}>
+                                        <Ticket className="mr-2 h-5 w-5"/>
+                                        Register Now
+                                    </Link>
                                 </Button>
                             </div>
                         </div>
