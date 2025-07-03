@@ -12,6 +12,7 @@ import {
   SidebarGroup,
   SidebarGroupLabel,
   SidebarSeparator,
+  SidebarMenuButton,
 } from '@/components/ui/sidebar';
 import { Logo } from './logo';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
@@ -48,8 +49,6 @@ import {
 import { Input } from './ui/input';
 import { currentUser } from '@/lib/mock-data';
 import { useToast } from '@/hooks/use-toast';
-import { cn } from '@/lib/utils';
-import { sidebarMenuButtonVariants } from '@/components/ui/sidebar';
 
 export function MainSidebar() {
   const pathname = usePathname();
@@ -107,28 +106,36 @@ export function MainSidebar() {
             <SidebarGroupLabel>Main</SidebarGroupLabel>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <Link href="/" className={cn(sidebarMenuButtonVariants())} data-active={isActive('/')}>
-              <LayoutDashboard />
-              Dashboard
-            </Link>
+            <SidebarMenuButton asChild tooltip="Dashboard" isActive={isActive('/')}>
+              <Link href="/">
+                <LayoutDashboard />
+                <span>Dashboard</span>
+              </Link>
+            </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <Link href="/feed" className={cn(sidebarMenuButtonVariants())} data-active={isActive('/feed')}>
-              <MessageSquare />
-              Status Feed
-            </Link>
+            <SidebarMenuButton asChild tooltip="Status Feed" isActive={isActive('/feed')}>
+              <Link href="/feed">
+                <MessageSquare />
+                <span>Status Feed</span>
+              </Link>
+            </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <Link href="/connections" className={cn(sidebarMenuButtonVariants())} data-active={isActive('/connections')}>
-              <Users />
-              Connections
-            </Link>
+            <SidebarMenuButton asChild tooltip="Connections" isActive={isActive('/connections')}>
+              <Link href="/connections">
+                <Users />
+                <span>Connections</span>
+              </Link>
+            </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <Link href="/notifications" className={cn(sidebarMenuButtonVariants())} data-active={isActive('/notifications')}>
-              <Bell />
-              Notifications
-            </Link>
+            <SidebarMenuButton asChild tooltip="Notifications" isActive={isActive('/notifications')}>
+              <Link href="/notifications">
+                <Bell />
+                <span>Notifications</span>
+              </Link>
+            </SidebarMenuButton>
           </SidebarMenuItem>
         
           <SidebarMenuItem>
@@ -139,46 +146,60 @@ export function MainSidebar() {
             <SidebarGroupLabel>Content</SidebarGroupLabel>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <Link href="/profile" className={cn(sidebarMenuButtonVariants())} data-active={isActive('/profile')}>
-              <User />
-              Profile Editor
-            </Link>
+            <SidebarMenuButton asChild tooltip="Profile Editor" isActive={isActive('/profile')}>
+              <Link href="/profile">
+                <User />
+                <span>Profile Editor</span>
+              </Link>
+            </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <Link href="/calendar" className={cn(sidebarMenuButtonVariants())} data-active={isActive('/calendar')}>
-              <CalendarDays />
-              Content Calendar
-            </Link>
+            <SidebarMenuButton asChild tooltip="Content Calendar" isActive={isActive('/calendar')}>
+              <Link href="/calendar">
+                <CalendarDays />
+                <span>Content Calendar</span>
+              </Link>
+            </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <Link href="/businesses" className={cn(sidebarMenuButtonVariants())} data-active={isActive('/businesses')}>
-              <Building2 />
-              My Businesses
-            </Link>
+            <SidebarMenuButton asChild tooltip="My Businesses" isActive={isActive('/businesses')}>
+              <Link href="/businesses">
+                <Building2 />
+                <span>My Businesses</span>
+              </Link>
+            </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <Link href="/listings" className={cn(sidebarMenuButtonVariants())} data-active={isActive('/listings')}>
-              <Tags />
-              Listings
-            </Link>
+            <SidebarMenuButton asChild tooltip="Listings" isActive={isActive('/listings')}>
+              <Link href="/listings">
+                <Tags />
+                <span>Listings</span>
+              </Link>
+            </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <Link href="/opportunities" className={cn(sidebarMenuButtonVariants())} data-active={isActive('/opportunities')}>
-              <Briefcase />
-              Opportunities
-            </Link>
+            <SidebarMenuButton asChild tooltip="Opportunities" isActive={isActive('/opportunities')}>
+              <Link href="/opportunities">
+                <Briefcase />
+                <span>Opportunities</span>
+              </Link>
+            </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <Link href="/events" className={cn(sidebarMenuButtonVariants())} data-active={isActive('/events')}>
-              <Calendar />
-              Events
-            </Link>
+            <SidebarMenuButton asChild tooltip="Events" isActive={isActive('/events')}>
+              <Link href="/events">
+                <Calendar />
+                <span>Events</span>
+              </Link>
+            </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <Link href="/offers" className={cn(sidebarMenuButtonVariants())} data-active={isActive('/offers')}>
-              <DollarSign />
-              Offers
-            </Link>
+            <SidebarMenuButton asChild tooltip="Offers" isActive={isActive('/offers')}>
+              <Link href="/offers">
+                <DollarSign />
+                <span>Offers</span>
+              </Link>
+            </SidebarMenuButton>
           </SidebarMenuItem>
 
           <SidebarMenuItem>
@@ -189,22 +210,28 @@ export function MainSidebar() {
             <SidebarGroupLabel>Public Pages</SidebarGroupLabel>
           </SidebarMenuItem>
            <SidebarMenuItem>
-            <Link href={`/u/${currentUser.username}`} className={cn(sidebarMenuButtonVariants())} data-active={isActive(`/u/${currentUser.username}`)}>
-              <Share />
-              Bio Page
-            </Link>
+            <SidebarMenuButton asChild tooltip="Bio Page" isActive={isActive(`/u/${currentUser.username}`)}>
+              <Link href={`/u/${currentUser.username}`}>
+                <Share />
+                <span>Bio Page</span>
+              </Link>
+            </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <Link href={`/u/${currentUser.username}/card`} className={cn(sidebarMenuButtonVariants())} data-active={isActive(`/u/${currentUser.username}/card`)}>
-              <CreditCard />
-              Digital Business Card
-            </Link>
+            <SidebarMenuButton asChild tooltip="Digital Business Card" isActive={isActive(`/u/${currentUser.username}/card`)}>
+              <Link href={`/u/${currentUser.username}/card`}>
+                <CreditCard />
+                <span>Digital Business Card</span>
+              </Link>
+            </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <Link href={`/u/${currentUser.username}/links`} className={cn(sidebarMenuButtonVariants())} data-active={isActive(`/u/${currentUser.username}/links`)}>
-              <BookUser />
-              Links Page
-            </Link>
+            <SidebarMenuButton asChild tooltip="Links Page" isActive={isActive(`/u/${currentUser.username}/links`)}>
+              <Link href={`/u/${currentUser.username}/links`}>
+                <BookUser />
+                <span>Links Page</span>
+              </Link>
+            </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarContent>
