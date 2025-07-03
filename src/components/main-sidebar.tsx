@@ -95,144 +95,116 @@ export function MainSidebar() {
         </SidebarGroup>
         <SidebarMenu>
           <SidebarMenuItem>
-            <Link href="/">
-              <SidebarMenuButton
-                isActive={isActive('/')}
-              >
+            <SidebarMenuButton asChild isActive={isActive('/')}>
+              <Link href="/">
                 <LayoutDashboard />
                 Dashboard
-              </SidebarMenuButton>
-            </Link>
+              </Link>
+            </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <Link href="/feed">
-              <SidebarMenuButton
-                isActive={isActive('/feed')}
-              >
+            <SidebarMenuButton asChild isActive={isActive('/feed')}>
+              <Link href="/feed">
                 <MessageSquare />
                 Status Feed
-              </SidebarMenuButton>
-            </Link>
+              </Link>
+            </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <Link href="/connections">
-              <SidebarMenuButton
-                isActive={isActive('/connections')}
-              >
+            <SidebarMenuButton asChild isActive={isActive('/connections')}>
+              <Link href="/connections">
                 <Users />
                 Connections
-              </SidebarMenuButton>
-            </Link>
+              </Link>
+            </SidebarMenuButton>
           </SidebarMenuItem>
            <SidebarMenuItem>
-            <Link href="/notifications">
-              <SidebarMenuButton
-                isActive={isActive('/notifications')}
-              >
+            <SidebarMenuButton asChild isActive={isActive('/notifications')}>
+              <Link href="/notifications">
                 <Bell />
                 Notifications
-              </SidebarMenuButton>
-            </Link>
+              </Link>
+            </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <Link href="/profile">
-              <SidebarMenuButton
-                isActive={isActive('/profile')}
-              >
+            <SidebarMenuButton asChild isActive={isActive('/profile')}>
+              <Link href="/profile">
                 <User />
                 Profile Editor
-              </SidebarMenuButton>
-            </Link>
+              </Link>
+            </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <Link href="/calendar">
-              <SidebarMenuButton
-                isActive={isActive('/calendar')}
-              >
+            <SidebarMenuButton asChild isActive={isActive('/calendar')}>
+              <Link href="/calendar">
                 <CalendarDays />
                 Content Calendar
-              </SidebarMenuButton>
-            </Link>
+              </Link>
+            </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <Link href="/businesses">
-              <SidebarMenuButton
-                isActive={isActive('/businesses')}
-              >
+            <SidebarMenuButton asChild isActive={isActive('/businesses')}>
+              <Link href="/businesses">
                 <Building2 />
                 My Businesses
-              </SidebarMenuButton>
-            </Link>
+              </Link>
+            </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <Link href="/listings">
-              <SidebarMenuButton
-                isActive={isActive('/listings')}
-              >
+            <SidebarMenuButton asChild isActive={isActive('/listings')}>
+              <Link href="/listings">
                 <Tags />
                 Listings
-              </SidebarMenuButton>
-            </Link>
+              </Link>
+            </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <Link href="/opportunities">
-              <SidebarMenuButton
-                isActive={isActive('/opportunities')}
-              >
+            <SidebarMenuButton asChild isActive={isActive('/opportunities')}>
+              <Link href="/opportunities">
                 <Briefcase />
                 Opportunities
-              </SidebarMenuButton>
-            </Link>
+              </Link>
+            </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <Link href="/events">
-              <SidebarMenuButton
-                isActive={isActive('/events')}
-              >
+            <SidebarMenuButton asChild isActive={isActive('/events')}>
+              <Link href="/events">
                 <Calendar />
                 Events
-              </SidebarMenuButton>
-            </Link>
+              </Link>
+            </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <Link href="/offers">
-              <SidebarMenuButton
-                isActive={isActive('/offers')}
-              >
+            <SidebarMenuButton asChild isActive={isActive('/offers')}>
+              <Link href="/offers">
                 <DollarSign />
                 Offers
-              </SidebarMenuButton>
-            </Link>
+              </Link>
+            </SidebarMenuButton>
           </SidebarMenuItem>
            <SidebarMenuItem>
-            <Link href={`/u/${currentUser.username}`}>
-              <SidebarMenuButton
-                isActive={isActive(`/u/${currentUser.username}`)}
-              >
+            <SidebarMenuButton asChild isActive={isActive(`/u/${currentUser.username}`)}>
+              <Link href={`/u/${currentUser.username}`}>
                 <Share />
                 Public Page
-              </SidebarMenuButton>
-            </Link>
+              </Link>
+            </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <Link href={`/u/${currentUser.username}/card`}>
-              <SidebarMenuButton
-                isActive={isActive(`/u/${currentUser.username}/card`)}
-              >
+            <SidebarMenuButton asChild isActive={isActive(`/u/${currentUser.username}/card`)}>
+              <Link href={`/u/${currentUser.username}/card`}>
                 <CreditCard />
                 Digital Business Card
-              </SidebarMenuButton>
-            </Link>
+              </Link>
+            </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <Link href={`/u/${currentUser.username}/bio`}>
-              <SidebarMenuButton
-                isActive={isActive(`/u/${currentUser.username}/bio`)}
-              >
+            <SidebarMenuButton asChild isActive={isActive(`/u/${currentUser.username}/bio`)}>
+              <Link href={`/u/${currentUser.username}/bio`}>
                 <BookUser />
                 Bio Card
-              </SidebarMenuButton>
-            </Link>
+              </Link>
+            </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarContent>
