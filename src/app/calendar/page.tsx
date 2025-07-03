@@ -18,6 +18,8 @@ import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialo
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import type { Event } from '@/lib/users';
+import { Separator } from '@/components/ui/separator';
+import { Label } from '@/components/ui/label';
 
 type CalendarItem = {
   id: string;
@@ -83,6 +85,9 @@ export default function CalendarPage() {
   const [currentMonth, setCurrentMonth] = useState<Date | undefined>();
   const [searchTerm, setSearchTerm] = useState('');
   const [locationFilter, setLocationFilter] = useState('');
+  const [typeFilters, setTypeFilters] = useState<Set<string>>(
+    new Set(['Event', 'Offer', 'Job', 'Listing'])
+  );
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<CalendarItem | null>(null);
   const { toast } = useToast();
@@ -173,6 +178,10 @@ export default function CalendarPage() {
 
   const filteredItems = useMemo(() => {
     return calendarItems.filter(item => {
+      if (!typeFilters.has(item.type)) {
+        return false;
+      }
+
       const searchMatch = searchTerm.length > 1 ?
         item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -186,7 +195,7 @@ export default function CalendarPage() {
 
       return searchMatch && locationMatch;
     });
-  }, [calendarItems, searchTerm, locationFilter]);
+  }, [calendarItems, searchTerm, locationFilter, typeFilters]);
   
   const itemsForSelectedDate = useMemo(() => {
     if (!selectedDate) return [];
@@ -196,7 +205,20 @@ export default function CalendarPage() {
   const handleClearFilters = () => {
     setSearchTerm('');
     setLocationFilter('');
+    setTypeFilters(new Set(['Event', 'Offer', 'Job', 'Listing']));
   }
+  
+  const handleTypeFilterChange = (type: string) => {
+    setTypeFilters(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(type)) {
+        newSet.delete(type);
+      } else {
+        newSet.add(type);
+      }
+      return newSet;
+    });
+  };
 
   const openDeleteDialog = (item: CalendarItem) => {
     setSelectedItem(item);
@@ -221,6 +243,13 @@ export default function CalendarPage() {
         default: return 'default';
     }
   }
+  
+  const contentTypes: { name: CalendarItem['type'], icon: React.ElementType, variant: VariantProps<typeof badgeVariants>['variant'] }[] = [
+    { name: 'Event', icon: CalendarIconLucide, variant: 'default' },
+    { name: 'Offer', icon: DollarSign, variant: 'secondary' },
+    { name: 'Job', icon: Briefcase, variant: 'destructive' },
+    { name: 'Listing', icon: Tags, variant: 'outline' },
+  ];
 
   if (!isMounted || !currentMonth) {
     return <CalendarSkeleton />;
@@ -288,30 +317,52 @@ export default function CalendarPage() {
         </div>
 
         <Card>
-          <CardContent className="p-4 grid sm:grid-cols-2 md:grid-cols-3 gap-4">
-            <div className="relative md:col-span-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input 
-                placeholder="Search by keyword..."
-                className="pl-10"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-            <div className="relative md:col-span-1">
-              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Filter by location..."
-                className="pl-10"
-                value={locationFilter}
-                onChange={(e) => setLocationFilter(e.target.value)}
-              />
-            </div>
-            <Button variant="outline" onClick={handleClearFilters} className="w-full md:col-span-1">
-              <X className="mr-2 h-4 w-4" />
-              Clear Filters
-            </Button>
-          </CardContent>
+            <CardContent className="p-4 space-y-4">
+                <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
+                    <div className="relative md:col-span-1">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input 
+                            placeholder="Search by keyword..."
+                            className="pl-10"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+                    <div className="relative md:col-span-1">
+                        <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                            placeholder="Filter by location..."
+                            className="pl-10"
+                            value={locationFilter}
+                            onChange={(e) => setLocationFilter(e.target.value)}
+                        />
+                    </div>
+                    <Button variant="outline" onClick={handleClearFilters} className="w-full md:col-span-1">
+                        <X className="mr-2 h-4 w-4" />
+                        Clear All Filters
+                    </Button>
+                </div>
+                <Separator />
+                <div className="space-y-2">
+                    <Label className="text-sm font-medium">Filter by type</Label>
+                    <div className="flex flex-wrap gap-2">
+                        {contentTypes.map(({ name, icon: Icon, variant }) => (
+                            <Button
+                                key={name}
+                                variant={typeFilters.has(name) ? variant : 'outline'}
+                                size="sm"
+                                onClick={() => handleTypeFilterChange(name)}
+                                className={cn(
+                                    variant === 'outline' && typeFilters.has(name) && 'bg-accent text-accent-foreground border-accent-foreground/30',
+                                    'transition-all'
+                                )}
+                            >
+                                <Icon className="mr-2 h-4 w-4" /> {name}s
+                            </Button>
+                        ))}
+                    </div>
+                </div>
+            </CardContent>
         </Card>
         
         <Card>
