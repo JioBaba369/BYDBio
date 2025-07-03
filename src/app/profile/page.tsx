@@ -17,7 +17,7 @@ import { useForm, useFieldArray, FormProvider, useFormContext } from "react-hook
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { availableIconNames, linkIconData } from "@/lib/link-icons";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -27,6 +27,22 @@ import { CSS } from '@dnd-kit/utilities';
 import BioGenerator from "@/components/ai/bio-generator";
 import ImageCropper from "@/components/image-cropper";
 
+const publicProfileSchema = z.object({
+  name: z.string().min(1, "Name cannot be empty."),
+  username: z.string().min(3, "Username must be at least 3 characters long.").regex(/^[a-zA-Z0-9_]+$/, "Username can only contain letters, numbers, and underscores."),
+});
+type PublicProfileFormValues = z.infer<typeof publicProfileSchema>;
+
+const businessCardSchema = z.object({
+  title: z.string().min(1, "Title is required."),
+  company: z.string().min(1, "Company is required."),
+  phone: z.string().optional(),
+  email: z.string().email({ message: "Please enter a valid email." }).optional().or(z.literal('')),
+  website: z.string().url({ message: "Please enter a valid URL." }).optional().or(z.literal('')),
+  linkedin: z.string().url({ message: "Please enter a valid URL." }).optional().or(z.literal('')),
+  location: z.string().optional(),
+});
+type BusinessCardFormValues = z.infer<typeof businessCardSchema>;
 
 const linksFormSchema = z.object({
   links: z.array(
@@ -39,8 +55,8 @@ const linksFormSchema = z.object({
     })
   ),
 });
-
 type LinksFormValues = z.infer<typeof linksFormSchema>;
+
 
 const SortableLinkItem = ({ field, index, remove }: { field: { id: string }, index: number, remove: (index: number) => void }) => {
   const { control, setValue } = useFormContext<LinksFormValues>();
@@ -155,6 +171,21 @@ export default function ProfilePage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
+  const publicProfileForm = useForm<PublicProfileFormValues>({
+    resolver: zodResolver(publicProfileSchema),
+    defaultValues: {
+      name: currentUser.name || "",
+      username: currentUser.username || "",
+    },
+    mode: 'onBlur',
+  });
+
+  const businessCardForm = useForm<BusinessCardFormValues>({
+    resolver: zodResolver(businessCardSchema),
+    defaultValues: currentUser.businessCard || {},
+    mode: 'onBlur',
+  });
+
   const linksForm = useForm<LinksFormValues>({
     resolver: zodResolver(linksFormSchema),
     defaultValues: {
@@ -168,6 +199,9 @@ export default function ProfilePage() {
     name: "links",
   });
 
+  const watchedPublicProfile = publicProfileForm.watch();
+  const watchedBusinessCard = businessCardForm.watch();
+
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
@@ -175,8 +209,23 @@ export default function ProfilePage() {
     })
   );
 
+  function onPublicProfileSubmit(data: PublicProfileFormValues) {
+    console.log("Updated public profile:", data);
+    toast({
+      title: "Profile Saved",
+      description: "Your public information has been updated.",
+    });
+  }
+
+  function onBusinessCardSubmit(data: BusinessCardFormValues) {
+    console.log("Updated business card:", data);
+    toast({
+      title: "Business Card Saved",
+      description: "Your digital card has been updated.",
+    });
+  }
+
   function onLinksSubmit(data: LinksFormValues) {
-    // In a real app, you would save this data to your backend.
     console.log("Updated links data:", data);
     toast({
       title: "Links Saved",
@@ -202,28 +251,23 @@ export default function ProfilePage() {
         setIsCropperOpen(true);
       });
       reader.readAsDataURL(file);
-      // Reset the input value to allow re-selecting the same file
       e.target.value = '';
     }
   };
 
-
   useEffect(() => {
-    // We can only get the window.location.origin on the client
-    if (typeof window !== 'undefined') {
-      const vCardData = `BEGIN:VCARD
+    const vCardData = `BEGIN:VCARD
 VERSION:3.0
-FN:${currentUser.name}
-ORG:${currentUser.businessCard.company}
-TITLE:${currentUser.businessCard.title}
-TEL;TYPE=WORK,VOICE:${currentUser.businessCard.phone}
-EMAIL:${currentUser.businessCard.email}
-URL:${currentUser.businessCard.website}
-ADR;TYPE=WORK:;;${currentUser.businessCard.location}
+FN:${watchedPublicProfile.name || currentUser.name}
+ORG:${watchedBusinessCard.company || ''}
+TITLE:${watchedBusinessCard.title || ''}
+TEL;TYPE=WORK,VOICE:${watchedBusinessCard.phone || ''}
+EMAIL:${watchedBusinessCard.email || ''}
+URL:${watchedBusinessCard.website || ''}
+ADR;TYPE=WORK:;;${watchedBusinessCard.location || ''}
 END:VCARD`;
-       setQrCodeUrl(vCardData);
-    }
-  }, []);
+    setQrCodeUrl(vCardData);
+  }, [watchedBusinessCard, watchedPublicProfile, currentUser.name]);
 
   return (
     <div className="space-y-6">
@@ -248,115 +292,200 @@ END:VCARD`;
         </TabsList>
 
         <TabsContent value="public">
-          <Card>
-            <CardHeader>
-              <CardTitle>Public Information</CardTitle>
-              <CardDescription>This information will be displayed on your public profile and link-in-bio page.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="name">Full Name</Label>
-                <Input id="name" defaultValue={currentUser.name} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="username">Username</Label>
-                <Input id="username" defaultValue={currentUser.username} />
-              </div>
-              <div className="space-y-2">
-                <Label>Profile Picture</Label>
-                <div className="flex items-center gap-4">
-                  <Avatar className="h-20 w-20">
-                    <AvatarImage src={croppedImageUrl || currentUser.avatarUrl} data-ai-hint="woman smiling"/>
-                    <AvatarFallback>{currentUser.avatarFallback}</AvatarFallback>
-                  </Avatar>
-                  <Button variant="outline" onClick={() => fileInputRef.current?.click()}><Upload className="mr-2 h-4 w-4"/> Change Photo</Button>
-                  <input
-                    type="file"
-                    ref={fileInputRef}
-                    className="hidden"
-                    accept="image/png, image/jpeg"
-                    onChange={onFileChange}
+          <FormProvider {...publicProfileForm}>
+            <form onSubmit={publicProfileForm.handleSubmit(onPublicProfileSubmit)}>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Public Information</CardTitle>
+                  <CardDescription>This information will be displayed on your public profile and link-in-bio page.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <FormField
+                    control={publicProfileForm.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Full Name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Jane Doe" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
-                </div>
-              </div>
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="bio">Bio</Label>
-                  <Textarea id="bio" rows={3} value={bio} onChange={(e) => setBio(e.target.value)} placeholder="Tell everyone a little bit about yourself..." />
-                </div>
-                <BioGenerator onSelectBio={setBio} />
-                <div className="space-y-2">
-                    <HashtagSuggester content={bio} onSelectHashtag={(tag) => {
-                      setBio(prev => `${prev.trim()} ${tag}`);
-                    }} />
-                </div>
-              </div>
-              <Button>Save Changes</Button>
-            </CardContent>
-          </Card>
+                  <FormField
+                    control={publicProfileForm.control}
+                    name="username"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Username</FormLabel>
+                        <FormControl>
+                          <Input placeholder="janedoe" {...field} />
+                        </FormControl>
+                         <FormDescription>
+                          This will be used in your public profile URL.
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <div className="space-y-2">
+                    <Label>Profile Picture</Label>
+                    <div className="flex items-center gap-4">
+                      <Avatar className="h-20 w-20">
+                        <AvatarImage src={croppedImageUrl || currentUser.avatarUrl} data-ai-hint="woman smiling"/>
+                        <AvatarFallback>{currentUser.avatarFallback}</AvatarFallback>
+                      </Avatar>
+                      <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}><Upload className="mr-2 h-4 w-4"/> Change Photo</Button>
+                      <input
+                        type="file"
+                        ref={fileInputRef}
+                        className="hidden"
+                        accept="image/png, image/jpeg"
+                        onChange={onFileChange}
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="bio">Bio</Label>
+                      <Textarea id="bio" rows={3} value={bio} onChange={(e) => setBio(e.target.value)} placeholder="Tell everyone a little bit about yourself..." />
+                       <FormDescription>
+                          Your bio is saved automatically as you type.
+                        </FormDescription>
+                    </div>
+                    <BioGenerator onSelectBio={setBio} />
+                    <div className="space-y-2">
+                        <HashtagSuggester content={bio} onSelectHashtag={(tag) => {
+                          setBio(prev => `${prev.trim()} ${tag}`);
+                        }} />
+                    </div>
+                  </div>
+                </CardContent>
+                <CardFooter>
+                  <Button type="submit" disabled={!publicProfileForm.formState.isDirty}>Save Changes</Button>
+                </CardFooter>
+              </Card>
+            </form>
+          </FormProvider>
         </TabsContent>
 
         <TabsContent value="card">
-          <Card>
-            <CardHeader>
-              <CardTitle>Digital Business Card</CardTitle>
-              <CardDescription>Enter your details to generate a shareable digital business card and QR code.</CardDescription>
-            </CardHeader>
-            <CardContent className="grid md:grid-cols-2 gap-8">
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="card-title">Job Title</Label>
-                  <Input id="card-title" defaultValue={currentUser.businessCard.title} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="card-company">Company</Label>
-                  <Input id="card-company" defaultValue={currentUser.businessCard.company} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="card-phone">Phone</Label>
-                  <Input id="card-phone" type="tel" defaultValue={currentUser.businessCard.phone} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="card-email">Email</Label>
-                  <Input id="card-email" type="email" defaultValue={currentUser.businessCard.email} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="card-website">Website</Label>
-                  <Input id="card-website" defaultValue={currentUser.businessCard.website} />
-                </div>
-                 <div className="space-y-2">
-                  <Label htmlFor="card-linkedin">LinkedIn</Label>
-                  <Input id="card-linkedin" defaultValue={currentUser.businessCard.linkedin} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="card-location">Location</Label>
-                  <Input id="card-location" defaultValue={currentUser.businessCard.location} />
-                </div>
-                <Button>Update Card</Button>
-              </div>
-              <div className="flex flex-col items-center justify-center bg-muted/50 rounded-lg p-6">
-                <p className="font-semibold mb-4 text-center">Card Preview</p>
-                <div className="w-full max-w-[280px] bg-background p-6 rounded-xl shadow-lg border">
-                  <div className="text-center">
-                    <Avatar className="h-20 w-20 mx-auto mb-2">
-                      <AvatarImage src={croppedImageUrl || currentUser.avatarUrl} data-ai-hint="woman smiling"/>
-                      <AvatarFallback>{currentUser.avatarFallback}</AvatarFallback>
-                    </Avatar>
-                    <p className="font-headline font-semibold text-lg">{currentUser.name}</p>
-                    <p className="text-primary text-sm">{currentUser.businessCard.title}</p>
-                  </div>
-                  <div className="flex justify-center mt-4">
-                    {qrCodeUrl ? (
-                      <QRCode value={qrCodeUrl} size={200} bgColor="#ffffff" fgColor="#000000" level="Q" />
-                    ) : (
-                      <div className="w-[200px] h-[200px] bg-gray-200 animate-pulse mx-auto rounded-md" />
-                    )}
-                  </div>
-                   <p className="text-xs text-muted-foreground text-center mt-2">Scan to save contact</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+           <FormProvider {...businessCardForm}>
+              <form onSubmit={businessCardForm.handleSubmit(onBusinessCardSubmit)}>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Digital Business Card</CardTitle>
+                    <CardDescription>Enter your details to generate a shareable digital business card and QR code.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="grid md:grid-cols-2 gap-8">
+                    <div className="space-y-4">
+                       <FormField
+                          control={businessCardForm.control}
+                          name="title"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Job Title</FormLabel>
+                              <FormControl><Input placeholder="Senior Product Designer" {...field} /></FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                       <FormField
+                          control={businessCardForm.control}
+                          name="company"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Company</FormLabel>
+                              <FormControl><Input placeholder="Acme Inc." {...field} /></FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={businessCardForm.control}
+                          name="phone"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Phone</FormLabel>
+                              <FormControl><Input type="tel" placeholder="+1 (555) 123-4567" {...field} /></FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={businessCardForm.control}
+                          name="email"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Email</FormLabel>
+                              <FormControl><Input type="email" placeholder="jane.doe@acme.com" {...field} /></FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                       <FormField
+                          control={businessCardForm.control}
+                          name="website"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Website</FormLabel>
+                              <FormControl><Input placeholder="https://janedoe.design" {...field} /></FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                       <FormField
+                          control={businessCardForm.control}
+                          name="linkedin"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>LinkedIn</FormLabel>
+                              <FormControl><Input placeholder="https://linkedin.com/in/janedoe" {...field} /></FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                       <FormField
+                          control={businessCardForm.control}
+                          name="location"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Location</FormLabel>
+                              <FormControl><Input placeholder="San Francisco, CA" {...field} /></FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                    </div>
+                    <div className="flex flex-col items-center justify-center bg-muted/50 rounded-lg p-6">
+                      <p className="font-semibold mb-4 text-center">Card Preview</p>
+                      <div className="w-full max-w-[280px] bg-background p-6 rounded-xl shadow-lg border">
+                        <div className="text-center">
+                          <Avatar className="h-20 w-20 mx-auto mb-2">
+                            <AvatarImage src={croppedImageUrl || currentUser.avatarUrl} data-ai-hint="woman smiling"/>
+                            <AvatarFallback>{currentUser.avatarFallback}</AvatarFallback>
+                          </Avatar>
+                          <p className="font-headline font-semibold text-lg">{watchedPublicProfile.name || 'Your Name'}</p>
+                          <p className="text-primary text-sm">{watchedBusinessCard.title || 'Your Title'}</p>
+                        </div>
+                        <div className="flex justify-center mt-4">
+                          {qrCodeUrl ? (
+                            <QRCode value={qrCodeUrl} size={200} bgColor="#ffffff" fgColor="#000000" level="Q" />
+                          ) : (
+                            <div className="w-[200px] h-[200px] bg-gray-200 animate-pulse mx-auto rounded-md" />
+                          )}
+                        </div>
+                         <p className="text-xs text-muted-foreground text-center mt-2">Scan to save contact</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                  <CardFooter>
+                     <Button type="submit" disabled={!businessCardForm.formState.isDirty}>Update Card</Button>
+                  </CardFooter>
+                </Card>
+              </form>
+            </FormProvider>
         </TabsContent>
 
         <TabsContent value="links">
