@@ -7,7 +7,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Globe, Linkedin, Mail, Phone, MapPin } from "lucide-react";
 import Link from "next/link";
 import { Logo } from "@/components/logo";
-import { useEffect, useState } from "react";
 import QRCode from "qrcode.react";
 import { currentUser } from "@/lib/mock-data";
 import ShareButton from "@/components/share-button";
@@ -18,14 +17,6 @@ export default function BusinessCardPage() {
   const username = typeof params.username === 'string' ? params.username : '';
   // In a real app, you would fetch data based on params.username
   const user = username === currentUser.username ? currentUser : null;
-
-  const [qrCodeValue, setQrCodeValue] = useState('');
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setQrCodeValue(window.location.href);
-    }
-  }, []);
   
   if (!user) {
     // A real app would have a proper 404 page.
@@ -78,8 +69,8 @@ END:VCARD`;
           <p className="text-muted-foreground text-sm">{company}</p>
 
           <div className="mt-6 flex justify-center">
-            {qrCodeValue ? (
-              <QRCode value={qrCodeValue} size={180} bgColor="#ffffff" fgColor="#000000" level="Q" />
+            {vCardData ? (
+              <QRCode value={vCardData} size={180} bgColor="#ffffff" fgColor="#000000" level="Q" />
             ) : (
               <div className="w-[180px] h-[180px] bg-gray-200 animate-pulse rounded-lg" />
             )}
