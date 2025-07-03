@@ -1,7 +1,7 @@
 
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Calendar, MapPin } from "lucide-react"
+import { Calendar, MapPin, PlusCircle } from "lucide-react"
 import { currentUser } from "@/lib/mock-data";
 import { format, parseISO } from "date-fns";
 
@@ -9,9 +9,15 @@ export default function EventsPage() {
   const { events } = currentUser;
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-bold font-headline">Events</h1>
-        <p className="text-muted-foreground">Discover curated events to expand your network and knowledge.</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold font-headline">Events</h1>
+          <p className="text-muted-foreground">Discover curated events to expand your network and knowledge.</p>
+        </div>
+        <Button>
+            <PlusCircle className="mr-2 h-4 w-4" />
+            Create Event
+        </Button>
       </div>
       {events.length > 0 ? (
         <div className="grid gap-6 md:grid-cols-2">

@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
-import { AreaChart, BarChart, File, LineChart, ListFilter, MoreHorizontal, PlusCircle } from "lucide-react"
+import { AreaChart, BarChart, Briefcase, Calendar, DollarSign, File, LineChart, ListFilter, MessageSquare, PlusCircle, Tags } from "lucide-react"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { Bar, CartesianGrid, XAxis, YAxis, Tooltip, Area, ResponsiveContainer, Line, Legend, BarChart as BarChartComponent, AreaChart as AreaChartComponent, LineChart as LineChartComponent } from "recharts"
 import Link from "next/link"
@@ -58,9 +58,48 @@ export default function Dashboard() {
     <div className="flex flex-col gap-8">
       <div className="flex items-center justify-between">
         <h1 className="font-headline text-2xl sm:text-3xl font-bold">Dashboard</h1>
-        <Link href="/profile">
-          <Button>Create New</Button>
-        </Link>
+         <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button>
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Create New
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Create New Content</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                <Link href="/feed" className="cursor-pointer">
+                    <MessageSquare className="mr-2 h-4 w-4" />
+                    <span>New Post</span>
+                </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                <Link href="/listings" className="cursor-pointer">
+                    <Tags className="mr-2 h-4 w-4" />
+                    <span>New Listing</span>
+                </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                <Link href="/opportunities" className="cursor-pointer">
+                    <Briefcase className="mr-2 h-4 w-4" />
+                    <span>New Job</span>
+                </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                <Link href="/events" className="cursor-pointer">
+                    <Calendar className="mr-2 h-4 w-4" />
+                    <span>New Event</span>
+                </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                <Link href="/offers" className="cursor-pointer">
+                    <DollarSign className="mr-2 h-4 w-4" />
+                    <span>New Offer</span>
+                </Link>
+                </DropdownMenuItem>
+            </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

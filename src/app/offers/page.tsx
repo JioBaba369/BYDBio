@@ -1,7 +1,7 @@
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Tag, Calendar } from "lucide-react"
+import { Tag, Calendar, PlusCircle } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { currentUser } from "@/lib/mock-data";
 import { format, parseISO } from "date-fns";
@@ -10,9 +10,15 @@ export default function OffersPage() {
   const { offers } = currentUser;
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-bold font-headline">Offers</h1>
-        <p className="text-muted-foreground">Discover curated offers and deals.</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold font-headline">Offers</h1>
+          <p className="text-muted-foreground">Discover curated offers and deals.</p>
+        </div>
+        <Button>
+            <PlusCircle className="mr-2 h-4 w-4" />
+            Create Offer
+        </Button>
       </div>
       {offers.length > 0 ? (
         <div className="grid gap-6 md:grid-cols-2">

@@ -1,16 +1,22 @@
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Briefcase, MapPin } from "lucide-react"
+import { Briefcase, MapPin, PlusCircle } from "lucide-react"
 import { currentUser } from "@/lib/mock-data";
 
 export default function JobsPage() {
   const { jobs } = currentUser;
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-bold font-headline">Jobs</h1>
-        <p className="text-muted-foreground">Discover curated jobs to boost your career.</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold font-headline">Jobs</h1>
+          <p className="text-muted-foreground">Discover curated jobs to boost your career.</p>
+        </div>
+        <Button>
+            <PlusCircle className="mr-2 h-4 w-4" />
+            Post Job
+        </Button>
       </div>
       {jobs.length > 0 ? (
         <div className="grid gap-6 md:grid-cols-2">

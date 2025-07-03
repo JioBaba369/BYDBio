@@ -5,15 +5,22 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { currentUser } from "@/lib/mock-data";
 import Image from "next/image";
+import { PlusCircle } from "lucide-react";
 
 export default function ListingsPage() {
   const { listings } = currentUser;
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-bold font-headline">Product & Service Listings</h1>
-        <p className="text-muted-foreground">Manage your products, services, and digital goods.</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold font-headline">Product & Service Listings</h1>
+          <p className="text-muted-foreground">Manage your products, services, and digital goods.</p>
+        </div>
+        <Button>
+            <PlusCircle className="mr-2 h-4 w-4" />
+            Create Listing
+        </Button>
       </div>
       {listings.length > 0 ? (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
