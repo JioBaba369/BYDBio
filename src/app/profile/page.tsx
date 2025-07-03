@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { PlusCircle, Trash2, User, CreditCard, Link2 as LinkIcon, Upload, GripVertical } from "lucide-react"
 import HashtagSuggester from "@/components/ai/hashtag-suggester"
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import QRCode from 'qrcode.react';
 import { currentUser } from "@/lib/mock-data";
 import { useForm, useFieldArray, FormProvider, useFormContext } from "react-hook-form";
@@ -25,6 +25,7 @@ import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, us
 import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import BioGenerator from "@/components/ai/bio-generator";
+import ImageCropper from "@/components/image-cropper";
 
 
 const linksFormSchema = z.object({
@@ -148,6 +149,10 @@ const SortableLinkItem = ({ field, index, remove }: { field: { id: string }, ind
 export default function ProfilePage() {
   const [bio, setBio] = useState(currentUser.bio);
   const [qrCodeUrl, setQrCodeUrl] = useState('');
+  const [imageToCrop, setImageToCrop] = useState<string | null>(null);
+  const [isCropperOpen, setIsCropperOpen] = useState(false);
+  const [croppedImageUrl, setCroppedImageUrl] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   const linksForm = useForm<LinksFormValues>({
@@ -188,16 +193,49 @@ export default function ProfilePage() {
     }
   }
 
+  const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const file = e.target.files[0];
+      const reader = new FileReader();
+      reader.addEventListener('load', () => {
+        setImageToCrop(reader.result as string);
+        setIsCropperOpen(true);
+      });
+      reader.readAsDataURL(file);
+      // Reset the input value to allow re-selecting the same file
+      e.target.value = '';
+    }
+  };
+
 
   useEffect(() => {
     // We can only get the window.location.origin on the client
     if (typeof window !== 'undefined') {
-      setQrCodeUrl(`${window.location.origin}/u/${currentUser.username}/card`);
+      const vCardData = `BEGIN:VCARD
+VERSION:3.0
+FN:${currentUser.name}
+ORG:${currentUser.businessCard.company}
+TITLE:${currentUser.businessCard.title}
+TEL;TYPE=WORK,VOICE:${currentUser.businessCard.phone}
+EMAIL:${currentUser.businessCard.email}
+URL:${currentUser.businessCard.website}
+ADR;TYPE=WORK:;;${currentUser.businessCard.location}
+END:VCARD`;
+       setQrCodeUrl(vCardData);
     }
   }, []);
 
   return (
     <div className="space-y-6">
+      <ImageCropper
+        imageSrc={imageToCrop}
+        open={isCropperOpen}
+        onOpenChange={setIsCropperOpen}
+        onCropComplete={(url) => {
+          setCroppedImageUrl(url);
+          setIsCropperOpen(false);
+        }}
+      />
       <div>
         <h1 className="text-3xl font-bold font-headline">Profile Editor</h1>
         <p className="text-muted-foreground">Manage your public presence and connections.</p>
@@ -228,10 +266,17 @@ export default function ProfilePage() {
                 <Label>Profile Picture</Label>
                 <div className="flex items-center gap-4">
                   <Avatar className="h-20 w-20">
-                    <AvatarImage src={currentUser.avatarUrl} data-ai-hint="woman smiling"/>
+                    <AvatarImage src={croppedImageUrl || currentUser.avatarUrl} data-ai-hint="woman smiling"/>
                     <AvatarFallback>{currentUser.avatarFallback}</AvatarFallback>
                   </Avatar>
-                  <Button variant="outline"><Upload className="mr-2 h-4 w-4"/> Change Photo</Button>
+                  <Button variant="outline" onClick={() => fileInputRef.current?.click()}><Upload className="mr-2 h-4 w-4"/> Change Photo</Button>
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    className="hidden"
+                    accept="image/png, image/jpeg"
+                    onChange={onFileChange}
+                  />
                 </div>
               </div>
               <div className="space-y-4">
@@ -294,7 +339,7 @@ export default function ProfilePage() {
                 <div className="w-full max-w-[280px] bg-background p-6 rounded-xl shadow-lg border">
                   <div className="text-center">
                     <Avatar className="h-20 w-20 mx-auto mb-2">
-                      <AvatarImage src={currentUser.avatarUrl} data-ai-hint="woman smiling"/>
+                      <AvatarImage src={croppedImageUrl || currentUser.avatarUrl} data-ai-hint="woman smiling"/>
                       <AvatarFallback>{currentUser.avatarFallback}</AvatarFallback>
                     </Avatar>
                     <p className="font-headline font-semibold text-lg">{currentUser.name}</p>
@@ -307,7 +352,7 @@ export default function ProfilePage() {
                       <div className="w-[200px] h-[200px] bg-gray-200 animate-pulse mx-auto rounded-md" />
                     )}
                   </div>
-                   <p className="text-xs text-muted-foreground text-center mt-2">Scan to Share</p>
+                   <p className="text-xs text-muted-foreground text-center mt-2">Scan to save contact</p>
                 </div>
               </div>
             </CardContent>
