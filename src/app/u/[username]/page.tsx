@@ -152,7 +152,7 @@ export default function LinkInBioPage() {
             {posts.length > 0 && (
               <div>
                 <h2 className="text-xl font-bold font-headline mb-4">Recent Updates</h2>
-                <div className="space-y-4">
+                <div className="grid md:grid-cols-2 gap-4">
                   {posts.slice(0, 2).map((post) => (
                     <Card key={post.id} className="shadow-none">
                       <CardContent className="p-4">
@@ -218,8 +218,8 @@ export default function LinkInBioPage() {
                         <Link href={`/u/${username}/jobs`}>View all</Link>
                     </Button>
                 </div>
-                <div className="grid gap-4">
-                  {jobs.slice(0, 1).map((job, index) => (
+                <div className="grid md:grid-cols-2 gap-4">
+                  {jobs.slice(0, 2).map((job, index) => (
                     <Card key={index} className="shadow-none">
                       <CardHeader>
                           <CardTitle className="text-lg">{job.title}</CardTitle>
@@ -248,8 +248,8 @@ export default function LinkInBioPage() {
                         <Link href={`/u/${username}/events`}>View all</Link>
                     </Button>
                 </div>
-                <div className="grid gap-4">
-                    {events.slice(0, 1).map((event, index) => (
+                <div className="grid md:grid-cols-2 gap-4">
+                    {events.slice(0, 2).map((event, index) => (
                         <Card key={index} className="shadow-none">
                           <CardHeader>
                               <CardTitle className="text-lg">{event.title}</CardTitle>
@@ -277,8 +277,8 @@ export default function LinkInBioPage() {
                         <Link href={`/u/${username}/offers`}>View all</Link>
                     </Button>
                 </div>
-                <div className="grid gap-4">
-                    {offers.slice(0, 1).map((offer, index) => (
+                <div className="grid md:grid-cols-2 gap-4">
+                    {offers.slice(0, 2).map((offer, index) => (
                         <Card key={index} className="shadow-none">
                           <CardHeader>
                             <CardTitle className="text-lg">{offer.title}</CardTitle>
