@@ -5,7 +5,7 @@ import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Send, Briefcase, Calendar, Tag, MapPin } from "lucide-react";
+import { Send, Briefcase, Calendar, Tag, MapPin, ShoppingBag } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -17,6 +17,7 @@ import { Logo } from "@/components/logo";
 import { currentUser } from "@/lib/mock-data";
 import ShareButton from "@/components/share-button";
 import { linkIcons } from "@/lib/link-icons";
+import Image from "next/image";
 
 export default function LinkInBioPage({ params }: { params: { username:string } }) {
   // In a real app, you would fetch user data based on params.username
@@ -64,7 +65,7 @@ export default function LinkInBioPage({ params }: { params: { username:string } 
     return <div>User not found.</div>
   }
 
-  const { name, avatarUrl, avatarFallback, bio, links, subscribers, jobs, events, offers } = userProfile;
+  const { name, avatarUrl, avatarFallback, bio, links, subscribers, jobs, events, offers, listings } = userProfile;
 
   return (
     <div className="flex justify-center bg-gray-100 dark:bg-gray-900 py-8 px-4">
@@ -110,6 +111,35 @@ export default function LinkInBioPage({ params }: { params: { username:string } 
           </div>
 
           <div className="mt-8 space-y-8">
+            {/* Listings Section */}
+            {listings.length > 0 && (
+              <div>
+                <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-xl font-bold font-headline">Products & Services</h2>
+                    <Button asChild variant="link" className="text-primary pr-0">
+                        <Link href={`/u/${params.username}/listings`}>View all</Link>
+                    </Button>
+                </div>
+                <div className="grid gap-4">
+                  {listings.slice(0, 1).map((item) => (
+                    <Card key={item.id} className="shadow-none overflow-hidden">
+                       <Image src={item.imageUrl} alt={item.title} width={600} height={400} className="w-full object-cover aspect-[16/9]" data-ai-hint="product design" />
+                      <CardHeader>
+                          <CardTitle className="text-lg">{item.title}</CardTitle>
+                          <CardDescription>{item.description}</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <Badge variant="secondary">{item.category}</Badge>
+                      </CardContent>
+                      <CardFooter>
+                        <Button className="w-full font-bold">{item.price}</Button>
+                      </CardFooter>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            )}
+            
             {/* Jobs Section */}
             {jobs.length > 0 && (
               <div>

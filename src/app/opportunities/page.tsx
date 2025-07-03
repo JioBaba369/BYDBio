@@ -1,10 +1,10 @@
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Briefcase, MapPin } from "lucide-react"
-
-const jobs: { title: string; company: string; location: string; type: string; }[] = [];
+import { currentUser } from "@/lib/mock-data";
 
 export default function JobsPage() {
+  const { jobs } = currentUser;
   return (
     <div className="space-y-6">
       <div>

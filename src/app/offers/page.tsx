@@ -2,10 +2,10 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button"
 import { Tag } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
-
-const offers: { title: string; description: string; category: string }[] = [];
+import { currentUser } from "@/lib/mock-data";
 
 export default function OffersPage() {
+  const { offers } = currentUser;
   return (
     <div className="space-y-6">
       <div>

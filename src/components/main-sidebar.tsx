@@ -28,6 +28,7 @@ import {
   User,
   Search,
   Users,
+  Tags,
 } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -156,6 +157,16 @@ export function MainSidebar() {
                 icon={<DollarSign />}
               >
                 Offers
+              </SidebarMenuButton>
+            </Link>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <Link href="/listings">
+              <SidebarMenuButton
+                isActive={isActive('/listings')}
+                icon={<Tags />}
+              >
+                Listings
               </SidebarMenuButton>
             </Link>
           </SidebarMenuItem>

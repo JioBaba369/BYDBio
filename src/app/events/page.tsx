@@ -1,10 +1,10 @@
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Calendar, MapPin } from "lucide-react"
-
-const events: { title: string; date: string; location: string }[] = [];
+import { currentUser } from "@/lib/mock-data";
 
 export default function EventsPage() {
+  const { events } = currentUser;
   return (
     <div className="space-y-6">
       <div>

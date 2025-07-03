@@ -21,9 +21,6 @@ export const currentUser = {
     { title: "Facebook", url: "https://facebook.com/janedoe.creative", icon: 'Facebook' },
     { title: "YouTube", url: "https://youtube.com/@janedoecreates", icon: 'Youtube' },
   ],
-  jobs: [],
-  events: [],
-  offers: [],
   businessCard: {
     title: "Senior Product Designer",
     company: "Acme Inc.",

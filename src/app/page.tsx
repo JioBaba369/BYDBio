@@ -30,6 +30,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
+import { currentUser } from "@/lib/mock-data"
 
 const chartData = [
   { month: "January", desktop: 186, mobile: 80 },
@@ -41,14 +42,17 @@ const chartData = [
 ]
 
 const barChartData = [
-  { name: 'Jobs', value: 4 },
-  { name: 'Events', value: 2 },
-  { name: 'Offers', value: 7 },
+  { name: 'Jobs', value: currentUser.jobs.length },
+  { name: 'Events', value: currentUser.events.length },
+  { name: 'Offers', value: currentUser.offers.length },
+  { name: 'Listings', value: currentUser.listings.length },
   { name: 'Updates', value: 12 },
-  { name: 'Links', value: 5 },
+  { name: 'Links', value: currentUser.links.length },
 ];
 
 export default function Dashboard() {
+  const totalListings = currentUser.jobs.length + currentUser.events.length + currentUser.offers.length + currentUser.listings.length;
+  
   return (
     <div className="flex flex-col gap-8">
       <div className="flex items-center justify-between">
@@ -93,9 +97,9 @@ export default function Dashboard() {
             <ListFilter className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">13</div>
+            <div className="text-2xl font-bold">{totalListings}</div>
             <p className="text-xs text-muted-foreground">
-              3 Jobs, 2 Events, 8 Offers
+              {currentUser.jobs.length} Jobs, {currentUser.events.length} Events, {currentUser.offers.length} Offers, {currentUser.listings.length} Listings
             </p>
           </CardContent>
         </Card>
