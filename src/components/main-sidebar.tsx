@@ -42,24 +42,9 @@ import { Input } from './ui/input';
 export function MainSidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const [hash, setHash] = React.useState('');
   const [searchQuery, setSearchQuery] = React.useState('');
 
-  React.useEffect(() => {
-    const onHashChange = () => {
-      setHash(window.location.hash);
-    };
-    onHashChange();
-    window.addEventListener('hashchange', onHashChange);
-    return () => {
-      window.removeEventListener('hashchange', onHashChange);
-    };
-  }, []);
-
-  const isActive = (path: string, linkHash?: string) => {
-    if (linkHash) {
-      return pathname === path && (hash || '#jobs') === linkHash;
-    }
+  const isActive = (path: string) => {
     if (path === '/') {
       return pathname === path;
     }
@@ -132,9 +117,9 @@ export function MainSidebar() {
             </Link>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <Link href="/opportunities#jobs">
+            <Link href="/opportunities">
               <SidebarMenuButton
-                isActive={isActive('/opportunities', '#jobs')}
+                isActive={isActive('/opportunities')}
                 icon={<Briefcase />}
               >
                 Jobs
@@ -142,9 +127,9 @@ export function MainSidebar() {
             </Link>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <Link href="/opportunities#events">
+            <Link href="/events">
               <SidebarMenuButton
-                isActive={isActive('/opportunities', '#events')}
+                isActive={isActive('/events')}
                 icon={<Calendar />}
               >
                 Events
@@ -152,9 +137,9 @@ export function MainSidebar() {
             </Link>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <Link href="/opportunities#offers">
+            <Link href="/offers">
               <SidebarMenuButton
-                isActive={isActive('/opportunities', '#offers')}
+                isActive={isActive('/offers')}
                 icon={<DollarSign />}
               >
                 Offers
