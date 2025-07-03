@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { UserPlus, UserCheck, Search as SearchIcon, Briefcase, MapPin, Tag, Calendar } from "lucide-react";
+import { UserPlus, UserCheck, Search as SearchIcon, Briefcase, MapPin, Tag, Calendar, Users, Tags, DollarSign } from "lucide-react";
 import { useState, useMemo } from 'react';
 import { allUsers as initialUsers } from '@/lib/users';
 import { currentUser } from '@/lib/mock-data';
@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import Image from "next/image";
 import { format, parseISO } from "date-fns";
 import type { User, Listing, Job, Event, Offer } from '@/lib/users';
+import { cn } from '@/lib/utils';
 
 // Augment item types with author info
 type ItemWithAuthor<T> = T & { author: Pick<User, 'id' | 'name' | 'handle' | 'avatarUrl' | 'avatarFallback'> };
@@ -128,9 +129,13 @@ export default function SearchPage() {
                 </h1>
                 <p className="text-muted-foreground">Search for users, listings, opportunities, and more.</p>
             </div>
-            <div className="text-center py-16 text-muted-foreground">
-              <p>Please enter a search term in the sidebar to find content.</p>
-            </div>
+             <Card className="text-center">
+              <CardContent className="p-10 text-muted-foreground">
+                <SearchIcon className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                <h3 className="text-lg font-semibold text-foreground">Find what you're looking for</h3>
+                <p>Use the search bar in the sidebar to discover users, content, and more across the platform.</p>
+              </CardContent>
+            </Card>
         </div>
     )
   }
@@ -142,7 +147,7 @@ export default function SearchPage() {
             <SearchIcon className="h-8 w-8" />
             Search Results
         </h1>
-        <p className="text-muted-foreground">Showing results for: "{query}"</p>
+        <p className="text-muted-foreground">Showing results for: <span className="text-foreground font-semibold">"{query}"</span></p>
       </div>
 
       <Tabs defaultValue="users" className="w-full">
@@ -158,7 +163,7 @@ export default function SearchPage() {
             {filteredContent.users.length > 0 ? (
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     {filteredContent.users.map(user => (
-                        <Card key={user.id}>
+                        <Card key={user.id} className="transition-all hover:shadow-md">
                         <CardContent className="p-4 flex items-center justify-between gap-4">
                             <Link href={`/u/${user.handle}`} className="flex items-center gap-4 hover:underline">
                             <Avatar>
@@ -179,9 +184,13 @@ export default function SearchPage() {
                     ))}
                 </div>
             ) : (
-                <div className="text-center py-16 text-muted-foreground">
-                    <p>No users found for "{query}".</p>
-                </div>
+                <Card>
+                    <CardContent className="p-10 text-center text-muted-foreground">
+                        <Users className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                        <h3 className="text-lg font-semibold text-foreground">No Users Found</h3>
+                        <p>We couldn't find any users matching "{query}". Try a different search.</p>
+                    </CardContent>
+                </Card>
             )}
         </TabsContent>
         
@@ -189,7 +198,7 @@ export default function SearchPage() {
              {filteredContent.listings.length > 0 ? (
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                     {filteredContent.listings.map((item) => (
-                        <Card key={item.id} className="flex flex-col">
+                        <Card key={item.id} className="flex flex-col transition-all hover:shadow-md">
                             {item.imageUrl && (
                                 <div className="overflow-hidden rounded-t-lg">
                                 <Image src={item.imageUrl} alt={item.title} width={600} height={400} className="w-full object-cover aspect-video" data-ai-hint="product design"/>
@@ -221,9 +230,13 @@ export default function SearchPage() {
                     ))}
                 </div>
              ) : (
-                 <div className="text-center py-16 text-muted-foreground">
-                    <p>No listings found for "{query}".</p>
-                </div>
+                 <Card>
+                    <CardContent className="p-10 text-center text-muted-foreground">
+                        <Tags className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                        <h3 className="text-lg font-semibold text-foreground">No Listings Found</h3>
+                        <p>We couldn't find any listings matching "{query}". Try a different search.</p>
+                    </CardContent>
+                </Card>
              )}
         </TabsContent>
         
@@ -231,7 +244,7 @@ export default function SearchPage() {
              {filteredContent.opportunities.length > 0 ? (
                 <div className="grid gap-6 md:grid-cols-2">
                     {filteredContent.opportunities.map((item) => (
-                        <Card key={item.id} className="flex flex-col">
+                        <Card key={item.id} className="flex flex-col transition-all hover:shadow-md">
                             <CardHeader>
                                 <CardTitle>{item.title}</CardTitle>
                                 <CardDescription>{item.company}</CardDescription>
@@ -262,9 +275,13 @@ export default function SearchPage() {
                     ))}
                 </div>
              ) : (
-                <div className="text-center py-16 text-muted-foreground">
-                    <p>No opportunities found for "{query}".</p>
-                </div>
+                <Card>
+                    <CardContent className="p-10 text-center text-muted-foreground">
+                        <Briefcase className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                        <h3 className="text-lg font-semibold text-foreground">No Opportunities Found</h3>
+                        <p>We couldn't find any opportunities matching "{query}". Try a different search.</p>
+                    </CardContent>
+                </Card>
              )}
         </TabsContent>
 
@@ -272,7 +289,7 @@ export default function SearchPage() {
              {filteredContent.events.length > 0 ? (
                 <div className="grid gap-6 md:grid-cols-2">
                     {filteredContent.events.map((item) => (
-                        <Card key={item.id} className="flex flex-col">
+                        <Card key={item.id} className="flex flex-col transition-all hover:shadow-md">
                             <CardHeader>
                                 <CardTitle>{item.title}</CardTitle>
                             </CardHeader>
@@ -302,9 +319,13 @@ export default function SearchPage() {
                     ))}
                 </div>
              ) : (
-                <div className="text-center py-16 text-muted-foreground">
-                    <p>No events found for "{query}".</p>
-                </div>
+                <Card>
+                    <CardContent className="p-10 text-center text-muted-foreground">
+                        <Calendar className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                        <h3 className="text-lg font-semibold text-foreground">No Events Found</h3>
+                        <p>We couldn't find any events matching "{query}". Try a different search.</p>
+                    </CardContent>
+                </Card>
              )}
         </TabsContent>
 
@@ -312,7 +333,7 @@ export default function SearchPage() {
              {filteredContent.offers.length > 0 ? (
                 <div className="grid gap-6 md:grid-cols-2">
                     {filteredContent.offers.map((item) => (
-                         <Card key={item.id} className="flex flex-col">
+                         <Card key={item.id} className="flex flex-col transition-all hover:shadow-md">
                             <CardHeader>
                                 <CardTitle>{item.title}</CardTitle>
                                 <CardDescription>{item.description}</CardDescription>
@@ -342,9 +363,13 @@ export default function SearchPage() {
                     ))}
                 </div>
              ) : (
-                <div className="text-center py-16 text-muted-foreground">
-                    <p>No offers found for "{query}".</p>
-                </div>
+                 <Card>
+                    <CardContent className="p-10 text-center text-muted-foreground">
+                        <DollarSign className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                        <h3 className="text-lg font-semibold text-foreground">No Offers Found</h3>
+                        <p>We couldn't find any offers matching "{query}". Try a different search.</p>
+                    </CardContent>
+                </Card>
              )}
         </TabsContent>
 
