@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
-import { Globe, Linkedin, Github, Twitter, Instagram, Facebook, Youtube, Link, Dribbble, Behance, Mail, Phone } from 'lucide-react';
+import { Globe, Linkedin, Github, Twitter, Instagram, Facebook, Youtube, Link, Mail, Phone } from 'lucide-react';
 
 export const linkIcons: Record<string, LucideIcon> = {
   Link,
@@ -12,8 +12,6 @@ export const linkIcons: Record<string, LucideIcon> = {
   Instagram,
   Facebook,
   Youtube,
-  Dribbble,
-  Behance,
 };
 
 export const availableIconNames = Object.keys(linkIcons) as (keyof typeof linkIcons)[];
