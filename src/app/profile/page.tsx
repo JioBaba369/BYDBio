@@ -16,7 +16,7 @@ import { currentUser } from "@/lib/mock-data";
 import { useForm, useFieldArray, FormProvider, useFormContext } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { availableIconNames, linkIcons } from "@/lib/link-icons";
+import { availableIconNames, linkIcons, linkIconData } from "@/lib/link-icons";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
@@ -41,7 +41,7 @@ const linksFormSchema = z.object({
 type LinksFormValues = z.infer<typeof linksFormSchema>;
 
 const SortableLinkItem = ({ field, index, remove }: { field: { id: string }, index: number, remove: (index: number) => void }) => {
-  const { control, watch } = useFormContext<LinksFormValues>();
+  const { control, watch, setValue } = useFormContext<LinksFormValues>();
 
   const {
     attributes,
@@ -57,7 +57,7 @@ const SortableLinkItem = ({ field, index, remove }: { field: { id: string }, ind
   };
   
   const selectedIconName = watch(`links.${index}.icon`);
-  const Icon = linkIcons[selectedIconName];
+  const Icon = selectedIconName ? linkIcons[selectedIconName] : null;
 
   return (
     <div ref={setNodeRef} style={style} {...attributes} className="flex items-start gap-2 p-4 border rounded-lg bg-background/50 touch-none">
@@ -71,7 +71,17 @@ const SortableLinkItem = ({ field, index, remove }: { field: { id: string }, ind
           render={({ field }) => (
             <FormItem>
               <FormLabel>Icon</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select
+                onValueChange={(value) => {
+                  field.onChange(value);
+                  const data = linkIconData[value as keyof typeof linkIconData];
+                  if (data) {
+                    setValue(`links.${index}.title`, data.title, { shouldDirty: true });
+                    setValue(`links.${index}.url`, data.urlPrefix, { shouldDirty: true });
+                  }
+                }}
+                defaultValue={field.value}
+              >
                 <FormControl>
                   <SelectTrigger>
                     <div className={cn("flex items-center gap-2", !field.value && "text-muted-foreground")}>
@@ -82,12 +92,13 @@ const SortableLinkItem = ({ field, index, remove }: { field: { id: string }, ind
                 </FormControl>
                 <SelectContent>
                   {availableIconNames.map((iconName) => {
-                    const LoopIcon = linkIcons[iconName];
+                    const data = linkIconData[iconName];
+                    const LoopIcon = data.icon;
                     return (
                       <SelectItem key={iconName} value={iconName}>
                         <div className="flex items-center gap-2">
                           <LoopIcon className="h-4 w-4" />
-                          <span>{iconName}</span>
+                          <span>{data.title}</span>
                         </div>
                       </SelectItem>
                     );
