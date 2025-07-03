@@ -10,6 +10,15 @@ type Listing = {
   category: string;
 };
 
+export type Post = {
+  id: string;
+  content: string;
+  imageUrl: string | null;
+  timestamp: string;
+  likes: number;
+  comments: number;
+};
+
 type User = {
   id: string;
   name: string;
@@ -22,6 +31,7 @@ type User = {
   events: { title: string; date: string; location: string }[];
   offers: { title: string; description: string; category: string }[];
   listings: Listing[];
+  posts: Post[];
 };
 
 export const allUsers: User[] = [
@@ -46,6 +56,24 @@ export const allUsers: User[] = [
         { id: 'listing1', title: 'Minimalist Icon Set', description: 'A pack of 200+ clean, modern icons for your next project.', price: '$25', imageUrl: 'https://placehold.co/600x400.png', category: 'Digital Asset' },
         { id: 'listing2', title: 'Web Design Masterclass', description: 'A 10-hour video course on modern web design principles.', price: '$149', imageUrl: 'https://placehold.co/600x400.png', category: 'Education' },
     ],
+    posts: [
+      {
+        id: 'post1-1',
+        content: "Excited to share a sneak peek of the new dashboard design I've been working on. Focusing on a cleaner layout and more intuitive data visualizations. #uidesign #productdesign #dashboard",
+        imageUrl: "https://placehold.co/600x400.png",
+        timestamp: "2h ago",
+        likes: 128,
+        comments: 12,
+      },
+      {
+        id: 'post1-2',
+        content: "Just launched our new 'Minimalist Icon Set' on the listings page! Perfect for your next project. #icons #digitalasset #designresources",
+        imageUrl: null,
+        timestamp: "1d ago",
+        likes: 256,
+        comments: 24,
+      }
+    ]
   },
   {
     id: 'user2',
@@ -59,6 +87,16 @@ export const allUsers: User[] = [
     events: [],
     offers: [],
     listings: [],
+    posts: [
+      {
+        id: 'post2-1',
+        content: "Just published a new article on 'The Future of Remote Collaboration'. Would love to hear your thoughts! Link in my bio. #remotework #futureofwork #collaboration",
+        imageUrl: null,
+        timestamp: "5h ago",
+        likes: 72,
+        comments: 5,
+      }
+    ]
   },
   {
     id: 'user3',
@@ -72,6 +110,7 @@ export const allUsers: User[] = [
     events: [],
     offers: [],
     listings: [],
+    posts: [],
   },
   {
     id: 'user4',
@@ -85,6 +124,16 @@ export const allUsers: User[] = [
     events: [],
     offers: [],
     listings: [],
+    posts: [
+        {
+        id: 'post4-1',
+        content: "Thrilled to be speaking at the upcoming Web Dev Conference. My talk is on modern CSS techniques. Hope to see you there! #webdev #css #conference",
+        imageUrl: "https://placehold.co/600x400.png",
+        timestamp: "8h ago",
+        likes: 98,
+        comments: 15,
+      }
+    ],
   },
   {
     id: 'user5',
@@ -98,6 +147,7 @@ export const allUsers: User[] = [
     events: [],
     offers: [],
     listings: [],
+    posts: [],
   },
   {
     id: 'user6',
@@ -111,6 +161,7 @@ export const allUsers: User[] = [
     events: [],
     offers: [],
     listings: [],
+    posts: [],
   },
   {
     id: 'user7',
@@ -124,5 +175,6 @@ export const allUsers: User[] = [
     events: [],
     offers: [],
     listings: [],
+    posts: [],
   },
 ];

@@ -6,7 +6,7 @@ import { useParams } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Send, Briefcase, Calendar, Tag, MapPin, ShoppingBag } from "lucide-react";
+import { Send, Briefcase, Calendar, Tag, MapPin, Heart, MessageCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -69,7 +69,7 @@ export default function LinkInBioPage() {
     return <div>User not found.</div>
   }
 
-  const { name, avatarUrl, avatarFallback, bio, links, subscribers, jobs, events, offers, listings } = userProfile;
+  const { name, avatarUrl, avatarFallback, bio, links, subscribers, jobs, events, offers, listings, posts } = userProfile;
 
   return (
     <div className="flex justify-center bg-gray-100 dark:bg-gray-900 py-8 px-4">
@@ -115,6 +115,38 @@ export default function LinkInBioPage() {
           </div>
 
           <div className="mt-8 space-y-8">
+            {/* Recent Updates Section */}
+            {posts.length > 0 && (
+              <div>
+                <h2 className="text-xl font-bold font-headline mb-4">Recent Updates</h2>
+                <div className="space-y-4">
+                  {posts.slice(0, 2).map((post) => (
+                    <Card key={post.id} className="shadow-none">
+                      <CardContent className="p-4">
+                        <p className="whitespace-pre-wrap text-sm">{post.content}</p>
+                        {post.imageUrl && (
+                          <div className="mt-4 rounded-lg overflow-hidden border">
+                            <Image src={post.imageUrl} alt="Post image" width={600} height={400} className="object-cover" data-ai-hint="office workspace"/>
+                          </div>
+                        )}
+                      </CardContent>
+                      <CardFooter className="flex justify-start items-center gap-4 px-4 pb-4 pt-2 text-sm text-muted-foreground">
+                          <div className="flex items-center gap-1">
+                              <Heart className="h-4 w-4" />
+                              <span>{post.likes}</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                              <MessageCircle className="h-4 w-4" />
+                              <span>{post.comments}</span>
+                          </div>
+                          <span className="ml-auto text-xs">{post.timestamp}</span>
+                      </CardFooter>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Listings Section */}
             {listings.length > 0 && (
               <div>

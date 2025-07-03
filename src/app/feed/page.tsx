@@ -8,40 +8,69 @@ import { Textarea } from "@/components/ui/textarea"
 import { Heart, Image as ImageIcon, MessageCircle, MoreHorizontal, Share2 } from "lucide-react"
 import Image from "next/image"
 import HashtagSuggester from "@/components/ai/hashtag-suggester"
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { currentUser } from "@/lib/mock-data";
+import { allUsers as initialUsers } from "@/lib/users";
+import { useToast } from "@/hooks/use-toast";
 
-const feedItems = [
-  {
-    id: 1,
+// Combine user data with their posts for the feed
+const initialFeedItems = initialUsers.flatMap(user => 
+  user.posts.map(post => ({
+    ...post,
     author: {
-      name: "Jane Doe",
-      avatarUrl: "https://placehold.co/100x100.png",
-      handle: "janedoe"
-    },
-    content: "Excited to share a sneak peek of the new dashboard design I've been working on. Focusing on a cleaner layout and more intuitive data visualizations. #uidesign #productdesign #dashboard",
-    imageUrl: "https://placehold.co/600x400.png",
-    timestamp: "2h ago",
-    likes: 128,
-    comments: 12,
-  },
-  {
-    id: 2,
-    author: {
-      name: "John Smith",
-      avatarUrl: "https://placehold.co/100x100.png",
-      handle: "johnsmith"
-    },
-    content: "Just published a new article on 'The Future of Remote Collaboration'. Would love to hear your thoughts! Link in my bio. #remotework #futureofwork #collaboration",
-    imageUrl: null,
-    timestamp: "5h ago",
-    likes: 72,
-    comments: 5,
-  }
-];
+      id: user.id,
+      name: user.name,
+      avatarUrl: user.avatarUrl,
+      handle: user.handle
+    }
+  }))
+)
+// A real app would sort by a real date object
+.sort(() => Math.random() - 0.5); // Random sort for variety
 
 export default function FeedPage() {
   const [postContent, setPostContent] = useState('');
+  const [feedItems, setFeedItems] = useState(initialFeedItems);
+  const { toast } = useToast();
+
+  const handlePost = () => {
+    if (!postContent.trim()) {
+      toast({
+        title: "Cannot post empty update",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const newPost = {
+      id: `post-new-${Date.now()}`,
+      content: postContent,
+      imageUrl: null, // For now, we don't support image uploads in new posts
+      timestamp: "Just now",
+      likes: 0,
+      comments: 0,
+      author: {
+        id: currentUser.id,
+        name: currentUser.name,
+        avatarUrl: currentUser.avatarUrl,
+        handle: currentUser.handle
+      }
+    };
+
+    setFeedItems(prevItems => [newPost, ...prevItems]);
+    setPostContent('');
+
+    toast({
+      title: "Update Posted!",
+      description: "Your new status has been added to the feed.",
+    });
+  };
+
+  const usersToShow = useMemo(() => {
+    const followingIds = new Set(currentUser.following);
+    followingIds.add(currentUser.id); // Also show own posts
+    return feedItems.filter(item => followingIds.has(item.author.id));
+  }, [feedItems]);
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
@@ -63,7 +92,7 @@ export default function FeedPage() {
                 onChange={(e) => setPostContent(e.target.value)}
               />
                <HashtagSuggester content={postContent} onSelectHashtag={(tag) => {
-                  setPostContent(prev => prev + ` ${tag}`);
+                  setPostContent(prev => prev ? `${prev.trim()} ${tag}`: tag);
                 }} />
             </div>
           </div>
@@ -72,12 +101,12 @@ export default function FeedPage() {
           <Button variant="ghost" size="icon">
             <ImageIcon className="h-5 w-5 text-muted-foreground" />
           </Button>
-          <Button>Post Update</Button>
+          <Button onClick={handlePost}>Post Update</Button>
         </CardFooter>
       </Card>
 
       <div className="space-y-6">
-        {feedItems.map(item => (
+        {usersToShow.map(item => (
           <Card key={item.id}>
             <CardHeader className="p-4">
               <div className="flex items-center justify-between">
@@ -120,6 +149,13 @@ export default function FeedPage() {
             </CardFooter>
           </Card>
         ))}
+         {usersToShow.length === 0 && (
+          <Card>
+            <CardContent className="p-10 text-center text-muted-foreground">
+              Follow other users to see their updates here.
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   )
