@@ -67,24 +67,25 @@ END:VCARD`;
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-muted/40 p-4 space-y-6">
-      <Card className="w-full max-w-sm p-6 shadow-xl">
-        <CardContent className="p-0 text-center space-y-4">
-            <Avatar className="w-20 h-20 mx-auto mb-2 border-2 border-muted">
+      <div className="w-full max-w-sm bg-background p-6 rounded-xl shadow-lg border">
+        <div className="text-center space-y-2">
+            <Avatar className="w-20 h-20 mx-auto">
                 <AvatarImage src={avatarUrl} alt={name} data-ai-hint="person portrait"/>
                 <AvatarFallback>{avatarFallback}</AvatarFallback>
             </Avatar>
             <div>
-                <h1 className="font-headline text-2xl font-bold">{name}</h1>
-                {title && <p className="text-primary font-medium">{title}</p>}
+                <h1 className="font-headline text-xl font-bold">{name}</h1>
+                {title && <p className="text-primary font-medium text-sm">{title}</p>}
                 {company && <p className="text-muted-foreground text-sm">{company}</p>}
             </div>
-
-            <div className="flex justify-center p-4 bg-white rounded-md max-w-[220px] mx-auto">
+        </div>
+        <div className="flex justify-center p-4 mt-4">
+            <div className="bg-white p-4 rounded-lg">
                 <QRCode value={vCardData} size={200} bgColor="#ffffff" fgColor="#000000" level="Q" />
             </div>
-            <p className="text-xs text-muted-foreground">Scan to save contact</p>
-        </CardContent>
-      </Card>
+        </div>
+        <p className="text-xs text-muted-foreground text-center">Scan to save contact</p>
+      </div>
       
       <div className="flex flex-wrap items-center justify-center gap-2">
         <ShareButton />
@@ -96,7 +97,7 @@ END:VCARD`;
         )}
       </div>
 
-      <div className="mt-6 text-center">
+      <div className="text-center">
           <Link href="/" className="text-sm text-muted-foreground hover:text-primary flex items-center gap-2">
               Powered by <Logo className="text-lg text-foreground" />
           </Link>
