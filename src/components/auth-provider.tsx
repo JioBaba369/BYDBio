@@ -7,6 +7,7 @@ import { doc, onSnapshot } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import { createUserProfileIfNotExists, type User as AppUser } from '@/lib/users';
 import { usePathname, useRouter } from 'next/navigation';
+import { isPublicPath } from '@/lib/paths';
 
 interface AuthContextType {
   user: AppUser | null;
@@ -19,24 +20,6 @@ const AuthContext = createContext<AuthContextType>({
   firebaseUser: null,
   loading: true,
 });
-
-// The public-facing pages that don't require authentication.
-const PUBLIC_PATHS = [
-    '/auth/sign-in',
-    '/auth/sign-up',
-    '/auth/reset-password',
-    '/u/',
-    '/b/',
-    '/l/',
-    '/o/',
-    '/offer/',
-    '/events/'
-];
-
-const isPublicPath = (path: string) => {
-    if (path === '/') return false; // Dashboard is protected
-    return PUBLIC_PATHS.some(p => path.startsWith(p));
-}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AppUser | null>(null);
@@ -56,7 +39,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         snapshotUnsubscribe = onSnapshot(userDocRef, async (doc) => {
             if (doc.exists()) {
                 setUser({ ...doc.data(), email: fbUser.email } as AppUser);
-                setLoading(false);
             } else {
                 try {
                     console.log(`No user profile found for UID: ${fbUser.uid}. Creating one now.`);
@@ -66,9 +48,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 } catch (creationError) {
                     console.error("Failed to create user profile on-the-fly:", creationError);
                     setUser(null); // Can't proceed if creation fails
-                    setLoading(false);
                 }
             }
+            setLoading(false);
         }, (error) => {
             console.error("Error fetching user profile:", error);
             setUser(null);
