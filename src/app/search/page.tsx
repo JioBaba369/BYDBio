@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { UserPlus, UserCheck, Search as SearchIcon, Briefcase, MapPin, Tag, Calendar, Users, Tags, DollarSign } from "lucide-react";
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { allUsers as initialUsers } from '@/lib/users';
 import { currentUser } from '@/lib/mock-data';
 import Link from 'next/link';
@@ -15,7 +15,6 @@ import { Badge } from "@/components/ui/badge";
 import Image from "next/image";
 import { format, parseISO } from "date-fns";
 import type { User, Listing, Job, Event, Offer } from '@/lib/users';
-import { cn } from '@/lib/utils';
 
 // Augment item types with author info
 type ItemWithAuthor<T> = T & { author: Pick<User, 'id' | 'name' | 'handle' | 'avatarUrl' | 'avatarFallback'> };
@@ -29,6 +28,21 @@ const mapUsersWithFollowingState = (users: typeof initialUsers, me: typeof curre
         isFollowedByCurrentUser: me.following.includes(user.id),
       }));
 }
+
+function ClientFormattedDate({ dateString, formatStr }: { dateString: string; formatStr: string }) {
+  const [formattedDate, setFormattedDate] = useState('');
+
+  useEffect(() => {
+    setFormattedDate(format(parseISO(dateString), formatStr));
+  }, [dateString, formatStr]);
+
+  if (!formattedDate) {
+    return <span>...</span>;
+  }
+
+  return <>{formattedDate}</>;
+}
+
 
 export default function SearchPage() {
   const searchParams = useSearchParams();
@@ -223,7 +237,7 @@ export default function SearchPage() {
                             <CardFooter className="flex justify-between items-center">
                                 <p className="font-bold text-lg">{item.price}</p>
                                 <Button asChild>
-                                    <Link href={`/u/${item.author.handle}/listings`}>View</Link>
+                                    <Link href={`/u/${item.author.handle}#listings`}>View</Link>
                                 </Button>
                             </CardFooter>
                         </Card>
@@ -268,7 +282,7 @@ export default function SearchPage() {
                             </CardContent>
                             <CardFooter>
                                <Button asChild className="w-full">
-                                    <Link href={`/u/${item.author.handle}/jobs`}>View Details</Link>
+                                    <Link href={`/u/${item.author.handle}#jobs`}>View Details</Link>
                                 </Button>
                             </CardFooter>
                         </Card>
@@ -295,7 +309,7 @@ export default function SearchPage() {
                             </CardHeader>
                             <CardContent className="space-y-2 flex-grow">
                                 <div className="flex items-center text-sm text-muted-foreground">
-                                <Calendar className="mr-2 h-4 w-4" /> {format(parseISO(item.date), "PPP p")}
+                                <Calendar className="mr-2 h-4 w-4" /> <ClientFormattedDate dateString={item.date} formatStr="PPP p" />
                                 </div>
                                 <div className="flex items-center text-sm text-muted-foreground">
                                 <MapPin className="mr-2 h-4 w-4" /> {item.location}
@@ -312,7 +326,7 @@ export default function SearchPage() {
                             </CardContent>
                             <CardFooter>
                                 <Button asChild className="w-full">
-                                    <Link href={`/u/${item.author.handle}/events`}>Learn More</Link>
+                                    <Link href={`/u/${item.author.handle}#events`}>Learn More</Link>
                                 </Button>
                             </CardFooter>
                         </Card>
@@ -342,7 +356,7 @@ export default function SearchPage() {
                                 <Badge variant="secondary"><Tag className="mr-1 h-3 w-3" />{item.category}</Badge>
                                 <div className="flex items-center pt-2 text-sm text-muted-foreground">
                                     <Calendar className="mr-2 h-4 w-4" /> 
-                                    <span>Releases: {format(parseISO(item.releaseDate), 'PPP')}</span>
+                                    <span>Releases: <ClientFormattedDate dateString={item.releaseDate} formatStr="PPP" /></span>
                                 </div>
                                  <div className="text-sm text-muted-foreground pt-3 border-t">
                                      <Link href={`/u/${item.author.handle}`} className="flex items-center gap-2 hover:underline">
@@ -356,7 +370,7 @@ export default function SearchPage() {
                             </CardContent>
                             <CardFooter>
                                 <Button asChild className="w-full">
-                                    <Link href={`/u/${item.author.handle}/offers`}>Claim Offer</Link>
+                                    <Link href={`/u/${item.author.handle}#offers`}>Claim Offer</Link>
                                 </Button>
                             </CardFooter>
                         </Card>
