@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -8,11 +9,28 @@ import { currentUser } from "@/lib/mock-data";
 import { format, parseISO } from "date-fns";
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { Offer } from "@/lib/users";
 import { useToast } from "@/hooks/use-toast";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
+
+// This component safely formats the date on the client-side to prevent hydration errors.
+function ClientFormattedDate({ dateString }: { dateString: string }) {
+  const [formattedDate, setFormattedDate] = useState('');
+
+  useEffect(() => {
+    // This effect runs only on the client, after the initial render.
+    setFormattedDate(format(parseISO(dateString), "PPP"));
+  }, [dateString]);
+
+  // Render a placeholder or nothing until the client-side formatting is complete.
+  if (!formattedDate) {
+    return <span>...</span>;
+  }
+
+  return <>{formattedDate}</>;
+}
 
 export default function OffersPage() {
   const [offers, setOffers] = useState<Offer[]>(currentUser.offers);
@@ -96,7 +114,7 @@ export default function OffersPage() {
                   <Badge variant="secondary"><Tag className="mr-1 h-3 w-3" />{offer.category}</Badge>
                    <div className="flex items-center pt-2 text-sm text-muted-foreground">
                     <Calendar className="mr-2 h-4 w-4" /> 
-                    <span>Releases: {format(parseISO(offer.releaseDate), 'PPP')}</span>
+                    <span>Releases: <ClientFormattedDate dateString={offer.releaseDate} /></span>
                   </div>
                 </CardContent>
                 <CardFooter>
@@ -146,7 +164,7 @@ export default function OffersPage() {
                     <Badge variant="secondary"><Tag className="mr-1 h-3 w-3" />{offer.category}</Badge>
                      <div className="flex items-center pt-2 text-sm text-muted-foreground">
                       <Calendar className="mr-2 h-4 w-4" /> 
-                      <span>Releases: {format(parseISO(offer.releaseDate), 'PPP')}</span>
+                      <span>Releases: <ClientFormattedDate dateString={offer.releaseDate} /></span>
                     </div>
                   </CardContent>
                 </Card>

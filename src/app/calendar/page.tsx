@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -26,11 +26,61 @@ type CalendarItem = {
   imageUrl?: string | null;
 };
 
+const CalendarSkeleton = () => (
+    <div className="space-y-6 animate-pulse">
+        <div>
+            <div className="h-8 bg-muted rounded w-1/2"></div>
+            <div className="h-4 bg-muted rounded w-3/4 mt-2"></div>
+        </div>
+        <Card>
+            <CardContent className="p-4 grid sm:grid-cols-2 md:grid-cols-3 gap-4">
+                <div className="h-10 bg-muted rounded"></div>
+                <div className="h-10 bg-muted rounded"></div>
+                <div className="h-10 bg-muted rounded"></div>
+            </CardContent>
+        </Card>
+        <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+                <div className="h-7 bg-muted rounded w-1/3"></div>
+                <div className="flex items-center gap-2">
+                    <div className="h-8 w-8 bg-muted rounded"></div>
+                    <div className="h-8 w-8 bg-muted rounded"></div>
+                </div>
+            </CardHeader>
+            <CardContent className="p-2">
+                <div className="grid grid-cols-7 gap-2">
+                    {[...Array(7)].map((_, i) => <div key={i} className="h-6 bg-muted rounded w-full"></div>)}
+                </div>
+                <div className="grid grid-cols-7 gap-px mt-2 bg-border border-t border-l">
+                    {[...Array(35)].map((_, i) => <div key={i} className="aspect-square bg-muted border-r border-b border-border"></div>)}
+                </div>
+            </CardContent>
+        </Card>
+        <div className="space-y-4">
+            <div className="h-7 bg-muted rounded w-1/4"></div>
+            <Card>
+                <CardContent className="p-6 text-center text-muted-foreground">
+                    Loading items...
+                </CardContent>
+            </Card>
+        </div>
+    </div>
+);
+
+
 export default function CalendarPage() {
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
-  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [isMounted, setIsMounted] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>();
+  const [currentMonth, setCurrentMonth] = useState<Date | undefined>();
   const [searchTerm, setSearchTerm] = useState('');
   const [locationFilter, setLocationFilter] = useState('');
+
+  useEffect(() => {
+    const today = new Date();
+    setSelectedDate(today);
+    setCurrentMonth(today);
+    setIsMounted(true);
+  }, []);
 
   const calendarItems: CalendarItem[] = useMemo(() => {
     const events = currentUser.events.map(event => ({
@@ -98,14 +148,6 @@ export default function CalendarPage() {
     setLocationFilter('');
   }
 
-  // Calendar grid logic
-  const firstDayOfMonth = startOfMonth(currentMonth);
-  const daysInCalendar = eachDayOfInterval({
-    start: startOfWeek(firstDayOfMonth),
-    end: endOfWeek(endOfMonth(currentMonth))
-  });
-  const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  
   const getBadgeVariant = (type: CalendarItem['type']): VariantProps<typeof badgeVariants>['variant'] => {
     switch (type) {
         case 'Event': return 'default';
@@ -115,6 +157,18 @@ export default function CalendarPage() {
         default: return 'default';
     }
   }
+
+  if (!isMounted || !currentMonth) {
+    return <CalendarSkeleton />;
+  }
+
+  // Calendar grid logic
+  const firstDayOfMonth = startOfMonth(currentMonth);
+  const daysInCalendar = eachDayOfInterval({
+    start: startOfWeek(firstDayOfMonth),
+    end: endOfWeek(endOfMonth(currentMonth))
+  });
+  const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
   return (
     <div className="space-y-6">
@@ -170,7 +224,7 @@ export default function CalendarPage() {
             </div>
             <div className="grid grid-cols-7 gap-px mt-2 bg-border border-t border-l">
                 {daysInCalendar.map(day => {
-                    const isCurrentMonth = isSameMonth(day, currentMonth);
+                    const isCurrentMonthDay = isSameMonth(day, currentMonth);
                     const isSelected = selectedDate && isSameDay(day, selectedDate);
                     const isToday = isSameDay(day, new Date());
                     const isPast = isBefore(day, new Date()) && !isToday;
@@ -183,13 +237,13 @@ export default function CalendarPage() {
                             onClick={() => setSelectedDate(day)}
                             className={cn(
                                 "aspect-square p-2 text-left align-top overflow-hidden relative border-r border-b border-border transition-colors focus:z-10 focus:ring-2 focus:ring-ring focus:ring-offset-2",
-                                isCurrentMonth ? "bg-background" : "bg-muted/40 text-muted-foreground/80",
-                                !isCurrentMonth && "text-muted-foreground",
+                                isCurrentMonthDay ? "bg-background" : "bg-muted/40 text-muted-foreground/80",
+                                !isCurrentMonthDay && "text-muted-foreground",
                                 isSelected && "bg-primary text-primary-foreground",
                                 !isSelected && isToday && "bg-accent text-accent-foreground",
                                 hasItems && !isSelected && !isToday && isPast && "bg-muted text-muted-foreground",
                                 hasItems && !isSelected && !isToday && !isPast && "bg-primary/10",
-                                !isSelected && isCurrentMonth && "hover:bg-accent/50"
+                                !isSelected && isCurrentMonthDay && "hover:bg-accent/50"
                             )}
                         >
                             <span className={cn("font-medium", isSelected ? "text-primary-foreground" : isToday ? "text-accent-foreground" : "text-foreground")}>{format(day, 'd')}</span>
