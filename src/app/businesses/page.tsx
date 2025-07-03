@@ -5,13 +5,14 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { currentUser } from "@/lib/mock-data";
 import Image from "next/image";
-import { PlusCircle, MoreHorizontal, Edit, Trash2, Archive, Globe, Mail, Phone, MapPin, Eye } from "lucide-react";
+import { PlusCircle, MoreHorizontal, Edit, Trash2, Archive, Globe, Mail, Phone, MapPin, Eye, MousePointerClick, ExternalLink, Building2 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { Business } from "@/lib/users";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
+import { Separator } from "@/components/ui/separator";
 
 export default function BusinessesPage() {
   const [businesses, setBusinesses] = useState<Business[]>(currentUser.businesses);
@@ -91,16 +92,29 @@ export default function BusinessesPage() {
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </CardHeader>
-                <CardContent className="flex-grow space-y-3 text-sm text-muted-foreground">
-                    {item.email && <div className="flex items-center gap-2"><Mail className="h-4 w-4" /> <span>{item.email}</span></div>}
-                    {item.phone && <div className="flex items-center gap-2"><Phone className="h-4 w-4" /> <span>{item.phone}</span></div>}
-                    {item.website && <div className="flex items-center gap-2"><Globe className="h-4 w-4" /> <span>{item.website}</span></div>}
-                    {item.address && <div className="flex items-center gap-2"><MapPin className="h-4 w-4" /> <span>{item.address}</span></div>}
+                <CardContent className="flex-grow">
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm text-muted-foreground">
+                        {item.email && <div className="flex items-center gap-2 truncate"><Mail className="h-4 w-4 flex-shrink-0" /> <span className="truncate">{item.email}</span></div>}
+                        {item.phone && <div className="flex items-center gap-2 truncate"><Phone className="h-4 w-4 flex-shrink-0" /> <span className="truncate">{item.phone}</span></div>}
+                        {item.website && <div className="flex items-center gap-2 truncate"><Globe className="h-4 w-4 flex-shrink-0" /> <span className="truncate">{item.website}</span></div>}
+                        {item.address && <div className="flex items-center gap-2 truncate col-span-2"><MapPin className="h-4 w-4 flex-shrink-0" /> <span className="truncate">{item.address}</span></div>}
+                    </div>
                 </CardContent>
-                <CardFooter>
+                <Separator className="my-4" />
+                <CardFooter className="flex-col items-start gap-4">
+                    <div className="flex justify-between w-full">
+                        <div className="flex items-center text-sm font-medium">
+                            <Eye className="mr-2 h-4 w-4 text-primary" />
+                            <span>{item.views?.toLocaleString() ?? 0} views</span>
+                        </div>
+                        <div className="flex items-center text-sm font-medium">
+                            <MousePointerClick className="mr-2 h-4 w-4 text-primary" />
+                            <span>{item.clicks?.toLocaleString() ?? 0} clicks</span>
+                        </div>
+                    </div>
                     <Button asChild variant="outline" className="w-full">
                         <Link href={`/b/${item.id}`}>
-                            <Eye className="mr-2 h-4 w-4" />
+                            <ExternalLink className="mr-2 h-4 w-4" />
                             View Public Page
                         </Link>
                     </Button>
@@ -109,10 +123,22 @@ export default function BusinessesPage() {
             ))}
           </div>
         ) : (
-          <Card>
-            <CardContent className="p-10 text-center text-muted-foreground">
-              You haven't created any active business pages yet.
+          <Card className="text-center">
+            <CardHeader>
+                <CardTitle>No Business Pages Yet</CardTitle>
+                <CardDescription>Get started by creating your first business page.</CardDescription>
+            </CardHeader>
+            <CardContent className="flex justify-center items-center p-10">
+                <Building2 className="h-16 w-16 text-muted-foreground" />
             </CardContent>
+            <CardFooter>
+                <Button asChild className="w-full">
+                    <Link href="/businesses/create">
+                      <PlusCircle className="mr-2 h-4 w-4" />
+                      Create Your First Business Page
+                    </Link>
+                </Button>
+            </CardFooter>
           </Card>
         )}
 

@@ -63,6 +63,8 @@ export type Business = {
   imageUrl?: string | null;
   logoUrl?: string | null;
   status: 'active' | 'archived';
+  views?: number;
+  clicks?: number;
 };
 
 export type User = {
@@ -100,6 +102,8 @@ const user1Businesses: Business[] = [
     imageUrl: 'https://placehold.co/1200x400.png',
     logoUrl: 'https://placehold.co/200x200.png',
     status: 'active',
+    views: 2451,
+    clicks: 832,
   },
   {
     id: 'biz2',
@@ -112,6 +116,8 @@ const user1Businesses: Business[] = [
     imageUrl: 'https://placehold.co/1200x400.png',
     logoUrl: 'https://placehold.co/200x200.png',
     status: 'active',
+    views: 890,
+    clicks: 120,
   },
   {
     id: 'biz3',
@@ -124,6 +130,8 @@ const user1Businesses: Business[] = [
     imageUrl: 'https://placehold.co/1200x400.png',
     logoUrl: 'https://placehold.co/200x200.png',
     status: 'archived',
+    views: 150,
+    clicks: 12,
   }
 ];
 
