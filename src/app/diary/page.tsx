@@ -11,12 +11,13 @@ import { useToast } from '@/hooks/use-toast';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { BookText, Calendar, MapPin, Save } from 'lucide-react';
+import Link from 'next/link';
 
 type EventWithNotes = Event & { notes?: string };
 
 export default function DiaryPage() {
     const [events, setEvents] = useState<EventWithNotes[]>(
-        currentUser.events.map(e => ({...e, notes: ''}))
+        currentUser.events.map(e => ({...e, notes: e.id === 'event1' ? 'Prepare a few questions for the Q&A session.' : ''}))
     );
     const { toast } = useToast();
 
@@ -59,12 +60,14 @@ export default function DiaryPage() {
                             <Card key={event.id}>
                                 <CardHeader>
                                     <CardTitle>{event.title}</CardTitle>
-                                    <div className="flex items-center text-sm text-muted-foreground pt-1">
-                                        <Calendar className="mr-2 h-4 w-4" /> {format(parseISO(event.date), "PPP 'at' p")}
-                                    </div>
-                                    <div className="flex items-center text-sm text-muted-foreground">
-                                        <MapPin className="mr-2 h-4 w-4" /> {event.location}
-                                    </div>
+                                    <CardDescription className="space-y-1 text-sm text-muted-foreground pt-1">
+                                        <div className="flex items-center">
+                                            <Calendar className="mr-2 h-4 w-4" /> {format(parseISO(event.date), "PPP 'at' p")}
+                                        </div>
+                                        <div className="flex items-center">
+                                            <MapPin className="mr-2 h-4 w-4" /> {event.location}
+                                        </div>
+                                    </CardDescription>
                                 </CardHeader>
                                 <CardContent className="space-y-2">
                                     <Label htmlFor={`notes-${event.id}`}>My Notes</Label>
@@ -85,8 +88,12 @@ export default function DiaryPage() {
                     </div>
                 ) : (
                     <Card>
-                        <CardContent className="p-10 text-center text-muted-foreground">
-                            You have no upcoming events.
+                        <CardContent className="p-10 text-center text-muted-foreground flex flex-col items-center gap-4">
+                            <Calendar className="h-12 w-12" />
+                            <p>You have no upcoming events.</p>
+                             <Button asChild>
+                                <Link href="/events">Explore Events</Link>
+                            </Button>
                         </CardContent>
                     </Card>
                 )}
@@ -100,10 +107,17 @@ export default function DiaryPage() {
                             <Card key={event.id} className="opacity-80">
                                 <CardHeader>
                                     <CardTitle>{event.title}</CardTitle>
-                                    <CardDescription>{format(parseISO(event.date), "PPP")}</CardDescription>
+                                     <CardDescription className="space-y-1 text-sm text-muted-foreground pt-1">
+                                        <div className="flex items-center">
+                                            <Calendar className="mr-2 h-4 w-4" /> {format(parseISO(event.date), "PPP")}
+                                        </div>
+                                        <div className="flex items-center">
+                                            <MapPin className="mr-2 h-4 w-4" /> {event.location}
+                                        </div>
+                                    </CardDescription>
                                 </CardHeader>
                                 <CardContent className="space-y-2">
-                                    <Label htmlFor={`notes-${event.id}`}>My Notes</Label>
+                                    <Label htmlFor={`notes-${event.id}`}>My Reflections</Label>
                                     <Textarea
                                         id={`notes-${event.id}`}
                                         placeholder="Add your reflections..."
