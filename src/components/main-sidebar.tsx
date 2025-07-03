@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -98,8 +97,8 @@ export function MainSidebar() {
             <Link href="/">
               <SidebarMenuButton
                 isActive={isActive('/')}
-                icon={<LayoutDashboard />}
               >
+                <LayoutDashboard />
                 Dashboard
               </SidebarMenuButton>
             </Link>
@@ -108,8 +107,8 @@ export function MainSidebar() {
             <Link href="/feed">
               <SidebarMenuButton
                 isActive={isActive('/feed')}
-                icon={<MessageSquare />}
               >
+                <MessageSquare />
                 Status Feed
               </SidebarMenuButton>
             </Link>
@@ -118,8 +117,8 @@ export function MainSidebar() {
             <Link href="/connections">
               <SidebarMenuButton
                 isActive={isActive('/connections')}
-                icon={<Users />}
               >
+                <Users />
                 Connections
               </SidebarMenuButton>
             </Link>
@@ -128,8 +127,8 @@ export function MainSidebar() {
             <Link href="/notifications">
               <SidebarMenuButton
                 isActive={isActive('/notifications')}
-                icon={<Bell />}
               >
+                <Bell />
                 Notifications
               </SidebarMenuButton>
             </Link>
@@ -138,8 +137,8 @@ export function MainSidebar() {
             <Link href="/profile">
               <SidebarMenuButton
                 isActive={isActive('/profile')}
-                icon={<User />}
               >
+                <User />
                 Profile Editor
               </SidebarMenuButton>
             </Link>
@@ -148,8 +147,8 @@ export function MainSidebar() {
             <Link href="/calendar">
               <SidebarMenuButton
                 isActive={isActive('/calendar')}
-                icon={<CalendarDays />}
               >
+                <CalendarDays />
                 Content Calendar
               </SidebarMenuButton>
             </Link>
@@ -158,8 +157,8 @@ export function MainSidebar() {
             <Link href="/businesses">
               <SidebarMenuButton
                 isActive={isActive('/businesses')}
-                icon={<Building2 />}
               >
+                <Building2 />
                 My Businesses
               </SidebarMenuButton>
             </Link>
@@ -168,8 +167,8 @@ export function MainSidebar() {
             <Link href="/listings">
               <SidebarMenuButton
                 isActive={isActive('/listings')}
-                icon={<Tags />}
               >
+                <Tags />
                 Listings
               </SidebarMenuButton>
             </Link>
@@ -178,8 +177,8 @@ export function MainSidebar() {
             <Link href="/opportunities">
               <SidebarMenuButton
                 isActive={isActive('/opportunities')}
-                icon={<Briefcase />}
               >
+                <Briefcase />
                 Opportunities
               </SidebarMenuButton>
             </Link>
@@ -188,8 +187,8 @@ export function MainSidebar() {
             <Link href="/events">
               <SidebarMenuButton
                 isActive={isActive('/events')}
-                icon={<Calendar />}
               >
+                <Calendar />
                 Events
               </SidebarMenuButton>
             </Link>
@@ -198,8 +197,8 @@ export function MainSidebar() {
             <Link href="/offers">
               <SidebarMenuButton
                 isActive={isActive('/offers')}
-                icon={<DollarSign />}
               >
+                <DollarSign />
                 Offers
               </SidebarMenuButton>
             </Link>
@@ -208,8 +207,8 @@ export function MainSidebar() {
             <Link href={`/u/${currentUser.username}`}>
               <SidebarMenuButton
                 isActive={isActive(`/u/${currentUser.username}`)}
-                icon={<Share />}
               >
+                <Share />
                 Public Page
               </SidebarMenuButton>
             </Link>
@@ -218,8 +217,8 @@ export function MainSidebar() {
             <Link href={`/u/${currentUser.username}/card`}>
               <SidebarMenuButton
                 isActive={isActive(`/u/${currentUser.username}/card`)}
-                icon={<CreditCard />}
               >
+                <CreditCard />
                 Digital Business Card
               </SidebarMenuButton>
             </Link>
@@ -228,8 +227,8 @@ export function MainSidebar() {
             <Link href={`/u/${currentUser.username}/bio`}>
               <SidebarMenuButton
                 isActive={isActive(`/u/${currentUser.username}/bio`)}
-                icon={<BookUser />}
               >
+                <BookUser />
                 Bio Card
               </SidebarMenuButton>
             </Link>
