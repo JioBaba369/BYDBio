@@ -52,12 +52,14 @@ export type Job = {
 export type Event = {
   id: string;
   title: string;
+  description: string;
   date: string;
   location: string;
   imageUrl: string | null;
   status: 'active' | 'archived';
   views?: number;
   rsvps?: number;
+  attendees?: { id: string; name: string; avatarUrl: string; }[];
 };
 
 export type Business = {
@@ -191,8 +193,37 @@ export const allUsers: User[] = [
        { id: 'job2', title: 'Frontend Developer', company: 'Tech Innovators', location: 'New York, NY', type: 'Full-time', postingDate: '2024-07-15T09:00:00Z', imageUrl: 'https://placehold.co/600x400.png', status: 'archived', views: 2500, applicants: 120 },
     ],
     events: [
-        { id: 'event1', title: 'Design Thinking Workshop', date: '2024-08-15T14:00:00Z', location: 'Online', imageUrl: 'https://placehold.co/600x400.png', status: 'active', views: 1230, rsvps: 88 },
-        { id: 'event2', title: 'Past Tech Meetup', date: '2024-06-20T18:00:00Z', location: 'San Francisco, CA', imageUrl: 'https://placehold.co/600x400.png', status: 'archived', views: 450, rsvps: 50 },
+        { 
+            id: 'event1', 
+            title: 'Design Thinking Workshop', 
+            description: 'Join us for an interactive workshop on the principles of design thinking. We will cover empathy mapping, ideation techniques, and prototyping. This session is perfect for designers, product managers, and anyone interested in a human-centered approach to problem-solving. No prior experience is necessary!',
+            date: '2024-08-15T14:00:00Z', 
+            location: 'Online', 
+            imageUrl: 'https://placehold.co/600x400.png', 
+            status: 'active', 
+            views: 1230, 
+            rsvps: 88,
+            attendees: [
+                { id: 'user2', name: 'John Smith', avatarUrl: 'https://placehold.co/100x100.png' },
+                { id: 'user4', name: 'Maria Garcia', avatarUrl: 'https://placehold.co/100x100.png' },
+                { id: 'user5', name: 'Chris Lee', avatarUrl: 'https://placehold.co/100x100.png' },
+                { id: 'user6', name: 'Patricia Williams', avatarUrl: 'https://placehold.co/100x100.png' },
+            ]
+        },
+        { 
+            id: 'event2', 
+            title: 'Past Tech Meetup', 
+            description: 'A look back at our monthly tech meetup. We discussed the latest trends in web development, including a deep dive into server components and a showcase of new CSS features. Thanks to all who attended!',
+            date: '2024-06-20T18:00:00Z', 
+            location: 'San Francisco, CA', 
+            imageUrl: 'https://placehold.co/600x400.png', 
+            status: 'archived', 
+            views: 450, 
+            rsvps: 50,
+            attendees: [
+                { id: 'user3', name: 'Alex Johnson', avatarUrl: 'https://placehold.co/100x100.png' },
+            ]
+        },
     ],
     offers: [
         { id: 'offer1', title: '1-on-1 Portfolio Review', description: 'Get expert feedback on your design portfolio.', category: 'Consulting', releaseDate: '2024-09-01T10:00:00Z', imageUrl: 'https://placehold.co/600x400.png', status: 'active', views: 980, claims: 112 },

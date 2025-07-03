@@ -304,7 +304,9 @@ export default function UserProfilePage({ userProfileData }: UserProfilePageProp
                                     </div>
                                 </CardContent>
                                 <CardFooter>
-                                    <Button className="w-full">Learn More</Button>
+                                    <Button asChild className="w-full">
+                                        <Link href={`/events/${event.id}`}>Learn More</Link>
+                                    </Button>
                                 </CardFooter>
                             </Card>
                         ))}

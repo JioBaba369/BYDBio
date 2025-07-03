@@ -1,0 +1,162 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import type { Event, User } from '@/lib/users';
+import Image from 'next/image';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { MapPin, Calendar, Clock, ArrowLeft, Users, Check } from 'lucide-react';
+import Link from 'next/link';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import { Separator } from '@/components/ui/separator';
+import { format, parseISO } from 'date-fns';
+import { cn } from '@/lib/utils';
+import ShareButton from '@/components/share-button';
+import { useToast } from '@/hooks/use-toast';
+import { Logo } from '@/components/logo';
+
+interface EventDetailClientProps {
+    event: Event;
+    author: User;
+}
+
+// Client-side date formatter to prevent hydration issues
+function ClientFormattedDate({ dateString, formatStr }: { dateString: string; formatStr: string }) {
+  const [formattedDate, setFormattedDate] = useState('');
+  useEffect(() => {
+    setFormattedDate(format(parseISO(dateString), formatStr));
+  }, [dateString, formatStr]);
+  return <>{formattedDate || '...'}</>;
+}
+
+
+export default function EventDetailClient({ event, author }: EventDetailClientProps) {
+    const [isRsvpd, setIsRsvpd] = useState(false);
+    const { toast } = useToast();
+
+    const handleRsvp = () => {
+        setIsRsvpd(!isRsvpd);
+        toast({
+            title: isRsvpd ? "You are no longer RSVP'd" : "You've RSVP'd!",
+            description: isRsvpd ? "We've removed you from the guest list." : "We've added you to the guest list. See you there!",
+        });
+    };
+
+    const attendeeCount = (event.rsvps || 0) + (isRsvpd ? 1 : 0);
+
+    return (
+        <div className="bg-muted/40 min-h-screen py-8 px-4">
+            <div className="max-w-4xl mx-auto space-y-6">
+                 <Button asChild variant="ghost" className="pl-0">
+                    <Link href={`/events`} className="inline-flex items-center gap-2 text-primary hover:underline">
+                        <ArrowLeft className="h-4 w-4" />
+                        Back to All Events
+                    </Link>
+                </Button>
+                <Card>
+                    {event.imageUrl && (
+                         <div className="overflow-hidden rounded-t-lg h-52 sm:h-64 bg-muted">
+                            <Image 
+                                src={event.imageUrl} 
+                                alt={event.title} 
+                                width={1200} 
+                                height={400} 
+                                className="w-full h-full object-cover"
+                                data-ai-hint="event poster"
+                            />
+                        </div>
+                    )}
+                    <CardContent className="p-6 space-y-8">
+                        <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+                            <div className='flex-1'>
+                                <CardTitle className="text-3xl font-bold font-headline">{event.title}</CardTitle>
+                                <CardDescription className="text-base pt-2 flex items-center gap-2">Hosted by <Link href={`/u/${author.username}`} className="font-semibold text-primary hover:underline">{author.name}</Link></CardDescription>
+                            </div>
+                            <div className='flex items-center gap-2'>
+                                <ShareButton />
+                                <Button onClick={handleRsvp} size="lg" className={cn(isRsvpd && "bg-green-600 hover:bg-green-700")}>
+                                    {isRsvpd ? <Check className="mr-2 h-5 w-5"/> : <Users className="mr-2 h-5 w-5"/>}
+                                    {isRsvpd ? "Attending" : "RSVP"}
+                                </Button>
+                            </div>
+                        </div>
+
+                        <div className="grid md:grid-cols-3 gap-6 text-sm">
+                            <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+                                <Calendar className="h-6 w-6 text-primary flex-shrink-0" />
+                                <div>
+                                    <p className="font-semibold">Date</p>
+                                    <p className="text-muted-foreground"><ClientFormattedDate dateString={event.date} formatStr="PPP" /></p>
+                                </div>
+                            </div>
+                             <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+                                <Clock className="h-6 w-6 text-primary flex-shrink-0" />
+                                <div>
+                                    <p className="font-semibold">Time</p>
+                                    <p className="text-muted-foreground"><ClientFormattedDate dateString={event.date} formatStr="p" /></p>
+                                </div>
+                            </div>
+                             <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+                                <MapPin className="h-6 w-6 text-primary flex-shrink-0" />
+                                <div>
+                                    <p className="font-semibold">Location</p>
+                                    <p className="text-muted-foreground">{event.location}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <Separator />
+                        
+                        <div>
+                            <h3 className="font-semibold text-lg mb-2">About this event</h3>
+                            <p className="text-muted-foreground whitespace-pre-wrap">{event.description}</p>
+                        </div>
+
+                        {event.attendees && event.attendees.length > 0 && (
+                             <div>
+                                <h3 className="font-semibold text-lg mb-2">{attendeeCount} Attendees</h3>
+                                <div className="flex flex-wrap items-center gap-2">
+                                     <TooltipProvider>
+                                        {event.attendees.map(attendee => (
+                                            <Tooltip key={attendee.id}>
+                                                <TooltipTrigger>
+                                                    <Link href={`/u/${author.username}`}>
+                                                        <Avatar>
+                                                            <AvatarImage src={attendee.avatarUrl} alt={attendee.name} data-ai-hint="person portrait"/>
+                                                            <AvatarFallback>{attendee.name.charAt(0)}</AvatarFallback>
+                                                        </Avatar>
+                                                    </Link>
+                                                </TooltipTrigger>
+                                                <TooltipContent>
+                                                    <p>{attendee.name}</p>
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        ))}
+                                    </TooltipProvider>
+                                    {event.attendees.length < (event.rsvps || 0) && (
+                                        <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center text-xs font-semibold text-muted-foreground">
+                                            +{(event.rsvps || 0) - event.attendees.length}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+
+                 <Card className="mt-8">
+                    <CardContent className="p-6 text-center">
+                        <Logo className="mx-auto text-foreground" />
+                        <p className="mt-2 text-sm text-muted-foreground">
+                        Want to create your own events?
+                        </p>
+                        <Button asChild className="mt-4 font-bold">
+                            <Link href="/">Create Your Profile & Get Started</Link>
+                        </Button>
+                    </CardContent>
+                </Card>
+            </div>
+        </div>
+    );
+}

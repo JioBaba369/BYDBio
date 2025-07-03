@@ -129,7 +129,9 @@ export default function EventsPage() {
                             <span>{event.rsvps?.toLocaleString() ?? 0} RSVPs</span>
                         </div>
                     </div>
-                    <Button className="w-full">Learn More</Button>
+                    <Button asChild className="w-full">
+                        <Link href={`/events/${event.id}`}>Learn More</Link>
+                    </Button>
                 </CardFooter>
               </Card>
             ))}
