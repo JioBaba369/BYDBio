@@ -2,7 +2,8 @@
 'use client';
 
 import { useState, useEffect } from "react";
-import type { User, Post, Business, Event, Job, Listing, Offer } from '@/lib/users';
+import type { User, Post, Listing, Offer, Job, Event } from '@/lib/users';
+import { type Business, getBusinessesByUser } from "@/lib/businesses";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -68,15 +69,21 @@ export default function UserProfilePage({ userProfileData }: UserProfilePageProp
       : null
   );
 
+  const [businesses, setBusinesses] = useState<Business[]>([]);
   const [activeTab, setActiveTab] = useState('posts');
 
   useEffect(() => {
+    if (userProfileData) {
+      // Fetch businesses associated with this user
+      getBusinessesByUser(userProfileData.uid).then(setBusinesses);
+    }
+
     const hash = window.location.hash.replace('#', '');
     const validTabs = ['posts', 'businesses', 'listings', 'jobs', 'events', 'offers', 'contact'];
     if (hash && validTabs.includes(hash)) {
       setActiveTab(hash);
     }
-  }, []);
+  }, [userProfileData]);
 
   const { toast } = useToast();
   
@@ -132,7 +139,7 @@ export default function UserProfilePage({ userProfileData }: UserProfilePageProp
     return <div>User not found.</div>
   }
 
-  const { name, username, avatarUrl, avatarFallback, bio, links, subscribers, jobs, events, offers, listings, posts, businesses } = userProfile;
+  const { name, username, avatarUrl, avatarFallback, bio, links, subscribers, jobs, events, offers, listings, posts } = userProfile;
   const hasContent = posts.length > 0 || businesses.length > 0 || listings.length > 0 || jobs.length > 0 || events.length > 0 || offers.length > 0;
 
   return (

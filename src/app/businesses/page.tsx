@@ -3,36 +3,106 @@
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { currentUser } from "@/lib/mock-data";
 import Image from "next/image";
 import { PlusCircle, MoreHorizontal, Edit, Trash2, Archive, Globe, Mail, Phone, MapPin, Eye, MousePointerClick, ExternalLink, Building2 } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
-import { Business } from "@/lib/users";
+import { useState, useEffect } from "react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
 import { Separator } from "@/components/ui/separator";
+import { useAuth } from "@/components/auth-provider";
+import { type Business, getBusinessesByUser, deleteBusiness, updateBusiness } from "@/lib/businesses";
+import { Skeleton } from "@/components/ui/skeleton";
+
+const BusinessPageSkeleton = () => (
+    <div className="space-y-6">
+        <div className="flex items-center justify-between">
+            <div>
+                <Skeleton className="h-9 w-64" />
+                <Skeleton className="h-4 w-80 mt-2" />
+            </div>
+            <Skeleton className="h-10 w-48" />
+        </div>
+        <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
+            <Card>
+                <Skeleton className="h-52 w-full rounded-t-lg" />
+                <CardHeader>
+                    <Skeleton className="h-6 w-3/4" />
+                    <Skeleton className="h-4 w-1/2" />
+                </CardHeader>
+                <CardContent>
+                    <div className="space-y-2">
+                        <Skeleton className="h-4 w-full" />
+                        <Skeleton className="h-4 w-2/3" />
+                    </div>
+                </CardContent>
+                <CardFooter>
+                    <Skeleton className="h-10 w-full" />
+                </CardFooter>
+            </Card>
+            <Card>
+                <Skeleton className="h-52 w-full rounded-t-lg" />
+                <CardHeader>
+                    <Skeleton className="h-6 w-3/4" />
+                    <Skeleton className="h-4 w-1/2" />
+                </CardHeader>
+                <CardContent>
+                    <div className="space-y-2">
+                        <Skeleton className="h-4 w-full" />
+                        <Skeleton className="h-4 w-2/3" />
+                    </div>
+                </CardContent>
+                <CardFooter>
+                    <Skeleton className="h-10 w-full" />
+                </CardFooter>
+            </Card>
+        </div>
+    </div>
+);
 
 export default function BusinessesPage() {
-  const [businesses, setBusinesses] = useState<Business[]>(currentUser.businesses);
+  const { user, loading: authLoading } = useAuth();
+  const [businesses, setBusinesses] = useState<Business[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedBusinessId, setSelectedBusinessId] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const handleArchive = (businessId: string) => {
-    setBusinesses(prev => prev.map(business => 
-      business.id === businessId ? { ...business, status: business.status === 'active' ? 'archived' : 'active' } : business
-    ));
-    toast({ title: 'Business page status updated!' });
+  useEffect(() => {
+    if (user?.uid) {
+      setIsLoading(true);
+      getBusinessesByUser(user.uid)
+        .then(setBusinesses)
+        .finally(() => setIsLoading(false));
+    }
+  }, [user]);
+
+  const handleArchive = async (businessId: string, currentStatus: 'active' | 'archived') => {
+    const newStatus = currentStatus === 'active' ? 'archived' : 'active';
+    try {
+      await updateBusiness(businessId, { status: newStatus });
+      setBusinesses(prev => prev.map(business => 
+        business.id === businessId ? { ...business, status: newStatus } : business
+      ));
+      toast({ title: 'Business page status updated!' });
+    } catch (error) {
+      toast({ title: 'Error updating status', variant: 'destructive' });
+    }
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!selectedBusinessId) return;
-    setBusinesses(prev => prev.filter(business => business.id !== selectedBusinessId));
-    toast({ title: 'Business page deleted!' });
-    setIsDeleteDialogOpen(false);
-    setSelectedBusinessId(null);
+    try {
+      await deleteBusiness(selectedBusinessId);
+      setBusinesses(prev => prev.filter(business => business.id !== selectedBusinessId));
+      toast({ title: 'Business page deleted!' });
+    } catch (error) {
+      toast({ title: 'Error deleting business', variant: 'destructive' });
+    } finally {
+      setIsDeleteDialogOpen(false);
+      setSelectedBusinessId(null);
+    }
   };
   
   const openDeleteDialog = (businessId: string) => {
@@ -42,6 +112,10 @@ export default function BusinessesPage() {
   
   const activeBusinesses = businesses.filter(b => b.status === 'active');
   const archivedBusinesses = businesses.filter(b => b.status === 'archived');
+  
+  if (authLoading || isLoading) {
+    return <BusinessPageSkeleton />;
+  }
 
   return (
     <>
@@ -87,7 +161,7 @@ export default function BusinessesPage() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem asChild><Link href={`/businesses/${item.id}/edit`} className="cursor-pointer"><Edit className="mr-2 h-4 w-4"/>Edit</Link></DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleArchive(item.id)} className="cursor-pointer"><Archive className="mr-2 h-4 w-4"/>Archive</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleArchive(item.id, item.status)} className="cursor-pointer"><Archive className="mr-2 h-4 w-4"/>Archive</DropdownMenuItem>
                       <DropdownMenuItem onClick={() => openDeleteDialog(item.id)} className="text-destructive cursor-pointer"><Trash2 className="mr-2 h-4 w-4"/>Delete</DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -149,7 +223,7 @@ export default function BusinessesPage() {
               {archivedBusinesses.map((item) => (
                 <Card key={item.id} className="flex flex-col opacity-70">
                   <div className="overflow-hidden rounded-t-lg relative">
-                    <Image src={item.imageUrl!} alt={item.name} width={600} height={300} className="w-full object-cover aspect-[2/1]" data-ai-hint="office building"/>
+                    {item.imageUrl && <Image src={item.imageUrl} alt={item.name} width={600} height={300} className="w-full object-cover aspect-[2/1]" data-ai-hint="office building"/> }
                     <Badge className="absolute top-2 right-2">Archived</Badge>
                   </div>
                    <CardHeader className="flex flex-row justify-between items-start">
@@ -164,7 +238,7 @@ export default function BusinessesPage() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => handleArchive(item.id)} className="cursor-pointer"><Archive className="mr-2 h-4 w-4"/>Unarchive</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleArchive(item.id, item.status)} className="cursor-pointer"><Archive className="mr-2 h-4 w-4"/>Unarchive</DropdownMenuItem>
                         <DropdownMenuItem onClick={() => openDeleteDialog(item.id)} className="text-destructive cursor-pointer"><Trash2 className="mr-2 h-4 w-4"/>Delete</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>

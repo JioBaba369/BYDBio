@@ -3,9 +3,30 @@
 
 import { BusinessForm, BusinessFormValues } from "@/components/forms/business-form";
 import { useToast } from "@/hooks/use-toast";
-import { currentUser } from "@/lib/mock-data";
 import { useParams, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { getBusiness, updateBusiness, type Business } from "@/lib/businesses";
+import { Skeleton } from "@/components/ui/skeleton";
+
+const EditBusinessPageSkeleton = () => (
+    <div className="space-y-6">
+        <div>
+            <Skeleton className="h-9 w-64" />
+            <Skeleton className="h-4 w-80 mt-2" />
+        </div>
+        <div className="grid md:grid-cols-3 gap-8">
+            <div className="md:col-span-2 space-y-6">
+                <Skeleton className="h-48 rounded-lg" />
+                <Skeleton className="h-64 rounded-lg" />
+            </div>
+            <div className="space-y-6">
+                <Skeleton className="h-48 rounded-lg" />
+                <Skeleton className="h-48 rounded-lg" />
+            </div>
+        </div>
+        <Skeleton className="h-10 w-32" />
+    </div>
+);
 
 export default function EditBusinessPage() {
     const router = useRouter();
@@ -13,22 +34,41 @@ export default function EditBusinessPage() {
     const businessId = params.id as string;
     const { toast } = useToast();
     const [isSaving, setIsSaving] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
+    const [businessToEdit, setBusinessToEdit] = useState<Business | null>(null);
 
-    // In a real app, you would fetch this data from an API
-    const businessToEdit = currentUser.businesses.find(b => b.id === businessId);
+    useEffect(() => {
+        if (businessId) {
+            setIsLoading(true);
+            getBusiness(businessId)
+                .then(setBusinessToEdit)
+                .finally(() => setIsLoading(false));
+        }
+    }, [businessId]);
     
-    // This is a mock function. In a real app, this would be an API call.
-    const onSubmit = (data: BusinessFormValues) => {
+    const onSubmit = async (data: BusinessFormValues) => {
         setIsSaving(true);
-        console.log("Updating business page:", businessId, data);
-        setTimeout(() => {
+        try {
+            await updateBusiness(businessId, data);
             toast({
                 title: "Business Page Updated!",
                 description: "Your business page has been updated successfully.",
             });
-            setIsSaving(false);
             router.push('/businesses');
-        }, 1000);
+        } catch (error) {
+            console.error("Error updating business page:", error);
+            toast({
+                title: "Error",
+                description: "Failed to update business page. Please try again.",
+                variant: "destructive",
+            });
+        } finally {
+            setIsSaving(false);
+        }
+    }
+
+    if (isLoading) {
+        return <EditBusinessPageSkeleton />;
     }
 
     if (!businessToEdit) {

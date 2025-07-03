@@ -2,27 +2,41 @@
 'use client';
 
 import { BusinessForm, BusinessFormValues } from "@/components/forms/business-form";
+import { useAuth } from "@/components/auth-provider";
 import { useToast } from "@/hooks/use-toast";
+import { createBusiness } from "@/lib/businesses";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export default function CreateBusinessPage() {
     const router = useRouter();
+    const { user } = useAuth();
     const { toast } = useToast();
     const [isSaving, setIsSaving] = useState(false);
     
-    // This is a mock function. In a real app, this would be an API call.
-    const onSubmit = (data: BusinessFormValues) => {
+    const onSubmit = async (data: BusinessFormValues) => {
+        if (!user) {
+            toast({ title: "Authentication Error", description: "You must be logged in to create a business.", variant: "destructive" });
+            return;
+        }
         setIsSaving(true);
-        console.log("Creating new business page:", data);
-        setTimeout(() => {
+        try {
+            await createBusiness(user.uid, data);
             toast({
                 title: "Business Page Created!",
                 description: "Your new business page has been created successfully.",
             });
-            setIsSaving(false);
             router.push('/businesses');
-        }, 1000);
+        } catch (error) {
+            console.error("Error creating business page:", error);
+            toast({
+                title: "Error",
+                description: "Failed to create business page. Please try again.",
+                variant: "destructive",
+            });
+        } finally {
+            setIsSaving(false);
+        }
     }
 
     return (

@@ -74,21 +74,6 @@ export type Event = {
   itinerary?: ItineraryItem[];
 };
 
-export type Business = {
-  id: string;
-  name: string;
-  description: string;
-  email: string;
-  phone?: string;
-  website?: string;
-  address?: string;
-  imageUrl?: string | null;
-  logoUrl?: string | null;
-  status: 'active' | 'archived';
-  views?: number;
-  clicks?: number;
-};
-
 export type BusinessCard = {
   title: string;
   company: string;
@@ -119,7 +104,6 @@ export type User = {
   offers: Offer[];
   listings: Listing[];
   posts: Post[];
-  businesses: Business[];
   subscribers: number;
   links: UserLink[];
   businessCard?: BusinessCard;
@@ -158,7 +142,6 @@ export const createUserProfileIfNotExists = async (user: FirebaseUser, additiona
             offers: [],
             listings: [],
             posts: [],
-            businesses: [],
             rsvpedEventIds: [],
             businessCard: {},
         });
@@ -187,52 +170,6 @@ export async function getUserByUsername(username: string): Promise<User | null> 
     const userDoc = querySnapshot.docs[0];
     return userDoc.data() as User;
 }
-
-
-const user1Businesses: Business[] = [
-  {
-    id: 'biz1',
-    name: 'Acme Inc. Design Studio',
-    description: 'A full-service design agency specializing in branding, web design, and user experience for tech startups.',
-    email: 'hello@acme.design',
-    phone: '+1 (555) 555-1234',
-    website: 'https://acme.design',
-    address: '123 Design St, San Francisco, CA 94105',
-    imageUrl: 'https://placehold.co/1200x400.png',
-    logoUrl: 'https://placehold.co/200x200.png',
-    status: 'active',
-    views: 2451,
-    clicks: 832,
-  },
-  {
-    id: 'biz2',
-    name: 'Side Hustle Icons',
-    description: 'A digital marketplace for high-quality, handcrafted icon sets for developers and designers.',
-    email: 'support@sidehustleicons.com',
-    website: 'https://sidehustleicons.com',
-    address: 'Remote',
-    phone: '',
-    imageUrl: 'https://placehold.co/1200x400.png',
-    logoUrl: 'https://placehold.co/200x200.png',
-    status: 'active',
-    views: 890,
-    clicks: 120,
-  },
-  {
-    id: 'biz3',
-    name: 'Archived Ventures',
-    description: 'This is an archived business page for demonstration purposes.',
-    email: 'archive@example.com',
-    website: 'https://archive.example.com',
-    address: 'N/A',
-    phone: '',
-    imageUrl: 'https://placehold.co/1200x400.png',
-    logoUrl: 'https://placehold.co/200x200.png',
-    status: 'archived',
-    views: 150,
-    clicks: 12,
-  }
-];
 
 
 export const allUsers: User[] = [
@@ -367,7 +304,6 @@ export const allUsers: User[] = [
         comments: 24,
       }
     ],
-    businesses: user1Businesses,
   },
   {
     id: 'user2',
@@ -395,7 +331,6 @@ export const allUsers: User[] = [
         comments: 5,
       }
     ],
-    businesses: [],
   },
   {
     id: 'user3',
@@ -414,7 +349,6 @@ export const allUsers: User[] = [
     offers: [],
     listings: [],
     posts: [],
-    businesses: [],
   },
   {
     id: 'user4',
@@ -454,7 +388,6 @@ export const allUsers: User[] = [
         comments: 15,
       }
     ],
-    businesses: [],
   },
   {
     id: 'user5',
@@ -473,7 +406,6 @@ export const allUsers: User[] = [
     offers: [],
     listings: [],
     posts: [],
-    businesses: [],
   },
   {
     id: 'user6',
@@ -492,7 +424,6 @@ export const allUsers: User[] = [
     offers: [],
     listings: [],
     posts: [],
-    businesses: [],
   },
   {
     id: 'user7',
@@ -511,6 +442,5 @@ export const allUsers: User[] = [
     offers: [],
     listings: [],
     posts: [],
-    businesses: [],
   },
 ];
