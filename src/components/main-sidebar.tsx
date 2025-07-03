@@ -18,6 +18,7 @@ import {
   Briefcase,
   Calendar,
   ChevronDown,
+  CreditCard,
   DollarSign,
   LayoutDashboard,
   MessageSquare,
@@ -167,6 +168,16 @@ export function MainSidebar() {
                 icon={<Share />}
               >
                 Public Page
+              </SidebarMenuButton>
+            </Link>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <Link href="/u/janedoe/card">
+              <SidebarMenuButton
+                isActive={isActive('/u/janedoe/card')}
+                icon={<CreditCard />}
+              >
+                Digital Business Card
               </SidebarMenuButton>
             </Link>
           </SidebarMenuItem>
