@@ -178,7 +178,7 @@ export function MainSidebar() {
             </Link>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <Link href={`/u/${currentUser.username}/bio`} className={cn(sidebarMenuButtonVariants())} data-active={isActive(`/u/${currentUser.username}/bio`)}>
+            <Link href={`/u/${currentUser.username}/links`} className={cn(sidebarMenuButtonVariants())} data-active={isActive(`/u/${currentUser.username}/links`)}>
               <BookUser />
               Links Page
             </Link>

@@ -3,7 +3,6 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { Logo } from "@/components/logo";
@@ -13,7 +12,7 @@ import { useParams } from "next/navigation";
 import { linkIcons } from "@/lib/link-icons";
 import { Separator } from "@/components/ui/separator";
 
-export default function BioCardPage() {
+export default function LinksPage() {
   const params = useParams();
   const username = typeof params.username === 'string' ? params.username : '';
   
@@ -86,4 +85,3 @@ export default function BioCardPage() {
     </div>
   );
 }
-
