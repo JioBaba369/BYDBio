@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Globe, Linkedin, Github, Twitter, Send, Briefcase, Calendar, Tag, MapPin } from "lucide-react";
+import { Send, Briefcase, Calendar, Tag, MapPin } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -13,28 +13,13 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Logo } from "@/components/logo";
-
-// Mock data
-const userProfile = {
-  username: "janedoe",
-  name: "Jane Doe",
-  avatarUrl: "https://placehold.co/200x200.png",
-  bio: "Senior Product Designer at Acme Inc. Crafting user-centric experiences that bridge business goals and user needs. Passionate about design systems and accessibility.",
-  subscribers: "12.5k",
-  links: [
-    { title: "Personal Website", url: "#", icon: <Globe className="h-5 w-5" /> },
-    { title: "LinkedIn", url: "#", icon: <Linkedin className="h-5 w-5" /> },
-    { title: "GitHub", url: "#", icon: <Github className="h-5 w-5" /> },
-    { title: "Twitter / X", url: "#", icon: <Twitter className="h-5 w-5" /> },
-  ],
-  jobs: [],
-  events: [],
-  offers: []
-};
+import { currentUser } from "@/lib/mock-data";
 
 export default function LinkInBioPage({ params }: { params: { username:string } }) {
   // In a real app, you would fetch user data based on params.username
-  const { name, avatarUrl, bio, links, subscribers, jobs, events, offers } = userProfile;
+  // For now, we'll use our mock data if the username matches.
+  const userProfile = params.username === currentUser.username ? currentUser : null;
+
   const { toast } = useToast();
   const [contactName, setContactName] = useState('');
   const [contactEmail, setContactEmail] = useState('');
@@ -71,6 +56,12 @@ export default function LinkInBioPage({ params }: { params: { username:string } 
     }
   };
 
+  if (!userProfile) {
+    // A real app would have a proper 404 page.
+    return <div>User not found.</div>
+  }
+
+  const { name, avatarUrl, avatarFallback, bio, links, subscribers, jobs, events, offers } = userProfile;
 
   return (
     <div className="flex justify-center bg-gray-100 dark:bg-gray-900 py-8 px-4">
@@ -79,7 +70,7 @@ export default function LinkInBioPage({ params }: { params: { username:string } 
           <div className="flex flex-col items-center text-center">
             <Avatar className="w-24 h-24 mb-4 border-4 border-primary/50">
               <AvatarImage src={avatarUrl} alt={name} data-ai-hint="woman smiling" />
-              <AvatarFallback>{name.charAt(0)}</AvatarFallback>
+              <AvatarFallback>{avatarFallback}</AvatarFallback>
             </Avatar>
             <h1 className="font-headline text-3xl font-bold text-foreground">{name}</h1>
             <p className="mt-2 text-muted-foreground font-body">{bio}</p>
@@ -102,7 +93,7 @@ export default function LinkInBioPage({ params }: { params: { username:string } 
                 className="w-full"
               >
                 <Button variant="outline" className="w-full h-14 text-base font-semibold justify-start p-4 hover:bg-primary/10 hover:border-primary">
-                  {link.icon}
+                  <link.icon className="h-5 w-5" />
                   <span className="flex-1 text-center">{link.title}</span>
                 </Button>
               </a>
@@ -218,7 +209,7 @@ export default function LinkInBioPage({ params }: { params: { username:string } 
           </div>
 
           <div className="text-center mt-8">
-             <a href="/u/janedoe/card" className="text-sm text-primary hover:underline font-semibold">
+             <a href={`/u/${params.username}/card`} className="text-sm text-primary hover:underline font-semibold">
                 View Digital Business Card
              </a>
           </div>

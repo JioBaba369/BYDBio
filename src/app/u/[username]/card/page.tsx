@@ -8,24 +8,28 @@ import Link from "next/link";
 import { Logo } from "@/components/logo";
 import { useEffect, useState } from "react";
 import QRCode from "qrcode.react";
-
-// Mock data
-const businessCardData = {
-  name: "Jane Doe",
-  title: "Senior Product Designer",
-  company: "Acme Inc.",
-  avatarUrl: "https://placehold.co/200x200.png",
-  phone: "+1 (555) 123-4567",
-  email: "jane.doe@acme.com",
-  website: "janedoe.design",
-  linkedin: "linkedin.com/in/janedoe",
-  location: "San Francisco, CA",
-};
+import { currentUser } from "@/lib/mock-data";
 
 export default function BusinessCardPage({ params }: { params: { username: string } }) {
   // In a real app, you would fetch data based on params.username
-  const { name, title, company, avatarUrl, phone, email, website, linkedin, location } = businessCardData;
+  const user = params.username === currentUser.username ? currentUser : null;
+
   const [qrCodeValue, setQrCodeValue] = useState('');
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setQrCodeValue(window.location.href);
+    }
+  }, []);
+  
+  if (!user) {
+    // A real app would have a proper 404 page.
+    return <div>User not found.</div>
+  }
+
+  const { name, avatarUrl, avatarFallback, businessCard } = user;
+  const { title, company, phone, email, website, linkedin, location } = businessCard;
+
 
   const vCardData = `BEGIN:VCARD
 VERSION:3.0
@@ -37,12 +41,6 @@ EMAIL:${email}
 URL:${website}
 ADR;TYPE=WORK:;;${location}
 END:VCARD`;
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setQrCodeValue(window.location.href);
-    }
-  }, []);
 
   const handleSaveToContacts = () => {
     const blob = new Blob([vCardData], { type: "text/vcard" });
@@ -63,7 +61,7 @@ END:VCARD`;
         <div className="flex justify-center -mt-16">
           <Avatar className="w-32 h-32 border-4 border-background rounded-full">
             <AvatarImage src={avatarUrl} alt={name} data-ai-hint="woman smiling"/>
-            <AvatarFallback>{name.charAt(0)}</AvatarFallback>
+            <AvatarFallback>{avatarFallback}</AvatarFallback>
           </Avatar>
         </div>
         <CardContent className="text-center p-6">

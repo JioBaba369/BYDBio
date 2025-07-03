@@ -12,15 +12,16 @@ import HashtagSuggester from "@/components/ai/hashtag-suggester"
 import Image from "next/image"
 import { useEffect, useState } from "react";
 import QRCode from 'qrcode.react';
+import { currentUser } from "@/lib/mock-data";
 
 export default function ProfilePage() {
-  const [bio, setBio] = useState("Senior Product Designer at Acme Inc. Crafting user-centric experiences that bridge business goals and user needs.");
+  const [bio, setBio] = useState(currentUser.bio);
   const [qrCodeUrl, setQrCodeUrl] = useState('');
 
   useEffect(() => {
     // We can only get the window.location.origin on the client
     if (typeof window !== 'undefined') {
-      setQrCodeUrl(`${window.location.origin}/u/janedoe/card`);
+      setQrCodeUrl(`${window.location.origin}/u/${currentUser.username}/card`);
     }
   }, []);
 
@@ -46,18 +47,18 @@ export default function ProfilePage() {
             <CardContent className="space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="name">Full Name</Label>
-                <Input id="name" defaultValue="Jane Doe" />
+                <Input id="name" defaultValue={currentUser.name} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="username">Username</Label>
-                <Input id="username" defaultValue="janedoe" />
+                <Input id="username" defaultValue={currentUser.username} />
               </div>
               <div className="space-y-2">
                 <Label>Profile Picture</Label>
                 <div className="flex items-center gap-4">
                   <Avatar className="h-20 w-20">
-                    <AvatarImage src="https://placehold.co/200x200.png" data-ai-hint="woman smiling"/>
-                    <AvatarFallback>JD</AvatarFallback>
+                    <AvatarImage src={currentUser.avatarUrl} data-ai-hint="woman smiling"/>
+                    <AvatarFallback>{currentUser.avatarFallback}</AvatarFallback>
                   </Avatar>
                   <Button variant="outline"><Upload className="mr-2 h-4 w-4"/> Change Photo</Button>
                 </div>
@@ -84,31 +85,31 @@ export default function ProfilePage() {
               <div className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="card-title">Job Title</Label>
-                  <Input id="card-title" defaultValue="Senior Product Designer" />
+                  <Input id="card-title" defaultValue={currentUser.businessCard.title} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="card-company">Company</Label>
-                  <Input id="card-company" defaultValue="Acme Inc." />
+                  <Input id="card-company" defaultValue={currentUser.businessCard.company} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="card-phone">Phone</Label>
-                  <Input id="card-phone" type="tel" defaultValue="+1 (555) 123-4567" />
+                  <Input id="card-phone" type="tel" defaultValue={currentUser.businessCard.phone} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="card-email">Email</Label>
-                  <Input id="card-email" type="email" defaultValue="jane.doe@acme.com" />
+                  <Input id="card-email" type="email" defaultValue={currentUser.businessCard.email} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="card-website">Website</Label>
-                  <Input id="card-website" defaultValue="janedoe.design" />
+                  <Input id="card-website" defaultValue={currentUser.businessCard.website} />
                 </div>
                  <div className="space-y-2">
                   <Label htmlFor="card-linkedin">LinkedIn</Label>
-                  <Input id="card-linkedin" defaultValue="linkedin.com/in/janedoe" />
+                  <Input id="card-linkedin" defaultValue={currentUser.businessCard.linkedin} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="card-location">Location</Label>
-                  <Input id="card-location" defaultValue="San Francisco, CA" />
+                  <Input id="card-location" defaultValue={currentUser.businessCard.location} />
                 </div>
                 <Button>Update Card</Button>
               </div>
@@ -117,11 +118,11 @@ export default function ProfilePage() {
                 <div className="w-full max-w-[280px] bg-background p-6 rounded-xl shadow-lg border">
                   <div className="text-center">
                     <Avatar className="h-20 w-20 mx-auto mb-2">
-                      <AvatarImage src="https://placehold.co/200x200.png" data-ai-hint="woman smiling"/>
-                      <AvatarFallback>JD</AvatarFallback>
+                      <AvatarImage src={currentUser.avatarUrl} data-ai-hint="woman smiling"/>
+                      <AvatarFallback>{currentUser.avatarFallback}</AvatarFallback>
                     </Avatar>
-                    <p className="font-headline font-semibold text-lg">Jane Doe</p>
-                    <p className="text-primary text-sm">Senior Product Designer</p>
+                    <p className="font-headline font-semibold text-lg">{currentUser.name}</p>
+                    <p className="text-primary text-sm">{currentUser.businessCard.title}</p>
                   </div>
                   <div className="flex justify-center mt-4">
                     {qrCodeUrl ? (

@@ -5,13 +5,20 @@ import { Tag, ArrowLeft } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
 import { Logo } from "@/components/logo"
+import { currentUser } from "@/lib/mock-data";
 
-// Mock data for a specific user
-const userOffers: { title: string; description: string; category: string }[] = [];
 
 export default function UserOffersPage({ params }: { params: { username: string } }) {
-  // In a real app, you would fetch the user's name based on params.username
-  const userName = "Jane Doe";
+  // In a real app, you would fetch user data based on params.username
+  const user = params.username === currentUser.username ? currentUser : null;
+
+  if (!user) {
+    // A real app would have a proper 404 page.
+    return <div>User not found.</div>
+  }
+  
+  const { name: userName, offers: userOffers } = user;
+
   return (
     <div className="space-y-6 max-w-4xl mx-auto py-8 px-4">
       <Button asChild variant="ghost" className="pl-0">

@@ -8,6 +8,7 @@ import { Heart, Image as ImageIcon, MessageCircle, MoreHorizontal, Share2 } from
 import Image from "next/image"
 import HashtagSuggester from "@/components/ai/hashtag-suggester"
 import { useState } from "react";
+import { currentUser } from "@/lib/mock-data";
 
 const feedItems = [
   {
@@ -49,8 +50,8 @@ export default function FeedPage() {
         <CardContent className="p-4">
           <div className="flex gap-4">
             <Avatar>
-              <AvatarImage src="https://placehold.co/100x100.png" data-ai-hint="woman smiling"/>
-              <AvatarFallback>JD</AvatarFallback>
+              <AvatarImage src={currentUser.avatarUrl} data-ai-hint="woman smiling"/>
+              <AvatarFallback>{currentUser.avatarFallback}</AvatarFallback>
             </Avatar>
             <div className="w-full space-y-2">
               <Textarea 

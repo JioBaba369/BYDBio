@@ -38,6 +38,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Input } from './ui/input';
+import { currentUser } from '@/lib/mock-data';
 
 export function MainSidebar() {
   const pathname = usePathname();
@@ -147,9 +148,9 @@ export function MainSidebar() {
             </Link>
           </SidebarMenuItem>
            <SidebarMenuItem>
-            <Link href="/u/janedoe">
+            <Link href={`/u/${currentUser.username}`}>
               <SidebarMenuButton
-                isActive={isActive('/u/janedoe')}
+                isActive={isActive(`/u/${currentUser.username}`)}
                 icon={<Share />}
               >
                 Public Page
@@ -157,9 +158,9 @@ export function MainSidebar() {
             </Link>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <Link href="/u/janedoe/card">
+            <Link href={`/u/${currentUser.username}/card`}>
               <SidebarMenuButton
-                isActive={isActive('/u/janedoe/card')}
+                isActive={isActive(`/u/${currentUser.username}/card`)}
                 icon={<CreditCard />}
               >
                 Digital Business Card
@@ -173,13 +174,13 @@ export function MainSidebar() {
           <DropdownMenuTrigger asChild>
             <button className="flex w-full items-center gap-2 rounded-md p-2 text-left text-sm text-sidebar-foreground hover:bg-sidebar-accent">
               <Avatar className="h-8 w-8">
-                <AvatarImage src="https://placehold.co/100x100.png" alt="Jane Doe" data-ai-hint="woman smiling" />
-                <AvatarFallback>JD</AvatarFallback>
+                <AvatarImage src={currentUser.avatarUrl} alt={currentUser.name} data-ai-hint="woman smiling" />
+                <AvatarFallback>{currentUser.avatarFallback}</AvatarFallback>
               </Avatar>
               <div className="flex-1 truncate">
-                <div className="font-medium">Jane Doe</div>
+                <div className="font-medium">{currentUser.name}</div>
                 <div className="text-xs text-sidebar-foreground/70">
-                  jane.doe@example.com
+                  {currentUser.email}
                 </div>
               </div>
               <ChevronDown className="h-4 w-4" />
@@ -188,9 +189,9 @@ export function MainSidebar() {
           <DropdownMenuContent className="w-56" align="end" forceMount>
             <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium leading-none">Jane Doe</p>
+                <p className="text-sm font-medium leading-none">{currentUser.name}</p>
                 <p className="text-xs leading-none text-muted-foreground">
-                  jane.doe@example.com
+                  {currentUser.email}
                 </p>
               </div>
             </DropdownMenuLabel>
