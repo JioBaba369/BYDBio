@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { User, Post } from '@/lib/users';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -27,6 +27,23 @@ type UserProfileWithLikes = User & { posts: PostWithLike[] };
 
 interface UserProfilePageProps {
   userProfileData: User;
+}
+
+// This component safely formats the date on the client-side to prevent hydration errors.
+function ClientFormattedDate({ dateString, formatStr }: { dateString: string; formatStr: string }) {
+  const [formattedDate, setFormattedDate] = useState('');
+
+  useEffect(() => {
+    // This effect runs only on the client, after the initial render.
+    setFormattedDate(format(parseISO(dateString), formatStr));
+  }, [dateString, formatStr]);
+
+  // Render a placeholder or nothing until the client-side formatting is complete.
+  if (!formattedDate) {
+    return <span>...</span>;
+  }
+
+  return <>{formattedDate}</>;
 }
 
 export default function UserProfilePage({ userProfileData }: UserProfilePageProps) {
@@ -251,7 +268,7 @@ export default function UserProfilePage({ userProfileData }: UserProfilePageProp
                             </CardHeader>
                             <CardContent className="space-y-2">
                                 <div className="flex items-center text-sm text-muted-foreground">
-                                  <Calendar className="mr-2 h-4 w-4" /> {format(parseISO(event.date), "PPP")}
+                                  <Calendar className="mr-2 h-4 w-4" /> <ClientFormattedDate dateString={event.date} formatStr="PPP" />
                                 </div>
                                 <div className="flex items-center text-sm text-muted-foreground">
                                   <MapPin className="mr-2 h-4 w-4" /> {event.location}
