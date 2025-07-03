@@ -5,16 +5,17 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
-import { Heart, Image as ImageIcon, MessageCircle, MoreHorizontal, Share2, Send } from "lucide-react"
+import { Heart, Image as ImageIcon, MessageCircle, MoreHorizontal, Share2, Send, X } from "lucide-react"
 import Image from "next/image"
 import HashtagSuggester from "@/components/ai/hashtag-suggester"
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { currentUser } from "@/lib/mock-data";
 import { allUsers as initialUsers } from "@/lib/users";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import ImageCropper from "@/components/image-cropper";
 
 // Combine user data with their posts for the feed, adding a liked state
 const initialFeedItems = initialUsers.flatMap(user =>
@@ -87,8 +88,35 @@ export default function FeedPage() {
   const [feedItems, setFeedItems] = useState(initialFeedItems);
   const { toast } = useToast();
 
+  const [imageToCrop, setImageToCrop] = useState<string | null>(null);
+  const [croppedImageUrl, setCroppedImageUrl] = useState<string | null>(null);
+  const [isCropperOpen, setIsCropperOpen] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const file = e.target.files[0];
+      const reader = new FileReader();
+      reader.addEventListener('load', () => {
+        setImageToCrop(reader.result as string);
+        setIsCropperOpen(true);
+      });
+      reader.readAsDataURL(file);
+      e.target.value = '';
+    }
+  };
+
+  const handleCropComplete = (url: string) => {
+    setCroppedImageUrl(url);
+    setIsCropperOpen(false);
+  }
+
+  const handleRemoveImage = () => {
+    setCroppedImageUrl(null);
+  }
+
   const handlePost = () => {
-    if (!postContent.trim()) {
+    if (!postContent.trim() && !croppedImageUrl) {
       toast({
         title: "Cannot post empty update",
         variant: "destructive",
@@ -99,7 +127,7 @@ export default function FeedPage() {
     const newPost = {
       id: `post-new-${Date.now()}`,
       content: postContent,
-      imageUrl: null,
+      imageUrl: croppedImageUrl,
       timestamp: "Just now",
       likes: 0,
       isLiked: false,
@@ -114,6 +142,7 @@ export default function FeedPage() {
 
     setFeedItems(prevItems => [newPost, ...prevItems]);
     setPostContent('');
+    setCroppedImageUrl(null);
 
     toast({
       title: "Update Posted!",
@@ -147,70 +176,97 @@ export default function FeedPage() {
   }, [feedItems]);
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
-      <h1 className="text-2xl sm:text-3xl font-bold font-headline">Status Feed</h1>
-      
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex gap-4">
-            <Avatar>
-              <AvatarImage src={currentUser.avatarUrl} data-ai-hint="woman smiling"/>
-              <AvatarFallback>{currentUser.avatarFallback}</AvatarFallback>
-            </Avatar>
-            <div className="w-full space-y-2">
-              <Textarea
-                id="new-post"
-                placeholder="What's on your mind?"
-                className="w-full text-base border-0 focus-visible:ring-0 ring-offset-0 p-0"
-                value={postContent}
-                onChange={(e) => setPostContent(e.target.value)}
-              />
-               <HashtagSuggester content={postContent} onSelectHashtag={(tag) => {
-                  setPostContent(prev => prev ? `${prev.trim()} ${tag}`: tag);
-                }} />
+    <>
+      <ImageCropper
+        imageSrc={imageToCrop}
+        open={isCropperOpen}
+        onOpenChange={setIsCropperOpen}
+        onCropComplete={handleCropComplete}
+        aspectRatio={16 / 9}
+        isRound={false}
+      />
+      <div className="max-w-2xl mx-auto space-y-6">
+        <h1 className="text-2xl sm:text-3xl font-bold font-headline">Status Feed</h1>
+        
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex gap-4">
+              <Avatar>
+                <AvatarImage src={currentUser.avatarUrl} data-ai-hint="woman smiling"/>
+                <AvatarFallback>{currentUser.avatarFallback}</AvatarFallback>
+              </Avatar>
+              <div className="w-full space-y-2">
+                <Textarea
+                  id="new-post"
+                  placeholder="What's on your mind?"
+                  className="w-full text-base border-0 focus-visible:ring-0 ring-offset-0 p-0"
+                  value={postContent}
+                  onChange={(e) => setPostContent(e.target.value)}
+                />
+                 {croppedImageUrl && (
+                  <div className="relative">
+                    <Image src={croppedImageUrl} alt="Preview" width={500} height={281} className="rounded-lg border object-cover w-full" />
+                    <Button variant="destructive" size="icon" className="absolute top-2 right-2 h-7 w-7" onClick={handleRemoveImage}>
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
+                 <HashtagSuggester content={postContent} onSelectHashtag={(tag) => {
+                    setPostContent(prev => prev ? `${prev.trim()} ${tag}`: tag);
+                  }} />
+              </div>
             </div>
-          </div>
-        </CardContent>
-        <CardFooter className="flex justify-between p-4 border-t">
-          <Button variant="ghost" size="icon">
-            <ImageIcon className="h-5 w-5 text-muted-foreground" />
-          </Button>
-          <Button onClick={handlePost}><Send className="mr-2 h-4 w-4"/>Post Update</Button>
-        </CardFooter>
-      </Card>
+          </CardContent>
+          <CardFooter className="flex justify-between p-4 border-t">
+            <Button variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()}>
+              <ImageIcon className="h-5 w-5 text-muted-foreground" />
+            </Button>
+            <input
+              type="file"
+              ref={fileInputRef}
+              className="hidden"
+              accept="image/png, image/jpeg"
+              onChange={onFileChange}
+            />
+            <Button onClick={handlePost} disabled={!postContent.trim() && !croppedImageUrl}>
+              <Send className="mr-2 h-4 w-4"/>Post Update
+            </Button>
+          </CardFooter>
+        </Card>
 
-      <Tabs defaultValue="following" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="following">Following</TabsTrigger>
-            <TabsTrigger value="for-you">For You</TabsTrigger>
-          </TabsList>
-          <TabsContent value="following" className="space-y-6 mt-6">
-              {followingFeedItems.length > 0 ? (
-                  followingFeedItems.map(item => (
-                      <PostCard key={item.id} item={item} handleLike={handleLike} />
-                  ))
-              ) : (
-                <Card>
-                    <CardContent className="p-10 text-center text-muted-foreground">
-                        Follow other users to see their updates here.
-                    </CardContent>
-                </Card>
-              )}
-          </TabsContent>
-          <TabsContent value="for-you" className="space-y-6 mt-6">
-              {forYouFeedItems.length > 0 ? (
-                  forYouFeedItems.map(item => (
-                      <PostCard key={item.id} item={item} handleLike={handleLike} />
-                  ))
-              ) : (
-                <Card>
-                    <CardContent className="p-10 text-center text-muted-foreground">
-                        No new posts to discover right now. Check back later!
-                    </CardContent>
-                </Card>
-              )}
-          </TabsContent>
-      </Tabs>
-    </div>
+        <Tabs defaultValue="following" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="following">Following</TabsTrigger>
+              <TabsTrigger value="for-you">For You</TabsTrigger>
+            </TabsList>
+            <TabsContent value="following" className="space-y-6 mt-6">
+                {followingFeedItems.length > 0 ? (
+                    followingFeedItems.map(item => (
+                        <PostCard key={item.id} item={item} handleLike={handleLike} />
+                    ))
+                ) : (
+                  <Card>
+                      <CardContent className="p-10 text-center text-muted-foreground">
+                          Follow other users to see their updates here.
+                      </CardContent>
+                  </Card>
+                )}
+            </TabsContent>
+            <TabsContent value="for-you" className="space-y-6 mt-6">
+                {forYouFeedItems.length > 0 ? (
+                    forYouFeedItems.map(item => (
+                        <PostCard key={item.id} item={item} handleLike={handleLike} />
+                    ))
+                ) : (
+                  <Card>
+                      <CardContent className="p-10 text-center text-muted-foreground">
+                          No new posts to discover right now. Check back later!
+                      </CardContent>
+                  </Card>
+                )}
+            </TabsContent>
+        </Tabs>
+      </div>
+    </>
   )
 }
