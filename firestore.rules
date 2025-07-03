@@ -3,19 +3,16 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Users can read anyone's public profile data.
-    // Users can only write to their own document.
-    // User documents cannot be deleted by clients.
+    // Users collection
     match /users/{userId} {
-      allow read;
+      // Anyone can read a user's public profile. This is required for public profile pages
+      // and for the query that finds users by username. `read` includes `get` and `list`.
+      allow read: if true;
+      
+      // Only the authenticated user can create or update their own profile.
+      // Deletes are not allowed from the client.
       allow create, update: if request.auth != null && request.auth.uid == userId;
       allow delete: if false;
-    }
-
-    // Lock down all other collections by default.
-    // This is a good security practice.
-    match /{document=**} {
-      allow read, write: if false;
     }
   }
 }
