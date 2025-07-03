@@ -5,14 +5,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { PlusCircle, Trash2, User, CreditCard, Link2 as LinkIcon, Upload, GripVertical } from "lucide-react"
+import { PlusCircle, Trash2, User, CreditCard, Link2 as LinkIcon, Upload, GripVertical, Save } from "lucide-react"
 import HashtagSuggester from "@/components/ai/hashtag-suggester"
 import { useEffect, useState, useRef } from "react";
 import QRCode from 'qrcode.react';
-import { currentUser } from "@/lib/mock-data";
 import { useForm, useFieldArray, FormProvider, useFormContext } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -26,10 +24,15 @@ import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalList
 import { CSS } from '@dnd-kit/utilities';
 import BioGenerator from "@/components/ai/bio-generator";
 import ImageCropper from "@/components/image-cropper";
+import { useAuth } from "../auth-provider";
+import { Skeleton } from "@/components/ui/skeleton";
+import { updateUser } from "@/lib/users";
+import { Label } from "@/components/ui/label";
 
 const publicProfileSchema = z.object({
   name: z.string().min(1, "Name cannot be empty."),
   username: z.string().min(3, "Username must be at least 3 characters long.").regex(/^[a-zA-Z0-9_]+$/, "Username can only contain letters, numbers, and underscores."),
+  bio: z.string().max(160, "Bio must be 160 characters or less.").optional(),
 });
 type PublicProfileFormValues = z.infer<typeof publicProfileSchema>;
 
@@ -162,9 +165,52 @@ const SortableLinkItem = ({ field, index, remove }: { field: { id: string }, ind
   );
 };
 
+const ProfilePageSkeleton = () => (
+    <div className="space-y-6">
+      <div>
+        <Skeleton className="h-9 w-64" />
+        <Skeleton className="h-4 w-80 mt-2" />
+      </div>
+      <div className="flex gap-2">
+        <Skeleton className="h-10 w-28" />
+        <Skeleton className="h-10 w-28" />
+        <Skeleton className="h-10 w-28" />
+      </div>
+       <Card>
+        <CardHeader>
+            <Skeleton className="h-7 w-48" />
+            <Skeleton className="h-4 w-full max-w-lg mt-1" />
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-16" />
+            <Skeleton className="h-10 w-full" />
+          </div>
+           <div className="space-y-2">
+            <Skeleton className="h-4 w-16" />
+            <Skeleton className="h-10 w-full" />
+          </div>
+           <div className="space-y-2">
+            <Skeleton className="h-4 w-16" />
+            <div className="flex items-center gap-4">
+              <Skeleton className="h-20 w-20 rounded-full" />
+              <Skeleton className="h-10 w-36" />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-16" />
+            <Skeleton className="h-20 w-full" />
+          </div>
+        </CardContent>
+        <CardFooter>
+            <Skeleton className="h-10 w-24" />
+        </CardFooter>
+       </Card>
+    </div>
+)
 
 export default function ProfilePage() {
-  const [bio, setBio] = useState(currentUser.bio);
+  const { user, firebaseUser, loading } = useAuth();
   const [qrCodeUrl, setQrCodeUrl] = useState('');
   const [imageToCrop, setImageToCrop] = useState<string | null>(null);
   const [isCropperOpen, setIsCropperOpen] = useState(false);
@@ -175,33 +221,48 @@ export default function ProfilePage() {
   const publicProfileForm = useForm<PublicProfileFormValues>({
     resolver: zodResolver(publicProfileSchema),
     defaultValues: {
-      name: currentUser.name || "",
-      username: currentUser.username || "",
+      name: "",
+      username: "",
+      bio: "",
     },
     mode: 'onBlur',
   });
 
   const businessCardForm = useForm<BusinessCardFormValues>({
     resolver: zodResolver(businessCardSchema),
-    defaultValues: currentUser.businessCard || {},
+    defaultValues: {},
     mode: 'onBlur',
   });
 
   const linksForm = useForm<LinksFormValues>({
     resolver: zodResolver(linksFormSchema),
-    defaultValues: {
-      links: currentUser.links.map((link, index) => ({...link, id: `link-${index}`})) || [],
-    },
+    defaultValues: { links: [] },
     mode: 'onBlur',
   });
-
+  
   const { fields, append, remove, move } = useFieldArray({
     control: linksForm.control,
     name: "links",
   });
+  
+  useEffect(() => {
+    if (user) {
+      publicProfileForm.reset({
+        name: user.name || '',
+        username: user.username || '',
+        bio: user.bio || '',
+      });
+      businessCardForm.reset(user.businessCard || {});
+      linksForm.reset({
+        links: user.links.map((link, index) => ({...link, id: `link-${index}`})) || [],
+      });
+      setCroppedImageUrl(user.avatarUrl || null);
+    }
+  }, [user, publicProfileForm, businessCardForm, linksForm]);
 
   const watchedPublicProfile = publicProfileForm.watch();
   const watchedBusinessCard = businessCardForm.watch();
+  const watchedBio = publicProfileForm.watch('bio');
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -210,28 +271,45 @@ export default function ProfilePage() {
     })
   );
 
-  function onPublicProfileSubmit(data: PublicProfileFormValues) {
-    console.log("Updated public profile:", data);
-    toast({
-      title: "Profile Saved",
-      description: "Your public information has been updated.",
-    });
+  async function onPublicProfileSubmit(data: PublicProfileFormValues) {
+    if (!firebaseUser) return;
+    try {
+      await updateUser(firebaseUser.uid, { name: data.name, username: data.username, bio: data.bio });
+      toast({
+        title: "Profile Saved",
+        description: "Your public information has been updated.",
+      });
+    } catch(error) {
+       toast({ title: "Error saving profile", variant: 'destructive'});
+    }
   }
 
-  function onBusinessCardSubmit(data: BusinessCardFormValues) {
-    console.log("Updated business card:", data);
-    toast({
-      title: "Business Card Saved",
-      description: "Your digital card has been updated.",
-    });
+  async function onBusinessCardSubmit(data: BusinessCardFormValues) {
+    if (!firebaseUser) return;
+    try {
+      await updateUser(firebaseUser.uid, { businessCard: data });
+      toast({
+        title: "Business Card Saved",
+        description: "Your digital card has been updated.",
+      });
+    } catch(error) {
+       toast({ title: "Error saving card", variant: 'destructive'});
+    }
   }
 
-  function onLinksSubmit(data: LinksFormValues) {
-    console.log("Updated links data:", data);
-    toast({
-      title: "Links Saved",
-      description: "Your link-in-bio page has been updated.",
-    });
+  async function onLinksSubmit(data: LinksFormValues) {
+     if (!firebaseUser) return;
+     try {
+       // remove the temporary 'id' field before saving to Firestore
+      const linksToSave = data.links.map(({id, ...rest}) => rest);
+      await updateUser(firebaseUser.uid, { links: linksToSave });
+      toast({
+        title: "Links Saved",
+        description: "Your link-in-bio page has been updated.",
+      });
+    } catch(error) {
+       toast({ title: "Error saving links", variant: 'destructive'});
+    }
   }
 
   function handleDragEnd(event: DragEndEvent) {
@@ -255,11 +333,31 @@ export default function ProfilePage() {
       e.target.value = '';
     }
   };
+  
+  const handleCropComplete = async (url: string) => {
+    // TODO: In a real app, this should upload the file to storage first.
+    // For now, it just updates the local state.
+    if (!firebaseUser) return;
+    try {
+      // Note: This blob URL will not persist. A real implementation
+      // would upload the file to Firebase Storage here and get a public URL.
+      setCroppedImageUrl(url); 
+      // await updateUser(firebaseUser.uid, { avatarUrl: url });
+       toast({
+        title: "Avatar Updated (Locally)",
+        description: "Avatar uploads are not fully implemented in this prototype.",
+      });
+    } catch(error) {
+       toast({ title: "Error updating avatar", variant: 'destructive'});
+    }
+    setIsCropperOpen(false);
+  }
 
   useEffect(() => {
+    if (!user) return;
     const vCardData = `BEGIN:VCARD
 VERSION:3.0
-FN:${watchedPublicProfile.name || currentUser.name}
+FN:${watchedPublicProfile.name || user.name}
 ORG:${watchedBusinessCard.company || ''}
 TITLE:${watchedBusinessCard.title || ''}
 TEL;TYPE=WORK,VOICE:${watchedBusinessCard.phone || ''}
@@ -268,7 +366,11 @@ URL:${watchedBusinessCard.website || ''}
 ADR;TYPE=WORK:;;${watchedBusinessCard.location || ''}
 END:VCARD`;
     setQrCodeUrl(vCardData);
-  }, [watchedBusinessCard, watchedPublicProfile, currentUser.name]);
+  }, [watchedBusinessCard, watchedPublicProfile, user]);
+
+  if (loading || !user) {
+    return <ProfilePageSkeleton />;
+  }
 
   return (
     <div className="space-y-6">
@@ -276,10 +378,7 @@ END:VCARD`;
         imageSrc={imageToCrop}
         open={isCropperOpen}
         onOpenChange={setIsCropperOpen}
-        onCropComplete={(url) => {
-          setCroppedImageUrl(url);
-          setIsCropperOpen(false);
-        }}
+        onCropComplete={handleCropComplete}
         isRound={true}
         aspectRatio={1}
       />
@@ -336,8 +435,8 @@ END:VCARD`;
                     <Label>Profile Picture</Label>
                     <div className="flex items-center gap-4">
                       <Avatar className="h-20 w-20">
-                        <AvatarImage src={croppedImageUrl || currentUser.avatarUrl} data-ai-hint="woman smiling"/>
-                        <AvatarFallback>{currentUser.avatarFallback}</AvatarFallback>
+                        <AvatarImage src={croppedImageUrl || user.avatarUrl} data-ai-hint="woman smiling"/>
+                        <AvatarFallback>{user.avatarFallback}</AvatarFallback>
                       </Avatar>
                       <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}><Upload className="mr-2 h-4 w-4"/> Change Photo</Button>
                       <input
@@ -350,23 +449,32 @@ END:VCARD`;
                     </div>
                   </div>
                   <div className="space-y-4">
+                    <FormField
+                      control={publicProfileForm.control}
+                      name="bio"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Bio</FormLabel>
+                          <FormControl>
+                            <Textarea rows={3} {...field} placeholder="Tell everyone a little bit about yourself..." />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <BioGenerator onSelectBio={(bio) => publicProfileForm.setValue('bio', bio, { shouldDirty: true })} />
                     <div className="space-y-2">
-                      <Label htmlFor="bio">Bio</Label>
-                      <Textarea id="bio" rows={3} value={bio} onChange={(e) => setBio(e.target.value)} placeholder="Tell everyone a little bit about yourself..." />
-                       <FormDescription>
-                          Your bio is saved automatically as you type.
-                        </FormDescription>
-                    </div>
-                    <BioGenerator onSelectBio={setBio} />
-                    <div className="space-y-2">
-                        <HashtagSuggester content={bio} onSelectHashtag={(tag) => {
-                          setBio(prev => `${prev.trim()} ${tag}`);
+                        <HashtagSuggester content={watchedBio} onSelectHashtag={(tag) => {
+                          publicProfileForm.setValue('bio', `${watchedBio.trim()} ${tag}`, { shouldDirty: true });
                         }} />
                     </div>
                   </div>
                 </CardContent>
                 <CardFooter>
-                  <Button type="submit" disabled={!publicProfileForm.formState.isDirty}>Save Changes</Button>
+                  <Button type="submit" disabled={publicProfileForm.formState.isSubmitting || !publicProfileForm.formState.isDirty}>
+                    <Save className="mr-2 h-4 w-4" />
+                    Save Changes
+                  </Button>
                 </CardFooter>
               </Card>
             </form>
@@ -466,8 +574,8 @@ END:VCARD`;
                       <div className="w-full max-w-[280px] bg-background p-6 rounded-xl shadow-lg border">
                         <div className="text-center">
                           <Avatar className="h-20 w-20 mx-auto mb-2">
-                            <AvatarImage src={croppedImageUrl || currentUser.avatarUrl} data-ai-hint="woman smiling"/>
-                            <AvatarFallback>{currentUser.avatarFallback}</AvatarFallback>
+                            <AvatarImage src={croppedImageUrl || user.avatarUrl} data-ai-hint="woman smiling"/>
+                            <AvatarFallback>{user.avatarFallback}</AvatarFallback>
                           </Avatar>
                           <p className="font-headline font-semibold text-lg">{watchedPublicProfile.name || 'Your Name'}</p>
                           <p className="text-primary text-sm">{watchedBusinessCard.title || 'Your Title'}</p>
@@ -484,7 +592,10 @@ END:VCARD`;
                     </div>
                   </CardContent>
                   <CardFooter>
-                     <Button type="submit" disabled={!businessCardForm.formState.isDirty}>Update Card</Button>
+                     <Button type="submit" disabled={businessCardForm.formState.isSubmitting || !businessCardForm.formState.isDirty}>
+                        <Save className="mr-2 h-4 w-4" />
+                        Update Card
+                     </Button>
                   </CardFooter>
                 </Card>
               </form>
@@ -528,7 +639,10 @@ END:VCARD`;
                   </Button>
                 </CardContent>
                 <CardFooter>
-                   <Button type="submit" disabled={!linksForm.formState.isDirty}>Save Links</Button>
+                   <Button type="submit" disabled={linksForm.formState.isSubmitting || !linksForm.formState.isDirty}>
+                    <Save className="mr-2 h-4 w-4" />
+                    Save Links
+                   </Button>
                 </CardFooter>
               </form>
             </FormProvider>

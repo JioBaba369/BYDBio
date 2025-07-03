@@ -1,5 +1,5 @@
 
-import { collection, query, where, getDocs, limit, doc, getDoc, setDoc } from "firebase/firestore";
+import { collection, query, where, getDocs, limit, doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type { User as FirebaseUser } from "firebase/auth";
 
@@ -99,6 +99,12 @@ export type BusinessCard = {
   location?: string;
 };
 
+export type UserLink = {
+    icon: string;
+    title: string;
+    url: string;
+}
+
 export type User = {
   id: string;
   name: string;
@@ -115,11 +121,7 @@ export type User = {
   posts: Post[];
   businesses: Business[];
   subscribers: number;
-  links: {
-    icon: string;
-    title: string;
-    url: string;
-  }[];
+  links: UserLink[];
   businessCard?: BusinessCard;
   rsvpedEventIds?: string[];
   uid: string;
@@ -161,6 +163,16 @@ export const createUserProfileIfNotExists = async (user: FirebaseUser, additiona
             businessCard: {},
         });
     }
+};
+
+/**
+ * Updates a user's profile document in Firestore.
+ * @param uid The user's unique ID.
+ * @param data The data to update. This will be merged with existing data.
+ */
+export const updateUser = async (uid: string, data: Partial<User>) => {
+    const userDocRef = doc(db, "users", uid);
+    await updateDoc(userDocRef, data);
 };
 
 export async function getUserByUsername(username: string): Promise<User | null> {
