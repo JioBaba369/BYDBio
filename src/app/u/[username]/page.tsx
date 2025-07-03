@@ -20,6 +20,7 @@ import ShareButton from "@/components/share-button";
 import { linkIcons } from "@/lib/link-icons";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
+import { format, parseISO } from "date-fns";
 
 // Add isLiked to post type for this component's state
 type PostWithLike = (typeof currentUser.posts)[0] & { isLiked: boolean };
@@ -255,7 +256,7 @@ export default function LinkInBioPage() {
                           </CardHeader>
                           <CardContent className="space-y-2">
                               <div className="flex items-center text-sm text-muted-foreground">
-                                <Calendar className="mr-2 h-4 w-4" /> {event.date}
+                                <Calendar className="mr-2 h-4 w-4" /> {format(parseISO(event.date), "PPP")}
                               </div>
                               <div className="flex items-center text-sm text-muted-foreground">
                                 <MapPin className="mr-2 h-4 w-4" /> {event.location}
