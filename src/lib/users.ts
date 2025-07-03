@@ -67,6 +67,16 @@ export type Business = {
   clicks?: number;
 };
 
+export type BusinessCard = {
+  title: string;
+  company: string;
+  phone?: string;
+  email?: string;
+  website?: string;
+  linkedin?: string;
+  location?: string;
+};
+
 export type User = {
   id: string;
   name: string;
@@ -88,6 +98,7 @@ export type User = {
     title: string;
     url: string;
   }[];
+  businessCard?: BusinessCard;
 };
 
 const user1Businesses: Business[] = [
@@ -158,6 +169,15 @@ export const allUsers: User[] = [
         { title: "Facebook", url: "https://facebook.com/janedoe.creative", icon: 'Facebook' },
         { title: "YouTube", url: "https://youtube.com/@janedoecreates", icon: 'Youtube' },
     ],
+    businessCard: {
+        title: "Senior Product Designer",
+        company: "Acme Inc.",
+        phone: "+1 (555) 123-4567",
+        email: "jane.doe@acme.com",
+        website: "https://janedoe.design",
+        linkedin: "https://www.linkedin.com/in/janedoe",
+        location: "San Francisco, CA",
+    },
     jobs: [
        { id: 'job1', title: 'UX/UI Designer', company: 'Creative Solutions', location: 'Remote', type: 'Full-time', postingDate: '2024-08-20T09:00:00Z', imageUrl: 'https://placehold.co/600x400.png', status: 'active' },
     ],

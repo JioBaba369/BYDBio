@@ -21,13 +21,4 @@ export const currentUser = {
     { title: "Facebook", url: "https://facebook.com/janedoe.creative", icon: 'Facebook' },
     { title: "YouTube", url: "https://youtube.com/@janedoecreates", icon: 'Youtube' },
   ],
-  businessCard: {
-    title: "Senior Product Designer",
-    company: "Acme Inc.",
-    phone: "+1 (555) 123-4567",
-    email: "jane.doe@acme.com",
-    website: "https://janedoe.design",
-    linkedin: "https://www.linkedin.com/in/janedoe",
-    location: "San Francisco, CA",
-  },
 };
