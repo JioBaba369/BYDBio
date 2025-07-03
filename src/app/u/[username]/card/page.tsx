@@ -1,3 +1,5 @@
+'use client';
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -31,6 +33,18 @@ EMAIL:${email}
 URL:${website}
 ADR;TYPE=WORK:;;${location}
 END:VCARD`;
+
+  const handleSaveToContacts = () => {
+    const blob = new Blob([vCardData], { type: "text/vcard" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${name.split(' ').join('_')}.vcf`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-muted/40 p-4">
@@ -82,19 +96,7 @@ END:VCARD`;
             </div>
           </div>
           
-          <Button className="mt-8 w-full font-bold"
-            onClick={() => {
-              const blob = new Blob([vCardData], { type: "text/vcard" });
-              const url = URL.createObjectURL(blob);
-              const a = document.createElement("a");
-              a.href = url;
-              a.download = `${name.split(' ').join('_')}.vcf`;
-              document.body.appendChild(a);
-              a.click();
-              document.body.removeChild(a);
-              URL.revokeObjectURL(url);
-            }}
-          >
+          <Button className="mt-8 w-full font-bold" onClick={handleSaveToContacts}>
             Save to Contacts
           </Button>
         </CardContent>
