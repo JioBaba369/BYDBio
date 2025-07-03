@@ -16,12 +16,10 @@ import QRCode from 'qrcode.react';
 
 
 interface ShareButtonComponentProps {
-    variant?: ButtonProps['variant'];
     size?: ButtonProps['size'];
-    className?: string;
 }
 
-export default function ShareButton({ variant = "outline", size, className }: ShareButtonComponentProps) {
+export default function ShareButton({ size }: ShareButtonComponentProps) {
   const { toast } = useToast();
   const [url, setUrl] = useState('');
   const [isQrDialogOpen, setIsQrDialogOpen] = useState(false);
@@ -59,7 +57,7 @@ export default function ShareButton({ variant = "outline", size, className }: Sh
     <Dialog open={isQrDialogOpen} onOpenChange={setIsQrDialogOpen}>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant={variant} size={size} className={className}>
+          <Button variant="outline" size={size}>
             <Share2 className="mr-2 h-5 w-5" />
             Share
           </Button>
