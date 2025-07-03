@@ -9,6 +9,7 @@ import { Logo } from "@/components/logo";
 import { currentUser } from "@/lib/mock-data";
 import ShareButton from "@/components/share-button";
 import { useParams } from "next/navigation";
+import { format, parseISO } from "date-fns";
 
 export default function UserEventsPage() {
   const params = useParams();
@@ -48,7 +49,7 @@ export default function UserEventsPage() {
               </CardHeader>
               <CardContent className="space-y-2">
                 <div className="flex items-center text-sm text-muted-foreground">
-                  <Calendar className="mr-2 h-4 w-4" /> {event.date}
+                  <Calendar className="mr-2 h-4 w-4" /> {format(parseISO(event.date), "PPP p")}
                 </div>
                 <div className="flex items-center text-sm text-muted-foreground">
                   <MapPin className="mr-2 h-4 w-4" /> {event.location}

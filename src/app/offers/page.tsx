@@ -1,9 +1,10 @@
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Tag } from "lucide-react"
+import { Tag, Calendar } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { currentUser } from "@/lib/mock-data";
+import { format, parseISO } from "date-fns";
 
 export default function OffersPage() {
   const { offers } = currentUser;
@@ -21,8 +22,12 @@ export default function OffersPage() {
                 <CardTitle>{offer.title}</CardTitle>
                 <CardDescription>{offer.description}</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-2">
                 <Badge variant="secondary"><Tag className="mr-1 h-3 w-3" />{offer.category}</Badge>
+                 <div className="flex items-center pt-2 text-sm text-muted-foreground">
+                  <Calendar className="mr-2 h-4 w-4" /> 
+                  <span>Releases: {format(parseISO(offer.releaseDate), 'PPP')}</span>
+                </div>
               </CardContent>
               <CardFooter>
                 <Button className="w-full">Claim Offer</Button>

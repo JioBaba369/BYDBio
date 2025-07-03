@@ -3,6 +3,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Button } from "@/components/ui/button"
 import { Calendar, MapPin } from "lucide-react"
 import { currentUser } from "@/lib/mock-data";
+import { format, parseISO } from "date-fns";
 
 export default function EventsPage() {
   const { events } = currentUser;
@@ -21,7 +22,7 @@ export default function EventsPage() {
               </CardHeader>
               <CardContent className="space-y-2">
                 <div className="flex items-center text-sm text-muted-foreground">
-                  <Calendar className="mr-2 h-4 w-4" /> {event.date}
+                  <Calendar className="mr-2 h-4 w-4" /> {format(parseISO(event.date), "PPP p")}
                 </div>
                 <div className="flex items-center text-sm text-muted-foreground">
                   <MapPin className="mr-2 h-4 w-4" /> {event.location}

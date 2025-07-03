@@ -29,6 +29,7 @@ import {
   Search,
   Users,
   Tags,
+  CalendarDays,
 } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -147,6 +148,16 @@ export function MainSidebar() {
                 icon={<Calendar />}
               >
                 Events
+              </SidebarMenuButton>
+            </Link>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <Link href="/calendar">
+              <SidebarMenuButton
+                isActive={isActive('/calendar')}
+                icon={<CalendarDays />}
+              >
+                Content Calendar
               </SidebarMenuButton>
             </Link>
           </SidebarMenuItem>
