@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { currentUser } from '@/lib/mock-data';
@@ -14,6 +14,24 @@ import { BookText, Calendar, MapPin, Save } from 'lucide-react';
 import Link from 'next/link';
 
 type EventWithNotes = Event & { notes?: string };
+
+// This component safely formats the date on the client-side to prevent hydration errors.
+function ClientFormattedDate({ dateString, formatStr }: { dateString: string; formatStr: string }) {
+  const [formattedDate, setFormattedDate] = useState('');
+
+  useEffect(() => {
+    // This effect runs only on the client, after the initial render.
+    setFormattedDate(format(parseISO(dateString), formatStr));
+  }, [dateString, formatStr]);
+
+  // Render a placeholder or nothing until the client-side formatting is complete.
+  if (!formattedDate) {
+    return <span>...</span>;
+  }
+
+  return <>{formattedDate}</>;
+}
+
 
 export default function DiaryPage() {
     const [events, setEvents] = useState<EventWithNotes[]>(
@@ -62,7 +80,7 @@ export default function DiaryPage() {
                                     <CardTitle>{event.title}</CardTitle>
                                     <CardDescription className="space-y-1 text-sm text-muted-foreground pt-1">
                                         <div className="flex items-center">
-                                            <Calendar className="mr-2 h-4 w-4" /> {format(parseISO(event.date), "PPP 'at' p")}
+                                            <Calendar className="mr-2 h-4 w-4" /> <ClientFormattedDate dateString={event.date} formatStr="PPP 'at' p" />
                                         </div>
                                         <div className="flex items-center">
                                             <MapPin className="mr-2 h-4 w-4" /> {event.location}
@@ -109,7 +127,7 @@ export default function DiaryPage() {
                                     <CardTitle>{event.title}</CardTitle>
                                      <CardDescription className="space-y-1 text-sm text-muted-foreground pt-1">
                                         <div className="flex items-center">
-                                            <Calendar className="mr-2 h-4 w-4" /> {format(parseISO(event.date), "PPP")}
+                                            <Calendar className="mr-2 h-4 w-4" /> <ClientFormattedDate dateString={event.date} formatStr="PPP" />
                                         </div>
                                         <div className="flex items-center">
                                             <MapPin className="mr-2 h-4 w-4" /> {event.location}
