@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -7,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { PlusCircle, Trash2, User, CreditCard, Link2 as LinkIcon, Upload } from "lucide-react"
+import { PlusCircle, Trash2, User, CreditCard, Link2 as LinkIcon, Upload, GripVertical } from "lucide-react"
 import HashtagSuggester from "@/components/ai/hashtag-suggester"
 import { useEffect, useState } from "react";
 import QRCode from 'qrcode.react';
@@ -20,6 +21,10 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
+import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+
 
 const linksFormSchema = z.object({
   links: z.array(
@@ -49,10 +54,17 @@ export default function ProfilePage() {
     mode: 'onBlur',
   });
 
-  const { fields, append, remove } = useFieldArray({
+  const { fields, append, remove, move } = useFieldArray({
     control: linksForm.control,
     name: "links",
   });
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   function onLinksSubmit(data: LinksFormValues) {
     // In a real app, you would save this data to your backend.
@@ -62,6 +74,16 @@ export default function ProfilePage() {
       description: "Your link-in-bio page has been updated.",
     });
   }
+
+  function handleDragEnd(event: DragEndEvent) {
+    const {active, over} = event;
+    if (active.id !== over?.id) {
+        const oldIndex = fields.findIndex((field) => field.id === active.id);
+        const newIndex = fields.findIndex((field) => field.id === over!.id);
+        move(oldIndex, newIndex);
+    }
+  }
+
 
   useEffect(() => {
     // We can only get the window.location.origin on the client
@@ -189,89 +211,112 @@ export default function ProfilePage() {
               <form onSubmit={linksForm.handleSubmit(onLinksSubmit)}>
                 <CardHeader>
                   <CardTitle>Manage Links</CardTitle>
-                  <CardDescription>Add, edit, or remove links for your link-in-bio page.</CardDescription>
+                  <CardDescription>Add, edit, or remove links for your link-in-bio page. Drag to reorder.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  <div className="space-y-4">
-                    {fields.map((field, index) => {
-                       const selectedIconName = linksForm.watch(`links.${index}.icon`);
-                       const Icon = linkIcons[selectedIconName];
-                      return (
-                        <div key={field.id} className="flex items-start gap-2 p-4 border rounded-lg bg-background/50">
-                          <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
-                            <FormField
-                              control={linksForm.control}
-                              name={`links.${index}.icon`}
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Icon</FormLabel>
-                                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                    <FormControl>
-                                      <SelectTrigger>
-                                        <div className={cn("flex items-center gap-2", !field.value && "text-muted-foreground")}>
-                                          {Icon ? <Icon className="h-4 w-4" /> : null}
-                                          <SelectValue placeholder="Select icon" />
-                                        </div>
-                                      </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                      {availableIconNames.map((iconName) => {
-                                        const LoopIcon = linkIcons[iconName];
-                                        return (
-                                          <SelectItem key={iconName} value={iconName}>
-                                            <div className="flex items-center gap-2">
-                                              <LoopIcon className="h-4 w-4" />
-                                              <span>{iconName}</span>
+                  <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={handleDragEnd}
+                  >
+                    <SortableContext items={fields.map(f => f.id)} strategy={verticalListSortingStrategy}>
+                      <div className="space-y-4">
+                        {fields.map((field, index) => {
+                          const {
+                            attributes,
+                            listeners,
+                            setNodeRef,
+                            transform,
+                            transition,
+                          } = useSortable({ id: field.id });
+                          const style = {
+                            transform: CSS.Transform.toString(transform),
+                            transition,
+                          };
+                          const selectedIconName = linksForm.watch(`links.${index}.icon`);
+                          const Icon = linkIcons[selectedIconName];
+                          
+                          return (
+                            <div ref={setNodeRef} style={style} {...attributes} key={field.id} className="flex items-start gap-2 p-4 border rounded-lg bg-background/50 touch-none">
+                              <div {...listeners} className="mt-8 shrink-0 cursor-grab p-2 -ml-2">
+                                <GripVertical className="h-5 w-5 text-muted-foreground" />
+                              </div>
+                              <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
+                                <FormField
+                                  control={linksForm.control}
+                                  name={`links.${index}.icon`}
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>Icon</FormLabel>
+                                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                        <FormControl>
+                                          <SelectTrigger>
+                                            <div className={cn("flex items-center gap-2", !field.value && "text-muted-foreground")}>
+                                              {Icon ? <Icon className="h-4 w-4" /> : null}
+                                              <SelectValue placeholder="Select icon" />
                                             </div>
-                                          </SelectItem>
-                                        );
-                                      })}
-                                    </SelectContent>
-                                  </Select>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            <FormField
-                              control={linksForm.control}
-                              name={`links.${index}.title`}
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Link Title</FormLabel>
-                                  <FormControl>
-                                    <Input {...field} placeholder="My Awesome Portfolio" />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                             <FormField
-                              control={linksForm.control}
-                              name={`links.${index}.url`}
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>URL</FormLabel>
-                                  <FormControl>
-                                    <Input {...field} placeholder="https://example.com" />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                          </div>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="mt-8 shrink-0"
-                            onClick={() => remove(index)}
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </div>
-                      );
-                    })}
-                  </div>
+                                          </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                          {availableIconNames.map((iconName) => {
+                                            const LoopIcon = linkIcons[iconName];
+                                            return (
+                                              <SelectItem key={iconName} value={iconName}>
+                                                <div className="flex items-center gap-2">
+                                                  <LoopIcon className="h-4 w-4" />
+                                                  <span>{iconName}</span>
+                                                </div>
+                                              </SelectItem>
+                                            );
+                                          })}
+                                        </SelectContent>
+                                      </Select>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                                <FormField
+                                  control={linksForm.control}
+                                  name={`links.${index}.title`}
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>Link Title</FormLabel>
+                                      <FormControl>
+                                        <Input {...field} placeholder="My Awesome Portfolio" />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                                <FormField
+                                  control={linksForm.control}
+                                  name={`links.${index}.url`}
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>URL</FormLabel>
+                                      <FormControl>
+                                        <Input {...field} placeholder="https://example.com" />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                              </div>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="mt-8 shrink-0"
+                                onClick={() => remove(index)}
+                              >
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </SortableContext>
+                  </DndContext>
                   <Button
                     type="button"
                     variant="outline"
