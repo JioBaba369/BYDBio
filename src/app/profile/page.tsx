@@ -41,7 +41,7 @@ const linksFormSchema = z.object({
 type LinksFormValues = z.infer<typeof linksFormSchema>;
 
 const SortableLinkItem = ({ field, index, remove }: { field: { id: string }, index: number, remove: (index: number) => void }) => {
-  const { control, watch, setValue } = useFormContext<LinksFormValues>();
+  const { control, setValue } = useFormContext<LinksFormValues>();
 
   const {
     attributes,
@@ -55,9 +55,6 @@ const SortableLinkItem = ({ field, index, remove }: { field: { id: string }, ind
     transform: CSS.Transform.toString(transform),
     transition,
   };
-  
-  const selectedIconName = watch(`links.${index}.icon`);
-  const Icon = selectedIconName ? linkIcons[selectedIconName] : null;
 
   return (
     <div ref={setNodeRef} style={style} {...attributes} className="flex items-start gap-2 p-4 border rounded-lg bg-background/50 touch-none">
@@ -83,11 +80,8 @@ const SortableLinkItem = ({ field, index, remove }: { field: { id: string }, ind
                 defaultValue={field.value}
               >
                 <FormControl>
-                  <SelectTrigger>
-                    <div className={cn("flex items-center gap-2", !field.value && "text-muted-foreground")}>
-                      {Icon ? <Icon className="h-4 w-4" /> : null}
-                      <SelectValue placeholder="Select icon" />
-                    </div>
+                  <SelectTrigger className={cn(!field.value && "text-muted-foreground")}>
+                    <SelectValue placeholder="Select icon" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
