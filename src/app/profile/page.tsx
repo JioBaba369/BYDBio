@@ -16,7 +16,7 @@ import { currentUser } from "@/lib/mock-data";
 import { useForm, useFieldArray, FormProvider, useFormContext } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { availableIconNames, linkIcons, linkIconData } from "@/lib/link-icons";
+import { availableIconNames, linkIconData } from "@/lib/link-icons";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
