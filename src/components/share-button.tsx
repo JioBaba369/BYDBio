@@ -2,7 +2,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Button } from '@/components/ui/button';
+import { Button, type ButtonProps } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,7 +14,14 @@ import { useToast } from '@/hooks/use-toast';
 import { Share2, Copy, QrCode } from 'lucide-react';
 import QRCode from 'qrcode.react';
 
-export default function ShareButton() {
+
+interface ShareButtonComponentProps {
+    variant?: ButtonProps['variant'];
+    size?: ButtonProps['size'];
+    className?: string;
+}
+
+export default function ShareButton({ variant = "outline", size, className }: ShareButtonComponentProps) {
   const { toast } = useToast();
   const [url, setUrl] = useState('');
   const [isQrDialogOpen, setIsQrDialogOpen] = useState(false);
@@ -52,8 +59,8 @@ export default function ShareButton() {
     <Dialog open={isQrDialogOpen} onOpenChange={setIsQrDialogOpen}>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline">
-            <Share2 className="mr-2 h-4 w-4" />
+          <Button variant={variant} size={size} className={className}>
+            <Share2 className="mr-2 h-5 w-5" />
             Share
           </Button>
         </DropdownMenuTrigger>

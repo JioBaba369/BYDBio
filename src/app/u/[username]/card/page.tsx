@@ -1,10 +1,9 @@
-
 'use client';
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Save } from "lucide-react";
+import { Save, Mail, Phone, Globe, Linkedin } from "lucide-react";
 import Link from "next/link";
 import { Logo } from "@/components/logo";
 import QRCode from "qrcode.react";
@@ -39,6 +38,7 @@ export default function BusinessCardPage() {
     phone = '', 
     email = '', 
     website = '', 
+    linkedin = '',
     location = '' 
   } = businessCard || {};
 
@@ -66,42 +66,67 @@ END:VCARD`;
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-muted/40 p-4 space-y-6">
-      <div className="w-full max-w-sm bg-background p-6 rounded-xl shadow-lg border">
-        <div className="text-center space-y-2">
-            <Avatar className="w-20 h-20 mx-auto">
-                <AvatarImage src={avatarUrl} alt={name} data-ai-hint="person portrait"/>
-                <AvatarFallback>{avatarFallback}</AvatarFallback>
-            </Avatar>
-            <div>
-                <h1 className="font-headline text-xl font-bold">{name}</h1>
-                {title && <p className="text-primary font-medium text-sm">{title}</p>}
+    <div className="bg-muted/30 dark:bg-card/20 min-h-screen flex flex-col items-center justify-center p-4 antialiased">
+      <div className="w-full max-w-sm space-y-6">
+        <Card className="rounded-3xl shadow-2xl border-primary/10 bg-card overflow-hidden relative group">
+            <div className="h-28 bg-primary/80 dark:bg-primary/50" />
+            <div className="absolute top-28 left-1/2 -translate-x-1/2 -translate-y-1/2">
+                <Avatar className="w-28 h-28 border-4 border-background shadow-lg transition-transform group-hover:scale-105">
+                    <AvatarImage src={avatarUrl} alt={name} data-ai-hint="person portrait"/>
+                    <AvatarFallback>{avatarFallback}</AvatarFallback>
+                </Avatar>
+            </div>
+            <CardContent className="pt-20 pb-8 text-center px-6">
+                <h1 className="font-headline text-2xl font-bold">{name}</h1>
+                {title && <p className="text-primary font-medium">{title}</p>}
                 {company && <p className="text-muted-foreground text-sm">{company}</p>}
-            </div>
-        </div>
-        <div className="flex justify-center p-4 mt-4">
-            <div className="bg-white p-4 rounded-lg">
-                <QRCode value={vCardData} size={200} bgColor="#ffffff" fgColor="#000000" level="Q" />
-            </div>
-        </div>
-        <p className="text-xs text-muted-foreground text-center">Scan to save contact</p>
-      </div>
-      
-      <div className="flex flex-wrap items-center justify-center gap-2">
-        <ShareButton />
-        {businessCard && (
-            <Button onClick={handleSaveToContacts} variant="outline">
-                <Save className="mr-2 h-4 w-4" />
+                
+                <div className="flex justify-center py-6">
+                    <div className="bg-white p-2.5 rounded-xl border-2 border-muted">
+                        <QRCode value={vCardData} size={180} bgColor="#ffffff" fgColor="#000000" level="Q" />
+                    </div>
+                </div>
+                <p className="text-xs text-muted-foreground -mt-2 mb-6">Scan to save contact</p>
+
+                <div className="flex justify-center items-center gap-5 flex-wrap text-muted-foreground">
+                    {email && (
+                        <a href={`mailto:${email}`} aria-label="Email" title="Email" className="hover:text-primary transition-colors">
+                            <Mail className="h-6 w-6" />
+                        </a>
+                    )}
+                     {phone && (
+                        <a href={`tel:${phone}`} aria-label="Phone" title="Phone" className="hover:text-primary transition-colors">
+                            <Phone className="h-6 w-6" />
+                        </a>
+                    )}
+                     {website && (
+                        <a href={website} target="_blank" rel="noopener noreferrer" aria-label="Website" title="Website" className="hover:text-primary transition-colors">
+                            <Globe className="h-6 w-6" />
+                        </a>
+                    )}
+                     {linkedin && (
+                        <a href={linkedin} target="_blank" rel="noopener noreferrer" aria-label="LinkedIn" title="LinkedIn" className="hover:text-primary transition-colors">
+                            <Linkedin className="h-6 w-6" />
+                        </a>
+                    )}
+                </div>
+            </CardContent>
+        </Card>
+        
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Button onClick={handleSaveToContacts} size="lg" className="font-bold w-full">
+                <Save className="mr-2 h-5 w-5" />
                 Save Contact
             </Button>
-        )}
-      </div>
+            <ShareButton size="lg" className="font-bold w-full" />
+        </div>
 
-      <div className="text-center">
-          <Link href="/" className="text-sm text-muted-foreground hover:text-primary flex items-center gap-2">
-              Powered by <Logo className="text-lg text-foreground" />
-          </Link>
-      </div>
+        <div className="text-center">
+            <Link href="/" className="text-sm text-muted-foreground hover:text-primary flex items-center justify-center gap-2">
+                Powered by <Logo className="text-lg text-foreground" />
+            </Link>
+        </div>
     </div>
+</div>
   );
 }
