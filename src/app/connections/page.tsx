@@ -5,8 +5,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { UserPlus, UserCheck, UserMinus } from "lucide-react";
+import { UserPlus, UserCheck, UserMinus, QrCode } from "lucide-react";
 import { useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { useRouter } from "next/navigation";
+import { useToast } from "@/hooks/use-toast";
+import QrScanner from "@/components/qr-scanner";
 
 const followers = [
   { id: 'user2', name: "John Smith", handle: "johnsmith", avatarUrl: "https://placehold.co/100x100.png", following: true },
@@ -23,6 +27,10 @@ const following = [
 export default function ConnectionsPage() {
     const [followersList, setFollowersList] = useState(followers);
     const [followingList, setFollowingList] = useState(following);
+    const [isScannerOpen, setIsScannerOpen] = useState(false);
+    const router = useRouter();
+    const { toast } = useToast();
+
 
     // This is a mock function. In a real app, this would be an API call.
     const toggleFollowInList = (listSetter: React.Dispatch<React.SetStateAction<any[]>>, userId: string) => {
@@ -66,12 +74,58 @@ export default function ConnectionsPage() {
         setFollowingList(prevList => prevList.filter(user => user.id !== userId));
     };
 
+    const handleQrScanSuccess = (decodedText: string) => {
+      try {
+        const url = new URL(decodedText);
+        const pathParts = url.pathname.split('/');
+        
+        // Expecting a URL like /u/[username] or /u/[username]/card
+        if (pathParts.length >= 3 && pathParts[1] === 'u') {
+          const username = pathParts[2];
+          toast({
+            title: "Scan Successful",
+            description: `Redirecting to ${username}'s profile...`,
+          });
+          setIsScannerOpen(false);
+          router.push(`/u/${username}`);
+        } else {
+          throw new Error("Invalid QR code");
+        }
+      } catch (error) {
+        console.error("QR Scan Error:", error);
+        toast({
+          title: "Invalid QR Code",
+          description: "The scanned QR code is not a valid profile URL.",
+          variant: "destructive",
+        });
+        setIsScannerOpen(false);
+      }
+    };
+
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold font-headline">Connections</h1>
-        <p className="text-muted-foreground">Manage your followers and who you follow.</p>
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold font-headline">Connections</h1>
+          <p className="text-muted-foreground">Manage your followers and who you follow.</p>
+        </div>
+        <Dialog open={isScannerOpen} onOpenChange={setIsScannerOpen}>
+            <DialogTrigger asChild>
+                <Button>
+                    <QrCode className="mr-2 h-4 w-4" />
+                    Scan to Connect
+                </Button>
+            </DialogTrigger>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Scan a Profile QR Code</DialogTitle>
+                </DialogHeader>
+                <div className="p-4">
+                  <QrScanner onScanSuccess={handleQrScanSuccess} />
+                </div>
+            </DialogContent>
+        </Dialog>
       </div>
 
       <Tabs defaultValue="followers" className="w-full">

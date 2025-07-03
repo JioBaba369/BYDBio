@@ -10,10 +10,19 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Link, PlusCircle, Trash2, User, CreditCard, Link2, Upload, Phone, Mail, Globe, MapPin, Building, Linkedin } from "lucide-react"
 import HashtagSuggester from "@/components/ai/hashtag-suggester"
 import Image from "next/image"
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import QRCode from 'qrcode.react';
 
 export default function ProfilePage() {
   const [bio, setBio] = useState("Senior Product Designer at Acme Inc. Crafting user-centric experiences that bridge business goals and user needs.");
+  const [qrCodeUrl, setQrCodeUrl] = useState('');
+
+  useEffect(() => {
+    // We can only get the window.location.origin on the client
+    if (typeof window !== 'undefined') {
+      setQrCodeUrl(`${window.location.origin}/u/janedoe/card`);
+    }
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -114,7 +123,13 @@ export default function ProfilePage() {
                     <p className="font-headline font-semibold text-lg">Jane Doe</p>
                     <p className="text-primary text-sm">Senior Product Designer</p>
                   </div>
-                  <Image src="https://placehold.co/250x250.png" width={200} height={200} alt="QR Code Preview" className="mx-auto mt-4 rounded-md" data-ai-hint="qr code" />
+                  <div className="flex justify-center mt-4">
+                    {qrCodeUrl ? (
+                      <QRCode value={qrCodeUrl} size={200} bgColor="#ffffff" fgColor="#000000" level="Q" />
+                    ) : (
+                      <div className="w-[200px] h-[200px] bg-gray-200 animate-pulse mx-auto rounded-md" />
+                    )}
+                  </div>
                    <p className="text-xs text-muted-foreground text-center mt-2">Scan to Share</p>
                 </div>
               </div>

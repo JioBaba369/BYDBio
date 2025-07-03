@@ -3,10 +3,11 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Globe, Linkedin, Mail, Phone, MapPin, Building } from "lucide-react";
-import Image from "next/image";
+import { Globe, Linkedin, Mail, Phone, MapPin } from "lucide-react";
 import Link from "next/link";
 import { Logo } from "@/components/logo";
+import { useEffect, useState } from "react";
+import QRCode from "qrcode.react";
 
 // Mock data
 const businessCardData = {
@@ -19,12 +20,13 @@ const businessCardData = {
   website: "janedoe.design",
   linkedin: "linkedin.com/in/janedoe",
   location: "San Francisco, CA",
-  qrCodeUrl: "https://placehold.co/250x250.png",
 };
 
 export default function BusinessCardPage({ params }: { params: { username: string } }) {
   // In a real app, you would fetch data based on params.username
-  const { name, title, company, avatarUrl, phone, email, website, linkedin, location, qrCodeUrl } = businessCardData;
+  const { name, title, company, avatarUrl, phone, email, website, linkedin, location } = businessCardData;
+  const [qrCodeValue, setQrCodeValue] = useState('');
+
   const vCardData = `BEGIN:VCARD
 VERSION:3.0
 FN:${name}
@@ -35,6 +37,12 @@ EMAIL:${email}
 URL:${website}
 ADR;TYPE=WORK:;;${location}
 END:VCARD`;
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setQrCodeValue(window.location.href);
+    }
+  }, []);
 
   const handleSaveToContacts = () => {
     const blob = new Blob([vCardData], { type: "text/vcard" });
@@ -64,14 +72,11 @@ END:VCARD`;
           <p className="text-muted-foreground text-sm">{company}</p>
 
           <div className="mt-6 flex justify-center">
-            <Image
-              src={qrCodeUrl}
-              width={180}
-              height={180}
-              alt="QR Code"
-              className="rounded-lg"
-              data-ai-hint="qr code"
-            />
+            {qrCodeValue ? (
+              <QRCode value={qrCodeValue} size={180} bgColor="#ffffff" fgColor="#000000" level="Q" />
+            ) : (
+              <div className="w-[180px] h-[180px] bg-gray-200 animate-pulse rounded-lg" />
+            )}
           </div>
           <p className="text-xs text-muted-foreground mt-2">Scan to save contact</p>
           
