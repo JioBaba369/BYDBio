@@ -10,9 +10,9 @@ import {
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
-import { AreaChart, BarChart, Briefcase, Calendar, DollarSign, File, LineChart, ListFilter, MessageSquare, PlusCircle, Tags } from "lucide-react"
+import { BarChart, Briefcase, Calendar, DollarSign, File, LineChart, ListFilter, MessageSquare, PlusCircle, Tags } from "lucide-react"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
-import { Bar, CartesianGrid, XAxis, YAxis, Tooltip, Area, ResponsiveContainer, Line, Legend, BarChart as BarChartComponent, AreaChart as AreaChartComponent, LineChart as LineChartComponent } from "recharts"
+import { Bar, CartesianGrid, XAxis, YAxis, Tooltip, Area, Legend, BarChart as BarChartComponent, AreaChart as AreaChartComponent } from "recharts"
 import Link from "next/link"
 import {
   DropdownMenu,
@@ -31,7 +31,9 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import { currentUser } from "@/lib/mock-data"
+import { useAuth } from "@/components/auth-provider"
+import { Skeleton } from "@/components/ui/skeleton"
+import { useMemo } from "react"
 
 const chartData = [
   { month: "January", desktop: 186, mobile: 80 },
@@ -42,17 +44,62 @@ const chartData = [
   { month: "June", desktop: 214, mobile: 140 },
 ]
 
-const barChartData = [
-  { name: 'Jobs', value: currentUser.jobs.length },
-  { name: 'Events', value: currentUser.events.length },
-  { name: 'Offers', value: currentUser.offers.length },
-  { name: 'Listings', value: currentUser.listings.length },
-  { name: 'Updates', value: 12 },
-  { name: 'Links', value: currentUser.links.length },
-];
+const DashboardSkeleton = () => (
+    <div className="flex flex-col gap-8">
+      <div className="flex items-center justify-between">
+        <Skeleton className="h-9 w-48" />
+        <Skeleton className="h-10 w-32" />
+      </div>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Skeleton className="h-28 rounded-lg" />
+        <Skeleton className="h-28 rounded-lg" />
+        <Skeleton className="h-28 rounded-lg" />
+        <Skeleton className="h-28 rounded-lg" />
+      </div>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+        <Skeleton className="col-span-4 h-80 rounded-lg" />
+        <Skeleton className="col-span-3 h-80 rounded-lg" />
+      </div>
+      <Skeleton className="h-96 rounded-lg" />
+    </div>
+)
 
 export default function Dashboard() {
-  const totalListings = currentUser.jobs.length + currentUser.events.length + currentUser.offers.length + currentUser.listings.length;
+  const { user, loading } = useAuth();
+  
+  const { totalContent, barChartData, profileCompletion } = useMemo(() => {
+    if (!user) {
+      return { totalContent: 0, barChartData: [], profileCompletion: 0 };
+    }
+
+    const total = (user.jobs?.length || 0) + 
+                  (user.events?.length || 0) + 
+                  (user.offers?.length || 0) + 
+                  (user.listings?.length || 0);
+
+    const chart = [
+      { name: 'Jobs', value: user.jobs?.length || 0 },
+      { name: 'Events', value: user.events?.length || 0 },
+      { name: 'Offers', value: user.offers?.length || 0 },
+      { name: 'Listings', value: user.listings?.length || 0 },
+      { name: 'Posts', value: user.posts?.length || 0 },
+      { name: 'Links', value: user.links?.length || 0 },
+    ];
+    
+    let completion = 0;
+    if (user.bio) completion += 20;
+    if (user.avatarUrl && !user.avatarUrl.includes('placehold.co')) completion += 20;
+    if (user.links && user.links.length > 0) completion += 20;
+    const hasContent = (user.jobs && user.jobs.length > 0) || (user.events && user.events.length > 0) || (user.offers && user.offers.length > 0) || (user.listings && user.listings.length > 0) || (user.posts && user.posts.length > 0);
+    if (hasContent) completion += 20;
+    if (user.businessCard && user.businessCard.title && user.businessCard.company) completion += 20;
+
+    return { totalContent: total, barChartData: chart, profileCompletion: completion };
+  }, [user]);
+  
+  if (loading || !user) {
+    return <DashboardSkeleton />;
+  }
   
   return (
     <div className="flex flex-col gap-8">
@@ -75,25 +122,25 @@ export default function Dashboard() {
                 </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                <Link href="/listings" className="cursor-pointer">
+                <Link href="/listings/create" className="cursor-pointer">
                     <Tags className="mr-2 h-4 w-4" />
                     <span>New Listing</span>
                 </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                <Link href="/opportunities" className="cursor-pointer">
+                <Link href="/opportunities/create" className="cursor-pointer">
                     <Briefcase className="mr-2 h-4 w-4" />
                     <span>New Job</span>
                 </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                <Link href="/events" className="cursor-pointer">
+                <Link href="/events/create" className="cursor-pointer">
                     <Calendar className="mr-2 h-4 w-4" />
                     <span>New Event</span>
                 </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                <Link href="/offers" className="cursor-pointer">
+                <Link href="/offers/create" className="cursor-pointer">
                     <DollarSign className="mr-2 h-4 w-4" />
                     <span>New Offer</span>
                 </Link>
@@ -133,13 +180,13 @@ export default function Dashboard() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Listings</CardTitle>
+            <CardTitle className="text-sm font-medium">Active Content</CardTitle>
             <ListFilter className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalListings}</div>
+            <div className="text-2xl font-bold">{totalContent}</div>
             <p className="text-xs text-muted-foreground">
-              {currentUser.jobs.length} Jobs, {currentUser.events.length} Events, {currentUser.offers.length} Offers, {currentUser.listings.length} Listings
+              {user.jobs?.length || 0} Jobs, {user.events?.length || 0} Events
             </p>
           </CardContent>
         </Card>
@@ -148,8 +195,8 @@ export default function Dashboard() {
             <CardTitle className="text-sm font-medium">Profile Completion</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold mb-2">75%</div>
-            <Progress value={75} aria-label="75% complete" />
+            <div className="text-2xl font-bold mb-2">{profileCompletion}%</div>
+            <Progress value={profileCompletion} aria-label={`${profileCompletion}% complete`} />
           </CardContent>
         </Card>
       </div>
