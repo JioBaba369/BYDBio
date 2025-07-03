@@ -1,6 +1,6 @@
 
 import type { Metadata } from 'next';
-import { allUsers } from '@/lib/users';
+import { getUserByUsername } from '@/lib/users';
 import UserProfilePage from './user-profile';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,7 +8,7 @@ import Link from 'next/link';
 
 export async function generateMetadata({ params }: { params: { username: string } }): Promise<Metadata> {
   const username = params.username;
-  const user = allUsers.find((u) => u.username === username);
+  const user = await getUserByUsername(username);
 
   if (!user) {
     return {
@@ -48,9 +48,9 @@ export async function generateMetadata({ params }: { params: { username: string 
   };
 }
 
-export default function PublicProfilePageWrapper({ params }: { params: { username: string } }) {
+export default async function PublicProfilePageWrapper({ params }: { params: { username: string } }) {
     const username = params.username;
-    const userProfileData = allUsers.find(u => u.username === username);
+    const userProfileData = await getUserByUsername(username);
 
     if (!userProfileData) {
         return (
@@ -70,5 +70,3 @@ export default function PublicProfilePageWrapper({ params }: { params: { usernam
 
     return <UserProfilePage userProfileData={userProfileData} />;
 }
-
-    

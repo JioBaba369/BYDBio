@@ -1,4 +1,7 @@
 
+import { collection, query, where, getDocs, limit } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+
 // In a real app, this data would come from a database.
 // It's defined here for demonstration purposes.
 
@@ -110,7 +113,7 @@ export type User = {
   listings: Listing[];
   posts: Post[];
   businesses: Business[];
-  subscribers: string;
+  subscribers: number;
   links: {
     icon: string;
     title: string;
@@ -118,7 +121,23 @@ export type User = {
   }[];
   businessCard?: BusinessCard;
   rsvpedEventIds?: string[];
+  uid: string;
+  email?: string;
 };
+
+export async function getUserByUsername(username: string): Promise<User | null> {
+    const usersRef = collection(db, "users");
+    const q = query(usersRef, where("username", "==", username), limit(1));
+    const querySnapshot = await getDocs(q);
+
+    if (querySnapshot.empty) {
+        return null;
+    }
+
+    const userDoc = querySnapshot.docs[0];
+    return userDoc.data() as User;
+}
+
 
 const user1Businesses: Business[] = [
   {
@@ -169,6 +188,7 @@ const user1Businesses: Business[] = [
 export const allUsers: User[] = [
   {
     id: 'user1',
+    uid: 'user1',
     name: 'Jane Doe',
     handle: 'janedoe',
     username: 'janedoe',
@@ -176,7 +196,7 @@ export const allUsers: User[] = [
     avatarFallback: 'JD',
     bio: "Senior Product Designer at Acme Inc. Crafting user-centric experiences that bridge business goals and user needs. Passionate about design systems and accessibility.",
     following: ['user2', 'user4', 'user5'],
-    subscribers: "12.5k",
+    subscribers: 12500,
     links: [
         { title: "Personal Website", url: "https://janedoe.design", icon: 'Globe' },
         { title: "Email Me", url: "mailto:jane.doe@example.com", icon: 'Mail' },
@@ -301,6 +321,7 @@ export const allUsers: User[] = [
   },
   {
     id: 'user2',
+    uid: 'user2',
     name: 'John Smith',
     handle: 'johnsmith',
     username: 'johnsmith',
@@ -308,7 +329,7 @@ export const allUsers: User[] = [
     avatarFallback: 'JS',
     bio: "Writer and thought leader on the future of work. Exploring remote collaboration and productivity hacks.",
     following: ['user1', 'user4'],
-    subscribers: "5.1k",
+    subscribers: 5100,
     links: [],
     jobs: [],
     events: [],
@@ -328,6 +349,7 @@ export const allUsers: User[] = [
   },
   {
     id: 'user3',
+    uid: 'user3',
     name: 'Alex Johnson',
     handle: 'alexj',
     username: 'alexj',
@@ -335,7 +357,7 @@ export const allUsers: User[] = [
     avatarFallback: 'AJ',
     bio: "Frontend developer passionate about building beautiful and accessible user interfaces with React and Next.js.",
     following: ['user1'],
-    subscribers: "1.2k",
+    subscribers: 1200,
     links: [],
     jobs: [],
     events: [],
@@ -346,6 +368,7 @@ export const allUsers: User[] = [
   },
   {
     id: 'user4',
+    uid: 'user4',
     name: 'Maria Garcia',
     handle: 'mariag',
     username: 'mariag',
@@ -353,7 +376,7 @@ export const allUsers: User[] = [
     avatarFallback: 'MG',
     bio: "Web developer and CSS enthusiast. Speaker at Web Dev Conference. Sharing tips on modern web technologies.",
     following: ['user1', 'user2'],
-    subscribers: "8.7k",
+    subscribers: 8700,
     links: [],
     jobs: [],
     events: [
@@ -385,6 +408,7 @@ export const allUsers: User[] = [
   },
   {
     id: 'user5',
+    uid: 'user5',
     name: 'Chris Lee',
     handle: 'chrisl',
     username: 'chrisl',
@@ -392,7 +416,7 @@ export const allUsers: User[] = [
     avatarFallback: 'CL',
     bio: "Startup founder and tech investor. Always looking for the next big thing in SaaS and AI.",
     following: [],
-    subscribers: "25k",
+    subscribers: 25000,
     links: [],
     jobs: [],
     events: [],
@@ -403,6 +427,7 @@ export const allUsers: User[] = [
   },
   {
     id: 'user6',
+    uid: 'user6',
     name: 'Patricia Williams',
     handle: 'patriciaw',
     username: 'patriciaw',
@@ -410,7 +435,7 @@ export const allUsers: User[] = [
     avatarFallback: 'PW',
     bio: "Marketing strategist helping brands grow their online presence. Expert in SEO and content marketing.",
     following: [],
-    subscribers: "4.3k",
+    subscribers: 4300,
     links: [],
     jobs: [],
     events: [],
@@ -421,6 +446,7 @@ export const allUsers: User[] = [
   },
   {
     id: 'user7',
+    uid: 'user7',
     name: 'Michael Brown',
     handle: 'mikeb',
     username: 'mikeb',
@@ -428,7 +454,7 @@ export const allUsers: User[] = [
     avatarFallback: 'MB',
     bio: "Photographer and videographer. Capturing moments that tell a story. Based in New York.",
     following: [],
-    subscribers: "15.2k",
+    subscribers: 15200,
     links: [],
     jobs: [],
     events: [],
