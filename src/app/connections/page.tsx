@@ -8,6 +8,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UserPlus, UserCheck, UserMinus, QrCode } from "lucide-react";
 import { useState, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import QrScanner from "@/components/qr-scanner";
@@ -21,6 +31,7 @@ type User = (typeof initialAllUsers)[0] & { isFollowedByCurrentUser?: boolean };
 export default function ConnectionsPage() {
     const [allUsers, setAllUsers] = useState<User[]>(initialAllUsers);
     const [isScannerOpen, setIsScannerOpen] = useState(false);
+    const [scannedVCardData, setScannedVCardData] = useState<string | null>(null);
     const router = useRouter();
     const { toast } = useToast();
 
@@ -71,112 +82,173 @@ export default function ConnectionsPage() {
         });
     };
 
+    const handleSaveVCard = () => {
+        if (!scannedVCardData) return;
+        const blob = new Blob([scannedVCardData], { type: "text/vcard;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        const nameMatch = scannedVCardData.match(/FN:(.*)/);
+        const name = nameMatch ? nameMatch[1].trim().split(';')[0].replace(/ /g, '_') : 'contact';
+        a.download = `${name}.vcf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        setScannedVCardData(null);
+        toast({
+            title: "Contact Saved",
+            description: "The VCF file has been downloaded to your device.",
+        });
+    };
 
     const handleQrScanSuccess = (decodedText: string) => {
-      try {
-        // First check if it's a vCard
-        if (decodedText.startsWith('BEGIN:VCARD')) {
-             toast({
-                title: "Contact Card Scanned",
-                description: "This QR code is for saving a contact, not for connecting. Please scan a profile URL QR code.",
-                variant: "destructive",
-            });
-            setIsScannerOpen(false);
-            return;
-        }
+      // Close scanner immediately
+      setIsScannerOpen(false);
 
+      // Case 1: Scanned a vCard
+      if (decodedText.startsWith('BEGIN:VCARD')) {
+        setScannedVCardData(decodedText);
+        return;
+      }
+
+      // Case 2: Scanned a profile URL
+      try {
         const url = new URL(decodedText);
         const pathParts = url.pathname.split('/');
         
         if (pathParts.length >= 3 && pathParts[1] === 'u') {
           const username = pathParts[2];
+          const userToFollow = initialAllUsers.find(u => u.username === username);
+
+          if (!userToFollow) {
+            toast({
+              title: "User Not Found",
+              description: `The profile for "${username}" could not be found.`,
+              variant: "destructive",
+            });
+            return;
+          }
+
+          if (userToFollow.id === currentUser.id) {
+            toast({
+              title: "Cannot Follow Yourself",
+              description: "You can't connect with your own profile.",
+              variant: "destructive",
+            });
+            return;
+          }
+
+          const me = allUsers.find(u => u.id === currentUser.id)!;
+          if (me.following.includes(userToFollow.id)) {
+            toast({
+              title: "Already Following",
+              description: `You are already following ${userToFollow.name}.`,
+            });
+            return;
+          }
+          
+          toggleFollow(userToFollow.id);
           toast({
-            title: "Scan Successful",
-            description: `Redirecting to ${username}'s profile...`,
+            title: "Connection Successful!",
+            description: `You are now following ${userToFollow.name}.`,
           });
-          setIsScannerOpen(false);
-          router.push(`/u/${username}`);
-        } else {
-          throw new Error("Invalid profile QR code");
+          return;
         }
       } catch (error) {
-        console.error("QR Scan Error:", error);
-        toast({
-          title: "Invalid QR Code",
-          description: "The scanned QR code is not a valid profile URL.",
-          variant: "destructive",
-        });
-        setIsScannerOpen(false);
+        // Not a valid URL, will fall through to the invalid code error
       }
+      
+      // Case 3: Invalid QR code
+      toast({
+        title: "Invalid QR Code",
+        description: "Please scan a valid profile or contact QR code.",
+        variant: "destructive",
+      });
     };
 
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold font-headline">Connections</h1>
-          <p className="text-muted-foreground">Manage your followers and who you follow.</p>
-        </div>
-        <Dialog open={isScannerOpen} onOpenChange={setIsScannerOpen}>
-            <DialogTrigger asChild>
-                <Button>
-                    <QrCode className="mr-2 h-4 w-4" />
-                    Scan to Connect
-                </Button>
-            </DialogTrigger>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>Scan a Profile QR Code</DialogTitle>
-                </DialogHeader>
-                <div className="p-4">
-                  <QrScanner onScanSuccess={handleQrScanSuccess} />
-                </div>
-            </DialogContent>
-        </Dialog>
-      </div>
+    <>
+      <AlertDialog open={!!scannedVCardData} onOpenChange={(open) => !open && setScannedVCardData(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Contact Card Scanned</AlertDialogTitle>
+            <AlertDialogDescription>
+              This QR code contains contact information (vCard). Would you like to save it to your device?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setScannedVCardData(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleSaveVCard}>Save Contact</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
-      <Tabs defaultValue="followers" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="followers">Followers ({followersList.length})</TabsTrigger>
-          <TabsTrigger value="following">Following ({followingList.length})</TabsTrigger>
-        </TabsList>
-        <TabsContent value="followers">
-            <div className="flex flex-col gap-4">
-                {followersList.map((user) => (
-                    <Card key={user.id}>
-                        <CardContent className="p-4">
-                            <div className="flex items-center justify-between gap-4">
-                                <Link href={`/u/${user.handle}`} className="flex items-center gap-4 hover:underline">
-                                    <Avatar>
-                                        <AvatarImage src={user.avatarUrl} data-ai-hint="person portrait" />
-                                        <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                                    </Avatar>
-                                    <div>
-                                        <p className="font-semibold">{user.name}</p>
-                                        <p className="text-sm text-muted-foreground">@{user.handle}</p>
-                                    </div>
-                                </Link>
-                                <div className="flex items-center gap-2 flex-shrink-0">
-                                    <Button size="sm" variant={user.isFollowedByCurrentUser ? 'secondary' : 'default'} onClick={() => toggleFollow(user.id)}>
-                                        {user.isFollowedByCurrentUser ? <UserCheck className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
-                                        {user.isFollowedByCurrentUser ? 'Following' : 'Follow Back'}
-                                    </Button>
-                                    <Button size="sm" variant="outline" className="text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={() => removeFollower(user.id)}>
-                                        <UserMinus className="mr-2 h-4 w-4" />
-                                        Remove
-                                    </Button>
-                                </div>
-                            </div>
-                            {user.bio && (
-                                <p className="text-sm text-muted-foreground mt-3 pt-3 border-t">{user.bio}</p>
-                            )}
-                        </CardContent>
-                    </Card>
-                ))}
-            </div>
-        </TabsContent>
-        <TabsContent value="following">
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold font-headline">Connections</h1>
+            <p className="text-muted-foreground">Manage your followers and who you follow.</p>
+          </div>
+          <Dialog open={isScannerOpen} onOpenChange={setIsScannerOpen}>
+              <DialogTrigger asChild>
+                  <Button>
+                      <QrCode className="mr-2 h-4 w-4" />
+                      Scan to Connect
+                  </Button>
+              </DialogTrigger>
+              <DialogContent>
+                  <DialogHeader>
+                      <DialogTitle>Scan a Profile or Contact QR Code</DialogTitle>
+                  </DialogHeader>
+                  <div className="p-4">
+                    <QrScanner onScanSuccess={handleQrScanSuccess} />
+                  </div>
+              </DialogContent>
+          </Dialog>
+        </div>
+
+        <Tabs defaultValue="followers" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="followers">Followers ({followersList.length})</TabsTrigger>
+            <TabsTrigger value="following">Following ({followingList.length})</TabsTrigger>
+          </TabsList>
+          <TabsContent value="followers">
+              <div className="flex flex-col gap-4">
+                  {followersList.map((user) => (
+                      <Card key={user.id}>
+                          <CardContent className="p-4">
+                              <div className="flex items-center justify-between gap-4">
+                                  <Link href={`/u/${user.handle}`} className="flex items-center gap-4 hover:underline">
+                                      <Avatar>
+                                          <AvatarImage src={user.avatarUrl} data-ai-hint="person portrait" />
+                                          <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                                      </Avatar>
+                                      <div>
+                                          <p className="font-semibold">{user.name}</p>
+                                          <p className="text-sm text-muted-foreground">@{user.handle}</p>
+                                      </div>
+                                  </Link>
+                                  <div className="flex items-center gap-2 flex-shrink-0">
+                                      <Button size="sm" variant={user.isFollowedByCurrentUser ? 'secondary' : 'default'} onClick={() => toggleFollow(user.id)}>
+                                          {user.isFollowedByCurrentUser ? <UserCheck className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
+                                          {user.isFollowedByCurrentUser ? 'Following' : 'Follow Back'}
+                                      </Button>
+                                      <Button size="sm" variant="outline" className="text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={() => removeFollower(user.id)}>
+                                          <UserMinus className="mr-2 h-4 w-4" />
+                                          Remove
+                                      </Button>
+                                  </div>
+                              </div>
+                              {user.bio && (
+                                  <p className="text-sm text-muted-foreground mt-3 pt-3 border-t">{user.bio}</p>
+                              )}
+                          </CardContent>
+                      </Card>
+                  ))}
+              </div>
+          </TabsContent>
+          <TabsContent value="following">
              <div className="flex flex-col gap-4">
                 {followingList.map((user) => (
                     <Card key={user.id}>
@@ -207,5 +279,6 @@ export default function ConnectionsPage() {
         </TabsContent>
       </Tabs>
     </div>
+    </>
   );
 }
