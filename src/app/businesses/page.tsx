@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { currentUser } from "@/lib/mock-data";
 import Image from "next/image";
-import { PlusCircle, MoreHorizontal, Edit, Trash2, Archive, Globe, Mail, Phone, MapPin } from "lucide-react";
+import { PlusCircle, MoreHorizontal, Edit, Trash2, Archive, Globe, Mail, Phone, MapPin, Eye } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { Business } from "@/lib/users";
@@ -97,6 +97,14 @@ export default function BusinessesPage() {
                     {item.website && <div className="flex items-center gap-2"><Globe className="h-4 w-4" /> <span>{item.website}</span></div>}
                     {item.address && <div className="flex items-center gap-2"><MapPin className="h-4 w-4" /> <span>{item.address}</span></div>}
                 </CardContent>
+                <CardFooter>
+                    <Button asChild variant="outline" className="w-full">
+                        <Link href={`/b/${item.id}`}>
+                            <Eye className="mr-2 h-4 w-4" />
+                            View Public Page
+                        </Link>
+                    </Button>
+                </CardFooter>
               </Card>
             ))}
           </div>
