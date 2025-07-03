@@ -102,8 +102,8 @@ export default function UserProfilePage({ userProfileData }: UserProfilePageProp
   const { name, username, avatarUrl, avatarFallback, bio, links, subscribers, jobs, events, offers, listings, posts } = userProfile;
 
   return (
-    <div className="flex justify-center bg-gray-100 dark:bg-gray-900 py-8 px-4">
-      <div className="w-full max-w-md mx-auto">
+    <div className="flex justify-center bg-muted/40 py-8 px-4">
+      <div className="w-full max-w-xl mx-auto">
         <Card className="bg-background/80 backdrop-blur-sm p-6 sm:p-8 shadow-2xl rounded-2xl border-primary/10">
           <div className="flex flex-col items-center text-center">
             <Avatar className="w-24 h-24 mb-4 border-4 border-primary/50">
@@ -145,13 +145,12 @@ export default function UserProfilePage({ userProfileData }: UserProfilePageProp
           </div>
 
           <div className="mt-8 space-y-8">
-            {/* Recent Updates Section */}
             {posts.length > 0 && (
-              <div>
+              <section>
                 <h2 className="text-xl font-bold font-headline mb-4">Recent Updates</h2>
                 <div className="grid md:grid-cols-2 gap-4">
                   {posts.slice(0, 2).map((post) => (
-                    <Card key={post.id} className="shadow-none">
+                    <Card key={post.id} className="shadow-none border">
                       <CardContent className="p-4">
                         <p className="whitespace-pre-wrap text-sm">{post.content}</p>
                         {post.imageUrl && (
@@ -174,121 +173,120 @@ export default function UserProfilePage({ userProfileData }: UserProfilePageProp
                     </Card>
                   ))}
                 </div>
-              </div>
+              </section>
             )}
 
-            {/* Listings Section */}
-            {listings.length > 0 && (
-              <div>
-                <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-xl font-bold font-headline">Products & Services</h2>
-                    <Button asChild variant="link" className="text-primary pr-0">
-                        <Link href={`/u/${username}/listings`}>View all</Link>
-                    </Button>
-                </div>
-                <div className="grid gap-4">
-                  {listings.slice(0, 1).map((item) => (
-                    <Card key={item.id} className="shadow-none overflow-hidden">
-                       <Image src={item.imageUrl} alt={item.title} width={600} height={400} className="w-full object-cover aspect-[16/9]" data-ai-hint="product design" />
-                      <CardHeader>
-                          <CardTitle className="text-lg">{item.title}</CardTitle>
-                          <CardDescription>{item.description}</CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <Badge variant="secondary">{item.category}</Badge>
-                      </CardContent>
-                      <CardFooter>
-                        <Button className="w-full font-bold">{item.price}</Button>
-                      </CardFooter>
-                    </Card>
-                  ))}
-                </div>
-              </div>
-            )}
-            
-            {/* Jobs Section */}
-            {jobs.length > 0 && (
-              <div>
-                <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-xl font-bold font-headline">Latest Jobs</h2>
-                    <Button asChild variant="link" className="text-primary pr-0">
-                        <Link href={`/u/${username}/jobs`}>View all</Link>
-                    </Button>
-                </div>
-                <div className="grid md:grid-cols-2 gap-4">
-                  {jobs.slice(0, 2).map((job, index) => (
-                    <Card key={index} className="shadow-none">
-                      <CardHeader>
-                          <CardTitle className="text-lg">{job.title}</CardTitle>
-                          <CardDescription>{job.company}</CardDescription>
-                      </CardHeader>
-                      <CardContent className="space-y-2 text-sm">
-                          <div className="flex items-center text-muted-foreground">
-                              <MapPin className="mr-2 h-4 w-4" /> {job.location}
-                          </div>
-                          <div className="flex items-center text-muted-foreground">
-                              <Briefcase className="mr-2 h-4 w-4" /> {job.type}
-                          </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </div>
-            )}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {listings.length > 0 && (
+                <section>
+                  <div className="flex justify-between items-center mb-4">
+                      <h2 className="text-xl font-bold font-headline">Products</h2>
+                      <Button asChild variant="link" className="text-primary pr-0">
+                          <Link href={`/u/${username}/listings`}>View all</Link>
+                      </Button>
+                  </div>
+                  <div className="space-y-4">
+                    {listings.slice(0, 1).map((item) => (
+                      <Card key={item.id} className="shadow-none border overflow-hidden">
+                         <div className="aspect-[16/9] w-full relative">
+                            <Image src={item.imageUrl} alt={item.title} layout="fill" className="object-cover" data-ai-hint="product design" />
+                         </div>
+                        <CardHeader>
+                            <CardTitle className="text-lg">{item.title}</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <Badge variant="secondary">{item.category}</Badge>
+                        </CardContent>
+                        <CardFooter>
+                          <Button className="w-full font-bold">{item.price}</Button>
+                        </CardFooter>
+                      </Card>
+                    ))}
+                  </div>
+                </section>
+              )}
+              
+              {jobs.length > 0 && (
+                <section>
+                  <div className="flex justify-between items-center mb-4">
+                      <h2 className="text-xl font-bold font-headline">Jobs</h2>
+                      <Button asChild variant="link" className="text-primary pr-0">
+                          <Link href={`/u/${username}/jobs`}>View all</Link>
+                      </Button>
+                  </div>
+                  <div className="space-y-4">
+                    {jobs.slice(0, 1).map((job, index) => (
+                      <Card key={index} className="shadow-none border">
+                        <CardHeader>
+                            <CardTitle className="text-lg">{job.title}</CardTitle>
+                            <CardDescription>{job.company}</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-2 text-sm">
+                            <div className="flex items-center text-muted-foreground">
+                                <MapPin className="mr-2 h-4 w-4" /> {job.location}
+                            </div>
+                            <div className="flex items-center text-muted-foreground">
+                                <Briefcase className="mr-2 h-4 w-4" /> {job.type}
+                            </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </section>
+              )}
 
-            {/* Events Section */}
-            {events.length > 0 && (
-              <div>
-                <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-xl font-bold font-headline">Upcoming Events</h2>
-                    <Button asChild variant="link" className="text-primary pr-0">
-                        <Link href={`/u/${username}/events`}>View all</Link>
-                    </Button>
-                </div>
-                <div className="grid md:grid-cols-2 gap-4">
-                    {events.slice(0, 2).map((event, index) => (
-                        <Card key={index} className="shadow-none">
-                          <CardHeader>
-                              <CardTitle className="text-lg">{event.title}</CardTitle>
-                          </CardHeader>
-                          <CardContent className="space-y-2">
-                              <div className="flex items-center text-sm text-muted-foreground">
-                                <Calendar className="mr-2 h-4 w-4" /> {format(parseISO(event.date), "PPP")}
-                              </div>
-                              <div className="flex items-center text-sm text-muted-foreground">
-                                <MapPin className="mr-2 h-4 w-4" /> {event.location}
-                              </div>
-                          </CardContent>
-                        </Card>
-                    ))}
-                </div>
-              </div>
-            )}
-            
-            {/* Offers Section */}
-            {offers.length > 0 && (
-              <div>
-                <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-xl font-bold font-headline">Active Offers</h2>
-                    <Button asChild variant="link" className="text-primary pr-0">
-                        <Link href={`/u/${username}/offers`}>View all</Link>
-                    </Button>
-                </div>
-                <div className="grid md:grid-cols-2 gap-4">
-                    {offers.slice(0, 2).map((offer, index) => (
-                        <Card key={index} className="shadow-none">
-                          <CardHeader>
-                            <CardTitle className="text-lg">{offer.title}</CardTitle>
-                            <CardDescription>{offer.description}</CardDescription>
-                          </CardHeader>
-                          <CardContent>
-                            <Badge variant="secondary"><Tag className="mr-1 h-3 w-3" />{offer.category}</Badge>
-                          </CardContent>
-                        </Card>
-                    ))}
-                </div>
-              </div>
-            )}
+              {events.length > 0 && (
+                <section>
+                  <div className="flex justify-between items-center mb-4">
+                      <h2 className="text-xl font-bold font-headline">Events</h2>
+                      <Button asChild variant="link" className="text-primary pr-0">
+                          <Link href={`/u/${username}/events`}>View all</Link>
+                      </Button>
+                  </div>
+                  <div className="space-y-4">
+                      {events.slice(0, 1).map((event, index) => (
+                          <Card key={index} className="shadow-none border">
+                            <CardHeader>
+                                <CardTitle className="text-lg">{event.title}</CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-2">
+                                <div className="flex items-center text-sm text-muted-foreground">
+                                  <Calendar className="mr-2 h-4 w-4" /> {format(parseISO(event.date), "PPP")}
+                                </div>
+                                <div className="flex items-center text-sm text-muted-foreground">
+                                  <MapPin className="mr-2 h-4 w-4" /> {event.location}
+                                </div>
+                            </CardContent>
+                          </Card>
+                      ))}
+                  </div>
+                </section>
+              )}
+              
+              {offers.length > 0 && (
+                <section>
+                  <div className="flex justify-between items-center mb-4">
+                      <h2 className="text-xl font-bold font-headline">Offers</h2>
+                      <Button asChild variant="link" className="text-primary pr-0">
+                          <Link href={`/u/${username}/offers`}>View all</Link>
+                      </Button>
+                  </div>
+                  <div className="space-y-4">
+                      {offers.slice(0, 1).map((offer, index) => (
+                          <Card key={index} className="shadow-none border">
+                            <CardHeader>
+                              <CardTitle className="text-lg">{offer.title}</CardTitle>
+                              <CardDescription>{offer.description}</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                              <Badge variant="secondary"><Tag className="mr-1 h-3 w-3" />{offer.category}</Badge>
+                            </CardContent>
+                          </Card>
+                      ))}
+                  </div>
+                </section>
+              )}
+            </div>
           </div>
 
           <div className="mt-8">
