@@ -3,13 +3,13 @@
 
 import { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Calendar } from '@/components/ui/calendar';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { currentUser } from '@/lib/mock-data';
-import { format, parseISO, isSameDay, startOfMonth } from 'date-fns';
-import { Search, MapPin, Tag, Calendar as CalendarIcon, X, Clock } from 'lucide-react';
+import { format, parseISO, isSameDay, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, addMonths, subMonths } from 'date-fns';
+import { Search, MapPin, Tag, Calendar as CalendarIcon, X, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 type CalendarItem = {
   type: 'Event' | 'Offer';
@@ -22,7 +22,7 @@ type CalendarItem = {
 
 export default function CalendarPage() {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
-  const [currentMonth, setCurrentMonth] = useState(startOfMonth(new Date()));
+  const [currentMonth, setCurrentMonth] = useState(new Date());
   const [searchTerm, setSearchTerm] = useState('');
   const [locationFilter, setLocationFilter] = useState('');
 
@@ -64,14 +64,18 @@ export default function CalendarPage() {
     return filteredItems.filter(item => isSameDay(item.date, selectedDate));
   }, [filteredItems, selectedDate]);
 
-  const daysWithItems = useMemo(() => {
-    return filteredItems.map(item => item.date);
-  }, [filteredItems]);
-  
   const handleClearFilters = () => {
     setSearchTerm('');
     setLocationFilter('');
   }
+
+  // Calendar grid logic
+  const firstDayOfMonth = startOfMonth(currentMonth);
+  const daysInCalendar = eachDayOfInterval({
+    start: startOfWeek(firstDayOfMonth),
+    end: endOfWeek(endOfMonth(currentMonth))
+  });
+  const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
   return (
     <div className="space-y-6">
@@ -106,46 +110,74 @@ export default function CalendarPage() {
           </Button>
         </CardContent>
       </Card>
+      
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="font-headline text-xl">{format(currentMonth, 'MMMM yyyy')}</CardTitle>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}>
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}>
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="p-2">
+            <div className="grid grid-cols-7 gap-2">
+                {weekdays.map(day => (
+                    <div key={day} className="text-center font-semibold text-muted-foreground text-sm">{day}</div>
+                ))}
+            </div>
+            <div className="grid grid-cols-7 gap-px mt-2 bg-border border-t border-l">
+                {daysInCalendar.map(day => {
+                    const isCurrentMonth = isSameMonth(day, currentMonth);
+                    const isSelected = selectedDate && isSameDay(day, selectedDate);
+                    const isToday = isSameDay(day, new Date());
+                    const itemsForDay = filteredItems.filter(item => isSameDay(item.date, day));
 
-      <div className="grid lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2">
-            <Card>
-                <CardContent className="p-2 flex justify-center">
-                    <Calendar
-                        mode="single"
-                        selected={selectedDate}
-                        onSelect={setSelectedDate}
-                        month={currentMonth}
-                        onMonthChange={setCurrentMonth}
-                        components={{
-                          Day: ({ date, displayMonth }) => {
-                            const hasItem = daysWithItems.some(d => isSameDay(date, d));
-                            const isSelected = selectedDate && isSameDay(date, selectedDate);
-                            const isToday = isSameDay(date, new Date());
-
-                            return (
-                              <div
-                                className="relative flex items-center justify-center h-9 w-9"
-                              >
-                                {format(date, 'd')}
-                                {hasItem && <span className="absolute bottom-1.5 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-primary"></span>}
-                              </div>
-                            );
-                          }
-                        }}
-                        className="p-0"
-                    />
-                </CardContent>
-            </Card>
-        </div>
-
-        <div className="lg:col-span-1 space-y-4">
+                    return (
+                        <button
+                            key={day.toString()}
+                            onClick={() => setSelectedDate(day)}
+                            className={cn(
+                                "aspect-square p-2 text-left align-top overflow-hidden relative border-r border-b border-border transition-colors focus:z-10 focus:ring-2 focus:ring-ring focus:ring-offset-2",
+                                isCurrentMonth ? "bg-background" : "bg-muted/40",
+                                !isSelected && isToday && "bg-accent",
+                                !isCurrentMonth && "text-muted-foreground",
+                                isSelected && "bg-primary text-primary-foreground",
+                                isCurrentMonth && !isSelected && "hover:bg-accent/50"
+                            )}
+                        >
+                            <span className={cn("font-medium", isSelected ? "text-primary-foreground" : "text-foreground")}>{format(day, 'd')}</span>
+                             <div className="mt-1 space-y-1 overflow-y-auto text-xs h-[calc(100%-2rem)]">
+                                {itemsForDay.slice(0, 2).map((item, idx) => (
+                                    <Badge
+                                        key={`${item.title}-${idx}`}
+                                        variant={item.type === 'Event' ? 'default' : 'secondary'}
+                                        className="w-full truncate block text-left text-xs h-auto"
+                                    >
+                                        {item.title}
+                                    </Badge>
+                                ))}
+                                {itemsForDay.length > 2 && (
+                                    <p className={cn("text-xs", isSelected ? "text-primary-foreground/80" : "text-muted-foreground")}>+ {itemsForDay.length - 2} more</p>
+                                )}
+                            </div>
+                        </button>
+                    )
+                })}
+            </div>
+        </CardContent>
+      </Card>
+      
+      <div className="space-y-4">
             <h2 className="text-xl font-bold font-headline">
                 {selectedDate ? `Schedule for ${format(selectedDate, 'PPP')}` : 'Select a date'}
             </h2>
             {selectedDate ? (
                 itemsForSelectedDate.length > 0 ? (
-                    <div className="space-y-4">
+                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {itemsForSelectedDate.map((item, index) => (
                             <Card key={index} className="shadow-sm">
                                 <CardHeader className="p-4 pb-2">
@@ -193,7 +225,6 @@ export default function CalendarPage() {
                 </Card>
             )}
         </div>
-      </div>
     </div>
   );
 }
