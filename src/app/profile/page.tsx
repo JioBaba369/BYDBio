@@ -1,22 +1,67 @@
 'use client';
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Link, PlusCircle, Trash2, User, CreditCard, Link2, Upload, Phone, Mail, Globe, MapPin, Building, Linkedin } from "lucide-react"
+import { PlusCircle, Trash2, User, CreditCard, Link2 as LinkIcon, Upload } from "lucide-react"
 import HashtagSuggester from "@/components/ai/hashtag-suggester"
-import Image from "next/image"
 import { useEffect, useState } from "react";
 import QRCode from 'qrcode.react';
 import { currentUser } from "@/lib/mock-data";
+import { useForm, useFieldArray, FormProvider } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { availableIconNames, linkIcons } from "@/lib/link-icons";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
+
+const linksFormSchema = z.object({
+  links: z.array(
+    z.object({
+      icon: z.enum(availableIconNames, {
+        errorMap: () => ({ message: "Please select an icon." }),
+      }),
+      title: z.string().min(1, "Title cannot be empty."),
+      url: z.string().url("Please enter a valid URL."),
+    })
+  ),
+});
+
+type LinksFormValues = z.infer<typeof linksFormSchema>;
+
 
 export default function ProfilePage() {
   const [bio, setBio] = useState(currentUser.bio);
   const [qrCodeUrl, setQrCodeUrl] = useState('');
+  const { toast } = useToast();
+
+  const linksForm = useForm<LinksFormValues>({
+    resolver: zodResolver(linksFormSchema),
+    defaultValues: {
+      links: currentUser.links || [],
+    },
+    mode: 'onBlur',
+  });
+
+  const { fields, append, remove } = useFieldArray({
+    control: linksForm.control,
+    name: "links",
+  });
+
+  function onLinksSubmit(data: LinksFormValues) {
+    // In a real app, you would save this data to your backend.
+    console.log("Updated links data:", data);
+    toast({
+      title: "Links Saved",
+      description: "Your link-in-bio page has been updated.",
+    });
+  }
 
   useEffect(() => {
     // We can only get the window.location.origin on the client
@@ -35,7 +80,7 @@ export default function ProfilePage() {
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="public"><User className="mr-2 h-4 w-4" />Public Profile</TabsTrigger>
           <TabsTrigger value="card"><CreditCard className="mr-2 h-4 w-4" />Digital Card</TabsTrigger>
-          <TabsTrigger value="links"><Link2 className="mr-2 h-4 w-4"/>Links</TabsTrigger>
+          <TabsTrigger value="links"><LinkIcon className="mr-2 h-4 w-4"/>Links</TabsTrigger>
         </TabsList>
 
         <TabsContent value="public">
@@ -140,40 +185,107 @@ export default function ProfilePage() {
 
         <TabsContent value="links">
           <Card>
-            <CardHeader>
-              <CardTitle>Manage Links</CardTitle>
-              <CardDescription>Add, edit, or remove links for your link-in-bio page.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-4">
-                <div className="flex items-end gap-4">
-                  <div className="flex-1 space-y-2">
-                    <Label htmlFor="link-title-1">Link Title</Label>
-                    <Input id="link-title-1" defaultValue="Personal Website" />
+            <FormProvider {...linksForm}>
+              <form onSubmit={linksForm.handleSubmit(onLinksSubmit)}>
+                <CardHeader>
+                  <CardTitle>Manage Links</CardTitle>
+                  <CardDescription>Add, edit, or remove links for your link-in-bio page.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="space-y-4">
+                    {fields.map((field, index) => {
+                       const selectedIconName = linksForm.watch(`links.${index}.icon`);
+                       const Icon = linkIcons[selectedIconName];
+                      return (
+                        <div key={field.id} className="flex items-start gap-2 p-4 border rounded-lg bg-background/50">
+                          <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
+                            <FormField
+                              control={linksForm.control}
+                              name={`links.${index}.icon`}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Icon</FormLabel>
+                                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <FormControl>
+                                      <SelectTrigger>
+                                        <div className={cn("flex items-center gap-2", !field.value && "text-muted-foreground")}>
+                                          {Icon ? <Icon className="h-4 w-4" /> : null}
+                                          <SelectValue placeholder="Select icon" />
+                                        </div>
+                                      </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                      {availableIconNames.map((iconName) => {
+                                        const LoopIcon = linkIcons[iconName];
+                                        return (
+                                          <SelectItem key={iconName} value={iconName}>
+                                            <div className="flex items-center gap-2">
+                                              <LoopIcon className="h-4 w-4" />
+                                              <span>{iconName}</span>
+                                            </div>
+                                          </SelectItem>
+                                        );
+                                      })}
+                                    </SelectContent>
+                                  </Select>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={linksForm.control}
+                              name={`links.${index}.title`}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Link Title</FormLabel>
+                                  <FormControl>
+                                    <Input {...field} placeholder="My Awesome Portfolio" />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                             <FormField
+                              control={linksForm.control}
+                              name={`links.${index}.url`}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>URL</FormLabel>
+                                  <FormControl>
+                                    <Input {...field} placeholder="https://example.com" />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="mt-8 shrink-0"
+                            onClick={() => remove(index)}
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
+                      );
+                    })}
                   </div>
-                  <div className="flex-1 space-y-2">
-                    <Label htmlFor="link-url-1">URL</Label>
-                    <Input id="link-url-1" defaultValue="https://janedoe.design" />
-                  </div>
-                  <Button variant="ghost" size="icon"><Trash2 className="h-4 w-4 text-destructive" /></Button>
-                </div>
-                <div className="flex items-end gap-4">
-                  <div className="flex-1 space-y-2">
-                    <Label htmlFor="link-title-2">Link Title</Label>
-                    <Input id="link-title-2" defaultValue="LinkedIn" />
-                  </div>
-                  <div className="flex-1 space-y-2">
-                    <Label htmlFor="link-url-2">URL</Label>
-                    <Input id="link-url-2" defaultValue="https://linkedin.com/in/janedoe" />
-                  </div>
-                  <Button variant="ghost" size="icon"><Trash2 className="h-4 w-4 text-destructive" /></Button>
-                </div>
-              </div>
-              <Button variant="outline" className="w-full"><PlusCircle className="mr-2 h-4 w-4"/>Add Another Link</Button>
-              <div className="pt-4">
-                <Button>Save Links</Button>
-              </div>
-            </CardContent>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => append({ icon: 'Link', title: '', url: '' })}
+                  >
+                    <PlusCircle className="mr-2 h-4 w-4" /> Add Link
+                  </Button>
+                </CardContent>
+                <CardFooter>
+                   <Button type="submit" disabled={!linksForm.formState.isDirty}>Save Links</Button>
+                </CardFooter>
+              </form>
+            </FormProvider>
           </Card>
         </TabsContent>
       </Tabs>

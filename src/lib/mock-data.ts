@@ -1,4 +1,3 @@
-import { Globe, Linkedin, Github, Twitter } from "lucide-react";
 import { allUsers } from "./users";
 
 // This would be determined by authentication in a real app
@@ -12,10 +11,10 @@ export const currentUser = {
   bio: "Senior Product Designer at Acme Inc. Crafting user-centric experiences that bridge business goals and user needs. Passionate about design systems and accessibility.",
   subscribers: "12.5k", // This would be calculated in a real app
   links: [
-    { title: "Personal Website", url: "https://janedoe.design", icon: Globe },
-    { title: "LinkedIn", url: "https://linkedin.com/in/janedoe", icon: Linkedin },
-    { title: "GitHub", url: "https://github.com/janedoe", icon: Github },
-    { title: "Twitter / X", url: "https://x.com/janedoe", icon: Twitter },
+    { title: "Personal Website", url: "https://janedoe.design", icon: 'Globe' },
+    { title: "LinkedIn", url: "https://linkedin.com/in/janedoe", icon: 'Linkedin' },
+    { title: "GitHub", url: "https://github.com/janedoe", icon: 'Github' },
+    { title: "Twitter / X", url: "https://x.com/janedoe", icon: 'Twitter' },
   ],
   jobs: [],
   events: [],

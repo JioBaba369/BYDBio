@@ -16,6 +16,7 @@ import { Separator } from "@/components/ui/separator";
 import { Logo } from "@/components/logo";
 import { currentUser } from "@/lib/mock-data";
 import ShareButton from "@/components/share-button";
+import { linkIcons } from "@/lib/link-icons";
 
 export default function LinkInBioPage({ params }: { params: { username:string } }) {
   // In a real app, you would fetch user data based on params.username
@@ -89,20 +90,23 @@ export default function LinkInBioPage({ params }: { params: { username:string } 
           </div>
 
           <div className="mt-8 flex flex-col space-y-4">
-            {links.map((link, index) => (
-              <a
-                key={index}
-                href={link.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full"
-              >
-                <Button variant="outline" className="w-full h-14 text-base font-semibold justify-start p-4 hover:bg-primary/10 hover:border-primary">
-                  <link.icon className="h-5 w-5" />
-                  <span className="flex-1 text-center">{link.title}</span>
-                </Button>
-              </a>
-            ))}
+            {links.map((link, index) => {
+                const Icon = linkIcons[link.icon];
+                return (
+                  <a
+                    key={index}
+                    href={link.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full"
+                  >
+                    <Button variant="outline" className="w-full h-14 text-base font-semibold justify-start p-4 hover:bg-primary/10 hover:border-primary">
+                      {Icon && <Icon className="h-5 w-5" />}
+                      <span className="flex-1 text-center">{link.title}</span>
+                    </Button>
+                  </a>
+                )
+            })}
           </div>
 
           <div className="mt-8 space-y-8">
