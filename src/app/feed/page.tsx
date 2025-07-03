@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -44,7 +45,7 @@ export default function FeedPage() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      <h1 className="text-3xl font-bold font-headline">Status Feed</h1>
+      <h1 className="text-2xl sm:text-3xl font-bold font-headline">Status Feed</h1>
       
       <Card>
         <CardContent className="p-4">

@@ -35,7 +35,7 @@ export default function UserListingsPage() {
       </Button>
       <div className="flex justify-between items-start">
         <div>
-            <h1 className="text-3xl font-bold font-headline">Listings from {userName}</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold font-headline">Listings from {userName}</h1>
             <p className="text-muted-foreground">Products and services available.</p>
         </div>
         <ShareButton />

@@ -34,7 +34,7 @@ export default function UserJobsPage() {
        </Button>
       <div className="flex justify-between items-start">
         <div>
-            <h1 className="text-3xl font-bold font-headline">Job Listings by {userName}</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold font-headline">Job Listings by {userName}</h1>
             <p className="text-muted-foreground">Opportunities currently available.</p>
         </div>
         <ShareButton />

@@ -57,7 +57,7 @@ export default function Dashboard() {
   return (
     <div className="flex flex-col gap-8">
       <div className="flex items-center justify-between">
-        <h1 className="font-headline text-3xl font-bold">Dashboard</h1>
+        <h1 className="font-headline text-2xl sm:text-3xl font-bold">Dashboard</h1>
         <Link href="/profile">
           <Button>Create New</Button>
         </Link>

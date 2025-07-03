@@ -9,7 +9,7 @@ export default function EventsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold font-headline">Events</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold font-headline">Events</h1>
         <p className="text-muted-foreground">Discover curated events to expand your network and knowledge.</p>
       </div>
       {events.length > 0 ? (

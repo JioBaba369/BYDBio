@@ -64,7 +64,7 @@ END:VCARD`;
           </Avatar>
         </div>
         <CardContent className="text-center p-6">
-          <h1 className="font-headline text-2xl font-bold">{name}</h1>
+          <h1 className="font-headline text-xl sm:text-2xl font-bold">{name}</h1>
           <p className="text-primary font-medium">{title}</p>
           <p className="text-muted-foreground text-sm">{company}</p>
 

@@ -237,11 +237,11 @@ END:VCARD`;
         }}
       />
       <div>
-        <h1 className="text-3xl font-bold font-headline">Profile Editor</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold font-headline">Profile Editor</h1>
         <p className="text-muted-foreground">Manage your public presence and connections.</p>
       </div>
       <Tabs defaultValue="public" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3">
           <TabsTrigger value="public"><User className="mr-2 h-4 w-4" />Public Profile</TabsTrigger>
           <TabsTrigger value="card"><CreditCard className="mr-2 h-4 w-4" />Digital Card</TabsTrigger>
           <TabsTrigger value="links"><LinkIcon className="mr-2 h-4 w-4"/>Links</TabsTrigger>

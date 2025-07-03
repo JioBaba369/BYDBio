@@ -50,7 +50,7 @@ export default function SearchPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold font-headline flex items-center gap-2">
+        <h1 className="text-2xl sm:text-3xl font-bold font-headline flex items-center gap-2">
             <SearchIcon className="h-8 w-8" />
             Search Results
         </h1>

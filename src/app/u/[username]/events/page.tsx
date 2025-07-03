@@ -34,7 +34,7 @@ export default function UserEventsPage() {
         </Button>
       <div className="flex justify-between items-start">
         <div>
-            <h1 className="text-3xl font-bold font-headline">Events by {userName}</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold font-headline">Events by {userName}</h1>
             <p className="text-muted-foreground">Upcoming events and workshops.</p>
         </div>
         <ShareButton />

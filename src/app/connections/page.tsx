@@ -73,6 +73,17 @@ export default function ConnectionsPage() {
 
     const handleQrScanSuccess = (decodedText: string) => {
       try {
+        // First check if it's a vCard
+        if (decodedText.startsWith('BEGIN:VCARD')) {
+             toast({
+                title: "Contact Card Scanned",
+                description: "This QR code is for saving a contact, not for connecting. Please scan a profile URL QR code.",
+                variant: "destructive",
+            });
+            setIsScannerOpen(false);
+            return;
+        }
+
         const url = new URL(decodedText);
         const pathParts = url.pathname.split('/');
         
@@ -85,7 +96,7 @@ export default function ConnectionsPage() {
           setIsScannerOpen(false);
           router.push(`/u/${username}`);
         } else {
-          throw new Error("Invalid QR code");
+          throw new Error("Invalid profile QR code");
         }
       } catch (error) {
         console.error("QR Scan Error:", error);
@@ -103,7 +114,7 @@ export default function ConnectionsPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold font-headline">Connections</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold font-headline">Connections</h1>
           <p className="text-muted-foreground">Manage your followers and who you follow.</p>
         </div>
         <Dialog open={isScannerOpen} onOpenChange={setIsScannerOpen}>
