@@ -3,6 +3,8 @@
 
 import { useState } from "react";
 import { useParams } from 'next/navigation';
+import type { Metadata } from 'next';
+import { allUsers } from '@/lib/users';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,12 +17,56 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Logo } from "@/components/logo";
-import { currentUser } from "@/lib/mock-data";
 import ShareButton from "@/components/share-button";
 import { linkIcons } from "@/lib/link-icons";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { format, parseISO } from "date-fns";
+import { currentUser } from "@/lib/mock-data";
+
+
+export async function generateMetadata({ params }: { params: { username: string } }): Promise<Metadata> {
+  const username = params.username;
+  const user = allUsers.find((u) => u.username === username);
+
+  if (!user) {
+    return {
+      title: 'User Not Found | BYD.Bio',
+      description: "The profile you are looking for does not exist.",
+    };
+  }
+
+  return {
+    title: `${user.name} | BYD.Bio`,
+    description: user.bio,
+    openGraph: {
+      title: `${user.name} | BYD.Bio`,
+      description: user.bio,
+      images: [
+        {
+          url: user.avatarUrl,
+          width: 200,
+          height: 200,
+          alt: user.name,
+        },
+      ],
+      url: `/u/${user.username}`,
+      type: 'profile',
+      profile: {
+        firstName: user.name.split(' ')[0],
+        lastName: user.name.split(' ').slice(1).join(' '),
+        username: user.username,
+      }
+    },
+    twitter: {
+      card: 'summary',
+      title: `${user.name} | BYD.Bio`,
+      description: user.bio,
+      images: [user.avatarUrl],
+    },
+  };
+}
+
 
 // Add isLiked to post type for this component's state
 type PostWithLike = (typeof currentUser.posts)[0] & { isLiked: boolean };
@@ -30,8 +76,8 @@ export default function LinkInBioPage() {
   const username = typeof params.username === 'string' ? params.username : '';
 
   // In a real app, you would fetch user data based on params.username
-  // For now, we'll use our mock data if the username matches.
-  const userProfileData = username === currentUser.username ? currentUser : null;
+  // For this prototype, we'll find the user in our mock data.
+  const userProfileData = allUsers.find(u => u.username === username);
 
   const [userProfile, setUserProfile] = useState(
     userProfileData

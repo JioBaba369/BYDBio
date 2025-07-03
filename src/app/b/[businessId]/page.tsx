@@ -2,23 +2,83 @@
 'use client';
 
 import { useParams } from 'next/navigation';
-import { currentUser } from '@/lib/mock-data';
+import { allUsers } from '@/lib/users';
 import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Mail, Phone, Globe, MapPin, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { Logo } from '@/components/logo';
+import type { Metadata } from 'next';
+
+export async function generateMetadata({ params }: { params: { businessId: string } }): Promise<Metadata> {
+  const businessId = params.businessId;
+  let business;
+  let author;
+
+  for (const user of allUsers) {
+    const foundBusiness = user.businesses.find(b => b.id === businessId);
+    if (foundBusiness) {
+      business = foundBusiness;
+      author = user;
+      break;
+    }
+  }
+
+  if (!business || !author) {
+    return {
+      title: 'Business Not Found | BYD.Bio',
+      description: "The business page you're looking for doesn't exist.",
+    };
+  }
+
+  const imageUrl = business.imageUrl || 'https://placehold.co/1200x630.png';
+
+  return {
+    title: `${business.name} | BYD.Bio`,
+    description: business.description,
+    openGraph: {
+      title: `${business.name} | BYD.Bio`,
+      description: business.description,
+      images: [
+        {
+          url: imageUrl,
+          width: 1200,
+          height: 630,
+          alt: business.name,
+        },
+      ],
+      url: `/b/${business.id}`,
+      type: 'article',
+    },
+     twitter: {
+      card: 'summary_large_image',
+      title: `${business.name} | BYD.Bio`,
+      description: business.description,
+      images: [imageUrl],
+    },
+  };
+}
+
 
 export default function PublicBusinessPage() {
     const params = useParams();
     const businessId = params.businessId as string;
 
     // In a real app, you would fetch this from an API.
-    // For this prototype, we'll find it in the mock data.
-    const business = currentUser.businesses.find(b => b.id === businessId);
+    let business;
+    let author;
+    for (const user of allUsers) {
+        const foundBusiness = user.businesses.find(b => b.id === businessId);
+        if (foundBusiness) {
+            business = foundBusiness;
+            author = user;
+            break;
+        }
+    }
 
-    if (!business) {
+
+    if (!business || !author) {
         return (
             <div className="flex flex-col items-center justify-center min-h-screen text-center p-4">
                 <h1 className="text-4xl font-bold">Business Not Found</h1>
@@ -34,9 +94,9 @@ export default function PublicBusinessPage() {
         <div className="bg-muted/40 min-h-screen py-8 px-4">
             <div className="max-w-4xl mx-auto space-y-6">
                  <Button asChild variant="ghost" className="pl-0">
-                    <Link href={`/u/${currentUser.username}`} className="inline-flex items-center gap-2 text-primary hover:underline">
+                    <Link href={`/u/${author.username}`} className="inline-flex items-center gap-2 text-primary hover:underline">
                         <ArrowLeft className="h-4 w-4" />
-                        Back to {currentUser.name}'s Profile
+                        Back to {author.name}'s Profile
                     </Link>
                 </Button>
                 <Card>

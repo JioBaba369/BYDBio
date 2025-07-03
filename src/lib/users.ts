@@ -81,6 +81,46 @@ type User = {
   businesses: Business[];
 };
 
+const user1Businesses: Business[] = [
+  {
+    id: 'biz1',
+    name: 'Acme Inc. Design Studio',
+    description: 'A full-service design agency specializing in branding, web design, and user experience for tech startups.',
+    email: 'hello@acme.design',
+    phone: '+1 (555) 555-1234',
+    website: 'https://acme.design',
+    address: '123 Design St, San Francisco, CA 94105',
+    imageUrl: 'https://placehold.co/1200x400.png',
+    logoUrl: 'https://placehold.co/200x200.png',
+    status: 'active',
+  },
+  {
+    id: 'biz2',
+    name: 'Side Hustle Icons',
+    description: 'A digital marketplace for high-quality, handcrafted icon sets for developers and designers.',
+    email: 'support@sidehustleicons.com',
+    website: 'https://sidehustleicons.com',
+    address: 'Remote',
+    phone: '',
+    imageUrl: 'https://placehold.co/1200x400.png',
+    logoUrl: 'https://placehold.co/200x200.png',
+    status: 'active',
+  },
+  {
+    id: 'biz3',
+    name: 'Archived Ventures',
+    description: 'This is an archived business page for demonstration purposes.',
+    email: 'archive@example.com',
+    website: 'https://archive.example.com',
+    address: 'N/A',
+    phone: '',
+    imageUrl: 'https://placehold.co/1200x400.png',
+    logoUrl: 'https://placehold.co/200x200.png',
+    status: 'archived',
+  }
+];
+
+
 export const allUsers: User[] = [
   {
     id: 'user1',
@@ -123,7 +163,7 @@ export const allUsers: User[] = [
         comments: 24,
       }
     ],
-    businesses: [],
+    businesses: user1Businesses,
   },
   {
     id: 'user2',
