@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Globe, Linkedin, Mail, Phone, MapPin, Building } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
+import { Logo } from "@/components/logo";
 
 // Mock data
 const businessCardData = {
@@ -47,7 +49,7 @@ END:VCARD`;
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-muted/40 p-4">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-muted/40 p-4">
       <Card className="w-full max-w-sm overflow-hidden rounded-2xl shadow-xl">
         <div className="bg-primary h-24" />
         <div className="flex justify-center -mt-16">
@@ -101,6 +103,11 @@ END:VCARD`;
           </Button>
         </CardContent>
       </Card>
+      <div className="mt-6 text-center">
+          <Link href="/" className="text-sm text-muted-foreground hover:text-primary flex items-center gap-2">
+              Powered by <Logo className="text-lg text-foreground" />
+          </Link>
+      </div>
     </div>
   );
 }

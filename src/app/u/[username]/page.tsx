@@ -11,6 +11,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { Logo } from "@/components/logo";
 
 // Mock data
 const userProfile = {
@@ -219,6 +221,18 @@ export default function LinkInBioPage({ params }: { params: { username:string } 
              <a href="/u/janedoe/card" className="text-sm text-primary hover:underline font-semibold">
                 View Digital Business Card
              </a>
+          </div>
+
+          <Separator className="my-8" />
+          
+          <div className="text-center">
+            <Logo className="justify-center text-foreground" />
+            <p className="mt-2 text-sm text-muted-foreground">
+              Your professional hub for profiles, links, and opportunities.
+            </p>
+            <Button asChild className="mt-4 font-bold">
+                <Link href="/">Get Started Free</Link>
+            </Button>
           </div>
         </Card>
       </div>

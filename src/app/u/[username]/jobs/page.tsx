@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button"
 import { Briefcase, MapPin, ArrowLeft } from "lucide-react"
 import Link from "next/link"
+import { Logo } from "@/components/logo";
 
 // Mock data for a specific user
 const userJobs: { title: string; company: string; location: string; type: string }[] = [];
@@ -51,6 +52,18 @@ export default function UserJobsPage({ params }: { params: { username: string } 
             </CardContent>
         </Card>
       )}
+
+      <Card className="mt-8">
+        <CardContent className="p-6 text-center">
+            <Logo className="mx-auto text-foreground" />
+            <p className="mt-2 text-sm text-muted-foreground">
+              Want to post your own jobs?
+            </p>
+            <Button asChild className="mt-4 font-bold">
+                <Link href="/">Create Your Profile & Get Started</Link>
+            </Button>
+        </CardContent>
+      </Card>
     </div>
   );
 }

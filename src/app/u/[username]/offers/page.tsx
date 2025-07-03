@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Tag, ArrowLeft } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
+import { Logo } from "@/components/logo"
 
 // Mock data for a specific user
 const userOffers: { title: string; description: string; category: string }[] = [];
@@ -47,6 +48,18 @@ export default function UserOffersPage({ params }: { params: { username: string 
           </CardContent>
         </Card>
       )}
+
+      <Card className="mt-8">
+        <CardContent className="p-6 text-center">
+            <Logo className="mx-auto text-foreground" />
+            <p className="mt-2 text-sm text-muted-foreground">
+              Want to post your own offers?
+            </p>
+            <Button asChild className="mt-4 font-bold">
+                <Link href="/">Create Your Profile & Get Started</Link>
+            </Button>
+        </CardContent>
+      </Card>
     </div>
   );
 }
