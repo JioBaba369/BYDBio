@@ -64,5 +64,6 @@ export const currentUser = {
       views: 150,
       clicks: 12,
     }
-  ]
+  ],
+  rsvpedEventIds: ['event4-1'],
 };

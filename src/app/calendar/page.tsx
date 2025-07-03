@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge, badgeVariants } from '@/components/ui/badge';
 import { currentUser } from '@/lib/mock-data';
+import { allUsers } from '@/lib/users';
 import { format, parseISO, isSameDay, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, addMonths, subMonths, isBefore } from 'date-fns';
 import { Search, MapPin, Tag, Briefcase, DollarSign, X, Clock, ChevronLeft, ChevronRight, MoreHorizontal, Edit, Trash2, PlusCircle, MessageSquare, Tags, Calendar as CalendarIconLucide, Building2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -16,6 +17,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialog';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
+import type { Event } from '@/lib/users';
 
 type CalendarItem = {
   id: string;
@@ -30,6 +32,7 @@ type CalendarItem = {
   price?: string;
   imageUrl?: string | null;
   editPath: string;
+  isExternal?: boolean;
 };
 
 const CalendarSkeleton = () => (
@@ -92,7 +95,8 @@ export default function CalendarPage() {
   }, []);
 
   const [calendarItems, setCalendarItems] = useState<CalendarItem[]>(() => {
-    const events = currentUser.events.map(event => ({
+    // User's own content
+    const ownEvents = currentUser.events.map(event => ({
       id: event.id,
       type: 'Event' as const,
       date: parseISO(event.date),
@@ -101,8 +105,9 @@ export default function CalendarPage() {
       location: event.location,
       imageUrl: event.imageUrl,
       editPath: `/events/${event.id}/edit`,
+      isExternal: false,
     }));
-    const offers = currentUser.offers.map(offer => ({
+    const ownOffers = currentUser.offers.map(offer => ({
       id: offer.id,
       type: 'Offer' as const,
       date: parseISO(offer.releaseDate),
@@ -111,8 +116,9 @@ export default function CalendarPage() {
       category: offer.category,
       imageUrl: offer.imageUrl,
       editPath: `/offers/${offer.id}/edit`,
+      isExternal: false,
     }));
-    const jobs = currentUser.jobs.map(job => ({
+    const ownJobs = currentUser.jobs.map(job => ({
         id: job.id,
         type: 'Job' as const,
         date: parseISO(job.postingDate),
@@ -123,8 +129,9 @@ export default function CalendarPage() {
         location: job.location,
         imageUrl: job.imageUrl,
         editPath: `/opportunities/${job.id}/edit`,
+        isExternal: false,
     }));
-    const listings = currentUser.listings.map(listing => ({
+    const ownListings = currentUser.listings.map(listing => ({
         id: listing.id,
         type: 'Listing' as const,
         date: parseISO(listing.publishDate),
@@ -134,8 +141,34 @@ export default function CalendarPage() {
         price: listing.price,
         imageUrl: listing.imageUrl,
         editPath: `/listings/${listing.id}/edit`,
+        isExternal: false,
     }));
-    return [...events, ...offers, ...jobs, ...listings].sort((a, b) => a.date.getTime() - b.date.getTime());
+
+    // Events user has RSVP'd to
+    const rsvpedEvents: CalendarItem[] = [];
+    if (currentUser.rsvpedEventIds) {
+      currentUser.rsvpedEventIds.forEach(eventId => {
+        for (const user of allUsers) {
+            const event = user.events.find(e => e.id === eventId);
+            if (event) {
+                rsvpedEvents.push({
+                    id: event.id,
+                    type: 'Event' as const,
+                    date: parseISO(event.date),
+                    title: event.title,
+                    description: `Attending event at ${event.location}`,
+                    location: event.location,
+                    imageUrl: event.imageUrl,
+                    editPath: `/events/${event.id}`, // Link to public page
+                    isExternal: true,
+                });
+                break;
+            }
+        }
+      });
+    }
+
+    return [...ownEvents, ...ownOffers, ...ownJobs, ...ownListings, ...rsvpedEvents].sort((a, b) => a.date.getTime() - b.date.getTime());
   });
 
   const filteredItems = useMemo(() => {
@@ -178,8 +211,9 @@ export default function CalendarPage() {
     setSelectedItem(null);
   };
 
-  const getBadgeVariant = (type: CalendarItem['type']): VariantProps<typeof badgeVariants>['variant'] => {
-    switch (type) {
+  const getBadgeVariant = (item: CalendarItem): VariantProps<typeof badgeVariants>['variant'] => {
+    if (item.type === 'Event' && item.isExternal) return 'secondary';
+    switch (item.type) {
         case 'Event': return 'default';
         case 'Offer': return 'secondary';
         case 'Job': return 'destructive';
@@ -207,6 +241,7 @@ export default function CalendarPage() {
         onOpenChange={setIsDeleteDialogOpen}
         onConfirm={handleDelete}
         itemName={selectedItem?.type.toLowerCase() ?? 'item'}
+        itemDescription={selectedItem?.isExternal ? "This will only remove it from your calendar, not delete the event itself." : undefined}
       />
       <div className="space-y-6">
         <div className="flex items-center justify-between">
@@ -326,7 +361,7 @@ export default function CalendarPage() {
                                   {itemsForDay.slice(0, 2).map((item, idx) => (
                                       <Badge
                                           key={`${item.title}-${idx}`}
-                                          variant={getBadgeVariant(item.type)}
+                                          variant={getBadgeVariant(item)}
                                           className={cn("w-full truncate block text-left text-xs h-auto", isSelected && "bg-background/20 text-foreground" )}
                                       >
                                           {item.title}
@@ -363,7 +398,7 @@ export default function CalendarPage() {
                                               <CardTitle className="text-base">{item.title}</CardTitle>
                                               <CardDescription className="text-xs pt-1">{item.description}</CardDescription>
                                           </div>
-                                          <Badge variant={getBadgeVariant(item.type)}>{item.type}</Badge>
+                                          <Badge variant={getBadgeVariant(item)}>{item.isExternal ? 'Attending' : item.type}</Badge>
                                       </div>
                                   </CardHeader>
                                   <CardContent className="p-4 pt-2 space-y-2 text-sm text-muted-foreground flex-grow">
@@ -407,11 +442,11 @@ export default function CalendarPage() {
                                       <DropdownMenuContent align="end" className="w-56">
                                         <DropdownMenuItem asChild>
                                           <Link href={item.editPath} className="cursor-pointer">
-                                            <Edit className="mr-2 h-4 w-4" /> Edit
+                                            <Edit className="mr-2 h-4 w-4" /> {item.isExternal ? 'View Details' : 'Edit'}
                                           </Link>
                                         </DropdownMenuItem>
                                         <DropdownMenuItem onClick={() => openDeleteDialog(item)} className="text-destructive cursor-pointer">
-                                          <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                          <Trash2 className="mr-2 h-4 w-4" /> {item.isExternal ? 'Remove from Calendar' : 'Delete'}
                                         </DropdownMenuItem>
                                       </DropdownMenuContent>
                                     </DropdownMenu>

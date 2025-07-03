@@ -5,15 +5,22 @@ import { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { currentUser } from '@/lib/mock-data';
-import type { Event } from '@/lib/users';
+import { allUsers, type Event, type User } from '@/lib/users';
 import { format, parseISO, isPast } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { BookText, Calendar, MapPin, Save } from 'lucide-react';
+import { BookText, Calendar, MapPin, Save, User as UserIcon } from 'lucide-react';
 import Link from 'next/link';
+import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 
-type EventWithNotes = Event & { notes?: string };
+
+type EventWithNotes = Event & { 
+  notes?: string; 
+  source: 'created' | 'rsvped';
+  author?: Pick<User, 'name' | 'username' | 'avatarUrl'>;
+};
 
 // This component safely formats the date on the client-side to prevent hydration errors.
 function ClientFormattedDate({ dateString, formatStr }: { dateString: string; formatStr: string }) {
@@ -34,9 +41,36 @@ function ClientFormattedDate({ dateString, formatStr }: { dateString: string; fo
 
 
 export default function DiaryPage() {
-    const [events, setEvents] = useState<EventWithNotes[]>(
-        currentUser.events.map(e => ({...e, notes: e.id === 'event1' ? 'Prepare a few questions for the Q&A session.' : ''}))
-    );
+    const [events, setEvents] = useState<EventWithNotes[]>(() => {
+      // 1. Get user's own events
+      const ownEvents: EventWithNotes[] = currentUser.events.map(e => ({
+        ...e, 
+        notes: e.id === 'event1' ? 'Prepare a few questions for the Q&A session.' : '',
+        source: 'created'
+      }));
+
+      // 2. Get events user has RSVP'd to
+      const rsvpedEvents: EventWithNotes[] = [];
+      if (currentUser.rsvpedEventIds) {
+          for (const eventId of currentUser.rsvpedEventIds) {
+              for (const user of allUsers) {
+                  const event = user.events.find(e => e.id === eventId);
+                  if (event) {
+                      rsvpedEvents.push({
+                          ...event,
+                          source: 'rsvped',
+                          author: { name: user.name, username: user.username, avatarUrl: user.avatarUrl },
+                          notes: ''
+                      });
+                      break;
+                  }
+              }
+          }
+      }
+      
+      return [...ownEvents, ...rsvpedEvents];
+    });
+
     const { toast } = useToast();
 
     const handleNoteChange = (eventId: string, note: string) => {
@@ -77,7 +111,12 @@ export default function DiaryPage() {
                         {upcomingEvents.map(event => (
                             <Card key={event.id}>
                                 <CardHeader>
-                                    <CardTitle>{event.title}</CardTitle>
+                                    <div className="flex justify-between items-start">
+                                      <CardTitle>{event.title}</CardTitle>
+                                      <Badge variant={event.source === 'created' ? 'default' : 'secondary'}>
+                                        {event.source === 'created' ? 'My Event' : 'Attending'}
+                                      </Badge>
+                                    </div>
                                     <CardDescription className="space-y-1 text-sm text-muted-foreground pt-1">
                                         <div className="flex items-center">
                                             <Calendar className="mr-2 h-4 w-4" /> <ClientFormattedDate dateString={event.date} formatStr="PPP 'at' p" />
@@ -85,6 +124,17 @@ export default function DiaryPage() {
                                         <div className="flex items-center">
                                             <MapPin className="mr-2 h-4 w-4" /> {event.location}
                                         </div>
+                                        {event.source === 'rsvped' && event.author && (
+                                            <div className="flex items-center pt-2">
+                                                <Link href={`/u/${event.author.username}`} className="flex items-center gap-2 hover:underline">
+                                                  <Avatar className="h-6 w-6">
+                                                      <AvatarImage src={event.author.avatarUrl} data-ai-hint="person portrait" />
+                                                      <AvatarFallback>{event.author.name.charAt(0)}</AvatarFallback>
+                                                  </Avatar>
+                                                  <span className="text-xs">Hosted by {event.author.name}</span>
+                                                </Link>
+                                            </div>
+                                        )}
                                     </CardDescription>
                                 </CardHeader>
                                 <CardContent className="space-y-2">
@@ -124,7 +174,12 @@ export default function DiaryPage() {
                          {pastEvents.map(event => (
                             <Card key={event.id} className="opacity-80">
                                 <CardHeader>
-                                    <CardTitle>{event.title}</CardTitle>
+                                     <div className="flex justify-between items-start">
+                                      <CardTitle>{event.title}</CardTitle>
+                                      <Badge variant={event.source === 'created' ? 'default' : 'secondary'}>
+                                        {event.source === 'created' ? 'My Event' : 'Attended'}
+                                      </Badge>
+                                    </div>
                                      <CardDescription className="space-y-1 text-sm text-muted-foreground pt-1">
                                         <div className="flex items-center">
                                             <Calendar className="mr-2 h-4 w-4" /> <ClientFormattedDate dateString={event.date} formatStr="PPP" />
@@ -132,6 +187,17 @@ export default function DiaryPage() {
                                         <div className="flex items-center">
                                             <MapPin className="mr-2 h-4 w-4" /> {event.location}
                                         </div>
+                                         {event.source === 'rsvped' && event.author && (
+                                            <div className="flex items-center pt-2">
+                                                <Link href={`/u/${event.author.username}`} className="flex items-center gap-2 hover:underline">
+                                                  <Avatar className="h-6 w-6">
+                                                      <AvatarImage src={event.author.avatarUrl} data-ai-hint="person portrait" />
+                                                      <AvatarFallback>{event.author.name.charAt(0)}</AvatarFallback>
+                                                  </Avatar>
+                                                  <span className="text-xs">Hosted by {event.author.name}</span>
+                                                </Link>
+                                            </div>
+                                        )}
                                     </CardDescription>
                                 </CardHeader>
                                 <CardContent className="space-y-2">

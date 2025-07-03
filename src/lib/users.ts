@@ -117,6 +117,7 @@ export type User = {
     url: string;
   }[];
   businessCard?: BusinessCard;
+  rsvpedEventIds?: string[];
 };
 
 const user1Businesses: Business[] = [
@@ -355,7 +356,19 @@ export const allUsers: User[] = [
     subscribers: "8.7k",
     links: [],
     jobs: [],
-    events: [],
+    events: [
+        {
+            id: 'event4-1',
+            title: 'Web Dev Conference',
+            description: 'A conference dedicated to the latest in web development, from modern CSS to server-side rendering.',
+            date: '2024-09-25T09:00:00Z',
+            location: 'Virtual Event',
+            imageUrl: 'https://placehold.co/600x400.png',
+            status: 'active',
+            views: 5600,
+            rsvps: 450,
+        }
+    ],
     offers: [],
     listings: [],
     posts: [

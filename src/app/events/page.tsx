@@ -3,18 +3,22 @@
 
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Calendar, MapPin, PlusCircle, MoreHorizontal, Archive, Trash2, Edit, Eye, Users } from "lucide-react"
+import { Calendar, MapPin, PlusCircle, MoreHorizontal, Archive, Trash2, Edit, Eye, Users, CheckCircle2 } from "lucide-react"
 import { currentUser } from "@/lib/mock-data";
+import { allUsers } from "@/lib/users";
 import { format, parseISO } from "date-fns";
 import Image from "next/image";
 import Link from "next/link";
-import { useState, useEffect } from "react";
-import type { Event } from "@/lib/users";
+import { useState, useEffect, useMemo } from "react";
+import type { Event as EventType, User } from "@/lib/users";
 import { useToast } from "@/hooks/use-toast";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+
+type EventWithAuthor = EventType & { author: Pick<User, 'id' | 'name' | 'handle' | 'avatarUrl'> };
 
 // This component safely formats the date on the client-side to prevent hydration errors.
 function ClientFormattedDate({ dateString }: { dateString: string }) {
@@ -35,13 +39,24 @@ function ClientFormattedDate({ dateString }: { dateString: string }) {
 
 
 export default function EventsPage() {
-  const [events, setEvents] = useState<Event[]>(currentUser.events);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const { toast } = useToast();
 
+  const [allEvents, setAllEvents] = useState<EventWithAuthor[]>(() => 
+      allUsers.flatMap(user => 
+          user.events.map(event => ({
+              ...event,
+              author: { id: user.id, name: user.name, handle: user.handle, avatarUrl: user.avatarUrl }
+          }))
+      ).sort((a,b) => parseISO(b.date).getTime() - parseISO(a.date).getTime())
+  );
+  
+  // Use state to track RSVP status for instant UI feedback
+  const [rsvpedEventIds, setRsvpedEventIds] = useState(new Set(currentUser.rsvpedEventIds || []));
+
   const handleArchive = (eventId: string) => {
-    setEvents(prev => prev.map(event => 
+    setAllEvents(prev => prev.map(event => 
       event.id === eventId ? { ...event, status: event.status === 'active' ? 'archived' : 'active' } : event
     ));
     toast({ title: 'Event status updated!' });
@@ -49,19 +64,33 @@ export default function EventsPage() {
 
   const handleDelete = () => {
     if (!selectedEventId) return;
-    setEvents(prev => prev.filter(event => event.id !== selectedEventId));
+    setAllEvents(prev => prev.filter(event => event.id !== selectedEventId));
     toast({ title: 'Event deleted!' });
     setIsDeleteDialogOpen(false);
     setSelectedEventId(null);
   };
+  
+  const handleRsvp = (eventId: string, eventTitle: string) => {
+    setRsvpedEventIds(prev => {
+        const newSet = new Set(prev);
+        if (newSet.has(eventId)) {
+            newSet.delete(eventId);
+            toast({ title: "You are no longer attending", description: `"${eventTitle}" has been removed from your diary.` });
+        } else {
+            newSet.add(eventId);
+            toast({ title: "You're going!", description: `"${eventTitle}" has been added to your diary.` });
+        }
+        return newSet;
+    });
+  }
   
   const openDeleteDialog = (eventId: string) => {
     setSelectedEventId(eventId);
     setIsDeleteDialogOpen(true);
   }
 
-  const activeEvents = events.filter(e => e.status === 'active');
-  const archivedEvents = events.filter(e => e.status === 'archived');
+  const activeEvents = allEvents.filter(e => e.status === 'active');
+  const archivedEvents = allEvents.filter(e => e.status === 'archived' && e.author.id === currentUser.id);
 
   return (
     <>
@@ -87,7 +116,11 @@ export default function EventsPage() {
         
         {activeEvents.length > 0 ? (
           <div className="grid gap-6 md:grid-cols-2">
-            {activeEvents.map((event) => (
+            {activeEvents.map((event) => {
+              const isOwner = event.author.id === currentUser.id;
+              const isRsvped = rsvpedEventIds.has(event.id);
+
+              return (
               <Card key={event.id} className="flex flex-col">
                 {event.imageUrl && (
                   <div className="overflow-hidden rounded-t-lg">
@@ -95,19 +128,32 @@ export default function EventsPage() {
                   </div>
                 )}
                 <CardHeader className="flex flex-row justify-between items-start">
-                  <CardTitle>{event.title}</CardTitle>
-                   <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem asChild><Link href={`/events/${event.id}/edit`} className="cursor-pointer"><Edit className="mr-2 h-4 w-4"/>Edit</Link></DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleArchive(event.id)} className="cursor-pointer"><Archive className="mr-2 h-4 w-4"/>Archive</DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => openDeleteDialog(event.id)} className="text-destructive cursor-pointer"><Trash2 className="mr-2 h-4 w-4"/>Delete</DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                   <div className="flex-1">
+                    <CardTitle>{event.title}</CardTitle>
+                    <CardDescription className="pt-2">
+                        <Link href={`/u/${event.author.handle}`} className="flex items-center gap-2 hover:underline">
+                            <Avatar className="h-6 w-6">
+                                <AvatarImage src={event.author.avatarUrl} data-ai-hint="person portrait" />
+                                <AvatarFallback>{event.author.name.charAt(0)}</AvatarFallback>
+                            </Avatar>
+                            <span className="text-xs">Hosted by {event.author.name}</span>
+                        </Link>
+                    </CardDescription>
+                   </div>
+                   {isOwner && (
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                        <DropdownMenuItem asChild><Link href={`/events/${event.id}/edit`} className="cursor-pointer"><Edit className="mr-2 h-4 w-4"/>Edit</Link></DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleArchive(event.id)} className="cursor-pointer"><Archive className="mr-2 h-4 w-4"/>Archive</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => openDeleteDialog(event.id)} className="text-destructive cursor-pointer"><Trash2 className="mr-2 h-4 w-4"/>Delete</DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                   )}
                 </CardHeader>
                 <CardContent className="space-y-2 flex-grow">
                   <div className="flex items-center text-sm text-muted-foreground">
@@ -129,12 +175,20 @@ export default function EventsPage() {
                             <span>{event.rsvps?.toLocaleString() ?? 0} RSVPs</span>
                         </div>
                     </div>
-                    <Button asChild className="w-full">
-                        <Link href={`/events/${event.id}`}>Learn More</Link>
-                    </Button>
+                     <div className="w-full flex gap-2">
+                      <Button asChild className="flex-1">
+                          <Link href={`/events/${event.id}`}>Learn More</Link>
+                      </Button>
+                      {!isOwner && (
+                        <Button variant={isRsvped ? "secondary" : "default"} onClick={() => handleRsvp(event.id, event.title)}>
+                            {isRsvped ? <CheckCircle2 className="mr-2 h-4 w-4"/> : <PlusCircle className="mr-2 h-4 w-4"/>}
+                            {isRsvped ? 'Attending' : 'Add to Diary'}
+                        </Button>
+                      )}
+                    </div>
                 </CardFooter>
               </Card>
-            ))}
+            )})}
           </div>
         ) : (
           <Card className="text-center">
@@ -158,7 +212,7 @@ export default function EventsPage() {
         
         {archivedEvents.length > 0 && (
           <div className="space-y-4">
-             <h2 className="text-xl font-bold font-headline">Archived Events</h2>
+             <h2 className="text-xl font-bold font-headline">My Archived Events</h2>
              <div className="grid gap-6 md:grid-cols-2">
               {archivedEvents.map((event) => (
                 <Card key={event.id} className="flex flex-col opacity-70">
