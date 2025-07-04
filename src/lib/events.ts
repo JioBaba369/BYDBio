@@ -40,6 +40,7 @@ export type Event = {
   rsvps: string[]; // Array of user UIDs who have RSVP'd
   itinerary: ItineraryItem[];
   createdAt: Timestamp | string;
+  searchableKeywords: string[];
 };
 
 export type EventWithAuthor = Event & { author: Pick<User, 'uid' | 'name' | 'username' | 'avatarUrl'> };
@@ -76,8 +77,13 @@ export const getEventsByUser = async (userId: string): Promise<Event[]> => {
 };
 
 // Function to create a new event
-export const createEvent = async (userId: string, data: Omit<Event, 'id' | 'authorId' | 'createdAt' | 'status' | 'views' | 'rsvps'>) => {
+export const createEvent = async (userId: string, data: Omit<Event, 'id' | 'authorId' | 'createdAt' | 'status' | 'views' | 'rsvps' | 'searchableKeywords'>) => {
   const eventsRef = collection(db, 'events');
+  const keywords = [
+    ...data.title.toLowerCase().split(' ').filter(Boolean),
+    ...data.description.toLowerCase().split(' ').filter(Boolean),
+    ...data.location.toLowerCase().split(' ').filter(Boolean),
+  ];
   await addDoc(eventsRef, {
     ...data,
     authorId: userId,
@@ -85,13 +91,31 @@ export const createEvent = async (userId: string, data: Omit<Event, 'id' | 'auth
     status: 'active',
     views: 0,
     rsvps: [],
+    searchableKeywords: [...new Set(keywords)],
   });
 };
 
 // Function to update an existing event
 export const updateEvent = async (id: string, data: Partial<Omit<Event, 'id' | 'authorId' | 'createdAt'>>) => {
   const eventDocRef = doc(db, 'events', id);
-  await updateDoc(eventDocRef, data);
+  const dataToUpdate = { ...data };
+
+  if (data.title || data.description || data.location) {
+    const eventDoc = await getDoc(eventDocRef);
+    const existingData = eventDoc.data() as Event;
+    const newTitle = data.title ?? existingData.title;
+    const newDescription = data.description ?? existingData.description;
+    const newLocation = data.location ?? existingData.location;
+
+    const keywords = [
+      ...newTitle.toLowerCase().split(' ').filter(Boolean),
+      ...newDescription.toLowerCase().split(' ').filter(Boolean),
+      ...newLocation.toLowerCase().split(' ').filter(Boolean),
+    ];
+    dataToUpdate.searchableKeywords = [...new Set(keywords)];
+  }
+
+  await updateDoc(eventDocRef, dataToUpdate);
 };
 
 // Function to delete an event

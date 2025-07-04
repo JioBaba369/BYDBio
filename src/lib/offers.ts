@@ -27,6 +27,7 @@ export type Offer = {
   views: number;
   claims: number;
   createdAt: Timestamp | string;
+  searchableKeywords: string[];
 };
 
 // Function to fetch a single offer by its ID
@@ -60,8 +61,13 @@ export const getOffersByUser = async (userId: string): Promise<Offer[]> => {
 };
 
 // Function to create a new offer
-export const createOffer = async (userId: string, data: Omit<Offer, 'id' | 'authorId' | 'createdAt' | 'status' | 'views' | 'claims'>) => {
+export const createOffer = async (userId: string, data: Omit<Offer, 'id' | 'authorId' | 'createdAt' | 'status' | 'views' | 'claims' | 'searchableKeywords'>) => {
   const offersRef = collection(db, 'offers');
+  const keywords = [
+    ...data.title.toLowerCase().split(' ').filter(Boolean),
+    ...data.description.toLowerCase().split(' ').filter(Boolean),
+    ...data.category.toLowerCase().split(' ').filter(Boolean),
+  ];
   await addDoc(offersRef, {
     ...data,
     authorId: userId,
@@ -69,13 +75,31 @@ export const createOffer = async (userId: string, data: Omit<Offer, 'id' | 'auth
     status: 'active',
     views: 0,
     claims: 0,
+    searchableKeywords: [...new Set(keywords)],
   });
 };
 
 // Function to update an existing offer
 export const updateOffer = async (id: string, data: Partial<Omit<Offer, 'id' | 'authorId' | 'createdAt'>>) => {
   const offerDocRef = doc(db, 'offers', id);
-  await updateDoc(offerDocRef, data);
+  const dataToUpdate = { ...data };
+
+  if (data.title || data.description || data.category) {
+    const offerDoc = await getDoc(offerDocRef);
+    const existingData = offerDoc.data() as Offer;
+    const newTitle = data.title ?? existingData.title;
+    const newDescription = data.description ?? existingData.description;
+    const newCategory = data.category ?? existingData.category;
+
+    const keywords = [
+        ...newTitle.toLowerCase().split(' ').filter(Boolean),
+        ...newDescription.toLowerCase().split(' ').filter(Boolean),
+        ...newCategory.toLowerCase().split(' ').filter(Boolean),
+    ];
+    dataToUpdate.searchableKeywords = [...new Set(keywords)];
+  }
+
+  await updateDoc(offerDocRef, dataToUpdate);
 };
 
 // Function to delete an offer

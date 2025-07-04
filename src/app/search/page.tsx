@@ -61,16 +61,17 @@ export default function SearchPage() {
             const userResults = await searchUsers(queryParam);
             
             // Search content collections
-            const collectionsToSearch = ['listings', 'jobs', 'events', 'offers'];
-            const contentPromises = collectionsToSearch.map(col => getDocs(query(collection(db, col), where('title', '>=', lowerCaseQuery), where('title', '<=', lowerCaseQuery + '\uf8ff'))));
+            const collectionsToSearch = ['listings', 'jobs', 'events', 'offers', 'businesses'];
+            const contentPromises = collectionsToSearch.map(col => getDocs(query(collection(db, col), where('searchableKeywords', 'array-contains', lowerCaseQuery))));
             
-            const [listingsSnap, jobsSnap, eventsSnap, offersSnap] = await Promise.all(contentPromises);
+            const [listingsSnap, jobsSnap, eventsSnap, offersSnap, businessesSnap] = await Promise.all(contentPromises);
 
             const allContent: (any & { type: string })[] = [
                 ...listingsSnap.docs.map(doc => ({ ...doc.data(), id: doc.id, type: 'listing' })),
                 ...jobsSnap.docs.map(doc => ({ ...doc.data(), id: doc.id, type: 'job' })),
                 ...eventsSnap.docs.map(doc => ({ ...doc.data(), id: doc.id, type: 'event' })),
                 ...offersSnap.docs.map(doc => ({ ...doc.data(), id: doc.id, type: 'offer' })),
+                ...businessesSnap.docs.map(doc => ({ ...doc.data(), id: doc.id, type: 'business' })),
             ];
 
             const authorIds = [...new Set(allContent.map(item => item.authorId))];

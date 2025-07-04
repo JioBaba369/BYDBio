@@ -27,6 +27,7 @@ export type Listing = {
   views?: number;
   clicks?: number;
   createdAt: Timestamp | string;
+  searchableKeywords: string[];
 };
 
 // Function to fetch a single listing by its ID
@@ -48,8 +49,14 @@ export const getListingsByUser = async (userId: string): Promise<Listing[]> => {
 };
 
 // Function to create a new listing
-export const createListing = async (userId: string, data: Omit<Listing, 'id' | 'authorId' | 'createdAt' | 'status' | 'views' | 'clicks'>) => {
+export const createListing = async (userId: string, data: Omit<Listing, 'id' | 'authorId' | 'createdAt' | 'status' | 'views' | 'clicks' | 'searchableKeywords'>) => {
   const listingsRef = collection(db, 'listings');
+  const keywords = [
+    ...data.title.toLowerCase().split(' ').filter(Boolean),
+    ...data.description.toLowerCase().split(' ').filter(Boolean),
+    ...data.category.toLowerCase().split(' ').filter(Boolean),
+  ];
+
   await addDoc(listingsRef, {
     ...data,
     authorId: userId,
@@ -57,13 +64,31 @@ export const createListing = async (userId: string, data: Omit<Listing, 'id' | '
     status: 'active',
     views: 0,
     clicks: 0,
+    searchableKeywords: [...new Set(keywords)],
   });
 };
 
 // Function to update an existing listing
 export const updateListing = async (id: string, data: Partial<Omit<Listing, 'id' | 'authorId' | 'createdAt'>>) => {
   const listingDocRef = doc(db, 'listings', id);
-  await updateDoc(listingDocRef, data);
+  const dataToUpdate = { ...data };
+
+  if (data.title || data.description || data.category) {
+    const listingDoc = await getDoc(listingDocRef);
+    const existingData = listingDoc.data() as Listing;
+    const newTitle = data.title ?? existingData.title;
+    const newDescription = data.description ?? existingData.description;
+    const newCategory = data.category ?? existingData.category;
+
+    const keywords = [
+        ...newTitle.toLowerCase().split(' ').filter(Boolean),
+        ...newDescription.toLowerCase().split(' ').filter(Boolean),
+        ...newCategory.toLowerCase().split(' ').filter(Boolean),
+    ];
+    dataToUpdate.searchableKeywords = [...new Set(keywords)];
+  }
+
+  await updateDoc(listingDocRef, dataToUpdate);
 };
 
 // Function to delete a listing

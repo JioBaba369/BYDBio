@@ -28,6 +28,7 @@ export type Job = {
   views: number;
   applicants: number;
   createdAt: Timestamp | string;
+  searchableKeywords: string[];
 };
 
 // Function to fetch a single job by its ID
@@ -61,8 +62,15 @@ export const getJobsByUser = async (userId: string): Promise<Job[]> => {
 };
 
 // Function to create a new job
-export const createJob = async (userId: string, data: Omit<Job, 'id' | 'authorId' | 'createdAt' | 'status' | 'views' | 'applicants' | 'postingDate'>) => {
+export const createJob = async (userId: string, data: Omit<Job, 'id' | 'authorId' | 'createdAt' | 'status' | 'views' | 'applicants' | 'postingDate' | 'searchableKeywords'>) => {
   const jobsRef = collection(db, 'jobs');
+  const keywords = [
+    ...data.title.toLowerCase().split(' ').filter(Boolean),
+    ...data.company.toLowerCase().split(' ').filter(Boolean),
+    ...data.location.toLowerCase().split(' ').filter(Boolean),
+    data.type.toLowerCase(),
+  ];
+
   await addDoc(jobsRef, {
     ...data,
     authorId: userId,
@@ -71,13 +79,33 @@ export const createJob = async (userId: string, data: Omit<Job, 'id' | 'authorId
     status: 'active',
     views: 0,
     applicants: 0,
+    searchableKeywords: [...new Set(keywords)],
   });
 };
 
 // Function to update an existing job
 export const updateJob = async (id: string, data: Partial<Omit<Job, 'id' | 'authorId' | 'createdAt'>>) => {
   const jobDocRef = doc(db, 'jobs', id);
-  await updateDoc(jobDocRef, data);
+  const dataToUpdate = { ...data };
+
+  if (data.title || data.company || data.location || data.type) {
+    const jobDoc = await getDoc(jobDocRef);
+    const existingData = jobDoc.data() as Job;
+    const newTitle = data.title ?? existingData.title;
+    const newCompany = data.company ?? existingData.company;
+    const newLocation = data.location ?? existingData.location;
+    const newType = data.type ?? existingData.type;
+
+    const keywords = [
+        ...newTitle.toLowerCase().split(' ').filter(Boolean),
+        ...newCompany.toLowerCase().split(' ').filter(Boolean),
+        ...newLocation.toLowerCase().split(' ').filter(Boolean),
+        newType.toLowerCase(),
+    ];
+    dataToUpdate.searchableKeywords = [...new Set(keywords)];
+  }
+
+  await updateDoc(jobDocRef, dataToUpdate);
 };
 
 // Function to delete a job

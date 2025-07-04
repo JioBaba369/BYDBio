@@ -30,6 +30,7 @@ export type Business = {
   views?: number;
   clicks?: number;
   createdAt: Timestamp | string;
+  searchableKeywords: string[];
 };
 
 // Function to fetch a single business by its ID
@@ -51,8 +52,15 @@ export const getBusinessesByUser = async (userId: string): Promise<Business[]> =
 };
 
 // Function to create a new business
-export const createBusiness = async (userId: string, data: Omit<Business, 'id' | 'authorId' | 'createdAt' | 'status' | 'views' | 'clicks'>) => {
+export const createBusiness = async (userId: string, data: Omit<Business, 'id' | 'authorId' | 'createdAt' | 'status' | 'views' | 'clicks' | 'searchableKeywords'>) => {
   const businessesRef = collection(db, 'businesses');
+  const keywords = [
+    ...data.name.toLowerCase().split(' ').filter(Boolean),
+    ...data.description.toLowerCase().split(' ').filter(Boolean),
+    data.email.toLowerCase(),
+    ...(data.address ? data.address.toLowerCase().split(' ') : [])
+  ];
+
   await addDoc(businessesRef, {
     ...data,
     authorId: userId,
@@ -60,13 +68,33 @@ export const createBusiness = async (userId: string, data: Omit<Business, 'id' |
     status: 'active',
     views: 0,
     clicks: 0,
+    searchableKeywords: [...new Set(keywords)],
   });
 };
 
 // Function to update an existing business
 export const updateBusiness = async (id: string, data: Partial<Omit<Business, 'id' | 'authorId' | 'createdAt'>>) => {
   const businessDocRef = doc(db, 'businesses', id);
-  await updateDoc(businessDocRef, data);
+  const dataToUpdate = { ...data };
+
+  if (data.name || data.description || data.email || data.address) {
+    const businessDoc = await getDoc(businessDocRef);
+    const existingData = businessDoc.data() as Business;
+    const newName = data.name ?? existingData.name;
+    const newDescription = data.description ?? existingData.description;
+    const newEmail = data.email ?? existingData.email;
+    const newAddress = data.address ?? existingData.address;
+
+    const keywords = [
+      ...newName.toLowerCase().split(' ').filter(Boolean),
+      ...newDescription.toLowerCase().split(' ').filter(Boolean),
+      newEmail.toLowerCase(),
+      ...(newAddress ? newAddress.toLowerCase().split(' ') : []),
+    ];
+    dataToUpdate.searchableKeywords = [...new Set(keywords)];
+  }
+
+  await updateDoc(businessDocRef, dataToUpdate);
 };
 
 // Function to delete a business

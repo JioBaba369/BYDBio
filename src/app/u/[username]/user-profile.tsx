@@ -242,164 +242,164 @@ END:VCARD`;
         </Card>
         
         {hasContent && (
-            <Card id="content" className="bg-background/80 backdrop-blur-sm p-4 sm:p-6 shadow-2xl rounded-2xl border-primary/10">
-                <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                    <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 h-auto flex-wrap">
-                        {posts.length > 0 && <TabsTrigger value="posts">Updates</TabsTrigger>}
-                        {businesses.length > 0 && <TabsTrigger value="businesses">Businesses</TabsTrigger>}
-                        {listings.length > 0 && <TabsTrigger value="listings">Listings</TabsTrigger>}
-                        {jobs.length > 0 && <TabsTrigger value="jobs">Jobs</TabsTrigger>}
-                        {events.length > 0 && <TabsTrigger value="events">Events</TabsTrigger>}
-                        {offers.length > 0 && <TabsTrigger value="offers">Offers</TabsTrigger>}
-                    </TabsList>
+          <Card id="content" className="bg-background/80 backdrop-blur-sm p-4 sm:p-6 shadow-2xl rounded-2xl border-primary/10">
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                  <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 h-auto flex-wrap">
+                      {posts.length > 0 && <TabsTrigger value="posts">Updates</TabsTrigger>}
+                      {businesses.length > 0 && <TabsTrigger value="businesses">Businesses</TabsTrigger>}
+                      {listings.length > 0 && <TabsTrigger value="listings">Listings</TabsTrigger>}
+                      {jobs.length > 0 && <TabsTrigger value="jobs">Jobs</TabsTrigger>}
+                      {events.length > 0 && <TabsTrigger value="events">Events</TabsTrigger>}
+                      {offers.length > 0 && <TabsTrigger value="offers">Offers</TabsTrigger>}
+                  </TabsList>
 
-                    <TabsContent value="posts" className="space-y-4 pt-4">
-                        {posts.map((post) => (
-                            <Card key={post.id} className="shadow-none border">
-                            <CardContent className="p-4">
-                                <p className="whitespace-pre-wrap text-sm">{post.content}</p>
-                                {post.imageUrl && (
-                                <div className="mt-4 rounded-lg overflow-hidden border">
-                                    <Image src={post.imageUrl} alt="Post image" width={600} height={400} className="object-cover" data-ai-hint="office workspace"/>
-                                </div>
-                                )}
-                            </CardContent>
-                            <CardFooter className="flex justify-start items-center gap-4 px-4 pb-4 pt-2 text-sm text-muted-foreground">
-                                <div className="flex items-center gap-1">
-                                    <Heart className="h-4 w-4" />
-                                    <span>{post.likes}</span>
-                                </div>
-                                <div className="flex items-center gap-1">
-                                    <MessageCircle className="h-4 w-4" />
-                                    <span>{post.comments}</span>
-                                </div>
-                                <span className="ml-auto text-xs">{formatDistanceToNow(parseISO(post.createdAt), { addSuffix: true })}</span>
-                            </CardFooter>
-                            </Card>
-                        ))}
-                    </TabsContent>
-                     <TabsContent value="businesses" className="space-y-4 pt-4">
-                        {businesses.map((item) => (
-                           <Card key={item.id} className="flex flex-col shadow-none border">
-                            {item.imageUrl &&
-                            <div className="overflow-hidden rounded-t-lg">
-                                <Image src={item.imageUrl} alt={item.name} width={600} height={300} className="w-full object-cover aspect-[2/1]" data-ai-hint="office storefront"/>
-                            </div>
-                            }
-                            <CardHeader>
-                                <CardTitle>{item.name}</CardTitle>
-                                <CardDescription>{item.description}</CardDescription>
-                            </CardHeader>
-                            <CardContent className="flex-grow">
-                                <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm text-muted-foreground">
-                                    {item.email && <div className="flex items-center gap-2 truncate"><Send className="h-4 w-4 flex-shrink-0" /> <span className="truncate">{item.email}</span></div>}
-                                    {item.website && <div className="flex items-center gap-2 truncate"><Globe className="h-4 w-4 flex-shrink-0" /> <span className="truncate">{item.website}</span></div>}
-                                    {item.address && <div className="flex items-center gap-2 truncate col-span-2"><MapPin className="h-4 w-4 flex-shrink-0" /> <span className="truncate">{item.address}</span></div>}
-                                </div>
-                            </CardContent>
-                            <Separator className="my-4" />
-                            <CardFooter className="flex-col items-start gap-4">
-                                <Button asChild variant="outline" className="w-full">
-                                    <Link href={`/b/${item.id}`}>
-                                        <ExternalLink className="mr-2 h-4 w-4" />
-                                        View Business Page
-                                    </Link>
-                                </Button>
-                            </CardFooter>
-                        </Card>
-                        ))}
-                    </TabsContent>
-                    <TabsContent value="listings" className="space-y-4 pt-4">
-                        {listings.map((item) => (
-                            <Card key={item.id} className="flex flex-col shadow-none border">
-                                <div className="overflow-hidden rounded-t-lg">
-                                <Image src={item.imageUrl || ''} alt={item.title} width={600} height={400} className="w-full object-cover aspect-video" data-ai-hint="product design"/>
-                                </div>
-                                <CardHeader>
-                                <CardTitle>{item.title}</CardTitle>
-                                <CardDescription>{item.description}</CardDescription>
-                                </CardHeader>
-                                <CardContent className="flex-grow">
-                                <Badge variant="secondary"><Tags className="mr-1 h-3 w-3" /> {item.category}</Badge>
-                                </CardContent>
-                                <CardFooter className="flex justify-between items-center">
-                                <p className="font-bold text-lg">{item.price}</p>
-                                <Button asChild>
-                                  <Link href={`/l/${item.id}`}>View</Link>
-                                </Button>
-                                </CardFooter>
-                            </Card>
-                        ))}
-                    </TabsContent>
-                    <TabsContent value="jobs" className="space-y-4 pt-4">
-                        {jobs.map((job) => (
-                            <Card key={job.id} className="shadow-none border">
-                                <CardHeader>
-                                    <CardTitle>{job.title}</CardTitle>
-                                    <CardDescription>{job.company}</CardDescription>
-                                </CardHeader>
-                                <CardContent className="space-y-2 text-sm">
-                                    <div className="flex items-center text-muted-foreground">
-                                        <MapPin className="mr-2 h-4 w-4" /> {job.location}
-                                    </div>
-                                    <div className="flex items-center text-muted-foreground">
-                                        <Briefcase className="mr-2 h-4 w-4" /> {job.type}
-                                    </div>
-                                </CardContent>
-                                 <CardFooter>
-                                    <Button asChild className="w-full">
-                                      <Link href={`/o/${job.id}`}>View Details</Link>
-                                    </Button>
-                                 </CardFooter>
-                            </Card>
-                        ))}
-                    </TabsContent>
-                    <TabsContent value="events" className="space-y-4 pt-4">
-                        {events.map((event) => (
-                             <Card key={event.id} className="shadow-none border">
-                                <CardHeader>
-                                    <CardTitle>{event.title}</CardTitle>
-                                </CardHeader>
-                                <CardContent className="space-y-2">
-                                    <div className="flex items-center text-sm text-muted-foreground">
-                                    <Calendar className="mr-2 h-4 w-4" /> <ClientFormattedDate date={event.date} formatStr="PPP" />
-                                    </div>
-                                    <div className="flex items-center text-sm text-muted-foreground">
-                                    <MapPin className="mr-2 h-4 w-4" /> {event.location}
-                                    </div>
-                                </CardContent>
-                                <CardFooter>
-                                    <Button asChild className="w-full">
-                                        <Link href={`/events/${event.id}`}>Learn More</Link>
-                                    </Button>
-                                </CardFooter>
-                            </Card>
-                        ))}
-                    </TabsContent>
-                    <TabsContent value="offers" className="space-y-4 pt-4">
-                         {offers.map((offer) => (
-                            <Card key={offer.id} className="shadow-none border">
-                                <CardHeader>
-                                <CardTitle>{offer.title}</CardTitle>
-                                <CardDescription>{offer.description}</CardDescription>
-                                </CardHeader>
-                                <CardContent>
-                                  <Badge variant="secondary"><Tag className="mr-1 h-3 w-3" />{offer.category}</Badge>
-                                  <div className="flex items-center pt-4 text-sm text-muted-foreground">
-                                      <Calendar className="mr-2 h-4 w-4" /> 
-                                      <span>Releases: <ClientFormattedDate date={offer.releaseDate} formatStr="PPP" /></span>
+                  <TabsContent value="posts" className="space-y-4 pt-4">
+                      {posts.map((post) => (
+                          <Card key={post.id} className="shadow-none border">
+                          <CardContent className="p-4">
+                              <p className="whitespace-pre-wrap text-sm">{post.content}</p>
+                              {post.imageUrl && (
+                              <div className="mt-4 rounded-lg overflow-hidden border">
+                                  <Image src={post.imageUrl} alt="Post image" width={600} height={400} className="object-cover" data-ai-hint="office workspace"/>
+                              </div>
+                              )}
+                          </CardContent>
+                          <CardFooter className="flex justify-start items-center gap-4 px-4 pb-4 pt-2 text-sm text-muted-foreground">
+                              <div className="flex items-center gap-1">
+                                  <Heart className="h-4 w-4" />
+                                  <span>{post.likes}</span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                  <MessageCircle className="h-4 w-4" />
+                                  <span>{post.comments}</span>
+                              </div>
+                              <span className="ml-auto text-xs">{formatDistanceToNow(parseISO(post.createdAt), { addSuffix: true })}</span>
+                          </CardFooter>
+                          </Card>
+                      ))}
+                  </TabsContent>
+                   <TabsContent value="businesses" className="space-y-4 pt-4">
+                      {businesses.map((item) => (
+                         <Card key={item.id} className="flex flex-col shadow-none border">
+                          {item.imageUrl &&
+                          <div className="overflow-hidden rounded-t-lg">
+                              <Image src={item.imageUrl} alt={item.name} width={600} height={300} className="w-full object-cover aspect-[2/1]" data-ai-hint="office storefront"/>
+                          </div>
+                          }
+                          <CardHeader>
+                              <CardTitle>{item.name}</CardTitle>
+                              <CardDescription>{item.description}</CardDescription>
+                          </CardHeader>
+                          <CardContent className="flex-grow">
+                              <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm text-muted-foreground">
+                                  {item.email && <div className="flex items-center gap-2 truncate"><Send className="h-4 w-4 flex-shrink-0" /> <span className="truncate">{item.email}</span></div>}
+                                  {item.website && <div className="flex items-center gap-2 truncate"><Globe className="h-4 w-4 flex-shrink-0" /> <span className="truncate">{item.website}</span></div>}
+                                  {item.address && <div className="flex items-center gap-2 truncate col-span-2"><MapPin className="h-4 w-4 flex-shrink-0" /> <span className="truncate">{item.address}</span></div>}
+                              </div>
+                          </CardContent>
+                          <Separator className="my-4" />
+                          <CardFooter className="flex-col items-start gap-4">
+                              <Button asChild variant="outline" className="w-full">
+                                  <Link href={`/b/${item.id}`}>
+                                      <ExternalLink className="mr-2 h-4 w-4" />
+                                      View Business Page
+                                  </Link>
+                              </Button>
+                          </CardFooter>
+                      </Card>
+                      ))}
+                  </TabsContent>
+                  <TabsContent value="listings" className="space-y-4 pt-4">
+                      {listings.map((item) => (
+                          <Card key={item.id} className="flex flex-col shadow-none border">
+                              <div className="overflow-hidden rounded-t-lg">
+                              <Image src={item.imageUrl || ''} alt={item.title} width={600} height={400} className="w-full object-cover aspect-video" data-ai-hint="product design"/>
+                              </div>
+                              <CardHeader>
+                              <CardTitle>{item.title}</CardTitle>
+                              <CardDescription>{item.description}</CardDescription>
+                              </CardHeader>
+                              <CardContent className="flex-grow">
+                              <Badge variant="secondary"><Tags className="mr-1 h-3 w-3" /> {item.category}</Badge>
+                              </CardContent>
+                              <CardFooter className="flex justify-between items-center">
+                              <p className="font-bold text-lg">{item.price}</p>
+                              <Button asChild>
+                                <Link href={`/l/${item.id}`}>View</Link>
+                              </Button>
+                              </CardFooter>
+                          </Card>
+                      ))}
+                  </TabsContent>
+                  <TabsContent value="jobs" className="space-y-4 pt-4">
+                      {jobs.map((job) => (
+                          <Card key={job.id} className="shadow-none border">
+                              <CardHeader>
+                                  <CardTitle>{job.title}</CardTitle>
+                                  <CardDescription>{job.company}</CardDescription>
+                              </CardHeader>
+                              <CardContent className="space-y-2 text-sm">
+                                  <div className="flex items-center text-muted-foreground">
+                                      <MapPin className="mr-2 h-4 w-4" /> {job.location}
                                   </div>
-                                </CardContent>
-                                <CardFooter>
-                                    <Button asChild className="w-full">
-                                      <Link href={`/offer/${offer.id}`}>Claim Offer</Link>
-                                    </Button>
-                                </CardFooter>
-                            </Card>
-                         ))}
-                    </TabsContent>
-                </Tabs>
-            </Card>
+                                  <div className="flex items-center text-muted-foreground">
+                                      <Briefcase className="mr-2 h-4 w-4" /> {job.type}
+                                  </div>
+                              </CardContent>
+                               <CardFooter>
+                                  <Button asChild className="w-full">
+                                    <Link href={`/o/${job.id}`}>View Details</Link>
+                                  </Button>
+                               </CardFooter>
+                          </Card>
+                      ))}
+                  </TabsContent>
+                  <TabsContent value="events" className="space-y-4 pt-4">
+                      {events.map((event) => (
+                           <Card key={event.id} className="shadow-none border">
+                              <CardHeader>
+                                  <CardTitle>{event.title}</CardTitle>
+                              </CardHeader>
+                              <CardContent className="space-y-2">
+                                  <div className="flex items-center text-sm text-muted-foreground">
+                                  <Calendar className="mr-2 h-4 w-4" /> <ClientFormattedDate date={event.date} formatStr="PPP" />
+                                  </div>
+                                  <div className="flex items-center text-sm text-muted-foreground">
+                                  <MapPin className="mr-2 h-4 w-4" /> {event.location}
+                                  </div>
+                              </CardContent>
+                              <CardFooter>
+                                  <Button asChild className="w-full">
+                                      <Link href={`/events/${event.id}`}>Learn More</Link>
+                                  </Button>
+                              </CardFooter>
+                          </Card>
+                      ))}
+                  </TabsContent>
+                  <TabsContent value="offers" className="space-y-4 pt-4">
+                       {offers.map((offer) => (
+                          <Card key={offer.id} className="shadow-none border">
+                              <CardHeader>
+                              <CardTitle>{offer.title}</CardTitle>
+                              <CardDescription>{offer.description}</CardDescription>
+                              </CardHeader>
+                              <CardContent>
+                                <Badge variant="secondary"><Tag className="mr-1 h-3 w-3" />{offer.category}</Badge>
+                                <div className="flex items-center pt-4 text-sm text-muted-foreground">
+                                    <Calendar className="mr-2 h-4 w-4" /> 
+                                    <span>Releases: <ClientFormattedDate date={offer.releaseDate} formatStr="PPP" /></span>
+                                </div>
+                              </CardContent>
+                              <CardFooter>
+                                  <Button asChild className="w-full">
+                                    <Link href={`/offer/${offer.id}`}>Claim Offer</Link>
+                                  </Button>
+                              </CardFooter>
+                          </Card>
+                       ))}
+                  </TabsContent>
+              </Tabs>
+          </Card>
         )}
 
         <Card id="contact" className="bg-background/80 backdrop-blur-sm p-6 sm:p-8 shadow-2xl rounded-2xl border-primary/10">
