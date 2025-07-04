@@ -84,6 +84,6 @@ export const getListingAndAuthor = async (listingId: string): Promise<{ listing:
         return null;
     }
 
-    const author = userDoc.data() as User;
+    const author = { uid: userDoc.id, ...userDoc.data() } as User;
     return { listing, author };
 }

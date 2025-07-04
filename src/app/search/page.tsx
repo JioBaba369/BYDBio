@@ -75,10 +75,10 @@ export default function SearchPage() {
 
             const authorIds = [...new Set(allContent.map(item => item.authorId))];
             const authors = await getUsersByIds(authorIds);
-            const authorMap = new Map(authors.map(author => [author.id, author]));
+            const authorMap = new Map(authors.map(author => [author.uid, author]));
             
             const newResults: SearchResults = {
-                users: userResults.filter(u => u.id !== user?.id),
+                users: userResults.filter(u => u.uid !== user?.uid),
                 listings: [],
                 opportunities: [],
                 events: [],
@@ -121,7 +121,7 @@ export default function SearchPage() {
       }
       setResults(prev => ({
           ...prev,
-          users: prev.users.map(u => u.id === targetUserId ? { ...u, isFollowedByCurrentUser: !isCurrentlyFollowing } : u)
+          users: prev.users.map(u => u.uid === targetUserId ? { ...u, isFollowedByCurrentUser: !isCurrentlyFollowing } : u)
       }));
     } catch (error) {
       toast({ title: "Something went wrong", variant: "destructive" });
@@ -188,9 +188,9 @@ export default function SearchPage() {
             {results.users.length > 0 ? (
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     {results.users.map(u => {
-                        const isFollowedByCurrentUser = user?.following.includes(u.id) || false;
+                        const isFollowedByCurrentUser = user?.following.includes(u.uid) || false;
                         return (
-                        <Card key={u.id} className="transition-all hover:shadow-md">
+                        <Card key={u.uid} className="transition-all hover:shadow-md">
                         <CardContent className="p-4 flex items-center justify-between gap-4">
                             <Link href={`/u/${u.username}`} className="flex items-center gap-4 hover:underline">
                             <Avatar>
@@ -202,7 +202,7 @@ export default function SearchPage() {
                                 <p className="text-sm text-muted-foreground">@{u.handle}</p>
                             </div>
                             </Link>
-                            <Button size="sm" variant={isFollowedByCurrentUser ? 'secondary' : 'default'} onClick={() => handleToggleFollow(u.id, isFollowedByCurrentUser)}>
+                            <Button size="sm" variant={isFollowedByCurrentUser ? 'secondary' : 'default'} onClick={() => handleToggleFollow(u.uid, isFollowedByCurrentUser)}>
                             {isFollowedByCurrentUser ? <UserCheck className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
                             {isFollowedByCurrentUser ? 'Following' : 'Follow'}
                             </Button>

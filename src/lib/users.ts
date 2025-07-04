@@ -21,8 +21,7 @@ export type UserLink = {
 }
 
 export type User = {
-  id: string; // Document ID (same as uid)
-  uid: string; // Firebase Auth UID
+  uid: string; // Firebase Auth UID and Document ID
   name: string;
   handle: string;
   username: string;
@@ -104,7 +103,6 @@ export const createUserProfileIfNotExists = async (user: FirebaseUser, additiona
         // In a real app, you might want to check if this username is unique and handle collisions.
         await setDoc(userDocRef, {
             uid: user.uid,
-            id: user.uid,
             email: user.email,
             name: additionalData?.name || user.displayName || "New User",
             username: username,
@@ -140,7 +138,7 @@ export async function getUserByUsername(username: string): Promise<User | null> 
     }
 
     const userDoc = querySnapshot.docs[0];
-    return { id: userDoc.id, ...userDoc.data() } as User;
+    return { uid: userDoc.id, ...userDoc.data() } as User;
 }
 
 export async function getUsersByIds(uids: string[]): Promise<User[]> {
@@ -158,7 +156,7 @@ export async function getUsersByIds(uids: string[]): Promise<User[]> {
         const q = query(usersRef, where("uid", "in", chunk));
         const querySnapshot = await getDocs(q);
         querySnapshot.forEach(doc => {
-            users.push({ id: doc.id, ...doc.data() } as User)
+            users.push({ uid: doc.id, ...doc.data() } as User)
         });
     }
     return users;
@@ -175,7 +173,7 @@ export async function searchUsers(searchText: string): Promise<User[]> {
     const querySnapshot = await getDocs(q);
 
     const usersMap = new Map<string, User>();
-    querySnapshot.forEach(doc => usersMap.set(doc.id, { id: doc.id, ...doc.data() } as User));
+    querySnapshot.forEach(doc => usersMap.set(doc.id, { uid: doc.id, ...doc.data() } as User));
     
     return Array.from(usersMap.values());
 }

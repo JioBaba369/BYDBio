@@ -87,6 +87,6 @@ export const getBusinessAndAuthor = async (businessId: string): Promise<{ busine
         return null;
     }
 
-    const author = userDoc.data() as User;
+    const author = { uid: userDoc.id, ...userDoc.data() } as User;
     return { business, author };
 }

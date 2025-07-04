@@ -43,7 +43,7 @@ export const getFollowing = async (userId: string): Promise<User[]> => {
     const usersRef = collection(db, 'users');
     const q = query(usersRef, where('uid', 'in', followingIds));
     const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({ ...doc.data() } as User));
+    return querySnapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() } as User));
 };
 
 // Get list of users who are following the current user
@@ -51,7 +51,7 @@ export const getFollowers = async (userId: string): Promise<User[]> => {
     const usersRef = collection(db, 'users');
     const q = query(usersRef, where('following', 'array-contains', userId));
     const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({ ...doc.data() } as User));
+    return querySnapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() } as User));
 };
 
 // Get suggested users to follow (simplified version)
@@ -72,5 +72,5 @@ export const getSuggestedUsers = async (userId: string, followingIds: string[]):
     // Fetch the full user objects for the suggestions
     const suggestionsQuery = query(usersRef, where('uid', 'in', nonFollowingIds.slice(0, 10))); // Limit to 10 suggestions
     const suggestionsSnapshot = await getDocs(suggestionsQuery);
-    return suggestionsSnapshot.docs.map(doc => ({ ...doc.data() } as User));
+    return suggestionsSnapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() } as User));
 };

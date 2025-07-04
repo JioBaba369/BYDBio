@@ -42,7 +42,7 @@ export type Event = {
   createdAt: Timestamp | string;
 };
 
-export type EventWithAuthor = Event & { author: Pick<User, 'id' | 'name' | 'username' | 'avatarUrl'> };
+export type EventWithAuthor = Event & { author: Pick<User, 'uid' | 'name' | 'username' | 'avatarUrl'> };
 
 
 // Function to fetch a single event by its ID
@@ -133,7 +133,7 @@ export const getEventAndAuthor = async (eventId: string): Promise<{ event: Event
         return null;
     }
 
-    const author = { ...userDoc.data(), id: userDoc.id } as User;
+    const author = { uid: userDoc.id, ...userDoc.data() } as User;
     return { event, author };
 }
 
@@ -154,7 +154,7 @@ export const getAllEvents = async (): Promise<EventWithAuthor[]> => {
         if (!author) {
             const userDoc = await getDoc(doc(db, 'users', authorId));
             if (userDoc.exists()) {
-                author = { id: userDoc.id, ...userDoc.data() } as User;
+                author = { uid: userDoc.id, ...userDoc.data() } as User;
                 authorCache[authorId] = author;
             }
         }
@@ -164,7 +164,7 @@ export const getAllEvents = async (): Promise<EventWithAuthor[]> => {
                 id: eventDoc.id,
                 ...data,
                 date: (data.date as Timestamp).toDate(),
-                author: { id: author.id, name: author.name, username: author.username, avatarUrl: author.avatarUrl }
+                author: { uid: author.uid, name: author.name, username: author.username, avatarUrl: author.avatarUrl }
             } as EventWithAuthor);
         }
     }
@@ -236,17 +236,23 @@ export const getEventsForDiary = async (userId: string) => {
         itemsMap.set(`listing-${doc.id}`, { ...doc.data(), id: doc.id, type: 'listing' });
     });
 
-    return Array.from(itemsMap.values()).map(item => {
+    const allItems = Array.from(itemsMap.values());
+    const authorIds = [...new Set(allItems.map(item => item.authorId).filter(Boolean))];
+    const authors = authorIds.length > 0 ? await getDocs(query(collection(db, 'users'), where('uid', 'in', authorIds))) : { docs: [] };
+    const authorMap = new Map(authors.docs.map(doc => [doc.id, { uid: doc.id, ...doc.data() } as User]));
+
+    return allItems.map(item => {
         const dateFields: any = {};
         if (item.date) dateFields.date = (item.date as Timestamp).toDate();
         if (item.releaseDate) dateFields.releaseDate = (item.releaseDate as Timestamp).toDate();
         if (item.postingDate) dateFields.postingDate = (item.postingDate as Timestamp).toDate();
-        // Listings don't have a date for the calendar, but we can use createdAt
         if (item.type === 'listing' && item.createdAt) dateFields.publishDate = (item.createdAt as Timestamp).toDate();
         
+        const author = authorMap.get(item.authorId);
         return {
             ...item,
             ...dateFields,
+            author: author ? { name: author.name, username: author.username, avatarUrl: author.avatarUrl } : undefined,
         };
     });
 };

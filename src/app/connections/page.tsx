@@ -86,18 +86,18 @@ export default function ConnectionsPage() {
         try {
             if (isCurrentlyFollowing) {
                 await unfollowUser(user.uid, targetUserId);
-                setFollowingList(prev => prev.filter(u => u.id !== targetUserId));
+                setFollowingList(prev => prev.filter(u => u.uid !== targetUserId));
                 toast({ title: "Unfollowed" });
             } else {
                 await followUser(user.uid, targetUserId);
-                const userToFollow = suggestedList.find(u => u.id === targetUserId) || followersList.find(u => u.id === targetUserId);
+                const userToFollow = suggestedList.find(u => u.uid === targetUserId) || followersList.find(u => u.uid === targetUserId);
                 if (userToFollow) {
                     setFollowingList(prev => [...prev, userToFollow]);
                 }
                 toast({ title: "Followed" });
             }
             // Manually update the suggested list to reflect the change
-            setSuggestedList(prev => prev.filter(u => u.id !== targetUserId));
+            setSuggestedList(prev => prev.filter(u => u.uid !== targetUserId));
         } catch (error) {
             console.error("Error following/unfollowing user:", error);
             toast({ title: "Something went wrong", variant: "destructive" });
@@ -207,9 +207,9 @@ export default function ConnectionsPage() {
           <TabsContent value="followers">
               <div className="flex flex-col gap-4">
                   {followersList.map((followerUser) => {
-                      const isFollowedByCurrentUser = followingList.some(f => f.id === followerUser.id);
+                      const isFollowedByCurrentUser = followingList.some(f => f.uid === followerUser.uid);
                       return (
-                      <Card key={followerUser.id}>
+                      <Card key={followerUser.uid}>
                           <CardContent className="p-4">
                               <div className="flex items-center justify-between gap-4">
                                   <Link href={`/u/${followerUser.handle}`} className="flex items-center gap-4 hover:underline">
@@ -223,7 +223,7 @@ export default function ConnectionsPage() {
                                       </div>
                                   </Link>
                                   <div className="flex items-center gap-2 flex-shrink-0">
-                                      <Button size="sm" variant={isFollowedByCurrentUser ? 'secondary' : 'default'} onClick={() => handleToggleFollow(followerUser.id, isFollowedByCurrentUser)}>
+                                      <Button size="sm" variant={isFollowedByCurrentUser ? 'secondary' : 'default'} onClick={() => handleToggleFollow(followerUser.uid, isFollowedByCurrentUser)}>
                                           {isFollowedByCurrentUser ? <UserCheck className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
                                           {isFollowedByCurrentUser ? 'Following' : 'Follow Back'}
                                       </Button>
@@ -237,7 +237,7 @@ export default function ConnectionsPage() {
           <TabsContent value="following">
              <div className="flex flex-col gap-4">
                 {followingList.map((followingUser) => (
-                    <Card key={followingUser.id}>
+                    <Card key={followingUser.uid}>
                         <CardContent className="p-4">
                             <div className="flex items-center justify-between gap-4">
                                  <Link href={`/u/${followingUser.handle}`} className="flex items-center gap-4 hover:underline">
@@ -250,7 +250,7 @@ export default function ConnectionsPage() {
                                         <p className="text-sm text-muted-foreground">@{followingUser.handle}</p>
                                     </div>
                                 </Link>
-                                <Button size="sm" variant="secondary" onClick={() => handleToggleFollow(followingUser.id, true)}>
+                                <Button size="sm" variant="secondary" onClick={() => handleToggleFollow(followingUser.uid, true)}>
                                     <UserCheck className="mr-2 h-4 w-4" />
                                     Unfollow
                                 </Button>
@@ -263,7 +263,7 @@ export default function ConnectionsPage() {
         <TabsContent value="suggestions">
             <div className="grid md:grid-cols-2 gap-4">
                 {suggestedList.map((suggestedUser) => (
-                    <Card key={suggestedUser.id}>
+                    <Card key={suggestedUser.uid}>
                         <CardContent className="p-4">
                             <div className="flex items-center justify-between gap-4">
                                 <Link href={`/u/${suggestedUser.handle}`} className="flex items-center gap-4 hover:underline flex-1 truncate">
@@ -276,7 +276,7 @@ export default function ConnectionsPage() {
                                         <p className="text-sm text-muted-foreground truncate">@{suggestedUser.handle}</p>
                                     </div>
                                 </Link>
-                                <Button size="sm" variant="default" onClick={() => handleToggleFollow(suggestedUser.id, false)} className="shrink-0">
+                                <Button size="sm" variant="default" onClick={() => handleToggleFollow(suggestedUser.uid, false)} className="shrink-0">
                                     <UserPlus className="mr-2 h-4 w-4" />
                                     Follow
                                 </Button>

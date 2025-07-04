@@ -98,6 +98,6 @@ export const getJobAndAuthor = async (jobId: string): Promise<{ job: Job; author
         return null;
     }
 
-    const author = { ...userDoc.data(), id: userDoc.id } as User;
+    const author = { uid: userDoc.id, ...userDoc.data() } as User;
     return { job, author };
 }

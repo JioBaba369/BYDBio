@@ -271,11 +271,12 @@ export default function ProfilePage() {
         location: user.businessCard?.location || '',
       });
       linksForm.reset({
-        links: user.links.map((link, index) => ({...link, id: `link-${index}`})) || [],
+        links: user.links.map((link, index) => ({...link, id: `link-${index}`})),
       });
       setCroppedImageUrl(user.avatarUrl || null);
     }
-  }, [user, publicProfileForm, businessCardForm, linksForm]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   const watchedPublicProfile = publicProfileForm.watch();
   const watchedBusinessCard = businessCardForm.watch();

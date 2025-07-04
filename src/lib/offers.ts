@@ -96,6 +96,6 @@ export const getOfferAndAuthor = async (offerId: string): Promise<{ offer: Offer
         return null;
     }
 
-    const author = { ...userDoc.data(), id: userDoc.id } as User;
+    const author = { uid: userDoc.id, ...userDoc.data() } as User;
     return { offer, author };
 }
