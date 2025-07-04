@@ -3,91 +3,73 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper function to check if a user is authenticated
-    function isAuthenticated() {
-      return request.auth != null;
+    // Default deny all access
+    match /{document=**} {
+      allow read, write: if false;
     }
 
-    // Helper function to check if the user is the owner of a document
-    function isOwner(userId) {
-      return request.auth.uid == userId;
-    }
-
-    // Users: Can read all, can only create/update their own profile
+    // Users can be read by any authenticated user.
+    // A user can create their own profile and update it.
+    // We also allow a specific rule for updating 'following' and 'subscribers' for the connections feature.
     match /users/{userId} {
-      allow read;
-      allow create: if isOwner(userId);
-      // Allow users to update their own profile. Also allow any authenticated user to
-      // update the `following` and `subscribers` fields of another user, which is necessary
-      // for the follow/unfollow functionality.
-      allow update: if isAuthenticated() && (isOwner(userId) || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['following', 'subscribers']));
-    }
-
-    // Posts: Can read all, can only create/delete their own posts
-    match /posts/{postId} {
-      allow read;
-      allow create: if isAuthenticated() && isOwner(request.resource.data.authorId);
-      // Allow owner to update/delete, allow any authenticated user to update likes
-      allow update: if isAuthenticated() && (isOwner(resource.data.authorId) || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes', 'likedBy']));
-      allow delete: if isAuthenticated() && isOwner(resource.data.authorId);
-    }
-
-    // Businesses: Can read all, can only create/update/delete their own
-    match /businesses/{businessId} {
-        allow read;
-        allow create: if isAuthenticated() && isOwner(request.resource.data.authorId);
-        allow update, delete: if isAuthenticated() && isOwner(resource.data.authorId);
+      allow read: if request.auth != null;
+      allow create: if request.auth.uid == userId;
+      
+      // Allow user to update their own profile, except for the subscribers count which is handled by the rule below
+      allow update: if request.auth.uid == userId && !('subscribers' in request.resource.data.diff(resource.data).affectedKeys());
+      
+      // Allow any authenticated user to increment/decrement subscribers by exactly 1.
+      // This is for the follow/unfollow functionality.
+      allow update: if request.auth != null
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['subscribers'])
+                    && (request.resource.data.subscribers == resource.data.subscribers + 1 || request.resource.data.subscribers == resource.data.subscribers - 1);
     }
     
-    // Listings: Can read all, can only create/update/delete their own
-    match /listings/{listingId} {
-      allow read;
-      allow create: if isAuthenticated() && isOwner(request.resource.data.authorId);
-      allow update, delete: if isAuthenticated() && isOwner(resource.data.authorId);
+    // Public content collections can be read by anyone.
+    // Create, update, and delete are restricted to the author.
+    match /(businesses|listings|jobs|offers)/{docId} {
+        allow read: if true;
+        allow create: if request.auth.uid == request.resource.data.authorId;
+        allow update, delete: if request.auth.uid == resource.data.authorId;
     }
 
-    // Jobs: Can read all, can only create/update/delete their own
-    match /jobs/{jobId} {
-      allow read;
-      allow create: if isAuthenticated() && isOwner(request.resource.data.authorId);
-      allow update, delete: if isAuthenticated() && isOwner(resource.data.authorId);
-    }
-    
-    // Offers: Can read all, can only create/update/delete their own
-    match /offers/{offerId} {
-        allow read;
-        allow create: if isAuthenticated() && isOwner(request.resource.data.authorId);
-        allow update, delete: if isAuthenticated() && isOwner(resource.data.authorId);
-    }
-
-    // Events: Can read all, can only create/delete their own. Any authenticated user can RSVP.
+    // Events have special rules for RSVPs.
     match /events/{eventId} {
-      allow read;
-      allow create: if isAuthenticated() && isOwner(request.resource.data.authorId);
-      // Allow owner to update all fields. Allow any authenticated user to update only the `rsvps` array.
-      allow update: if isAuthenticated() && (isOwner(resource.data.authorId) || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['rsvps']));
-      allow delete: if isAuthenticated() && isOwner(resource.data.authorId);
-    }
-    
-    // Diary Notes: Can only be created, read, updated, and deleted by the owner.
-    match /diaryNotes/{noteId} {
-        allow read, update, delete: if isAuthenticated() && isOwner(resource.data.userId);
-        allow create: if isAuthenticated() && isOwner(request.resource.data.userId);
+        allow read: if true;
+        allow create, delete: if request.auth.uid == request.resource.data.authorId;
+        
+        // Author can update their own event
+        allow update: if request.auth.uid == resource.data.authorId;
+        
+        // Any authenticated user can update the rsvps array for themself
+        allow update: if request.auth != null 
+                      && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['rsvps']);
     }
 
-    // Notifications: Can only be created by an authenticated user. Can only be read/updated by the recipient.
-    match /notifications/{notificationId} {
-      allow create: if isAuthenticated();
-      allow read, update: if isAuthenticated() && isOwner(resource.data.userId);
-      // No delete for now to preserve history, or can be restricted to owner
-      allow delete: if isAuthenticated() && isOwner(resource.data.userId);
+    // Posts have special rules for likes.
+    match /posts/{postId} {
+        allow read: if request.auth != null;
+        allow create: if request.auth.uid == request.resource.data.authorId;
+        
+        // Author can update their own post
+        allow update: if request.auth.uid == resource.data.authorId;
+        
+        // Any authenticated user can update the likes/likedBy fields
+        allow update: if request.auth != null 
+                      && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes', 'likedBy']);
     }
-    
-    // Reminders: Can only be created, read, and updated by the owner.
-    match /reminders/{reminderId} {
-        allow read, update: if isAuthenticated() && isOwner(resource.data.userId);
-        allow create: if isAuthenticated() && isOwner(request.resource.data.userId);
-        allow delete: if isAuthenticated() && isOwner(resource.data.userId);
+
+    // Private collections can only be accessed by the user they belong to.
+    match /(diaryNotes|reminders)/{docId} {
+      allow read, write: if request.auth.uid == resource.data.userId;
+    }
+
+    // Notifications can be created by an "actor" for another "userId".
+    // Only the receiving "userId" can read or update (e.g., mark as read).
+    match /notifications/{notificationId} {
+      allow read, update: if request.auth.uid == resource.data.userId;
+      allow create: if request.auth.uid == request.resource.data.actorId;
+      allow delete: if false; // Don't allow client-side deletes
     }
   }
 }
