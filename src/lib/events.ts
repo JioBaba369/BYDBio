@@ -353,8 +353,8 @@ export const getCalendarItems = async (userId: string) => {
         else if (item.publishDate) primaryDate = item.publishDate;
 
 
-        dateFields.date = (primaryDate as Timestamp).toDate();
-        if (item.endDate) dateFields.endDate = (item.endDate as Timestamp).toDate();
+        dateFields.date = (primaryDate as Timestamp).toDate().toISOString();
+        if (item.endDate) dateFields.endDate = (item.endDate as Timestamp).toDate().toISOString();
         
         const author = authorMap.get(item.authorId);
         return {

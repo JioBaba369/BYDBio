@@ -34,7 +34,7 @@ import { format } from 'date-fns';
 type CalendarItem = {
   id: string;
   type: 'Event' | 'Offer' | 'Job' | 'Listing';
-  date: Date;
+  date: string;
   title: string;
   description: string;
   location?: string;
@@ -112,7 +112,7 @@ export default function CalendarPage() {
                             return {
                                 id: item.id,
                                 type: 'Event' as const,
-                                date: item.date as Date,
+                                date: item.date,
                                 title: item.title,
                                 description: `Event at ${item.location}`,
                                 location: item.location,
@@ -127,7 +127,7 @@ export default function CalendarPage() {
                              return {
                                 id: item.id,
                                 type: 'Offer' as const,
-                                date: item.date as Date,
+                                date: item.date,
                                 title: item.title,
                                 description: item.description,
                                 category: item.category,
@@ -142,7 +142,7 @@ export default function CalendarPage() {
                              return {
                                 id: item.id,
                                 type: 'Job' as const,
-                                date: item.date as Date,
+                                date: item.date,
                                 title: item.title,
                                 description: `${item.type} at ${item.company}`,
                                 company: item.company,
@@ -159,7 +159,7 @@ export default function CalendarPage() {
                              return {
                                 id: item.id,
                                 type: 'Listing' as const,
-                                date: item.date as Date,
+                                date: item.date,
                                 title: item.title,
                                 description: item.description,
                                 category: item.category,
