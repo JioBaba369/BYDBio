@@ -9,7 +9,7 @@ service cloud.firestore {
     }
 
     function isOwner(userId) {
-      return request.auth.uid == userId;
+      return isUserAuthenticated() && request.auth.uid == userId;
     }
 
     // --- COLLECTION RULES ---
@@ -17,8 +17,8 @@ service cloud.firestore {
     // USER PROFILES
     match /users/{userId} {
       allow read: if true;
-      allow create: if isUserAuthenticated() && isOwner(userId);
-      allow delete: if false; // Deletion handled by backend function for safety
+      allow create: if isOwner(userId);
+      allow delete: if isOwner(userId); // Deletion handled by backend function for safety
       allow update: if
         // Rule 1: Allow owner to update their own profile fields.
         (isOwner(userId) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'username', 'handle', 'bio', 'avatarUrl', 'avatarFallback', 'links', 'businessCard', 'notificationSettings', 'following', 'searchableKeywords']))

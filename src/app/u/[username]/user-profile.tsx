@@ -67,7 +67,8 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
   
   useEffect(() => {
     setIsFollowing(currentUser?.following?.includes(userProfileData.uid) || false);
-  }, [currentUser, userProfileData.uid]);
+    setFollowerCount(userProfileData.followerCount || 0);
+  }, [currentUser, userProfileData]);
   
   const { toast } = useToast();
   
@@ -106,6 +107,7 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
     setIsFollowLoading(true);
     const currentlyFollowing = isFollowing;
 
+    // Optimistic UI Update
     setIsFollowing(!currentlyFollowing);
     setFollowerCount(prev => prev + (!currentlyFollowing ? 1 : -1));
 
@@ -118,6 +120,7 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
             toast({ title: `You are now following ${userProfileData.name}` });
         }
     } catch (error) {
+        // Rollback on error
         setIsFollowing(currentlyFollowing);
         setFollowerCount(prev => prev + (currentlyFollowing ? 1 : -1));
         toast({ title: "Something went wrong", variant: "destructive" });
