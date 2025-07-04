@@ -9,6 +9,9 @@ import { getJob, updateJob, type Job } from "@/lib/jobs";
 import { uploadImage } from "@/lib/storage";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/components/auth-provider";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 
 const EditJobPageSkeleton = () => (
     <div className="space-y-6">
@@ -90,9 +93,17 @@ export default function EditOpportunityPage() {
 
     return (
         <div className="space-y-6">
-            <div>
-                <h1 className="text-2xl sm:text-3xl font-bold font-headline">Edit Opportunity</h1>
-                <p className="text-muted-foreground">Modify the details of the job opportunity below.</p>
+            <div className="flex items-start justify-between">
+                <div>
+                    <h1 className="text-2xl sm:text-3xl font-bold font-headline">Edit Opportunity</h1>
+                    <p className="text-muted-foreground">Modify the details of the job opportunity below.</p>
+                </div>
+                 <Button asChild variant="outline">
+                    <Link href="/opportunities">
+                        <ArrowLeft className="mr-2 h-4 w-4" />
+                        Back to Opportunities
+                    </Link>
+                </Button>
             </div>
             <OpportunityForm defaultValues={jobToEdit} onSubmit={onSubmit} isSaving={isSaving} />
         </div>

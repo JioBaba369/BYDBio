@@ -55,7 +55,7 @@ END:VCARD`;
             <Button asChild variant="ghost" size="sm">
             <Link href={`/u/${user.username}`} className="inline-flex items-center gap-2 text-muted-foreground hover:text-primary">
                 <ArrowLeft className="h-4 w-4" />
-                Back to Profile
+                Back to {user.name}'s Profile
             </Link>
             </Button>
         </div>

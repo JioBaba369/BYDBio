@@ -9,6 +9,9 @@ import { getEvent, updateEvent, type Event } from "@/lib/events";
 import { uploadImage } from "@/lib/storage";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/components/auth-provider";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 
 const EditEventPageSkeleton = () => (
     <div className="space-y-6">
@@ -90,9 +93,17 @@ export default function EditEventPage() {
 
     return (
         <div className="space-y-6">
-            <div>
-                <h1 className="text-2xl sm:text-3xl font-bold font-headline">Edit Event</h1>
-                <p className="text-muted-foreground">Modify the details of your event below.</p>
+            <div className="flex items-start justify-between">
+                <div>
+                    <h1 className="text-2xl sm:text-3xl font-bold font-headline">Edit Event</h1>
+                    <p className="text-muted-foreground">Modify the details of your event below.</p>
+                </div>
+                 <Button asChild variant="outline">
+                    <Link href="/events">
+                        <ArrowLeft className="mr-2 h-4 w-4" />
+                        Back to Events
+                    </Link>
+                </Button>
             </div>
             <EventForm defaultValues={eventToEdit} onSubmit={onSubmit} isSaving={isSaving} />
         </div>

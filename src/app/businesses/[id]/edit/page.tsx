@@ -9,6 +9,9 @@ import { getBusiness, updateBusiness, type Business } from "@/lib/businesses";
 import { Skeleton } from "@/components/ui/skeleton";
 import { uploadImage } from "@/lib/storage";
 import { useAuth } from "@/components/auth-provider";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 
 const EditBusinessPageSkeleton = () => (
     <div className="space-y-6">
@@ -95,9 +98,17 @@ export default function EditBusinessPage() {
 
     return (
         <div className="space-y-6">
-            <div>
-                <h1 className="text-2xl sm:text-3xl font-bold font-headline">Edit Business Page</h1>
-                <p className="text-muted-foreground">Modify the details of your business below.</p>
+            <div className="flex items-start justify-between">
+                <div>
+                    <h1 className="text-2xl sm:text-3xl font-bold font-headline">Edit Business Page</h1>
+                    <p className="text-muted-foreground">Modify the details of your business below.</p>
+                </div>
+                <Button asChild variant="outline">
+                    <Link href="/businesses">
+                        <ArrowLeft className="mr-2 h-4 w-4" />
+                        Back to Businesses
+                    </Link>
+                </Button>
             </div>
             <BusinessForm defaultValues={businessToEdit} onSubmit={onSubmit} isSaving={isSaving} />
         </div>
