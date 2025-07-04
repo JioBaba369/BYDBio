@@ -18,9 +18,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/components/auth-provider";
 import { Skeleton } from "@/components/ui/skeleton";
 import { deleteUserAccount, updateUser, type NotificationSettings } from "@/lib/users";
-import { sendPasswordResetEmail } from "firebase/auth";
-import { auth } from "@/lib/firebase";
 import { useSearchParams } from 'next/navigation';
+import { ChangePasswordDialog } from "@/components/change-password-dialog";
 
 const SettingsPageSkeleton = () => (
     <div className="space-y-6">
@@ -59,6 +58,7 @@ export default function SettingsPage() {
     const { toast } = useToast();
     
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+    const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
 
     const searchParams = useSearchParams();
     const tabParam = searchParams.get('tab');
@@ -113,32 +113,6 @@ export default function SettingsPage() {
         }
     };
 
-    const handleSendResetEmail = async () => {
-        if (!user?.email) {
-            toast({
-                title: "Error",
-                description: "No email address found for this account.",
-                variant: "destructive",
-            });
-            return;
-        }
-        try {
-            await sendPasswordResetEmail(auth, user.email);
-            toast({
-                title: "Reset Link Sent",
-                description: "A password reset link has been sent to your email address.",
-            });
-        } catch (error: any) {
-            console.error("Password reset error:", error);
-            toast({
-                title: "Error Sending Link",
-                description: error.message || "An unexpected error occurred.",
-                variant: "destructive",
-            });
-        }
-    };
-
-
     if (loading || !user) {
         return <SettingsPageSkeleton />;
     }
@@ -153,6 +127,7 @@ export default function SettingsPage() {
                 confirmationText={user.username}
                 confirmationLabel={`This action is permanent. To confirm, please type your username "${user.username}" below.`}
             />
+            <ChangePasswordDialog open={isChangePasswordOpen} onOpenChange={setIsChangePasswordOpen} />
             <div className="space-y-6">
                 <div>
                     <h1 className="text-2xl sm:text-3xl font-bold font-headline">Settings</h1>
@@ -305,10 +280,10 @@ export default function SettingsPage() {
                                     <div>
                                         <p className="font-medium">Change Password</p>
                                         <p className="text-sm text-muted-foreground">
-                                            We will send a secure link to your email to reset your password.
+                                            Update your password. You will need to enter your current password.
                                         </p>
                                     </div>
-                                    <Button variant="outline" onClick={handleSendResetEmail}>Send Reset Link</Button>
+                                    <Button variant="outline" onClick={() => setIsChangePasswordOpen(true)}>Change Password</Button>
                                 </div>
                                 <Separator />
                                 <div className="flex items-center justify-between">

@@ -9,6 +9,9 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useState } from "react";
+import { useAuth } from "./auth-provider";
+import { useToast } from "@/hooks/use-toast";
+import { EmailAuthProvider, reauthenticateWithCredential, updatePassword } from "firebase/auth";
 
 const changePasswordSchema = z.object({
   currentPassword: z.string().min(1, "Current password is required."),
@@ -24,11 +27,12 @@ type ChangePasswordFormValues = z.infer<typeof changePasswordSchema>;
 interface ChangePasswordDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onConfirm: (values: ChangePasswordFormValues) => void;
 }
 
-export function ChangePasswordDialog({ open, onOpenChange, onConfirm }: ChangePasswordDialogProps) {
+export function ChangePasswordDialog({ open, onOpenChange }: ChangePasswordDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { firebaseUser } = useAuth();
+  const { toast } = useToast();
 
   const form = useForm<ChangePasswordFormValues>({
     resolver: zodResolver(changePasswordSchema),
@@ -39,15 +43,41 @@ export function ChangePasswordDialog({ open, onOpenChange, onConfirm }: ChangePa
     },
   });
 
-  const onSubmit = (data: ChangePasswordFormValues) => {
+  const onSubmit = async (data: ChangePasswordFormValues) => {
+    if (!firebaseUser || !firebaseUser.email) {
+        toast({ title: "Error", description: "You must be logged in to change your password.", variant: "destructive" });
+        return;
+    }
+
     setIsSubmitting(true);
-    // In a real app, you'd call an API here.
-    console.log("Change password data:", data);
-    setTimeout(() => {
-        onConfirm(data);
-        setIsSubmitting(false);
-        form.reset();
-    }, 1000);
+    try {
+      const credential = EmailAuthProvider.credential(firebaseUser.email, data.currentPassword);
+      await reauthenticateWithCredential(firebaseUser, credential);
+      await updatePassword(firebaseUser, data.newPassword);
+      
+      toast({
+        title: "Password Changed",
+        description: "Your password has been updated successfully.",
+      });
+      form.reset();
+      onOpenChange(false);
+    } catch (error: any) {
+      console.error("Change password error:", error);
+      let description = "An unexpected error occurred.";
+      if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+          description = "The current password you entered is incorrect.";
+          form.setError("currentPassword", { type: "manual", message: description });
+      } else if (error.code === 'auth/too-many-requests') {
+          description = "Too many attempts. Please try again later.";
+      }
+      toast({
+        title: "Error Changing Password",
+        description: description,
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
