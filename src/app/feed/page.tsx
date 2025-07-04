@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
-import { Heart, Image as ImageIcon, MessageCircle, MoreHorizontal, Share2, Send, X, Users } from "lucide-react"
+import { Heart, Image as ImageIcon, MessageCircle, MoreHorizontal, Share2, Send, X, Users, Trash2 } from "lucide-react"
 import Image from "next/image"
 import HashtagSuggester from "@/components/ai/hashtag-suggester"
 import { useState, useRef, useEffect } from "react";
@@ -14,11 +14,13 @@ import { useToast } from "@/hooks/use-toast"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
 import ImageCropper from "@/components/image-cropper"
-import { getFeedPosts, createPost, toggleLikePost, Post } from "@/lib/posts"
+import { getFeedPosts, createPost, toggleLikePost, Post, deletePost } from "@/lib/posts"
 import { type User } from "@/lib/users"
 import { Skeleton } from "@/components/ui/skeleton"
 import { uploadImage } from "@/lib/storage"
 import { ClientFormattedDate } from "@/components/client-formatted-date"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog"
 
 type FeedItem = Omit<Post, 'createdAt'> & { createdAt: string; author: User; isLiked: boolean; };
 
@@ -43,50 +45,6 @@ const PostCardSkeleton = () => (
     </Card>
 );
 
-const PostCard = ({ item, handleLike }: { item: FeedItem, handleLike: (postId: string) => void }) => (
-    <Card key={item.id}>
-        <CardHeader className="p-4">
-        <div className="flex items-center justify-between">
-            <Link href={`/u/${item.author.handle}`} className="flex items-center gap-3 hover:underline">
-            <Avatar>
-                <AvatarImage src={item.author.avatarUrl} data-ai-hint="person portrait"/>
-                <AvatarFallback>{item.author.name.charAt(0)}</AvatarFallback>
-            </Avatar>
-            <div>
-                <p className="font-semibold">{item.author.name}</p>
-                <p className="text-sm text-muted-foreground">@{item.author.handle} · <ClientFormattedDate date={item.createdAt} relative /></p>
-            </div>
-            </Link>
-            <Button variant="ghost" size="icon">
-            <MoreHorizontal className="h-5 w-5" />
-            </Button>
-        </div>
-        </CardHeader>
-        <CardContent className="p-4 pt-0">
-        <p className="whitespace-pre-wrap">{item.content}</p>
-        {item.imageUrl && (
-            <div className="mt-4 rounded-lg overflow-hidden border">
-            <Image src={item.imageUrl} alt="Post image" width={600} height={400} className="object-cover" data-ai-hint="office workspace"/>
-            </div>
-        )}
-        </CardContent>
-        <CardFooter className="flex justify-between p-4 border-t">
-        <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground hover:text-primary" onClick={() => handleLike(item.id)}>
-            <Heart className={cn("h-5 w-5", item.isLiked && "fill-red-500 text-red-500")} />
-            <span>{item.likes}</span>
-        </Button>
-        <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground">
-            <MessageCircle className="h-5 w-5" />
-            <span>{item.comments}</span>
-        </Button>
-        <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground">
-            <Share2 className="h-5 w-5" />
-            <span>Share</span>
-        </Button>
-        </CardFooter>
-    </Card>
-);
-
 export default function FeedPage() {
   const { user, loading: authLoading } = useAuth();
   const [postContent, setPostContent] = useState('');
@@ -98,6 +56,9 @@ export default function FeedPage() {
   const [croppedImageUrl, setCroppedImageUrl] = useState<string | null>(null);
   const [isCropperOpen, setIsCropperOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [postToDelete, setPostToDelete] = useState<FeedItem | null>(null);
 
   const fetchFeed = async () => {
     if (!user) return;
@@ -191,6 +152,90 @@ export default function FeedPage() {
     }
   };
   
+  const openDeleteDialog = (post: FeedItem) => {
+    setPostToDelete(post);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!postToDelete) return;
+
+    // Optimistic update
+    setFeedItems(prev => prev.filter(item => item.id !== postToDelete.id));
+    
+    try {
+        await deletePost(postToDelete.id);
+        toast({ title: "Post Deleted" });
+    } catch (error) {
+        console.error("Error deleting post:", error);
+        toast({ title: "Failed to delete post", variant: "destructive" });
+        // Revert on error
+        fetchFeed();
+    } finally {
+        setIsDeleteDialogOpen(false);
+        setPostToDelete(null);
+    }
+  };
+
+  const PostCard = ({ item, handleLike, openDeleteDialog }: { item: FeedItem, handleLike: (postId: string) => void, openDeleteDialog: (post: FeedItem) => void }) => {
+    const isOwner = user?.uid === item.author.uid;
+
+    return (
+        <Card key={item.id}>
+            <CardHeader className="p-4">
+            <div className="flex items-center justify-between">
+                <Link href={`/u/${item.author.handle}`} className="flex items-center gap-3 hover:underline">
+                <Avatar>
+                    <AvatarImage src={item.author.avatarUrl} data-ai-hint="person portrait"/>
+                    <AvatarFallback>{item.author.name.charAt(0)}</AvatarFallback>
+                </Avatar>
+                <div>
+                    <p className="font-semibold">{item.author.name}</p>
+                    <p className="text-sm text-muted-foreground">@{item.author.handle} · <ClientFormattedDate date={item.createdAt} relative /></p>
+                </div>
+                </Link>
+                {isOwner && (
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <MoreHorizontal className="h-5 w-5" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => openDeleteDialog(item)} className="text-destructive cursor-pointer">
+                                <Trash2 className="mr-2 h-4 w-4" /> Delete Post
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                )}
+            </div>
+            </CardHeader>
+            <CardContent className="p-4 pt-0">
+            <p className="whitespace-pre-wrap">{item.content}</p>
+            {item.imageUrl && (
+                <div className="mt-4 rounded-lg overflow-hidden border">
+                <Image src={item.imageUrl} alt="Post image" width={600} height={400} className="object-cover" data-ai-hint="office workspace"/>
+                </div>
+            )}
+            </CardContent>
+            <CardFooter className="flex justify-between p-4 border-t">
+            <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground hover:text-primary" onClick={() => handleLike(item.id)}>
+                <Heart className={cn("h-5 w-5", item.isLiked && "fill-red-500 text-red-500")} />
+                <span>{item.likes}</span>
+            </Button>
+            <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground">
+                <MessageCircle className="h-5 w-5" />
+                <span>{item.comments}</span>
+            </Button>
+            <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground">
+                <Share2 className="h-5 w-5" />
+                <span>Share</span>
+            </Button>
+            </CardFooter>
+        </Card>
+    );
+  };
+  
   if (authLoading) {
       return (
          <div className="max-w-2xl mx-auto space-y-6">
@@ -212,6 +257,13 @@ export default function FeedPage() {
         onCropComplete={handleCropComplete}
         aspectRatio={16 / 9}
         isRound={false}
+      />
+      <DeleteConfirmationDialog 
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        onConfirm={handleConfirmDelete}
+        itemName="post"
+        itemDescription="This will permanently delete the post from your feed. This action cannot be undone."
       />
       <div className="max-w-2xl mx-auto space-y-6">
         <h1 className="text-2xl sm:text-3xl font-bold font-headline">Status Feed</h1>
@@ -267,7 +319,7 @@ export default function FeedPage() {
                 <PostCardSkeleton />
             ) : feedItems.length > 0 ? (
                 feedItems.map(item => (
-                    <PostCard key={item.id} item={item} handleLike={handleLike} />
+                    <PostCard key={item.id} item={item} handleLike={handleLike} openDeleteDialog={openDeleteDialog} />
                 ))
             ) : (
               <Card>
