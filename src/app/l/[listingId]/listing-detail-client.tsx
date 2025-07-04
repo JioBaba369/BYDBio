@@ -1,10 +1,11 @@
+
 'use client';
 
 import type { Listing, User } from '@/lib/users';
 import Image from 'next/image';
-import { Card, CardContent, CardTitle, CardDescription, CardHeader } from '@/components/ui/card';
+import { Card, CardContent, CardTitle, CardDescription, CardHeader, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Tag, DollarSign, MessageSquare, Calendar, Edit } from 'lucide-react';
+import { ArrowLeft, Tag, DollarSign, MessageSquare, Calendar, Edit, ShoppingCart } from 'lucide-react';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -82,6 +83,14 @@ export default function ListingDetailClient({ listing, author }: ListingDetailCl
                                 <h3 className="font-semibold text-lg mb-2 mt-4">Description</h3>
                                 <p className="text-muted-foreground whitespace-pre-wrap">{listing.description}</p>
                             </CardContent>
+                            <CardFooter>
+                                <Button asChild size="lg" className="w-full">
+                                    <Link href={`/u/${author.username}#contact`}>
+                                        <ShoppingCart className="mr-2 h-5 w-5" />
+                                        {listing.listingType === 'rental' ? 'Rent Now' : 'Buy Now'}
+                                    </Link>
+                                </Button>
+                            </CardFooter>
                         </Card>
                     </div>
                     <div className="md:col-span-1 space-y-6">

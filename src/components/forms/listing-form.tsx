@@ -18,12 +18,14 @@ import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover"
 import { Calendar } from "../ui/calendar"
 import { cn } from "@/lib/utils"
 import { format } from "date-fns"
+import { RadioGroup, RadioGroupItem } from "../ui/radio-group"
 
 const listingFormSchema = z.object({
   title: z.string().min(2, "Title must be at least 2 characters.").max(100, "Title must not be longer than 100 characters."),
   description: z.string().min(10, "Description must be at least 10 characters.").max(500, "Description must not be longer than 500 characters."),
   price: z.string().min(1, "Price is required."),
   category: z.string().min(2, "Category is required."),
+  listingType: z.enum(['sale', 'rental']).default('sale'),
   imageUrl: z.string().optional().nullable(),
   startDate: z.date().optional().nullable(),
   endDate: z.date().optional().nullable(),
@@ -59,6 +61,7 @@ export function ListingForm({ defaultValues, onSubmit, isSaving }: ListingFormPr
       description: "",
       price: "",
       category: "",
+      listingType: 'sale',
       imageUrl: null,
       startDate: null,
       endDate: null,
@@ -142,6 +145,40 @@ export function ListingForm({ defaultValues, onSubmit, isSaving }: ListingFormPr
                                     </FormItem>
                                 )}
                             />
+                             <FormField
+                                control={form.control}
+                                name="listingType"
+                                render={({ field }) => (
+                                    <FormItem className="space-y-3">
+                                    <FormLabel>Listing Type</FormLabel>
+                                    <FormControl>
+                                        <RadioGroup
+                                        onValueChange={field.onChange}
+                                        defaultValue={field.value}
+                                        className="flex gap-x-6"
+                                        >
+                                        <FormItem className="flex items-center space-x-3 space-y-0">
+                                            <FormControl>
+                                            <RadioGroupItem value="sale" />
+                                            </FormControl>
+                                            <FormLabel className="font-normal">
+                                            For Sale
+                                            </FormLabel>
+                                        </FormItem>
+                                        <FormItem className="flex items-center space-x-3 space-y-0">
+                                            <FormControl>
+                                            <RadioGroupItem value="rental" />
+                                            </FormControl>
+                                            <FormLabel className="font-normal">
+                                            For Rent
+                                            </FormLabel>
+                                        </FormItem>
+                                        </RadioGroup>
+                                    </FormControl>
+                                    <FormMessage />
+                                    </FormItem>
+                                )}
+                                />
                             <div className="grid grid-cols-2 gap-4">
                                 <FormField
                                     control={form.control}
@@ -150,7 +187,7 @@ export function ListingForm({ defaultValues, onSubmit, isSaving }: ListingFormPr
                                         <FormItem>
                                         <FormLabel>Price</FormLabel>
                                         <FormControl>
-                                            <Input placeholder="$25" {...field} />
+                                            <Input placeholder="$25 or $100/day" {...field} />
                                         </FormControl>
                                         <FormMessage />
                                         </FormItem>

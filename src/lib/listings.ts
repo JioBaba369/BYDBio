@@ -24,6 +24,7 @@ export type Listing = {
   imageUrl: string | null;
   category: string;
   status: 'active' | 'archived';
+  listingType?: 'sale' | 'rental';
   views?: number;
   clicks?: number;
   startDate?: Timestamp | Date | string | null;
@@ -78,6 +79,7 @@ export const createListing = async (userId: string, data: Omit<Listing, 'id' | '
     authorId: userId,
     createdAt: serverTimestamp(),
     status: 'active',
+    listingType: data.listingType || 'sale',
     views: 0,
     clicks: 0,
     searchableKeywords: [...new Set(keywords)],

@@ -53,6 +53,7 @@ export type Listing = {
   price: string;
   imageUrl: string | null;
   category: string;
+  listingType?: 'sale' | 'rental';
   status: 'active' | 'archived';
   startDate?: Timestamp | Date | string | null;
   endDate?: Timestamp | Date | string | null;
