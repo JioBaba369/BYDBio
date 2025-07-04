@@ -291,7 +291,7 @@ export default function ProfilePage() {
   async function onPublicProfileSubmit(data: PublicProfileFormValues) {
     if (!firebaseUser) return;
     try {
-      await updateUser(firebaseUser.uid, { name: data.name, username: data.username, bio: data.bio });
+      await updateUser(firebaseUser.uid, { name: data.name, username: data.username, handle: data.username, bio: data.bio });
       toast({
         title: "Profile Saved",
         description: "Your public information has been updated.",
