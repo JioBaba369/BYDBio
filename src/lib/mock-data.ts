@@ -8,6 +8,6 @@ const fullCurrentUser = allUsers.find(u => u.id === CURRENT_USER_ID)!;
 
 export const currentUser = {
   ...fullCurrentUser,
-  email: "jane.doe@example.com",
+  email: "jiobaba369@gmail.com",
   rsvpedEventIds: ['event4-1'],
 };
