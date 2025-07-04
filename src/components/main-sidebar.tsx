@@ -33,6 +33,7 @@ import {
   Bell,
   BookUser,
   BookText,
+  DraftingCompass,
 } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -199,6 +200,14 @@ export function MainSidebar() {
               <Link href="/profile">
                 <User />
                 <span>Profile Editor</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild tooltip="Wireframe" isActive={isActive('/wireframe')}>
+              <Link href="/wireframe">
+                <DraftingCompass />
+                <span>Wireframe</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
