@@ -50,8 +50,8 @@ export default function CreateOpportunityPage() {
     return (
         <div className="space-y-6">
             <div>
-                <h1 className="text-2xl sm:text-3xl font-bold font-headline">Post New Opportunity</h1>
-                <p className="text-muted-foreground">Fill out the form below to post a new job opportunity.</p>
+                <h1 className="text-2xl sm:text-3xl font-bold font-headline">Create an Opportunity</h1>
+                <p className="text-muted-foreground">Share a new job posting with your network. Fill out the details below to attract the best candidates.</p>
             </div>
             <OpportunityForm onSubmit={onSubmit} isSaving={isSaving} />
         </div>
