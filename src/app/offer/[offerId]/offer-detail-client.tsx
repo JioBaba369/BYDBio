@@ -12,6 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Logo } from '@/components/logo';
 import { useState, useEffect } from 'react';
 import { format, parseISO } from 'date-fns';
+import ShareButton from '@/components/share-button';
 
 // This component safely formats the date on the client-side to prevent hydration errors.
 function ClientFormattedDate({ dateString, formatStr }: { dateString: string, formatStr: string }) {
@@ -57,14 +58,19 @@ export default function OfferDetailClient({ offer, author }: OfferDetailClientPr
                                 </div>
                             )}
                             <CardHeader>
-                                <Badge variant="secondary" className="w-fit"><Tag className="mr-1 h-3 w-3" />{offer.category}</Badge>
-                                <CardTitle className="text-3xl font-bold font-headline pt-2">{offer.title}</CardTitle>
-                                <CardDescription className="text-base pt-2">
-                                  <div className="flex items-center text-sm text-muted-foreground">
-                                    <Calendar className="mr-2 h-4 w-4" /> 
-                                    <span>Releases: <ClientFormattedDate dateString={offer.releaseDate} formatStr="PPP" /></span>
-                                  </div>
-                                </CardDescription>
+                                <div className="flex justify-between items-start gap-4">
+                                    <div className="flex-1">
+                                        <Badge variant="secondary" className="w-fit"><Tag className="mr-1 h-3 w-3" />{offer.category}</Badge>
+                                        <CardTitle className="text-3xl font-bold font-headline pt-2">{offer.title}</CardTitle>
+                                        <CardDescription className="text-base pt-2">
+                                        <div className="flex items-center text-sm text-muted-foreground">
+                                            <Calendar className="mr-2 h-4 w-4" /> 
+                                            <span>Releases: <ClientFormattedDate dateString={offer.releaseDate as string} formatStr="PPP" /></span>
+                                        </div>
+                                        </CardDescription>
+                                    </div>
+                                    <ShareButton />
+                                </div>
                             </CardHeader>
                             <CardContent>
                                 <h3 className="font-semibold text-lg mb-2">About this offer</h3>

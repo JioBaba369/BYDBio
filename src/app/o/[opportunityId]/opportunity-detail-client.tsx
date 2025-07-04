@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { Job, User } from '@/lib/users';
@@ -9,6 +10,7 @@ import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Logo } from '@/components/logo';
+import ShareButton from '@/components/share-button';
 
 interface OpportunityDetailClientProps {
     job: Job;
@@ -47,7 +49,10 @@ export default function OpportunityDetailClient({ job, author }: OpportunityDeta
                                 {job.company}
                             </CardDescription>
                         </div>
-                        <Button size="lg" className="w-full sm:w-auto">Apply Now</Button>
+                        <div className="flex items-center gap-2 w-full sm:w-auto shrink-0">
+                            <Button size="lg" className="flex-1 sm:flex-none">Apply Now</Button>
+                            <ShareButton variant="outline" size="lg" />
+                        </div>
                     </CardHeader>
                     <CardContent>
                         <div className="flex items-center gap-4 text-muted-foreground mt-4">

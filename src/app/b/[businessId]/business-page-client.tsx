@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Mail, Phone, Globe, MapPin, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { Logo } from '@/components/logo';
+import ShareButton from '@/components/share-button';
 
 interface BusinessPageClientProps {
     business: Business;
@@ -50,7 +51,10 @@ export default function BusinessPageClient({ business, author }: BusinessPageCli
                                 />
                             )}
                             <div className="pt-16 flex-1">
-                                <CardTitle className="text-3xl font-bold font-headline">{business.name}</CardTitle>
+                                <div className="flex justify-between items-start gap-4">
+                                    <CardTitle className="text-3xl font-bold font-headline">{business.name}</CardTitle>
+                                    <ShareButton />
+                                </div>
                                 <CardDescription className="text-base pt-2">{business.description}</CardDescription>
                             </div>
                         </div>

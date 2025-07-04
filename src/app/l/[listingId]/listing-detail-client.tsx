@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { Listing, User } from '@/lib/users';
@@ -9,6 +10,7 @@ import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Logo } from '@/components/logo';
+import ShareButton from '@/components/share-button';
 
 interface ListingDetailClientProps {
     listing: Listing;
@@ -41,10 +43,15 @@ export default function ListingDetailClient({ listing, author }: ListingDetailCl
                                 </div>
                             )}
                             <CardHeader>
-                                <CardTitle className="text-3xl font-bold font-headline">{listing.title}</CardTitle>
-                                <div className="flex items-center gap-4 pt-2">
-                                     <Badge variant="secondary"><Tag className="mr-1 h-3 w-3" />{listing.category}</Badge>
-                                     <p className="font-bold text-2xl text-primary flex items-center"><DollarSign className="mr-1 h-6 w-6" />{listing.price}</p>
+                                <div className="flex justify-between items-start gap-4">
+                                    <div>
+                                        <CardTitle className="text-3xl font-bold font-headline">{listing.title}</CardTitle>
+                                        <div className="flex items-center gap-4 pt-2">
+                                            <Badge variant="secondary"><Tag className="mr-1 h-3 w-3" />{listing.category}</Badge>
+                                            <p className="font-bold text-2xl text-primary flex items-center"><DollarSign className="mr-1 h-6 w-6" />{listing.price}</p>
+                                        </div>
+                                    </div>
+                                    <ShareButton />
                                 </div>
                             </CardHeader>
                             <CardContent>
