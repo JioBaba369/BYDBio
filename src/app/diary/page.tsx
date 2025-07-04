@@ -11,7 +11,7 @@ import { format, parseISO, isPast } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { BookText, Calendar, MapPin, Save, User as UserIcon } from 'lucide-react';
+import { BookText, Calendar, MapPin, Save, User as UserIcon, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
@@ -65,6 +65,7 @@ export default function DiaryPage() {
     const { user, loading: authLoading } = useAuth();
     const [events, setEvents] = useState<EventWithNotes[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [savingNoteId, setSavingNoteId] = useState<string | null>(null);
     const { toast } = useToast();
 
     useEffect(() => {
@@ -92,7 +93,8 @@ export default function DiaryPage() {
         if (!user) return;
         const event = events.find(e => e.id === eventId);
         if (!event) return;
-
+        
+        setSavingNoteId(eventId);
         try {
             await saveDiaryNote(user.uid, eventId, event.notes || '');
             toast({
@@ -102,6 +104,8 @@ export default function DiaryPage() {
         } catch (error) {
             console.error(`Saving note for event ${eventId}:`, error);
             toast({ title: "Failed to save note", variant: "destructive" });
+        } finally {
+            setSavingNoteId(null);
         }
     };
 
@@ -127,51 +131,54 @@ export default function DiaryPage() {
                 <h2 className="text-xl font-bold font-headline">Upcoming Events</h2>
                 {upcomingEvents.length > 0 ? (
                     <div className="grid md:grid-cols-2 gap-6">
-                        {upcomingEvents.map(event => (
-                            <Card key={event.id}>
-                                <CardHeader>
-                                    <div className="flex justify-between items-start">
-                                      <CardTitle>{event.title}</CardTitle>
-                                      <Badge variant={event.source === 'created' ? 'default' : 'secondary'}>
-                                        {event.source === 'created' ? 'My Event' : 'Attending'}
-                                      </Badge>
-                                    </div>
-                                    <CardDescription className="space-y-1 text-sm text-muted-foreground pt-1">
-                                        <div className="flex items-center">
-                                            <Calendar className="mr-2 h-4 w-4" /> <ClientFormattedDate date={event.date as Date} formatStr="PPP 'at' p" />
+                        {upcomingEvents.map(event => {
+                            const isSaving = savingNoteId === event.id;
+                            return (
+                                <Card key={event.id}>
+                                    <CardHeader>
+                                        <div className="flex justify-between items-start">
+                                        <CardTitle>{event.title}</CardTitle>
+                                        <Badge variant={event.source === 'created' ? 'default' : 'secondary'}>
+                                            {event.source === 'created' ? 'My Event' : 'Attending'}
+                                        </Badge>
                                         </div>
-                                        <div className="flex items-center">
-                                            <MapPin className="mr-2 h-4 w-4" /> {event.location}
-                                        </div>
-                                        {event.source === 'rsvped' && event.author && (
-                                            <div className="flex items-center pt-2">
-                                                <Link href={`/u/${event.author.username}`} className="flex items-center gap-2 hover:underline">
-                                                  <Avatar className="h-6 w-6">
-                                                      <AvatarImage src={event.author.avatarUrl} data-ai-hint="person portrait" />
-                                                      <AvatarFallback>{event.author.name.charAt(0)}</AvatarFallback>
-                                                  </Avatar>
-                                                  <span className="text-xs">Hosted by {event.author.name}</span>
-                                                </Link>
+                                        <CardDescription className="space-y-1 text-sm text-muted-foreground pt-1">
+                                            <div className="flex items-center">
+                                                <Calendar className="mr-2 h-4 w-4" /> <ClientFormattedDate date={event.date as Date} formatStr="PPP 'at' p" />
                                             </div>
-                                        )}
-                                    </CardDescription>
-                                </CardHeader>
-                                <CardContent className="space-y-2">
-                                    <Label htmlFor={`notes-${event.id}`}>My Notes</Label>
-                                    <Textarea
-                                        id={`notes-${event.id}`}
-                                        placeholder="Jot down your thoughts, questions, or key takeaways..."
-                                        value={event.notes}
-                                        onChange={(e) => handleNoteChange(event.id, e.target.value)}
-                                        rows={4}
-                                    />
-                                    <Button size="sm" onClick={() => handleSaveNote(event.id)}>
-                                        <Save className="mr-2 h-4 w-4" />
-                                        Save Note
-                                    </Button>
-                                </CardContent>
-                            </Card>
-                        ))}
+                                            <div className="flex items-center">
+                                                <MapPin className="mr-2 h-4 w-4" /> {event.location}
+                                            </div>
+                                            {event.source === 'rsvped' && event.author && (
+                                                <div className="flex items-center pt-2">
+                                                    <Link href={`/u/${event.author.username}`} className="flex items-center gap-2 hover:underline">
+                                                    <Avatar className="h-6 w-6">
+                                                        <AvatarImage src={event.author.avatarUrl} data-ai-hint="person portrait" />
+                                                        <AvatarFallback>{event.author.name.charAt(0)}</AvatarFallback>
+                                                    </Avatar>
+                                                    <span className="text-xs">Hosted by {event.author.name}</span>
+                                                    </Link>
+                                                </div>
+                                            )}
+                                        </CardDescription>
+                                    </CardHeader>
+                                    <CardContent className="space-y-2">
+                                        <Label htmlFor={`notes-${event.id}`}>My Notes</Label>
+                                        <Textarea
+                                            id={`notes-${event.id}`}
+                                            placeholder="Jot down your thoughts, questions, or key takeaways..."
+                                            value={event.notes}
+                                            onChange={(e) => handleNoteChange(event.id, e.target.value)}
+                                            rows={4}
+                                        />
+                                        <Button size="sm" onClick={() => handleSaveNote(event.id)} disabled={isSaving}>
+                                            {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                                            {isSaving ? 'Saving...' : 'Save Note'}
+                                        </Button>
+                                    </CardContent>
+                                </Card>
+                            )
+                        })}
                     </div>
                 ) : (
                     <Card>
@@ -190,51 +197,54 @@ export default function DiaryPage() {
                 <h2 className="text-xl font-bold font-headline">Past Events</h2>
                 {pastEvents.length > 0 ? (
                     <div className="grid md:grid-cols-2 gap-6">
-                         {pastEvents.map(event => (
-                            <Card key={event.id} className="opacity-80">
-                                <CardHeader>
-                                     <div className="flex justify-between items-start">
-                                      <CardTitle>{event.title}</CardTitle>
-                                      <Badge variant={event.source === 'created' ? 'default' : 'secondary'}>
-                                        {event.source === 'created' ? 'My Event' : 'Attended'}
-                                      </Badge>
-                                    </div>
-                                     <CardDescription className="space-y-1 text-sm text-muted-foreground pt-1">
-                                        <div className="flex items-center">
-                                            <Calendar className="mr-2 h-4 w-4" /> <ClientFormattedDate date={event.date as Date} formatStr="PPP" />
+                         {pastEvents.map(event => {
+                             const isSaving = savingNoteId === event.id;
+                             return (
+                                <Card key={event.id} className="opacity-80">
+                                    <CardHeader>
+                                        <div className="flex justify-between items-start">
+                                        <CardTitle>{event.title}</CardTitle>
+                                        <Badge variant={event.source === 'created' ? 'default' : 'secondary'}>
+                                            {event.source === 'created' ? 'My Event' : 'Attended'}
+                                        </Badge>
                                         </div>
-                                        <div className="flex items-center">
-                                            <MapPin className="mr-2 h-4 w-4" /> {event.location}
-                                        </div>
-                                         {event.source === 'rsvped' && event.author && (
-                                            <div className="flex items-center pt-2">
-                                                <Link href={`/u/${event.author.username}`} className="flex items-center gap-2 hover:underline">
-                                                  <Avatar className="h-6 w-6">
-                                                      <AvatarImage src={event.author.avatarUrl} data-ai-hint="person portrait" />
-                                                      <AvatarFallback>{event.author.name.charAt(0)}</AvatarFallback>
-                                                  </Avatar>
-                                                  <span className="text-xs">Hosted by {event.author.name}</span>
-                                                </Link>
+                                        <CardDescription className="space-y-1 text-sm text-muted-foreground pt-1">
+                                            <div className="flex items-center">
+                                                <Calendar className="mr-2 h-4 w-4" /> <ClientFormattedDate date={event.date as Date} formatStr="PPP" />
                                             </div>
-                                        )}
-                                    </CardDescription>
-                                </CardHeader>
-                                <CardContent className="space-y-2">
-                                    <Label htmlFor={`notes-${event.id}`}>My Reflections</Label>
-                                    <Textarea
-                                        id={`notes-${event.id}`}
-                                        placeholder="Add your reflections..."
-                                        value={event.notes}
-                                        onChange={(e) => handleNoteChange(event.id, e.target.value)}
-                                        rows={4}
-                                    />
-                                    <Button size="sm" onClick={() => handleSaveNote(event.id)}>
-                                        <Save className="mr-2 h-4 w-4" />
-                                        Save Note
-                                    </Button>
-                                </CardContent>
-                            </Card>
-                        ))}
+                                            <div className="flex items-center">
+                                                <MapPin className="mr-2 h-4 w-4" /> {event.location}
+                                            </div>
+                                            {event.source === 'rsvped' && event.author && (
+                                                <div className="flex items-center pt-2">
+                                                    <Link href={`/u/${event.author.username}`} className="flex items-center gap-2 hover:underline">
+                                                    <Avatar className="h-6 w-6">
+                                                        <AvatarImage src={event.author.avatarUrl} data-ai-hint="person portrait" />
+                                                        <AvatarFallback>{event.author.name.charAt(0)}</AvatarFallback>
+                                                    </Avatar>
+                                                    <span className="text-xs">Hosted by {event.author.name}</span>
+                                                    </Link>
+                                                </div>
+                                            )}
+                                        </CardDescription>
+                                    </CardHeader>
+                                    <CardContent className="space-y-2">
+                                        <Label htmlFor={`notes-${event.id}`}>My Reflections</Label>
+                                        <Textarea
+                                            id={`notes-${event.id}`}
+                                            placeholder="Add your reflections..."
+                                            value={event.notes}
+                                            onChange={(e) => handleNoteChange(event.id, e.target.value)}
+                                            rows={4}
+                                        />
+                                        <Button size="sm" onClick={() => handleSaveNote(event.id)} disabled={isSaving}>
+                                            {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                                            {isSaving ? 'Saving...' : 'Save Note'}
+                                        </Button>
+                                    </CardContent>
+                                </Card>
+                            )
+                        })}
                     </div>
                 ) : (
                     <Card>

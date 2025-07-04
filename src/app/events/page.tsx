@@ -3,7 +3,7 @@
 
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Calendar, MapPin, PlusCircle, MoreHorizontal, Archive, Trash2, Edit, Eye, Users, CheckCircle2, LayoutGrid, List } from "lucide-react"
+import { Calendar, MapPin, PlusCircle, MoreHorizontal, Archive, Trash2, Edit, Eye, Users, CheckCircle2, LayoutGrid, List, Loader2 } from "lucide-react"
 import { format, parseISO } from "date-fns";
 import Image from "next/image";
 import Link from "next/link";
@@ -71,6 +71,7 @@ export default function EventsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+  const [rsvpingEventId, setRsvpingEventId] = useState<string | null>(null);
   const { toast } = useToast();
   const [view, setView] = useState<'grid' | 'list'>('grid');
 
@@ -113,13 +114,16 @@ export default function EventsPage() {
         toast({ title: "Please sign in to RSVP", variant: "destructive" });
         return;
     }
+    if (rsvpingEventId) return;
+    
+    setRsvpingEventId(eventId);
     try {
         const isNowRsvped = await toggleRsvp(eventId, user.uid);
         setAllEvents(prev => prev.map(event => {
             if (event.id === eventId) {
                 const newRsvps = isNowRsvped 
-                    ? [...event.rsvps, user.uid] 
-                    : event.rsvps.filter(uid => uid !== user.uid);
+                    ? [...(event.rsvps || []), user.uid] 
+                    : (event.rsvps || []).filter(uid => uid !== user.uid);
                 return { ...event, rsvps: newRsvps };
             }
             return event;
@@ -131,6 +135,8 @@ export default function EventsPage() {
     } catch (error) {
         console.error("RSVP error:", error);
         toast({ title: "Failed to update RSVP", variant: "destructive" });
+    } finally {
+        setRsvpingEventId(null);
     }
   }
   
@@ -184,6 +190,7 @@ export default function EventsPage() {
               {activeEvents.map((event) => {
                 const isOwner = user && event.author.id === user.uid;
                 const isRsvped = user && event.rsvps?.includes(user.uid);
+                const isProcessing = rsvpingEventId === event.id;
 
                 return (
                 <Card key={event.id} className="flex flex-col">
@@ -245,8 +252,8 @@ export default function EventsPage() {
                             <Link href={`/events/${event.id}`}>Learn More</Link>
                         </Button>
                         {!isOwner && user && (
-                          <Button variant={isRsvped ? "secondary" : "default"} onClick={() => handleRsvp(event.id, event.title)}>
-                              {isRsvped ? <CheckCircle2 className="mr-2 h-4 w-4"/> : <PlusCircle className="mr-2 h-4 w-4"/>}
+                          <Button variant={isRsvped ? "secondary" : "default"} onClick={() => handleRsvp(event.id, event.title)} disabled={isProcessing}>
+                              {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : isRsvped ? <CheckCircle2 className="mr-2 h-4 w-4"/> : <PlusCircle className="mr-2 h-4 w-4"/>}
                               {isRsvped ? 'Attending' : 'Add to Diary'}
                           </Button>
                         )}
@@ -271,6 +278,7 @@ export default function EventsPage() {
                   {activeEvents.map((event) => {
                     const isOwner = user && event.author.id === user.uid;
                     const isRsvped = user && event.rsvps?.includes(user.uid);
+                    const isProcessing = rsvpingEventId === event.id;
 
                     return (
                       <TableRow key={event.id}>
@@ -317,8 +325,8 @@ export default function EventsPage() {
                               </DropdownMenuContent>
                             </DropdownMenu>
                           ) : user && (
-                            <Button size="sm" variant={isRsvped ? "secondary" : "default"} onClick={() => handleRsvp(event.id, event.title)}>
-                                {isRsvped ? <CheckCircle2 className="mr-2 h-4 w-4"/> : <PlusCircle className="mr-2 h-4 w-4"/>}
+                            <Button size="sm" variant={isRsvped ? "secondary" : "default"} onClick={() => handleRsvp(event.id, event.title)} disabled={isProcessing}>
+                                {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : isRsvped ? <CheckCircle2 className="mr-2 h-4 w-4"/> : <PlusCircle className="mr-2 h-4 w-4"/>}
                                 {isRsvped ? 'Attending' : 'Attend'}
                             </Button>
                           )}
