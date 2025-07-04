@@ -10,21 +10,8 @@ import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Logo } from '@/components/logo';
-import { useState, useEffect } from 'react';
-import { format, parseISO } from 'date-fns';
 import ShareButton from '@/components/share-button';
-
-// This component safely formats the date on the client-side to prevent hydration errors.
-function ClientFormattedDate({ dateString, formatStr }: { dateString: string, formatStr: string }) {
-  const [formattedDate, setFormattedDate] = useState('...');
-
-  useEffect(() => {
-    // This effect runs only on the client, after the initial render.
-    setFormattedDate(format(parseISO(dateString), formatStr));
-  }, [dateString, formatStr]);
-
-  return <>{formattedDate}</>;
-}
+import { ClientFormattedDate } from '@/components/client-formatted-date';
 
 
 interface OfferDetailClientProps {
@@ -66,8 +53,8 @@ export default function OfferDetailClient({ offer, author }: OfferDetailClientPr
                                         <div className="flex items-center text-sm text-muted-foreground">
                                             <Calendar className="mr-2 h-4 w-4" /> 
                                             <span>
-                                                Starts: <ClientFormattedDate dateString={offer.startDate as string} formatStr="PPP" />
-                                                {offer.endDate && <>, Ends: <ClientFormattedDate dateString={offer.endDate as string} formatStr="PPP" /></>}
+                                                Starts: <ClientFormattedDate date={offer.startDate as string} formatStr="PPP" />
+                                                {offer.endDate && <>, Ends: <ClientFormattedDate date={offer.endDate as string} formatStr="PPP" /></>}
                                             </span>
                                         </div>
                                         </CardDescription>

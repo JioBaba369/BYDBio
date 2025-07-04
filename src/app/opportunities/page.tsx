@@ -15,19 +15,7 @@ import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/components/auth-provider";
 import { type Job, getJobsByUser, deleteJob, updateJob } from "@/lib/jobs";
 import { Skeleton } from "@/components/ui/skeleton";
-import { format } from "date-fns";
-
-// This component safely formats the date on the client-side to prevent hydration errors.
-function ClientFormattedDate({ date, formatStr }: { date: Date, formatStr?: string }) {
-  const [formattedDate, setFormattedDate] = useState('...');
-
-  useEffect(() => {
-    // This effect runs only on the client, after the initial render.
-    setFormattedDate(format(date, formatStr || "PPP"));
-  }, [date, formatStr]);
-
-  return <>{formattedDate}</>;
-}
+import { ClientFormattedDate } from "@/components/client-formatted-date";
 
 const JobPageSkeleton = () => (
     <div className="space-y-6">
@@ -161,8 +149,8 @@ export default function OpportunitiesPage() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem asChild><Link href={`/opportunities/${job.id}/edit`} className="cursor-pointer"><Edit className="mr-2 h-4 w-4"/>Edit</Link></DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleArchive(job.id, job.status)} className="cursor-pointer"><Archive className="mr-2 h-4 w-4"/>Archive</DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => openDeleteDialog(job.id)} className="text-destructive cursor-pointer"><Trash2 className="mr-2 h-4 w-4"/>Delete</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleArchive(job.id, job.status)} className="cursor-pointer"><Archive className="mr-2 h-4 w-4"/>Archive</Link></DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => openDeleteDialog(job.id)} className="text-destructive cursor-pointer"><Trash2 className="mr-2 h-4 w-4"/>Delete</Link></DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </CardHeader>

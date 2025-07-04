@@ -4,7 +4,6 @@
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Calendar, MapPin, PlusCircle, MoreHorizontal, Archive, Trash2, Edit, Eye, Users, CheckCircle2, LayoutGrid, List, Loader2, ExternalLink } from "lucide-react"
-import { format, parseISO } from "date-fns";
 import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect } from "react";
@@ -18,19 +17,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useAuth } from "@/components/auth-provider";
 import { type EventWithAuthor, getAllEvents, deleteEvent, updateEvent, toggleRsvp } from "@/lib/events";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ClientFormattedDate } from "@/components/client-formatted-date";
 
-
-// This component safely formats the date on the client-side to prevent hydration errors.
-function ClientFormattedDate({ date, formatStr }: { date: Date, formatStr?: string }) {
-  const [formattedDate, setFormattedDate] = useState('...');
-
-  useEffect(() => {
-    // This effect runs only on the client, after the initial render.
-    setFormattedDate(format(date, formatStr || "PPP p"));
-  }, [date, formatStr]);
-
-  return <>{formattedDate}</>;
-}
 
 const EventPageSkeleton = () => (
     <div className="space-y-6">
@@ -231,7 +219,7 @@ export default function EventsPage() {
                     <div className="flex items-center text-sm text-muted-foreground">
                       <Calendar className="mr-2 h-4 w-4" /> 
                       <span>
-                        <ClientFormattedDate date={event.startDate as Date} />
+                        <ClientFormattedDate date={event.startDate as Date} formatStr="PPP p" />
                         {event.endDate && <> - <ClientFormattedDate date={event.endDate as Date} formatStr="PPP" /></>}
                       </span>
                     </div>
@@ -327,8 +315,8 @@ export default function EventsPage() {
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
                               <DropdownMenuItem asChild><Link href={`/events/${event.id}/edit`} className="cursor-pointer"><Edit className="mr-2 h-4 w-4"/>Edit</Link></DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleArchive(event.id, event.status)} className="cursor-pointer"><Archive className="mr-2 h-4 w-4"/>Archive</DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => openDeleteDialog(event.id)} className="text-destructive cursor-pointer"><Trash2 className="mr-2 h-4 w-4"/>Delete</DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleArchive(event.id, event.status)} className="cursor-pointer"><Archive className="mr-2 h-4 w-4"/>Archive</Link></DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => openDeleteDialog(event.id)} className="text-destructive cursor-pointer"><Trash2 className="mr-2 h-4 w-4"/>Delete</Link></DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
                           ) : user && (
@@ -385,7 +373,7 @@ export default function EventsPage() {
                   </CardHeader>
                    <CardContent className="space-y-2 flex-grow">
                     <div className="flex items-center text-sm text-muted-foreground">
-                      <Calendar className="mr-2 h-4 w-4" /> <ClientFormattedDate date={event.startDate as Date} />
+                      <Calendar className="mr-2 h-4 w-4" /> <ClientFormattedDate date={event.startDate as Date} formatStr="PPP p" />
                     </div>
                     <div className="flex items-center text-sm text-muted-foreground">
                       <MapPin className="mr-2 h-4 w-4" /> {event.location}

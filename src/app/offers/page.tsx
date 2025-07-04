@@ -5,7 +5,6 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button"
 import { Tag, Calendar, PlusCircle, MoreHorizontal, Edit, Archive, Trash2, DollarSign, Eye, Gift, ExternalLink } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
-import { format } from "date-fns";
 import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect } from "react";
@@ -16,18 +15,7 @@ import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/components/auth-provider";
 import { type Offer, getOffersByUser, deleteOffer, updateOffer } from "@/lib/offers";
 import { Skeleton } from "@/components/ui/skeleton";
-
-// This component safely formats the date on the client-side to prevent hydration errors.
-function ClientFormattedDate({ date, formatStr }: { date: Date, formatStr?: string }) {
-  const [formattedDate, setFormattedDate] = useState('...');
-
-  useEffect(() => {
-    // This effect runs only on the client, after the initial render.
-    setFormattedDate(format(date, formatStr || "PPP"));
-  }, [date, formatStr]);
-
-  return <>{formattedDate}</>;
-}
+import { ClientFormattedDate } from "@/components/client-formatted-date";
 
 const OfferPageSkeleton = () => (
     <div className="space-y-6">
@@ -159,8 +147,8 @@ export default function OffersPage() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem asChild><Link href={`/offers/${offer.id}/edit`} className="cursor-pointer"><Edit className="mr-2 h-4 w-4"/>Edit</Link></DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleArchive(offer.id, offer.status)} className="cursor-pointer"><Archive className="mr-2 h-4 w-4"/>Archive</DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => openDeleteDialog(offer.id)} className="text-destructive cursor-pointer"><Trash2 className="mr-2 h-4 w-4"/>Delete</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleArchive(offer.id, offer.status)} className="cursor-pointer"><Archive className="mr-2 h-4 w-4"/>Archive</Link></DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => openDeleteDialog(offer.id)} className="text-destructive cursor-pointer"><Trash2 className="mr-2 h-4 w-4"/>Delete</Link></DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </CardHeader>

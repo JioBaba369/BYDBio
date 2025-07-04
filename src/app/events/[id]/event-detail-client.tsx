@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import type { Event, User } from '@/lib/users';
 import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -11,28 +11,19 @@ import Link from 'next/link';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { Separator } from '@/components/ui/separator';
-import { format, parseISO } from 'date-fns';
-import { cn } from '@/lib/utils';
 import ShareButton from '@/components/share-button';
 import { Logo } from '@/components/logo';
 import * as ics from 'ics';
 import { saveAs } from 'file-saver';
 import { useToast } from '@/hooks/use-toast';
+import { ClientFormattedDate } from '@/components/client-formatted-date';
+import { parseISO } from 'date-fns';
+
 
 interface EventDetailClientProps {
     event: Event;
     author: User;
 }
-
-// Client-side date formatter to prevent hydration issues
-function ClientFormattedDate({ dateString, formatStr }: { dateString: string; formatStr: string }) {
-  const [formattedDate, setFormattedDate] = useState('...');
-  useEffect(() => {
-    setFormattedDate(format(parseISO(dateString), formatStr));
-  }, [dateString, formatStr]);
-  return <>{formattedDate}</>;
-}
-
 
 export default function EventDetailClient({ event, author }: EventDetailClientProps) {
     const attendeeCount = event.rsvps || 0;
@@ -137,14 +128,14 @@ export default function EventDetailClient({ event, author }: EventDetailClientPr
                                 <Calendar className="h-6 w-6 text-primary flex-shrink-0" />
                                 <div>
                                     <p className="font-semibold">{event.endDate ? 'Starts' : 'Date'}</p>
-                                    <p className="text-muted-foreground"><ClientFormattedDate dateString={event.startDate as string} formatStr="PPP" /></p>
+                                    <p className="text-muted-foreground"><ClientFormattedDate date={event.startDate as string} formatStr="PPP" /></p>
                                 </div>
                             </div>
                              <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
                                 <Clock className="h-6 w-6 text-primary flex-shrink-0" />
                                 <div>
                                     <p className="font-semibold">Time</p>
-                                    <p className="text-muted-foreground"><ClientFormattedDate dateString={event.startDate as string} formatStr="p" /></p>
+                                    <p className="text-muted-foreground"><ClientFormattedDate date={event.startDate as string} formatStr="p" /></p>
                                 </div>
                             </div>
                             {event.endDate ? (
@@ -152,7 +143,7 @@ export default function EventDetailClient({ event, author }: EventDetailClientPr
                                     <Calendar className="h-6 w-6 text-primary flex-shrink-0" />
                                     <div>
                                         <p className="font-semibold">Ends</p>
-                                        <p className="text-muted-foreground"><ClientFormattedDate dateString={event.endDate as string} formatStr="PPP" /></p>
+                                        <p className="text-muted-foreground"><ClientFormattedDate date={event.endDate as string} formatStr="PPP" /></p>
                                     </div>
                                 </div>
                             ) : (

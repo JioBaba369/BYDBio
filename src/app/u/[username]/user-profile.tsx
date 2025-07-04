@@ -22,7 +22,6 @@ import ShareButton from "@/components/share-button";
 import { linkIcons } from "@/lib/link-icons";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
-import { format, formatDistanceToNow, parseISO } from "date-fns";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -35,6 +34,7 @@ import { followUser, unfollowUser } from "@/lib/connections";
 import { useRouter } from "next/navigation";
 import QRCode from "qrcode.react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { ClientFormattedDate } from "@/components/client-formatted-date";
 
 
 interface UserProfilePageProps {
@@ -56,21 +56,6 @@ const contactFormSchema = z.object({
 });
 type ContactFormValues = z.infer<typeof contactFormSchema>;
 
-// This component safely formats the date on the client-side to prevent hydration errors.
-function ClientFormattedDate({ date, formatStr, relative }: { date: Date | string; formatStr: string; relative?: boolean }) {
-  const [formattedDate, setFormattedDate] = useState('...');
-  const dateObj = typeof date === 'string' ? parseISO(date) : date;
-  
-  useEffect(() => {
-    if (relative) {
-      setFormattedDate(formatDistanceToNow(dateObj, { addSuffix: true }));
-    } else {
-      setFormattedDate(format(dateObj, formatStr));
-    }
-  }, [dateObj, formatStr, relative]);
-
-  return <>{formattedDate}</>;
-}
 
 export default function UserProfilePage({ userProfileData, content }: UserProfilePageProps) {
   const { user: currentUser } = useAuth();
@@ -277,7 +262,7 @@ END:VCARD`;
                                   <MessageCircle className="h-4 w-4" />
                                   <span>{post.comments}</span>
                               </div>
-                              <span className="ml-auto text-xs"><ClientFormattedDate date={post.createdAt} formatStr="" relative /></span>
+                              <ClientFormattedDate date={post.createdAt} relative className="ml-auto text-xs" />
                           </CardFooter>
                           </Card>
                       ))}

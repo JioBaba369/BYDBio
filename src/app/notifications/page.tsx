@@ -10,9 +10,9 @@ import { useState, useEffect } from "react";
 import { getNotificationsForUser, markNotificationsAsRead, type NotificationWithActor } from "@/lib/notifications";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { ClientFormattedDate } from "@/components/client-formatted-date";
 
 const NotificationSkeleton = () => (
     <div className="flex items-center gap-4 p-4">
@@ -66,7 +66,7 @@ const NotificationItem = ({ notification }: { notification: NotificationWithActo
         <div className="flex-1 text-sm">
           {message}
           <p className="text-xs text-muted-foreground mt-1">
-            {formatDistanceToNow(notification.createdAt.toDate(), { addSuffix: true })}
+            <ClientFormattedDate date={notification.createdAt.toDate()} relative />
           </p>
         </div>
       </div>

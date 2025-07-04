@@ -11,20 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Logo } from '@/components/logo';
 import ShareButton from '@/components/share-button';
-import { format, parseISO } from 'date-fns';
-import { useEffect, useState } from 'react';
-
-// This component safely formats the date on the client-side to prevent hydration errors.
-function ClientFormattedDate({ dateString, formatStr }: { dateString: string, formatStr: string }) {
-  const [formattedDate, setFormattedDate] = useState('...');
-
-  useEffect(() => {
-    // This effect runs only on the client, after the initial render.
-    setFormattedDate(format(parseISO(dateString), formatStr));
-  }, [dateString, formatStr]);
-
-  return <>{formattedDate}</>;
-}
+import { ClientFormattedDate } from '@/components/client-formatted-date';
 
 
 interface OpportunityDetailClientProps {
@@ -79,8 +66,8 @@ export default function OpportunityDetailClient({ job, author }: OpportunityDeta
                                 <div className="flex items-center pt-2">
                                     <Calendar className="mr-2 h-4 w-4" /> 
                                     <span>
-                                        {job.startDate && <ClientFormattedDate dateString={job.startDate as string} formatStr="PPP" />}
-                                        {job.endDate && <> - <ClientFormattedDate dateString={job.endDate as string} formatStr="PPP" /></>}
+                                        {job.startDate && <ClientFormattedDate date={job.startDate as string} formatStr="PPP" />}
+                                        {job.endDate && <> - <ClientFormattedDate date={job.endDate as string} formatStr="PPP" /></>}
                                     </span>
                                 </div>
                             )}

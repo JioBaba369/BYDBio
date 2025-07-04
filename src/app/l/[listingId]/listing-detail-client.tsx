@@ -11,20 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Logo } from '@/components/logo';
 import ShareButton from '@/components/share-button';
-import { format, parseISO } from 'date-fns';
-import { useEffect, useState } from 'react';
-
-// This component safely formats the date on the client-side to prevent hydration errors.
-function ClientFormattedDate({ dateString, formatStr }: { dateString: string, formatStr: string }) {
-  const [formattedDate, setFormattedDate] = useState('...');
-
-  useEffect(() => {
-    // This effect runs only on the client, after the initial render.
-    setFormattedDate(format(parseISO(dateString), formatStr));
-  }, [dateString, formatStr]);
-
-  return <>{formattedDate}</>;
-}
+import { ClientFormattedDate } from '@/components/client-formatted-date';
 
 
 interface ListingDetailClientProps {
@@ -74,8 +61,8 @@ export default function ListingDetailClient({ listing, author }: ListingDetailCl
                                     <div className="flex items-center pt-2 text-sm text-muted-foreground">
                                         <Calendar className="mr-2 h-4 w-4" /> 
                                         <span>
-                                            {listing.startDate && <ClientFormattedDate dateString={listing.startDate as string} formatStr="PPP" />}
-                                            {listing.endDate && <> - <ClientFormattedDate dateString={listing.endDate as string} formatStr="PPP" /></>}
+                                            {listing.startDate && <ClientFormattedDate date={listing.startDate as string} formatStr="PPP" />}
+                                            {listing.endDate && <> - <ClientFormattedDate date={listing.endDate as string} formatStr="PPP" /></>}
                                         </span>
                                     </div>
                                 )}

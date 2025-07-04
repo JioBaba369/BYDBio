@@ -5,13 +5,13 @@ import { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/components/auth-provider';
-import { type Event, getDiaryEvents, saveDiaryNote } from '@/lib/events';
-import type { User } from '@/lib/users';
-import { format, isPast, formatDistanceToNow } from 'date-fns';
+import { getDiaryEvents, saveDiaryNote } from '@/lib/events';
+import type { Event, User } from '@/lib/users';
+import { isPast } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { BookText, Calendar, MapPin, Save, User as UserIcon, Loader2, Wand2, Sparkles, PencilRuler } from 'lucide-react';
+import { BookText, Calendar, MapPin, Save, Loader2, Wand2, Sparkles, PencilRuler } from 'lucide-react';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
@@ -19,26 +19,13 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { reflectOnEvent } from '@/ai/flows/reflect-on-event';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Separator } from '@/components/ui/separator';
+import { ClientFormattedDate } from '@/components/client-formatted-date';
 
 type EventWithNotes = Event & { 
   notes?: string; 
   source: 'created' | 'rsvped';
   author?: Pick<User, 'name' | 'username' | 'avatarUrl'>;
 };
-
-function ClientFormattedDate({ date, formatStr, relative }: { date: Date; formatStr: string; relative?: boolean }) {
-  const [formattedDate, setFormattedDate] = useState('...');
-
-  useEffect(() => {
-    if (relative) {
-        setFormattedDate(formatDistanceToNow(date, { addSuffix: true }));
-    } else {
-        setFormattedDate(format(date, formatStr));
-    }
-  }, [date, formatStr, relative]);
-
-  return <>{formattedDate}</>;
-}
 
 const DiarySkeleton = () => (
     <div className="space-y-8 animate-pulse">
@@ -262,7 +249,8 @@ export default function DiaryPage() {
                                         </div>
                                         <CardDescription className="space-y-1 text-sm text-muted-foreground pt-1">
                                             <div className="flex items-center">
-                                                <Calendar className="mr-2 h-4 w-4" /> <ClientFormattedDate date={event.startDate as Date} formatStr="PPP" /> (<ClientFormattedDate date={event.startDate as Date} formatStr="" relative={true}/>)
+                                                <Calendar className="mr-2 h-4 w-4" /> 
+                                                <span><ClientFormattedDate date={event.startDate as Date} formatStr="PPP" /> (<ClientFormattedDate date={event.startDate as Date} relative />)</span>
                                             </div>
                                              {event.source === 'rsvped' && event.author && (
                                                 <div className="flex items-center pt-2">

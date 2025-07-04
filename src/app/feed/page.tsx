@@ -17,9 +17,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import ImageCropper from "@/components/image-cropper"
 import { getFeedPosts, createPost, toggleLikePost, Post } from "@/lib/posts"
 import { type User, getUsersByIds } from "@/lib/users"
-import { formatDistanceToNow } from "date-fns"
 import { Skeleton } from "@/components/ui/skeleton"
 import { uploadImage } from "@/lib/storage"
+import { ClientFormattedDate } from "@/components/client-formatted-date"
 
 type FeedItem = Post & { author: User; isLiked: boolean; };
 
@@ -55,7 +55,7 @@ const PostCard = ({ item, handleLike }: { item: FeedItem, handleLike: (postId: s
             </Avatar>
             <div>
                 <p className="font-semibold">{item.author.name}</p>
-                <p className="text-sm text-muted-foreground">@{item.author.handle} · {formatDistanceToNow(item.createdAt.toDate(), { addSuffix: true })}</p>
+                <p className="text-sm text-muted-foreground">@{item.author.handle} · <ClientFormattedDate date={item.createdAt.toDate()} relative /></p>
             </div>
             </Link>
             <Button variant="ghost" size="icon">
