@@ -23,10 +23,10 @@ export async function generateMetadata({ params }: { params: { opportunityId: st
 
   return {
     title: `${job.title} at ${job.company} | BYD.Bio`,
-    description: `Apply for the ${job.type} ${job.title} role at ${job.company}. Located in ${job.location}.`,
+    description: job.description || `Apply for the ${job.type} ${job.title} role at ${job.company}. Located in ${job.location}.`,
     openGraph: {
       title: `${job.title} at ${job.company} | BYD.Bio`,
-      description: `Apply for the ${job.type} ${job.title} role at ${job.company}.`,
+      description: job.description || `Apply for the ${job.type} ${job.title} role at ${job.company}.`,
       images: [ { url: imageUrl, width: 1200, height: 630, alt: job.title } ],
       url: `/o/${job.id}`,
       type: 'article',
@@ -34,7 +34,7 @@ export async function generateMetadata({ params }: { params: { opportunityId: st
      twitter: {
       card: 'summary_large_image',
       title: `${job.title} at ${job.company} | BYD.Bio`,
-      description: `Apply for the ${job.type} ${job.title} role at ${job.company}.`,
+      description: job.description || `Apply for the ${job.type} ${job.title} role at ${job.company}.`,
       images: [imageUrl],
     },
   };
@@ -59,6 +59,7 @@ export default async function PublicOpportunityPage({ params }: { params: { oppo
     const serializableJob = {
         ...data.job,
         postingDate: (data.job.postingDate as Date).toISOString(),
+        closingDate: data.job.closingDate ? (data.job.closingDate as Date).toISOString() : null,
         startDate: data.job.startDate ? (data.job.startDate as Date).toISOString() : null,
         endDate: data.job.endDate ? (data.job.endDate as Date).toISOString() : null,
         createdAt: (data.job.createdAt as Timestamp).toDate().toISOString(),

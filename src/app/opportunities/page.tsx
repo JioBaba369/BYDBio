@@ -3,7 +3,7 @@
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Briefcase, MapPin, PlusCircle, MoreHorizontal, Edit, Archive, Trash2, Eye, Users, Calendar } from "lucide-react"
+import { Briefcase, MapPin, PlusCircle, MoreHorizontal, Edit, Archive, Trash2, Eye, Users, Calendar, DollarSign, Clock } from "lucide-react"
 import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect } from "react";
@@ -161,12 +161,16 @@ export default function OpportunitiesPage() {
                   <div className="flex items-center text-sm text-muted-foreground">
                     <Briefcase className="mr-2 h-4 w-4" /> {job.type}
                   </div>
-                  {(job.startDate || job.endDate) && (
+                   {job.remuneration && (
+                    <div className="flex items-center text-sm text-muted-foreground">
+                      <DollarSign className="mr-2 h-4 w-4" /> {job.remuneration}
+                    </div>
+                  )}
+                  {job.closingDate && (
                     <div className="flex items-center pt-2 text-sm text-muted-foreground">
-                        <Calendar className="mr-2 h-4 w-4" /> 
+                        <Clock className="mr-2 h-4 w-4" /> 
                         <span>
-                            {job.startDate && <ClientFormattedDate date={job.startDate as Date} />}
-                            {job.endDate && <> - <ClientFormattedDate date={job.endDate as Date} /></>}
+                            Closes: <ClientFormattedDate date={job.closingDate as Date} />
                         </span>
                     </div>
                   )}

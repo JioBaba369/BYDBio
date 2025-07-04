@@ -77,9 +77,12 @@ export type Job = {
   authorId: string;
   title: string;
   company: string;
+  description: string;
   location: string;
   type: 'Full-time' | 'Part-time' | 'Contract' | 'Internship';
+  remuneration?: string;
   postingDate: Timestamp | Date | string;
+  closingDate?: Timestamp | Date | string | null;
   startDate?: Timestamp | Date | string | null;
   endDate?: Timestamp | Date | string | null;
   imageUrl: string | null;

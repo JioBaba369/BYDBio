@@ -18,12 +18,16 @@ import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover"
 import { cn } from "@/lib/utils"
 import { format } from "date-fns"
 import { Calendar } from "../ui/calendar"
+import { Textarea } from "../ui/textarea"
 
 const opportunityFormSchema = z.object({
   title: z.string().min(2, "Title must be at least 2 characters.").max(100, "Title must not be longer than 100 characters."),
   company: z.string().min(2, "Company name is required."),
+  description: z.string().min(10, "A detailed description is required.").max(5000, "Description is too long."),
   location: z.string().min(2, "Location is required."),
   type: z.enum(['Full-time', 'Part-time', 'Contract', 'Internship']),
+  remuneration: z.string().optional(),
+  closingDate: z.date().optional().nullable(),
   imageUrl: z.string().optional().nullable(),
   startDate: z.date().optional().nullable(),
   endDate: z.date().optional().nullable(),
@@ -57,6 +61,7 @@ export function OpportunityForm({ defaultValues, onSubmit, isSaving }: Opportuni
       ...defaultValues,
       startDate: defaultValues?.startDate ? new Date(defaultValues.startDate) : undefined,
       endDate: defaultValues?.endDate ? new Date(defaultValues.endDate) : undefined,
+      closingDate: defaultValues?.closingDate ? new Date(defaultValues.closingDate) : undefined,
     },
     mode: "onChange",
   })
@@ -108,7 +113,7 @@ export function OpportunityForm({ defaultValues, onSubmit, isSaving }: Opportuni
                                     <FormItem>
                                     <FormLabel>Job Title</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="e.g. UX/UI Designer" {...field} />
+                                        <Input placeholder="e.g. Food Service Assistant - Sutherland" {...field} />
                                     </FormControl>
                                     <FormMessage />
                                     </FormItem>
@@ -121,7 +126,25 @@ export function OpportunityForm({ defaultValues, onSubmit, isSaving }: Opportuni
                                     <FormItem>
                                     <FormLabel>Company</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="e.g. Creative Solutions" {...field} />
+                                        <Input placeholder="e.g. HealthShare NSW" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                             <FormField
+                                control={form.control}
+                                name="description"
+                                render={({ field }) => (
+                                    <FormItem>
+                                    <FormLabel>Job Description</FormLabel>
+                                    <FormControl>
+                                        <Textarea
+                                        placeholder="Provide a detailed description of the role, responsibilities, and required qualifications. Include details about the organization, team, and any benefits."
+                                        className="resize-none"
+                                        rows={8}
+                                        {...field}
+                                        />
                                     </FormControl>
                                     <FormMessage />
                                     </FormItem>
@@ -134,35 +157,88 @@ export function OpportunityForm({ defaultValues, onSubmit, isSaving }: Opportuni
                                     <FormItem>
                                     <FormLabel>Location</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="e.g. Remote" {...field} />
+                                        <Input placeholder="e.g. Sydney Region / Sydney - South" {...field} />
                                     </FormControl>
                                     <FormMessage />
                                     </FormItem>
                                 )}
                             />
+                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <FormField
+                                    control={form.control}
+                                    name="type"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                        <FormLabel>Job Type</FormLabel>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <FormControl>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select a job type" />
+                                            </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                <SelectItem value="Full-time">Full-time</SelectItem>
+                                                <SelectItem value="Part-time">Part-time</SelectItem>
+                                                <SelectItem value="Contract">Contract</SelectItem>
+                                                <SelectItem value="Internship">Internship</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="remuneration"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                        <FormLabel>Remuneration (Optional)</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="e.g. $58,460.87" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
                             <FormField
                                 control={form.control}
-                                name="type"
+                                name="closingDate"
                                 render={({ field }) => (
-                                    <FormItem>
-                                    <FormLabel>Job Type</FormLabel>
-                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <FormItem className="flex flex-col">
+                                    <FormLabel>Closing Date (Optional)</FormLabel>
+                                    <Popover>
+                                        <PopoverTrigger asChild>
                                         <FormControl>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Select a job type" />
-                                        </SelectTrigger>
+                                            <Button
+                                            variant={"outline"}
+                                            className={cn(
+                                                "w-full pl-3 text-left font-normal",
+                                                !field.value && "text-muted-foreground"
+                                            )}
+                                            >
+                                            {field.value ? (
+                                                format(field.value, "PPP")
+                                            ) : (
+                                                <span>Pick a date</span>
+                                            )}
+                                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                            </Button>
                                         </FormControl>
-                                        <SelectContent>
-                                            <SelectItem value="Full-time">Full-time</SelectItem>
-                                            <SelectItem value="Part-time">Part-time</SelectItem>
-                                            <SelectItem value="Contract">Contract</SelectItem>
-                                            <SelectItem value="Internship">Internship</SelectItem>
-                                        </SelectContent>
-                                    </Select>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-auto p-0" align="start">
+                                        <Calendar
+                                            mode="single"
+                                            selected={field.value}
+                                            onSelect={field.onChange}
+                                            initialFocus
+                                        />
+                                        </PopoverContent>
+                                    </Popover>
                                     <FormMessage />
                                     </FormItem>
                                 )}
-                            />
+                                />
                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <FormField
                                 control={form.control}

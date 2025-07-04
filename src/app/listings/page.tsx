@@ -147,9 +147,17 @@ export default function ListingsPage() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem asChild><Link href={`/listings/${item.id}/edit`} className="cursor-pointer"><Edit className="mr-2 h-4 w-4"/>Edit</Link></DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleArchive(item.id, item.status)} className="cursor-pointer"><Archive className="mr-2 h-4 w-4"/>Archive</Link></DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => openDeleteDialog(item.id)} className="text-destructive cursor-pointer"><Trash2 className="mr-2 h-4 w-4"/>Delete</Link></DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link href={`/listings/${item.id}/edit`} className="cursor-pointer">
+                          <Edit className="mr-2 h-4 w-4"/>Edit
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleArchive(item.id, item.status)} className="cursor-pointer">
+                        <Archive className="mr-2 h-4 w-4"/>Archive
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => openDeleteDialog(item.id)} className="text-destructive cursor-pointer">
+                        <Trash2 className="mr-2 h-4 w-4"/>Delete
+                      </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </CardHeader>

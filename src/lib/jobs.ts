@@ -20,9 +20,12 @@ export type Job = {
   authorId: string; // UID of the user who created it
   title: string;
   company: string;
+  description: string;
   location: string;
   type: 'Full-time' | 'Part-time' | 'Contract' | 'Internship';
+  remuneration?: string;
   postingDate: Timestamp | Date | string;
+  closingDate?: Timestamp | Date | string | null;
   startDate?: Timestamp | Date | string | null;
   endDate?: Timestamp | Date | string | null;
   imageUrl: string | null;
@@ -47,6 +50,7 @@ export const getJob = async (id: string): Promise<Job | null> => {
         id: jobDoc.id, 
         ...data,
         postingDate: (data.postingDate as Timestamp).toDate(),
+        closingDate: data.closingDate ? (data.closingDate as Timestamp).toDate() : null,
         startDate: data.startDate ? (data.startDate as Timestamp).toDate() : null,
         endDate: data.endDate ? (data.endDate as Timestamp).toDate() : null,
     } as Job;
@@ -69,6 +73,7 @@ export const getJobsByUser = async (userId: string): Promise<Job[]> => {
           id: doc.id, 
           ...data,
           postingDate: (data.postingDate as Timestamp).toDate(),
+          closingDate: data.closingDate ? (data.closingDate as Timestamp).toDate() : null,
           startDate: data.startDate ? (data.startDate as Timestamp).toDate() : null,
           endDate: data.endDate ? (data.endDate as Timestamp).toDate() : null,
       } as Job;
@@ -81,6 +86,7 @@ export const createJob = async (userId: string, data: Omit<Job, 'id' | 'authorId
   const keywords = [
     ...data.title.toLowerCase().split(' ').filter(Boolean),
     ...data.company.toLowerCase().split(' ').filter(Boolean),
+    ...data.description.toLowerCase().split(' ').filter(Boolean),
     ...data.location.toLowerCase().split(' ').filter(Boolean),
     data.type.toLowerCase(),
   ];
@@ -102,17 +108,19 @@ export const updateJob = async (id: string, data: Partial<Omit<Job, 'id' | 'auth
   const jobDocRef = doc(db, 'jobs', id);
   const dataToUpdate = { ...data };
 
-  if (data.title || data.company || data.location || data.type) {
+  if (data.title || data.company || data.location || data.type || data.description) {
     const jobDoc = await getDoc(jobDocRef);
     const existingData = jobDoc.data() as Job;
     const newTitle = data.title ?? existingData.title;
     const newCompany = data.company ?? existingData.company;
     const newLocation = data.location ?? existingData.location;
     const newType = data.type ?? existingData.type;
+    const newDescription = data.description ?? existingData.description;
 
     const keywords = [
         ...newTitle.toLowerCase().split(' ').filter(Boolean),
         ...newCompany.toLowerCase().split(' ').filter(Boolean),
+        ...newDescription.toLowerCase().split(' ').filter(Boolean),
         ...newLocation.toLowerCase().split(' ').filter(Boolean),
         newType.toLowerCase(),
     ];

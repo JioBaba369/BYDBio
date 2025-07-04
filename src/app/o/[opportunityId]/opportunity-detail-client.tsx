@@ -1,10 +1,11 @@
+
 'use client';
 
 import type { Job, User } from '@/lib/users';
 import Image from 'next/image';
 import { Card, CardContent, CardTitle, CardDescription, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Building, Calendar, MapPin, Edit } from 'lucide-react';
+import { ArrowLeft, Building, Calendar, MapPin, Edit, DollarSign, Clock } from 'lucide-react';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -68,27 +69,37 @@ export default function OpportunityDetailClient({ job, author }: OpportunityDeta
                         </div>
                     </CardHeader>
                     <CardContent>
-                        <div className="flex items-center gap-4 text-muted-foreground mt-4 text-sm">
-                            <div className="flex items-center gap-2">
-                                <MapPin className="h-4 w-4" />
-                                <span>{job.location}</span>
+                        <div className="mt-4 grid sm:grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+                            <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg">
+                                <MapPin className="h-5 w-5 text-primary flex-shrink-0" />
+                                <div>
+                                    <p className="font-semibold">Location</p>
+                                    <p className="text-muted-foreground">{job.location}</p>
+                                </div>
                             </div>
-                             {(job.startDate || job.endDate) && (
-                                <div className="flex items-center pt-2">
-                                    <Calendar className="mr-2 h-4 w-4" /> 
-                                    <span>
-                                        {job.startDate && <ClientFormattedDate date={job.startDate as string} formatStr="PPP" />}
-                                        {job.endDate && <> - <ClientFormattedDate date={job.endDate as string} formatStr="PPP" /></>}
-                                    </span>
+                            {job.remuneration && (
+                                <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg">
+                                    <DollarSign className="h-5 w-5 text-primary flex-shrink-0" />
+                                    <div>
+                                        <p className="font-semibold">Salary</p>
+                                        <p className="text-muted-foreground">{job.remuneration}</p>
+                                    </div>
+                                </div>
+                            )}
+                             {job.closingDate && (
+                                <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg">
+                                    <Clock className="h-5 w-5 text-primary flex-shrink-0" />
+                                    <div>
+                                        <p className="font-semibold">Apply by</p>
+                                        <p className="text-muted-foreground"><ClientFormattedDate date={job.closingDate as string} formatStr="PPP" /></p>
+                                    </div>
                                 </div>
                             )}
                         </div>
 
                          <div className="mt-8">
                             <h3 className="font-semibold text-lg mb-2">Job Description</h3>
-                            <p className="text-muted-foreground whitespace-pre-wrap">
-                                This is a placeholder for the full job description. In a real application, this would contain detailed information about the role, responsibilities, and qualifications.
-                            </p>
+                            <p className="text-muted-foreground whitespace-pre-wrap">{job.description}</p>
                         </div>
 
                         <div className="mt-8 pt-6 border-t">
