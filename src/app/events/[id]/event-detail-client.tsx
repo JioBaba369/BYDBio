@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -131,39 +132,38 @@ export default function EventDetailClient({ event, author }: EventDetailClientPr
                                 <CardDescription className="text-base pt-2 flex items-center gap-2">Hosted by <Link href={`/u/${author.username}`} className="font-semibold text-primary hover:underline">{author.name}</Link></CardDescription>
                             </div>
                             <div className='flex items-center gap-2 flex-wrap justify-end'>
-                                {isOwner ? (
+                                {isOwner && (
                                     <Button asChild size="lg">
                                         <Link href={`/events/${event.id}/edit`}>
                                             <Edit className="mr-2 h-5 w-5"/>
                                             Edit Event
                                         </Link>
                                     </Button>
-                                ) : (
-                                    <>
-                                        <Button variant="outline" onClick={handleAddToCalendar}>
-                                            <CalendarPlus className="mr-2 h-4 w-4"/>
-                                            Add to Calendar
-                                        </Button>
-                                        <Button variant="outline" onClick={handleSetReminder} disabled={isReminderLoading}>
-                                            {isReminderLoading ? (
-                                                <>
-                                                    <Loader2 className="mr-2 h-4 w-4 animate-spin"/>
-                                                    Setting...
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <BellRing className="mr-2 h-4 w-4"/>
-                                                    Set Reminder
-                                                </>
-                                            )}
-                                        </Button>
-                                        <Button asChild size="lg">
-                                            <Link href={`/events/${event.id}/register`}>
-                                                <Ticket className="mr-2 h-5 w-5"/>
-                                                Register Now
-                                            </Link>
-                                        </Button>
-                                    </>
+                                )}
+                                <Button variant="outline" onClick={handleAddToCalendar}>
+                                    <CalendarPlus className="mr-2 h-4 w-4"/>
+                                    Add to Calendar
+                                </Button>
+                                <Button variant="outline" onClick={handleSetReminder} disabled={isReminderLoading}>
+                                    {isReminderLoading ? (
+                                        <>
+                                            <Loader2 className="mr-2 h-4 w-4 animate-spin"/>
+                                            Setting...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <BellRing className="mr-2 h-4 w-4"/>
+                                            Set Reminder
+                                        </>
+                                    )}
+                                </Button>
+                                {!isOwner && (
+                                    <Button asChild size="lg">
+                                        <Link href={`/events/${event.id}/register`}>
+                                            <Ticket className="mr-2 h-5 w-5"/>
+                                            Register Now
+                                        </Link>
+                                    </Button>
                                 )}
                                 <ShareButton />
                             </div>
