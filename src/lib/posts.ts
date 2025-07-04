@@ -93,7 +93,8 @@ export const toggleLikePost = async (postId: string, userId: string) => {
             likedBy: arrayUnion(userId),
             likes: increment(1)
         });
-        await createNotification(postData.authorId, 'new_like', userId, postId);
+        const contentSnippet = postData.content.substring(0, 40) + (postData.content.length > 40 ? '...' : '');
+        await createNotification(postData.authorId, 'new_like', userId, postId, contentSnippet);
     }
 
     return !isLiked; // Return the new like status

@@ -12,18 +12,20 @@ import {
   limit,
   type Timestamp,
   getDoc,
+  updateDoc,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { getUsersByIds, type User } from './users';
 
-export type NotificationType = 'new_follower' | 'new_like';
+export type NotificationType = 'new_follower' | 'new_like' | 'event_rsvp';
 
 export type Notification = {
   id: string; // Document ID
   userId: string; // The user receiving the notification
   actorId: string; // The user who performed the action
   type: NotificationType;
-  entityId?: string; // e.g., postId
+  entityId?: string; // e.g., postId, eventId
+  entityTitle?: string; // A title or snippet for context
   read: boolean;
   createdAt: Timestamp;
 };
@@ -35,7 +37,8 @@ export const createNotification = async (
   userId: string,
   type: NotificationType,
   actorId: string,
-  entityId?: string
+  entityId?: string,
+  entityTitle?: string
 ) => {
   // Don't notify users about their own actions
   if (userId === actorId) {
@@ -69,6 +72,9 @@ export const createNotification = async (
   if (entityId) {
     notificationData.entityId = entityId;
   }
+  if (entityTitle) {
+    notificationData.entityTitle = entityTitle;
+  }
 
   await addDoc(notificationsRef, notificationData);
 };
@@ -100,7 +106,14 @@ export const getNotificationsForUser = async (userId: string): Promise<Notificat
   }));
 };
 
-// Mark notifications as read for a user
+// Mark a single notification as read
+export const markSingleNotificationAsRead = async (notificationId: string) => {
+  const notificationRef = doc(db, 'notifications', notificationId);
+  await updateDoc(notificationRef, { read: true });
+};
+
+
+// Mark all notifications as read for a user
 export const markNotificationsAsRead = async (userId: string) => {
   const notificationsRef = collection(db, 'notifications');
   const q = query(

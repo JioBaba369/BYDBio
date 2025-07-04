@@ -3,16 +3,17 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { CheckCheck, Bell, UserPlus, Heart } from "lucide-react";
+import { CheckCheck, Bell, UserPlus, Heart, Calendar } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/components/auth-provider";
 import { useState, useEffect } from "react";
-import { getNotificationsForUser, markNotificationsAsRead, type NotificationWithActor } from "@/lib/notifications";
+import { getNotificationsForUser, markNotificationsAsRead, markSingleNotificationAsRead, type NotificationWithActor } from "@/lib/notifications";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { ClientFormattedDate } from "@/components/client-formatted-date";
+import { useRouter } from "next/navigation";
 
 const NotificationSkeleton = () => (
     <div className="flex items-center gap-4 p-4">
@@ -24,7 +25,7 @@ const NotificationSkeleton = () => (
     </div>
 );
 
-const NotificationItem = ({ notification }: { notification: NotificationWithActor }) => {
+const NotificationItem = ({ notification, onRead }: { notification: NotificationWithActor, onRead: (id: string) => void }) => {
   const { actor } = notification;
 
   if (!actor) return null; // Don't render if the actor (user who performed action) is gone
@@ -39,17 +40,25 @@ const NotificationItem = ({ notification }: { notification: NotificationWithActo
       break;
     case 'new_like':
       icon = <Heart className="h-5 w-5 text-red-500" />;
-      message = <p><span className="font-semibold">{actor.name}</span> liked your post.</p>;
-      // A real app would link to the post: `/posts/${notification.entityId}`
-      // For now, we link to the user's feed, which is where posts are.
-      link = `/feed`;
+      message = (
+        <p>
+            <span className="font-semibold">{actor.name}</span> liked your post:{" "}
+            <span className="italic text-muted-foreground">"{notification.entityTitle}"</span>
+        </p>
+      );
+      link = `/feed`; // A real app would link to the post: `/posts/${notification.entityId}`
+      break;
+    case 'event_rsvp':
+      icon = <Calendar className="h-5 w-5 text-purple-500" />;
+      message = <p><span className="font-semibold">{actor.name}</span> RSVP'd to your event: <span className="font-semibold">{notification.entityTitle}</span>.</p>;
+      link = `/events/${notification.entityId}`;
       break;
     default:
       return null;
   }
 
   return (
-    <Link href={link} className={cn(
+    <Link href={link} onClick={() => onRead(notification.id)} className={cn(
       "block p-4 border-b last:border-b-0 transition-colors",
       !notification.read ? "bg-primary/5 hover:bg-primary/10" : "hover:bg-muted/50"
     )}>
@@ -66,7 +75,7 @@ const NotificationItem = ({ notification }: { notification: NotificationWithActo
         <div className="flex-1 text-sm">
           {message}
           <p className="text-xs text-muted-foreground mt-1">
-            <ClientFormattedDate date={notification.createdAt.toDate()} relative />
+            <ClientFormattedDate date={(notification.createdAt as unknown as Timestamp).toDate()} relative />
           </p>
         </div>
       </div>
@@ -78,6 +87,7 @@ const NotificationItem = ({ notification }: { notification: NotificationWithActo
 export default function NotificationsPage() {
     const { user, loading: authLoading } = useAuth();
     const { toast } = useToast();
+    const router = useRouter();
     const [notifications, setNotifications] = useState<NotificationWithActor[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
@@ -91,6 +101,17 @@ export default function NotificationsPage() {
     }, [user]);
 
     const unreadCount = notifications.filter(n => !n.read).length;
+
+    const handleReadNotification = async (notificationId: string) => {
+        // Optimistic update
+        setNotifications(prev => prev.map(n => n.id === notificationId ? { ...n, read: true } : n));
+        try {
+            await markSingleNotificationAsRead(notificationId);
+        } catch (error) {
+            console.error("Failed to mark notification as read:", error);
+            // Optionally revert UI on failure and show a toast
+        }
+    };
 
     const handleMarkAllAsRead = async () => {
         if (!user || unreadCount === 0) return;
@@ -137,7 +158,7 @@ export default function NotificationsPage() {
                 </Button>
             </div>
             <Card>
-                <CardContent className="p-0">
+                <CardContent className="p-0 divide-y">
                     {isLoading ? (
                         <>
                            <NotificationSkeleton />
@@ -145,13 +166,11 @@ export default function NotificationsPage() {
                            <NotificationSkeleton />
                         </>
                     ) : notifications.length > 0 ? (
-                       <ul>
+                       <div>
                            {notifications.map(notification => (
-                             <li key={notification.id}>
-                               <NotificationItem notification={notification} />
-                             </li>
+                             <NotificationItem key={notification.id} notification={notification} onRead={handleReadNotification} />
                            ))}
-                       </ul>
+                       </div>
                     ) : (
                         <div className="p-10 text-center text-muted-foreground flex flex-col items-center gap-4">
                             <Bell className="h-12 w-12" />

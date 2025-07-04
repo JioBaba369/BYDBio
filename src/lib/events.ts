@@ -21,6 +21,7 @@ import {
 import { db } from '@/lib/firebase';
 import type { User } from './users';
 import { formatCurrency } from './utils';
+import { createNotification } from './notifications';
 
 export type ItineraryItem = {
   time: string;
@@ -175,6 +176,8 @@ export const toggleRsvp = async (eventId: string, userId: string) => {
         await updateDoc(eventRef, { rsvps: arrayRemove(userId) });
     } else {
         await updateDoc(eventRef, { rsvps: arrayUnion(userId) });
+        // Send a notification to the event creator
+        await createNotification(eventData.authorId, 'event_rsvp', userId, eventId, eventData.title);
     }
     return !isRsvped;
 };
