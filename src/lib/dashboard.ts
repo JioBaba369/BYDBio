@@ -48,6 +48,17 @@ export const getRecentActivity = async (userId: string): Promise<ActivityItem[]>
         const type = typeMap[collectionName];
         snapshot.docs.forEach(doc => {
             const data = doc.data();
+            
+            // Create a new object and serialize all Timestamp fields
+            const serializedData: { [key: string]: any } = {};
+            for (const key in data) {
+                if (data[key] instanceof Timestamp) {
+                    serializedData[key] = data[key].toDate().toISOString();
+                } else {
+                    serializedData[key] = data[key];
+                }
+            }
+
             let title = 'Untitled';
             if (data.title) {
                 title = data.title;
@@ -58,10 +69,9 @@ export const getRecentActivity = async (userId: string): Promise<ActivityItem[]>
             }
 
             allItems.push({
-                ...data,
+                ...serializedData,
                 id: doc.id,
                 type: type,
-                createdAt: (data.createdAt as Timestamp).toDate().toISOString(),
                 title: title
             });
         });
