@@ -32,6 +32,7 @@ import {
   BookText,
   Compass,
   Megaphone,
+  Mail,
 } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -182,6 +183,14 @@ export function MainSidebar() {
               <Link href="/connections">
                 <Users />
                 <span>Connections</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+           <SidebarMenuItem>
+            <SidebarMenuButton asChild tooltip="Messages" isActive={isActive('/messages')}>
+              <Link href="/messages">
+                <Mail />
+                <span>Messages</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>

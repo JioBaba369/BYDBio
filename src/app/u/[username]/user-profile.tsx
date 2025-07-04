@@ -34,6 +34,7 @@ import QRCode from "qrcode.react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { ClientFormattedDate } from "@/components/client-formatted-date";
 import { formatCurrency } from "@/lib/utils";
+import { createMessage } from "@/lib/messages";
 
 
 interface UserProfilePageProps {
@@ -77,10 +78,15 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
 
   const handleContactSubmit = async (data: ContactFormValues) => {
     try {
-      console.log(data);
+      await createMessage(userProfileData.uid, {
+        senderName: data.name,
+        senderEmail: data.email,
+        message: data.message,
+      });
+
       toast({
         title: "Message Sent!",
-        description: "Thanks for reaching out. I'll get back to you soon.",
+        description: `Thanks for reaching out to ${userProfileData.name}.`,
       });
       contactForm.reset();
     } catch (error) {
