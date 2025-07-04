@@ -28,8 +28,7 @@ import { useAuth } from "@/components/auth-provider";
 import { Skeleton } from "@/components/ui/skeleton";
 import { updateUser } from "@/lib/users";
 import { Label } from "@/components/ui/label";
-import { getStorage, ref as storageRef, uploadString, getDownloadURL } from "firebase/storage";
-import { storage } from "@/lib/firebase";
+import { uploadImage } from "@/lib/storage";
 
 const publicProfileSchema = z.object({
   name: z.string().min(1, "Name cannot be empty."),
@@ -358,19 +357,10 @@ export default function ProfilePage() {
     toast({ title: "Uploading...", description: "Please wait while we upload your new avatar." });
 
     try {
-      // Create a reference to the file in Firebase Storage
-      const avatarRef = storageRef(storage, `avatars/${firebaseUser.uid}`);
+      const downloadURL = await uploadImage(url, `avatars/${firebaseUser.uid}`);
       
-      // Upload the file. The 'url' is a data URL (e.g., 'data:image/jpeg;base64,...')
-      const uploadResult = await uploadString(avatarRef, url, 'data_url');
-      
-      // Get the public URL of the uploaded file
-      const downloadURL = await getDownloadURL(uploadResult.ref);
-      
-      // Update the user's document in Firestore with the new avatar URL
       await updateUser(firebaseUser.uid, { avatarUrl: downloadURL });
       
-      // Update the local state to show the new avatar immediately
       setCroppedImageUrl(downloadURL);
       
       toast({
