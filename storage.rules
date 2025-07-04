@@ -1,10 +1,49 @@
 
 rules_version = '2';
+
 service firebase.storage {
   match /b/{bucket}/o {
+    
+    // Helper function for authentication
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Public read access for all files, as images are meant to be public.
     match /{allPaths=**} {
-      allow read;
-      allow write: if request.auth != null;
+      allow read: if true;
+      // Deny write by default. Specific write rules are defined below.
+      allow write: if false;
+    }
+
+    // Only authenticated users can write to their own dedicated folders.
+    // The path structure in the app matches these rules (e.g., "avatars/{userId}/...").
+    match /avatars/{userId}/{allPaths=**} {
+      allow write: if isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    match /posts/{userId}/{allPaths=**} {
+      allow write: if isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    match /listings/{userId}/{allPaths=**} {
+      allow write: if isAuthenticated() && request.auth.uid == userId;
+    }
+
+    match /jobs/{userId}/{allPaths=**} {
+      allow write: if isAuthenticated() && request.auth.uid == userId;
+    }
+
+    match /events/{userId}/{allPaths=**} {
+      allow write: if isAuthenticated() && request.auth.uid == userId;
+    }
+
+    match /offers/{userId}/{allPaths=**} {
+      allow write: if isAuthenticated() && request.auth.uid == userId;
+    }
+
+    match /businesses/{userId}/{allPaths=**} {
+      allow write: if isAuthenticated() && request.auth.uid == userId;
     }
   }
 }
