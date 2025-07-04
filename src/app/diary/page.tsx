@@ -1,21 +1,23 @@
-
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/components/auth-provider';
 import { type Event, getDiaryEvents, saveDiaryNote } from '@/lib/events';
 import type { User } from '@/lib/users';
-import { format, parseISO, isPast } from 'date-fns';
+import { format, isPast, formatDistanceToNow } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { BookText, Calendar, MapPin, Save, User as UserIcon, Loader2 } from 'lucide-react';
+import { BookText, Calendar, MapPin, Save, User as UserIcon, Loader2, Wand2, Sparkles, PencilRuler } from 'lucide-react';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
+import { reflectOnEvent } from '@/ai/flows/reflect-on-event';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Separator } from '@/components/ui/separator';
 
 type EventWithNotes = Event & { 
   notes?: string; 
@@ -23,20 +25,22 @@ type EventWithNotes = Event & {
   author?: Pick<User, 'name' | 'username' | 'avatarUrl'>;
 };
 
-// This component safely formats the date on the client-side to prevent hydration errors.
-function ClientFormattedDate({ date, formatStr }: { date: Date; formatStr: string }) {
+function ClientFormattedDate({ date, formatStr, relative }: { date: Date; formatStr: string; relative?: boolean }) {
   const [formattedDate, setFormattedDate] = useState('...');
 
   useEffect(() => {
-    // This effect runs only on the client, after the initial render.
-    setFormattedDate(format(date, formatStr));
-  }, [date, formatStr]);
+    if (relative) {
+        setFormattedDate(formatDistanceToNow(date, { addSuffix: true }));
+    } else {
+        setFormattedDate(format(date, formatStr));
+    }
+  }, [date, formatStr, relative]);
 
   return <>{formattedDate}</>;
 }
 
 const DiarySkeleton = () => (
-    <div className="space-y-6">
+    <div className="space-y-8 animate-pulse">
         <div>
             <Skeleton className="h-9 w-48" />
             <Skeleton className="h-4 w-72 mt-2" />
@@ -44,15 +48,32 @@ const DiarySkeleton = () => (
         <section className="space-y-4">
             <Skeleton className="h-7 w-40" />
             <div className="grid md:grid-cols-2 gap-6">
-                <Card>
+                {[...Array(2)].map((_, i) => (
+                    <Card key={i} className="bg-transparent border-dashed">
+                        <CardHeader>
+                            <Skeleton className="h-6 w-3/4" />
+                            <Skeleton className="h-4 w-1/2 mt-2" />
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <Skeleton className="h-4 w-20" />
+                            <Skeleton className="h-24 w-full" />
+                            <Skeleton className="h-9 w-28" />
+                        </CardContent>
+                    </Card>
+                ))}
+            </div>
+        </section>
+        <section className="space-y-4">
+            <Skeleton className="h-7 w-40" />
+            <div className="grid md:grid-cols-2 gap-6">
+                <Card className="bg-transparent border-dashed">
                     <CardHeader>
                         <Skeleton className="h-6 w-3/4" />
                         <Skeleton className="h-4 w-1/2 mt-2" />
                     </CardHeader>
-                    <CardContent className="space-y-2">
-                        <Skeleton className="h-4 w-20" />
-                        <Skeleton className="h-20 w-full" />
-                        <Skeleton className="h-9 w-28" />
+                    <CardContent className="space-y-4">
+                        <Skeleton className="h-16 w-full" />
+                        <Skeleton className="h-9 w-40" />
                     </CardContent>
                 </Card>
             </div>
@@ -66,6 +87,8 @@ export default function DiaryPage() {
     const [events, setEvents] = useState<EventWithNotes[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [savingNoteId, setSavingNoteId] = useState<string | null>(null);
+    const [reflectingId, setReflectingId] = useState<string | null>(null);
+    const [reflections, setReflections] = useState<Record<string, string[]>>({});
     const { toast } = useToast();
 
     useEffect(() => {
@@ -109,6 +132,27 @@ export default function DiaryPage() {
         }
     };
 
+    const handleGenerateReflections = async (event: EventWithNotes) => {
+        setReflectingId(event.id);
+        try {
+            const result = await reflectOnEvent({
+                eventTitle: event.title,
+                eventDescription: event.description,
+                userNotes: event.notes,
+            });
+            if (result.reflectionPrompts && result.reflectionPrompts.length > 0) {
+                setReflections(prev => ({...prev, [event.id]: result.reflectionPrompts}));
+            } else {
+                toast({ title: "Could not generate reflections." });
+            }
+        } catch (error) {
+            console.error("Error generating reflections:", error);
+            toast({ title: "AI Reflection Failed", variant: "destructive" });
+        } finally {
+            setReflectingId(null);
+        }
+    };
+
     const { upcomingEvents, pastEvents } = useMemo(() => {
         const sortedEvents = [...events].sort((a, b) => (a.date as Date).getTime() - (b.date as Date).getTime());
         const upcoming = sortedEvents.filter(e => !isPast(e.date as Date));
@@ -121,10 +165,10 @@ export default function DiaryPage() {
     }
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-8">
             <div>
                 <h1 className="text-2xl sm:text-3xl font-bold font-headline">My Diary</h1>
-                <p className="text-muted-foreground">Keep track of your events and personal notes.</p>
+                <p className="text-muted-foreground">Keep track of your events, notes, and reflections.</p>
             </div>
 
             <section className="space-y-4">
@@ -134,13 +178,13 @@ export default function DiaryPage() {
                         {upcomingEvents.map(event => {
                             const isSaving = savingNoteId === event.id;
                             return (
-                                <Card key={event.id}>
+                                <Card key={event.id} className="flex flex-col">
                                     <CardHeader>
                                         <div className="flex justify-between items-start">
-                                        <CardTitle>{event.title}</CardTitle>
-                                        <Badge variant={event.source === 'created' ? 'default' : 'secondary'}>
-                                            {event.source === 'created' ? 'My Event' : 'Attending'}
-                                        </Badge>
+                                            <CardTitle>{event.title}</CardTitle>
+                                            <Badge variant={event.source === 'created' ? 'default' : 'secondary'}>
+                                                {event.source === 'created' ? 'My Event' : 'Attending'}
+                                            </Badge>
                                         </div>
                                         <CardDescription className="space-y-1 text-sm text-muted-foreground pt-1">
                                             <div className="flex items-center">
@@ -162,8 +206,8 @@ export default function DiaryPage() {
                                             )}
                                         </CardDescription>
                                     </CardHeader>
-                                    <CardContent className="space-y-2">
-                                        <Label htmlFor={`notes-${event.id}`}>My Notes</Label>
+                                    <CardContent className="space-y-2 flex-grow">
+                                        <Label htmlFor={`notes-${event.id}`} className="flex items-center gap-2"><PencilRuler className="h-4 w-4"/> My Notes</Label>
                                         <Textarea
                                             id={`notes-${event.id}`}
                                             placeholder="Jot down your thoughts, questions, or key takeaways..."
@@ -171,17 +215,19 @@ export default function DiaryPage() {
                                             onChange={(e) => handleNoteChange(event.id, e.target.value)}
                                             rows={4}
                                         />
+                                    </CardContent>
+                                    <CardFooter>
                                         <Button size="sm" onClick={() => handleSaveNote(event.id)} disabled={isSaving}>
                                             {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                                             {isSaving ? 'Saving...' : 'Save Note'}
                                         </Button>
-                                    </CardContent>
+                                    </CardFooter>
                                 </Card>
                             )
                         })}
                     </div>
                 ) : (
-                    <Card>
+                    <Card className="border-dashed">
                         <CardContent className="p-10 text-center text-muted-foreground flex flex-col items-center gap-4">
                             <Calendar className="h-12 w-12" />
                             <p>You have no upcoming events.</p>
@@ -199,23 +245,23 @@ export default function DiaryPage() {
                     <div className="grid md:grid-cols-2 gap-6">
                          {pastEvents.map(event => {
                              const isSaving = savingNoteId === event.id;
+                             const isLoadingReflections = reflectingId === event.id;
+                             const eventReflections = reflections[event.id] || [];
+
                              return (
-                                <Card key={event.id} className="opacity-80">
+                                <Card key={event.id} className="opacity-90 flex flex-col">
                                     <CardHeader>
                                         <div className="flex justify-between items-start">
-                                        <CardTitle>{event.title}</CardTitle>
-                                        <Badge variant={event.source === 'created' ? 'default' : 'secondary'}>
-                                            {event.source === 'created' ? 'My Event' : 'Attended'}
-                                        </Badge>
+                                            <CardTitle>{event.title}</CardTitle>
+                                            <Badge variant={event.source === 'created' ? 'default' : 'secondary'}>
+                                                {event.source === 'created' ? 'My Event' : 'Attended'}
+                                            </Badge>
                                         </div>
                                         <CardDescription className="space-y-1 text-sm text-muted-foreground pt-1">
                                             <div className="flex items-center">
-                                                <Calendar className="mr-2 h-4 w-4" /> <ClientFormattedDate date={event.date as Date} formatStr="PPP" />
+                                                <Calendar className="mr-2 h-4 w-4" /> <ClientFormattedDate date={event.date as Date} formatStr="PPP" /> (<ClientFormattedDate date={event.date as Date} formatStr="" relative={true}/>)
                                             </div>
-                                            <div className="flex items-center">
-                                                <MapPin className="mr-2 h-4 w-4" /> {event.location}
-                                            </div>
-                                            {event.source === 'rsvped' && event.author && (
+                                             {event.source === 'rsvped' && event.author && (
                                                 <div className="flex items-center pt-2">
                                                     <Link href={`/u/${event.author.username}`} className="flex items-center gap-2 hover:underline">
                                                     <Avatar className="h-6 w-6">
@@ -228,29 +274,52 @@ export default function DiaryPage() {
                                             )}
                                         </CardDescription>
                                     </CardHeader>
-                                    <CardContent className="space-y-2">
-                                        <Label htmlFor={`notes-${event.id}`}>My Reflections</Label>
-                                        <Textarea
-                                            id={`notes-${event.id}`}
-                                            placeholder="Add your reflections..."
-                                            value={event.notes}
-                                            onChange={(e) => handleNoteChange(event.id, e.target.value)}
-                                            rows={4}
-                                        />
-                                        <Button size="sm" onClick={() => handleSaveNote(event.id)} disabled={isSaving}>
+                                    <CardContent className="space-y-4 flex-grow">
+                                        <div>
+                                            <Label htmlFor={`notes-past-${event.id}`} className="flex items-center gap-2 mb-2"><PencilRuler className="h-4 w-4"/> My Reflections</Label>
+                                            <Textarea
+                                                id={`notes-past-${event.id}`}
+                                                placeholder="Add your reflections..."
+                                                value={event.notes}
+                                                onChange={(e) => handleNoteChange(event.id, e.target.value)}
+                                                rows={4}
+                                            />
+                                        </div>
+                                         <Button size="sm" variant="secondary" onClick={() => handleSaveNote(event.id)} disabled={isSaving}>
                                             {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                                             {isSaving ? 'Saving...' : 'Save Note'}
                                         </Button>
+
+                                        <Separator />
+
+                                        <div className="space-y-2">
+                                            <Button size="sm" onClick={() => handleGenerateReflections(event)} disabled={isLoadingReflections}>
+                                                {isLoadingReflections ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+                                                {isLoadingReflections ? 'Generating...' : 'AI Reflection Prompts'}
+                                            </Button>
+                                            {eventReflections.length > 0 && (
+                                                <Accordion type="single" collapsible className="w-full">
+                                                    <AccordionItem value="item-1">
+                                                        <AccordionTrigger className="text-sm">View AI Prompts</AccordionTrigger>
+                                                        <AccordionContent>
+                                                            <ul className="list-disc pl-5 space-y-2 text-muted-foreground">
+                                                                {eventReflections.map((prompt, i) => <li key={i}>{prompt}</li>)}
+                                                            </ul>
+                                                        </AccordionContent>
+                                                    </AccordionItem>
+                                                </Accordion>
+                                            )}
+                                        </div>
                                     </CardContent>
                                 </Card>
                             )
                         })}
                     </div>
                 ) : (
-                    <Card>
+                    <Card className="border-dashed">
                         <CardContent className="p-10 text-center text-muted-foreground flex flex-col items-center gap-4">
                             <BookText className="h-12 w-12" />
-                            <p>Your event diary is empty.<br/>Notes from past events will appear here.</p>
+                            <p>Your event diary is empty.<br/>Notes and reflections from past events will appear here.</p>
                         </CardContent>
                     </Card>
                 )}
