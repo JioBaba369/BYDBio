@@ -7,10 +7,7 @@ export function Logo({ className }: { className?: string }) {
       <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
         <Share2 className="h-5 w-5 text-primary" />
       </div>
-      <div>
-        <div>BYD.Bio</div>
-        <div className="text-xs font-normal text-muted-foreground -mt-1 leading-tight">Build Your Dream Bio</div>
-      </div>
+      <span>BYD.Bio</span>
     </div>
   );
 }

@@ -4,7 +4,7 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, ListFilter, File } from "lucide-react";
+import { PlusCircle, ListFilter, File, Activity, CreditCard, Users, DollarSign } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 export default function WireframePage() {
@@ -25,41 +25,41 @@ export default function WireframePage() {
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Metric 1</CardTitle>
-                        <Skeleton className="h-4 w-4" />
+                        <DollarSign className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <Skeleton className="h-7 w-20" />
-                        <Skeleton className="h-3 w-40 mt-1" />
+                        <div className="text-2xl font-bold">$45,231.89</div>
+                        <p className="text-xs text-muted-foreground">+20.1% from last month</p>
                     </CardContent>
                 </Card>
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Metric 2</CardTitle>
-                        <Skeleton className="h-4 w-4" />
+                        <Users className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <Skeleton className="h-7 w-20" />
-                        <Skeleton className="h-3 w-40 mt-1" />
+                       <div className="text-2xl font-bold">+2350</div>
+                        <p className="text-xs text-muted-foreground">+180.1% from last month</p>
                     </CardContent>
                 </Card>
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Metric 3</CardTitle>
-                         <Skeleton className="h-4 w-4" />
+                         <CreditCard className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                       <Skeleton className="h-7 w-20" />
-                        <Skeleton className="h-3 w-40 mt-1" />
+                       <div className="text-2xl font-bold">+12,234</div>
+                       <p className="text-xs text-muted-foreground">+19% from last month</p>
                     </CardContent>
                 </Card>
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Metric 4</CardTitle>
-                         <Skeleton className="h-4 w-4" />
+                         <Activity className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                       <Skeleton className="h-7 w-20" />
-                        <Skeleton className="h-3 w-40 mt-1" />
+                       <div className="text-2xl font-bold">+573</div>
+                        <p className="text-xs text-muted-foreground">+201 since last hour</p>
                     </CardContent>
                 </Card>
             </div>
@@ -135,19 +135,28 @@ export default function WireframePage() {
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead className="w-[100px]"><Skeleton className="h-4 w-full" /></TableHead>
-                                <TableHead><Skeleton className="h-4 w-full" /></TableHead>
-                                <TableHead><Skeleton className="h-4 w-full" /></TableHead>
-                                <TableHead className="text-right"><Skeleton className="h-4 w-full" /></TableHead>
+                                <TableHead className="w-[100px]">ID</TableHead>
+                                <TableHead>Name</TableHead>
+                                <TableHead>Status</TableHead>
+                                <TableHead className="text-right">Amount</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {[...Array(5)].map((_, i) => (
                                 <TableRow key={i}>
-                                    <TableCell><Skeleton className="h-4 w-full" /></TableCell>
-                                    <TableCell><Skeleton className="h-4 w-full" /></TableCell>
-                                    <TableCell><Skeleton className="h-4 w-full" /></TableCell>
-                                    <TableCell className="text-right"><Skeleton className="h-4 w-full" /></TableCell>
+                                    <TableCell>
+                                        <div className="font-medium">USR-00{i + 1}</div>
+                                    </TableCell>
+                                    <TableCell>
+                                        <div className="font-medium">Placeholder Name {i + 1}</div>
+                                        <div className="hidden text-sm text-muted-foreground md:inline">
+                                            user{i+1}@example.com
+                                        </div>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Skeleton className="h-5 w-16" />
+                                    </TableCell>
+                                    <TableCell className="text-right">${(Math.random() * 200).toFixed(2)}</TableCell>
                                 </TableRow>
                             ))}
                         </TableBody>

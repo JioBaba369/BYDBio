@@ -240,27 +240,27 @@ END:VCARD`;
                                 </Card>
                             );
                             case 'business': return (
-                                <Card key={item.id} className="flex flex-col shadow-none border">
+                                <Card key={item.id} className="shadow-none border">
                                     <CardHeader><CardTitle className="text-base">Created a new business page</CardTitle></CardHeader>
                                     <CardContent>
-                                        <Link href={`/b/${item.id}`} className="block hover:bg-muted/50 p-4 rounded-lg border">
+                                        <Link href={`/b/${item.id}`} className="block hover:bg-muted/50 p-4 rounded-lg border -m-4">
                                             <div className="flex gap-4">
                                                 {item.logoUrl && <Image src={item.logoUrl} alt={item.name} width={56} height={56} className="rounded-lg object-cover" data-ai-hint="logo"/>}
-                                                <div>
+                                                <div className="flex-1">
                                                     <p className="font-semibold">{item.name}</p>
                                                     <p className="text-sm text-muted-foreground line-clamp-2">{item.description}</p>
                                                 </div>
                                             </div>
                                         </Link>
                                     </CardContent>
-                                    <CardFooter className="text-xs text-muted-foreground px-4 pb-4"><ClientFormattedDate date={item.createdAt} relative /></CardFooter>
+                                    <CardFooter className="text-xs text-muted-foreground px-4 pb-4 pt-2"><ClientFormattedDate date={item.createdAt} relative /></CardFooter>
                                 </Card>
                             );
                             case 'listing': return (
                                 <Card key={item.id} className="shadow-none border">
                                      <CardHeader><CardTitle className="text-base">Added a new listing</CardTitle></CardHeader>
                                      <CardContent>
-                                         <Link href={`/l/${item.id}`} className="block hover:bg-muted/50 p-4 rounded-lg border">
+                                         <Link href={`/l/${item.id}`} className="block hover:bg-muted/50 p-4 rounded-lg border -m-4">
                                             <div className="flex gap-4 items-center">
                                                 {item.imageUrl && <Image src={item.imageUrl} alt={item.title} width={120} height={80} className="rounded-lg object-cover" data-ai-hint="product design"/>}
                                                 <div className="flex-1">
@@ -271,48 +271,48 @@ END:VCARD`;
                                             </div>
                                         </Link>
                                      </CardContent>
-                                     <CardFooter className="text-xs text-muted-foreground px-4 pb-4"><ClientFormattedDate date={item.createdAt} relative /></CardFooter>
+                                     <CardFooter className="text-xs text-muted-foreground px-4 pb-4 pt-2"><ClientFormattedDate date={item.createdAt} relative /></CardFooter>
                                 </Card>
                             );
                             case 'job': return (
                                 <Card key={item.id} className="shadow-none border">
                                     <CardHeader><CardTitle className="text-base">Posted a new opportunity</CardTitle></CardHeader>
                                      <CardContent>
-                                        <Link href={`/o/${item.id}`} className="block hover:bg-muted/50 p-4 rounded-lg border">
+                                        <Link href={`/o/${item.id}`} className="block hover:bg-muted/50 p-4 rounded-lg border -m-4">
                                             <p className="font-semibold">{item.title}</p>
                                             <p className="text-sm text-muted-foreground flex items-center gap-1.5"><Building2 className="h-4 w-4"/> {item.company}</p>
                                             <p className="text-sm text-muted-foreground flex items-center gap-1.5"><MapPin className="h-4 w-4"/> {item.location}</p>
                                             <Badge variant="destructive" className="mt-2">{item.type}</Badge>
                                         </Link>
                                      </CardContent>
-                                     <CardFooter className="text-xs text-muted-foreground px-4 pb-4"><ClientFormattedDate date={item.createdAt} relative /></CardFooter>
+                                     <CardFooter className="text-xs text-muted-foreground px-4 pb-4 pt-2"><ClientFormattedDate date={item.createdAt} relative /></CardFooter>
                                 </Card>
                             );
                             case 'event': return (
                                 <Card key={item.id} className="shadow-none border">
                                     <CardHeader><CardTitle className="text-base">Created a new event</CardTitle></CardHeader>
                                      <CardContent>
-                                        <Link href={`/events/${item.id}`} className="block hover:bg-muted/50 p-4 rounded-lg border">
+                                        <Link href={`/events/${item.id}`} className="block hover:bg-muted/50 p-4 rounded-lg border -m-4">
                                             {item.imageUrl && <Image src={item.imageUrl} alt={item.title} width={600} height={200} className="rounded-lg object-cover w-full aspect-video mb-2" data-ai-hint="event poster"/>}
                                             <p className="font-semibold">{item.title}</p>
                                             <p className="text-sm text-muted-foreground flex items-center gap-1.5"><Calendar className="h-4 w-4"/> <ClientFormattedDate date={item.startDate} formatStr="PPP p"/></p>
                                             <p className="text-sm text-muted-foreground flex items-center gap-1.5"><MapPin className="h-4 w-4"/> {item.location}</p>
                                         </Link>
                                      </CardContent>
-                                     <CardFooter className="text-xs text-muted-foreground px-4 pb-4"><ClientFormattedDate date={item.createdAt} relative /></CardFooter>
+                                     <CardFooter className="text-xs text-muted-foreground px-4 pb-4 pt-2"><ClientFormattedDate date={item.createdAt} relative /></CardFooter>
                                 </Card>
                             );
                             case 'offer': return (
                                  <Card key={item.id} className="shadow-none border">
                                     <CardHeader><CardTitle className="text-base">Posted a new offer</CardTitle></CardHeader>
                                      <CardContent>
-                                        <Link href={`/offer/${item.id}`} className="block hover:bg-muted/50 p-4 rounded-lg border">
+                                        <Link href={`/offer/${item.id}`} className="block hover:bg-muted/50 p-4 rounded-lg border -m-4">
                                             <p className="font-semibold">{item.title}</p>
-                                            <p className="text-sm text-muted-foreground">{item.description}</p>
+                                            <p className="text-sm text-muted-foreground line-clamp-2">{item.description}</p>
                                             <Badge variant="secondary" className="mt-2">{item.category}</Badge>
                                         </Link>
                                      </CardContent>
-                                     <CardFooter className="text-xs text-muted-foreground px-4 pb-4"><ClientFormattedDate date={item.createdAt} relative /></CardFooter>
+                                     <CardFooter className="text-xs text-muted-foreground px-4 pb-4 pt-2"><ClientFormattedDate date={item.createdAt} relative /></CardFooter>
                                 </Card>
                             );
                             default: return null;
