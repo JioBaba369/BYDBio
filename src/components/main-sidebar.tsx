@@ -19,7 +19,6 @@ import {
   Briefcase,
   Calendar,
   CreditCard,
-  DollarSign,
   LayoutDashboard,
   MessageSquare,
   Settings,
@@ -27,9 +26,7 @@ import {
   User,
   Search,
   Users,
-  Tags,
   CalendarDays,
-  Building2,
   Bell,
   BookUser,
   BookText,
@@ -237,27 +234,19 @@ export function MainSidebar() {
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
+
           <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="My Businesses" isActive={isActive('/businesses')}>
+            <SidebarSeparator className="my-1" />
+          </SidebarMenuItem>
+          
+          <SidebarMenuItem>
+            <SidebarGroupLabel>Discovery</SidebarGroupLabel>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild tooltip="Businesses" isActive={isActive('/businesses')}>
               <Link href="/businesses">
-                <Building2 />
-                <span>My Businesses</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Listings" isActive={isActive('/listings')}>
-              <Link href="/listings">
-                <Tags />
-                <span>Listings</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Opportunities" isActive={isActive('/opportunities')}>
-              <Link href="/opportunities">
                 <Briefcase />
-                <span>Opportunities</span>
+                <span>Businesses</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -266,14 +255,6 @@ export function MainSidebar() {
               <Link href="/events">
                 <Calendar />
                 <span>Events</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Offers" isActive={isActive('/offers')}>
-              <Link href="/offers">
-                <DollarSign />
-                <span>Offers</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>

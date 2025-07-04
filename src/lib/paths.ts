@@ -14,8 +14,12 @@ const PUBLIC_CONTENT_PATHS = [
     '/l/',
     '/o/',
     '/offer/',
-    '/events/',
+    '/events',
     '/explore',
+    '/listings',
+    '/opportunities',
+    '/offers',
+    '/businesses'
 ];
 
 /**
