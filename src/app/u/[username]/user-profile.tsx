@@ -8,7 +8,7 @@ import type { Listing } from '@/lib/listings';
 import type { Offer } from '@/lib/offers';
 import type { Job } from '@/lib/jobs';
 import type { Event } from '@/lib/events';
-import { type Business, getBusinessesByUser } from "@/lib/businesses";
+import { type Business } from "@/lib/businesses";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -43,6 +43,7 @@ interface UserProfilePageProps {
     jobs: Job[];
     events: Event[];
     offers: Offer[];
+    businesses: Business[];
   }
 }
 
@@ -68,10 +69,8 @@ function ClientFormattedDate({ date, formatStr }: { date: Date | string; formatS
 export default function UserProfilePage({ userProfileData, content }: UserProfilePageProps) {
   const { user: currentUser } = useAuth();
   const router = useRouter();
-  const [businesses, setBusinesses] = useState<Business[]>([]);
   const [activeTab, setActiveTab] = useState('posts');
-  const [isLoading, setIsLoading] = useState(true);
-
+  
   // Client-side state for optimistic UI updates
   const [isFollowing, setIsFollowing] = useState(currentUser?.following?.includes(userProfileData.uid) || false);
   const [subscribers, setSubscribers] = useState(userProfileData.subscribers || 0);
@@ -82,17 +81,13 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
   }, [currentUser, userProfileData.uid]);
 
   useEffect(() => {
-    // Fetch businesses associated with this user
-    getBusinessesByUser(userProfileData.uid)
-      .then(setBusinesses)
-      .finally(() => setIsLoading(false));
-
+    // This effect is now just for setting the active tab from the URL hash
     const hash = window.location.hash.replace('#', '');
     const validTabs = ['posts', 'businesses', 'listings', 'jobs', 'events', 'offers', 'contact'];
     if (hash && validTabs.includes(hash)) {
       setActiveTab(hash);
     }
-  }, [userProfileData]);
+  }, []);
 
   const { toast } = useToast();
   
@@ -159,7 +154,7 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
 
 
   const { name, username, avatarUrl, avatarFallback, bio, links, handle } = userProfileData;
-  const { posts, listings, jobs, events, offers } = content;
+  const { posts, listings, jobs, events, offers, businesses } = content;
   
   const hasContent = posts.length > 0 || businesses.length > 0 || listings.length > 0 || jobs.length > 0 || events.length > 0 || offers.length > 0;
 
