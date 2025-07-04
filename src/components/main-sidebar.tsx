@@ -35,6 +35,7 @@ import {
   BookText,
   DraftingCompass,
   Compass,
+  Megaphone,
 } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -312,6 +313,14 @@ export function MainSidebar() {
       </SidebarContent>
       <SidebarFooter>
         <SidebarMenu>
+            <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="What's New" isActive={isActive('/whats-new')}>
+                <Link href="/whats-new">
+                    <Megaphone />
+                    <span>What's New</span>
+                </Link>
+                </SidebarMenuButton>
+            </SidebarMenuItem>
             <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip="Settings" isActive={isActive('/settings')}>
                 <Link href="/settings">
