@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button"
 import { Tag, Calendar, PlusCircle, MoreHorizontal, Edit, Archive, Trash2, DollarSign, Eye, Gift } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
-import { format, parseISO } from "date-fns";
+import { format } from "date-fns";
 import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect } from "react";
@@ -18,13 +18,13 @@ import { type Offer, getOffersByUser, deleteOffer, updateOffer } from "@/lib/off
 import { Skeleton } from "@/components/ui/skeleton";
 
 // This component safely formats the date on the client-side to prevent hydration errors.
-function ClientFormattedDate({ dateString }: { dateString: string }) {
+function ClientFormattedDate({ date }: { date: Date }) {
   const [formattedDate, setFormattedDate] = useState('...');
 
   useEffect(() => {
     // This effect runs only on the client, after the initial render.
-    setFormattedDate(format(parseISO(dateString), "PPP"));
-  }, [dateString]);
+    setFormattedDate(format(date, "PPP"));
+  }, [date]);
 
   return <>{formattedDate}</>;
 }
@@ -168,7 +168,7 @@ export default function OffersPage() {
                   <Badge variant="secondary"><Tag className="mr-1 h-3 w-3" />{offer.category}</Badge>
                    <div className="flex items-center pt-2 text-sm text-muted-foreground">
                     <Calendar className="mr-2 h-4 w-4" /> 
-                    <span>Releases: <ClientFormattedDate dateString={offer.releaseDate.toString()} /></span>
+                    <span>Releases: <ClientFormattedDate date={offer.releaseDate as Date} /></span>
                   </div>
                 </CardContent>
                 <Separator />
@@ -243,7 +243,7 @@ export default function OffersPage() {
                     <Badge variant="secondary"><Tag className="mr-1 h-3 w-3" />{offer.category}</Badge>
                      <div className="flex items-center pt-2 text-sm text-muted-foreground">
                       <Calendar className="mr-2 h-4 w-4" /> 
-                      <span>Releases: <ClientFormattedDate dateString={offer.releaseDate.toString()} /></span>
+                      <span>Releases: <ClientFormattedDate date={offer.releaseDate as Date} /></span>
                     </div>
                   </CardContent>
                 </Card>
