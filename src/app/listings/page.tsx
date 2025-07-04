@@ -8,6 +8,7 @@ import { PlusCircle, MoreHorizontal, Edit, Trash2, Archive, Tags, Eye, MousePoin
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/components/auth-provider";
