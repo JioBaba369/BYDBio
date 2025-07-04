@@ -2,17 +2,21 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // Users collection
     match /users/{userId} {
-      // Anyone can read a user's public profile. This is required for public profile pages
-      // and for the query that finds users by username. `read` includes `get` and `list`.
       allow read: if true;
-      
-      // Only the authenticated user can create or update their own profile.
-      // Deletes are not allowed from the client.
-      allow create, update: if request.auth != null && request.auth.uid == userId;
-      allow delete: if false;
+      allow write: if request.auth.uid == userId;
+    }
+
+    match /businesses/{businessId} {
+      allow read: if true;
+      allow create: if request.auth.uid == request.resource.data.authorId;
+      allow update, delete: if request.auth.uid == resource.data.authorId;
+    }
+
+    // This is a catch-all to deny access to any other collections
+    // that are not explicitly defined.
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }
