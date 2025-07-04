@@ -15,9 +15,23 @@ import {
   arrayRemove,
   writeBatch,
   setDoc,
+  orderBy,
+  limit,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { User, Listing, Job, Offer } from './users';
+import type { User } from './users';
+
+const serializeTimestamps = (data: { [key: string]: any }): { [key: string]: any } => {
+    const serializedData: { [key: string]: any } = {};
+    for (const key in data) {
+        if (data[key] && typeof data[key].toDate === 'function') {
+            serializedData[key] = data[key].toDate().toISOString();
+        } else {
+            serializedData[key] = data[key];
+        }
+    }
+    return serializedData;
+};
 
 export type ItineraryItem = {
   time: string;
@@ -214,10 +228,10 @@ export const getAllEvents = async (): Promise<EventWithAuthor[]> => {
 
 // Diary notes
 export type DiaryNote = {
-    id: string;
-    userId: string;
-    eventId: string;
-    notes: string;
+  id: string;
+  userId: string;
+  eventId: string;
+  notes: string;
 }
 
 export const getDiaryNote = async (userId: string, eventId: string): Promise<DiaryNote | null> => {
@@ -251,12 +265,12 @@ export const getDiaryEvents = async (userId: string): Promise<any[]> => {
     const eventsMap = new Map<string, any>();
 
     createdSnapshot.forEach(doc => {
-        eventsMap.set(doc.id, { ...doc.data(), id: doc.id, source: 'created' });
+        eventsMap.set(doc.id, { ...serializeTimestamps(doc.data()), id: doc.id, source: 'created' });
     });
 
     rsvpedSnapshot.forEach(doc => {
         if (!eventsMap.has(doc.id)) {
-            itemsMap.set(doc.id, { ...doc.data(), id: doc.id, source: 'rsvped' });
+            eventsMap.set(doc.id, { ...serializeTimestamps(doc.data()), id: doc.id, source: 'rsvped' });
         }
     });
     
@@ -290,8 +304,6 @@ export const getDiaryEvents = async (userId: string): Promise<any[]> => {
         }
         return {
         ...event,
-        startDate: (event.startDate as Timestamp).toDate(),
-        endDate: event.endDate ? (event.endDate as Timestamp).toDate() : null,
         notes: notesMap.get(event.id) || '',
         author: event.source === 'rsvped' ? authorMap.get(event.authorId) : undefined,
     }}).filter((e): e is any => e !== null);
@@ -322,21 +334,21 @@ export const getCalendarItems = async (userId: string) => {
     const itemsMap = new Map<string, any>();
     
     eventsSnapshot.forEach(doc => {
-        itemsMap.set(`event-${doc.id}`, { ...doc.data(), id: doc.id, type: 'event', source: 'created' });
+        itemsMap.set(`event-${doc.id}`, { ...serializeTimestamps(doc.data()), id: doc.id, type: 'event', source: 'created' });
     });
     rsvpedEventsSnapshot.forEach(doc => {
         if (!itemsMap.has(`event-${doc.id}`)) {
-            itemsMap.set(`event-${doc.id}`, { ...doc.data(), id: doc.id, type: 'event', source: 'rsvped' });
+            itemsMap.set(`event-${doc.id}`, { ...serializeTimestamps(doc.data()), id: doc.id, type: 'event', source: 'rsvped' });
         }
     });
     offersSnapshot.forEach(doc => {
-        itemsMap.set(`offer-${doc.id}`, { ...doc.data(), id: doc.id, type: 'offer' });
+        itemsMap.set(`offer-${doc.id}`, { ...serializeTimestamps(doc.data()), id: doc.id, type: 'offer' });
     });
     jobsSnapshot.forEach(doc => {
-        itemsMap.set(`job-${doc.id}`, { ...doc.data(), id: doc.id, type: 'job' });
+        itemsMap.set(`job-${doc.id}`, { ...serializeTimestamps(doc.data()), id: doc.id, type: 'job' });
     });
     listingsSnapshot.forEach(doc => {
-        itemsMap.set(`listing-${doc.id}`, { ...doc.data(), id: doc.id, type: 'listing' });
+        itemsMap.set(`listing-${doc.id}`, { ...serializeTimestamps(doc.data()), id: doc.id, type: 'listing' });
     });
 
     const allItems = Array.from(itemsMap.values());
@@ -347,23 +359,15 @@ export const getCalendarItems = async (userId: string) => {
     return allItems.map(item => {
         const author = authorMap.get(item.authorId);
         
-        const serializedItem: any = { ...item };
-        for (const key in serializedItem) {
-            // Using a more robust check for Timestamp-like objects
-            if (serializedItem[key] && typeof serializedItem[key].toDate === 'function') {
-                serializedItem[key] = serializedItem[key].toDate().toISOString();
-            }
-        }
-        
-        let primaryDate = serializedItem.createdAt; 
-        if (serializedItem.startDate) {
-            primaryDate = serializedItem.startDate;
-        } else if (serializedItem.postingDate) {
-            primaryDate = serializedItem.postingDate;
+        let primaryDate = item.createdAt; 
+        if (item.startDate) {
+            primaryDate = item.startDate;
+        } else if (item.postingDate) {
+            primaryDate = item.postingDate;
         }
 
         return {
-            ...serializedItem,
+            ...item,
             date: primaryDate,
             author: author ? { name: author.name, username: author.username, avatarUrl: author.avatarUrl } : undefined,
         };
