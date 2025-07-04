@@ -20,6 +20,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { deleteUserAccount, updateUser, type NotificationSettings } from "@/lib/users";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "@/lib/firebase";
+import { useSearchParams } from 'next/navigation';
 
 const SettingsPageSkeleton = () => (
     <div className="space-y-6">
@@ -58,6 +59,11 @@ export default function SettingsPage() {
     const { toast } = useToast();
     
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+
+    const searchParams = useSearchParams();
+    const tabParam = searchParams.get('tab');
+    const validTabs = ['profile', 'appearance', 'notifications', 'security'];
+    const defaultTab = tabParam && validTabs.includes(tabParam) ? tabParam : 'profile';
     
     const handleNotificationSettingChange = async (key: keyof NotificationSettings, value: boolean) => {
         if (!user) return;
@@ -154,7 +160,7 @@ export default function SettingsPage() {
                         Manage your account settings, appearance, and preferences.
                     </p>
                 </div>
-                <Tabs defaultValue="profile" className="w-full">
+                <Tabs defaultValue={defaultTab} className="w-full">
                     <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4">
                         <TabsTrigger value="profile">Profile</TabsTrigger>
                         <TabsTrigger value="appearance">Appearance</TabsTrigger>

@@ -7,7 +7,7 @@ import { useAuth } from './auth-provider';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from './ui/dropdown-menu';
 import { Button } from './ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar';
-import { ChevronDown, LogOut, Settings, User } from 'lucide-react';
+import { ChevronDown, LogOut, Settings, User, Palette } from 'lucide-react';
 import Link from 'next/link';
 import { signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
@@ -80,6 +80,12 @@ function Header() {
                     <Link href="/settings" className="cursor-pointer">
                       <Settings className="mr-2 h-4 w-4" />
                       <span>Settings</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/settings?tab=appearance" className="cursor-pointer">
+                      <Palette className="mr-2 h-4 w-4" />
+                      <span>Appearance</span>
                     </Link>
                   </DropdownMenuItem>
                 <DropdownMenuSeparator />
