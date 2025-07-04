@@ -185,7 +185,7 @@ export default function CalendarPage() {
   
   const contentTypes: { name: CalendarItem['type'], icon: React.ElementType, variant: VariantProps<typeof badgeVariants>['variant'] }[] = [
     { name: 'Event', icon: CalendarIconLucide, variant: 'default' },
-    { name: 'Offer', icon: DollarSign, variant: 'secondary' },
+    { name: 'Offer', icon: Gift, variant: 'secondary' },
     { name: 'Job', icon: Briefcase, variant: 'destructive' },
     { name: 'Listing', icon: Tags, variant: 'outline' },
   ];
@@ -304,7 +304,7 @@ export default function CalendarPage() {
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                 <Link href="/offers/create" className="cursor-pointer">
-                    <DollarSign className="mr-2 h-4 w-4" />
+                    <Gift className="mr-2 h-4 w-4" />
                     <span>New Offer</span>
                 </Link>
                 </DropdownMenuItem>
