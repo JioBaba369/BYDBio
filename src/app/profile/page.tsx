@@ -7,11 +7,11 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { PlusCircle, Trash2, User, CreditCard, Link2 as LinkIcon, Upload, GripVertical, Save } from "lucide-react"
+import { PlusCircle, Trash2, User, CreditCard, Link2 as LinkIcon, Upload, GripVertical, Save, Building, Linkedin, Phone, Mail, Globe } from "lucide-react"
 import HashtagSuggester from "@/components/ai/hashtag-suggester"
 import { useEffect, useState, useRef } from "react";
 import QRCode from 'qrcode.react';
-import { useForm, useFieldArray, FormProvider, useFormContext } from "react-hook-form";
+import { useForm, useFieldArray, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { availableIconNames, linkIconData } from "@/lib/link-icons";
@@ -289,31 +289,43 @@ export default function ProfilePage() {
     })
   );
 
-  async function onPublicProfileSubmit(data: PublicProfileFormValues) {
+  const handleSaveProfileAndCard = async () => {
+    const isPublicProfileValid = await publicProfileForm.trigger();
+    const isBusinessCardValid = await businessCardForm.trigger();
+
+    if (!isPublicProfileValid || !isBusinessCardValid) {
+        toast({ title: "Validation Error", description: "Please correct the errors before saving.", variant: "destructive" });
+        return;
+    }
+
     if (!firebaseUser) return;
+
     try {
-      await updateUser(firebaseUser.uid, { name: data.name, username: data.username, handle: data.username, bio: data.bio });
-      toast({
-        title: "Profile Saved",
-        description: "Your public information has been updated.",
-      });
+        const publicData = publicProfileForm.getValues();
+        const cardData = businessCardForm.getValues();
+
+        await updateUser(firebaseUser.uid, {
+            name: publicData.name,
+            username: publicData.username,
+            handle: publicData.username,
+            bio: publicData.bio,
+            businessCard: cardData,
+        });
+
+        // Reset dirty state after successful save
+        publicProfileForm.reset(publicData);
+        businessCardForm.reset(cardData);
+
+        toast({
+            title: "Profile Saved",
+            description: "Your information has been successfully updated.",
+        });
+
     } catch(error) {
        toast({ title: "Error saving profile", variant: 'destructive'});
     }
   }
 
-  async function onBusinessCardSubmit(data: BusinessCardFormValues) {
-    if (!firebaseUser) return;
-    try {
-      await updateUser(firebaseUser.uid, { businessCard: data });
-      toast({
-        title: "Business Card Saved",
-        description: "Your digital card has been updated.",
-      });
-    } catch(error) {
-       toast({ title: "Error saving card", variant: 'destructive'});
-    }
-  }
 
   async function onLinksSubmit(data: LinksFormValues) {
      if (!firebaseUser) return;
@@ -390,6 +402,7 @@ TITLE:${watchedBusinessCard.title || ''}
 TEL;TYPE=WORK,VOICE:${watchedBusinessCard.phone || ''}
 EMAIL:${watchedBusinessCard.email || ''}
 URL:${watchedBusinessCard.website || ''}
+X-SOCIALPROFILE;type=linkedin:${watchedBusinessCard.linkedin || ''}
 ADR;TYPE=WORK:;;${watchedBusinessCard.location || ''}
 END:VCARD`;
     setQrCodeUrl(vCardData);
@@ -398,6 +411,8 @@ END:VCARD`;
   if (loading || !user) {
     return <ProfilePageSkeleton />;
   }
+  
+  const isProfileDirty = publicProfileForm.formState.isDirty || businessCardForm.formState.isDirty;
 
   return (
     <div className="space-y-6">
@@ -413,221 +428,206 @@ END:VCARD`;
         <h1 className="text-2xl sm:text-3xl font-bold font-headline">Profile Editor</h1>
         <p className="text-muted-foreground">Manage your public presence and connections.</p>
       </div>
-      <Tabs defaultValue="public" className="w-full">
-        <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3">
-          <TabsTrigger value="public"><User className="mr-2 h-4 w-4" />Public Profile</TabsTrigger>
-          <TabsTrigger value="card"><CreditCard className="mr-2 h-4 w-4" />Digital Card</TabsTrigger>
+      <Tabs defaultValue="profile" className="w-full">
+        <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2">
+          <TabsTrigger value="profile"><User className="mr-2 h-4 w-4" />Profile & Card</TabsTrigger>
           <TabsTrigger value="links"><LinkIcon className="mr-2 h-4 w-4"/>Links</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="public">
-          <FormProvider {...publicProfileForm}>
-            <form onSubmit={publicProfileForm.handleSubmit(onPublicProfileSubmit)}>
-              <Card>
+        <TabsContent value="profile">
+            <Card>
                 <CardHeader>
-                  <CardTitle>Public Information</CardTitle>
-                  <CardDescription>This information will be displayed on your public profile and link-in-bio page.</CardDescription>
+                  <CardTitle>Public Profile & Digital Card</CardTitle>
+                  <CardDescription>This information appears on your public pages. Changes are shown in the live preview on the right.</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-6">
-                  <FormField
-                    control={publicProfileForm.control}
-                    name="name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Full Name</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Jane Doe" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={publicProfileForm.control}
-                    name="username"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Username</FormLabel>
-                        <FormControl>
-                          <Input placeholder="janedoe" {...field} />
-                        </FormControl>
-                         <FormDescription>
-                          This will be used in your public profile URL.
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <div className="space-y-2">
-                    <Label>Profile Picture</Label>
-                    <div className="flex items-center gap-4">
-                      <Avatar className="h-20 w-20">
-                        <AvatarImage src={croppedImageUrl || user.avatarUrl} data-ai-hint="woman smiling"/>
-                        <AvatarFallback>{user.avatarFallback}</AvatarFallback>
-                      </Avatar>
-                      <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}><Upload className="mr-2 h-4 w-4"/> Change Photo</Button>
-                      <input
-                        type="file"
-                        ref={fileInputRef}
-                        className="hidden"
-                        accept="image/png, image/jpeg"
-                        onChange={onFileChange}
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-4">
-                    <FormField
-                      control={publicProfileForm.control}
-                      name="bio"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Bio</FormLabel>
-                          <FormControl>
-                            <Textarea rows={3} {...field} placeholder="Tell everyone a little bit about yourself..." />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <BioGenerator onSelectBio={(bio) => publicProfileForm.setValue('bio', bio, { shouldDirty: true })} />
-                    <div className="space-y-2">
-                        <HashtagSuggester content={watchedBio || ''} onSelectHashtag={(tag) => {
-                          const currentBio = publicProfileForm.getValues('bio') || '';
-                          publicProfileForm.setValue('bio', `${currentBio.trim()} ${tag}`, { shouldDirty: true });
-                        }} />
-                    </div>
-                  </div>
+                <CardContent>
+                   <div className="grid md:grid-cols-3 gap-8">
+                       <div className="md:col-span-2 space-y-6">
+                           <Card className="p-6">
+                               <h3 className="text-lg font-medium mb-4">Public Information</h3>
+                               <FormField
+                                control={publicProfileForm.control}
+                                name="name"
+                                render={({ field }) => (
+                                    <FormItem className="mb-4">
+                                    <FormLabel>Full Name</FormLabel>
+                                    <FormControl>
+                                        <Input placeholder="Jane Doe" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                    </FormItem>
+                                )}
+                                />
+                                <FormField
+                                control={publicProfileForm.control}
+                                name="username"
+                                render={({ field }) => (
+                                    <FormItem className="mb-4">
+                                    <FormLabel>Username</FormLabel>
+                                    <FormControl>
+                                        <Input placeholder="janedoe" {...field} />
+                                    </FormControl>
+                                    <FormDescription>
+                                        This will be used in your public profile URL.
+                                    </FormDescription>
+                                    <FormMessage />
+                                    </FormItem>
+                                )}
+                                />
+                                <div className="space-y-2 mb-4">
+                                    <Label>Profile Picture</Label>
+                                    <div className="flex items-center gap-4">
+                                    <Avatar className="h-20 w-20">
+                                        <AvatarImage src={croppedImageUrl || user.avatarUrl} data-ai-hint="woman smiling"/>
+                                        <AvatarFallback>{user.avatarFallback}</AvatarFallback>
+                                    </Avatar>
+                                    <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}><Upload className="mr-2 h-4 w-4"/> Change Photo</Button>
+                                    <input
+                                        type="file"
+                                        ref={fileInputRef}
+                                        className="hidden"
+                                        accept="image/png, image/jpeg"
+                                        onChange={onFileChange}
+                                    />
+                                    </div>
+                                </div>
+                                <div className="space-y-4">
+                                    <FormField
+                                    control={publicProfileForm.control}
+                                    name="bio"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                        <FormLabel>Bio</FormLabel>
+                                        <FormControl>
+                                            <Textarea rows={3} {...field} placeholder="Tell everyone a little bit about yourself..." />
+                                        </FormControl>
+                                        <FormMessage />
+                                        </FormItem>
+                                    )}
+                                    />
+                                    <BioGenerator onSelectBio={(bio) => publicProfileForm.setValue('bio', bio, { shouldDirty: true })} />
+                                    <div className="space-y-2">
+                                        <HashtagSuggester content={watchedBio || ''} onSelectHashtag={(tag) => {
+                                        const currentBio = publicProfileForm.getValues('bio') || '';
+                                        publicProfileForm.setValue('bio', `${currentBio.trim()} ${tag}`, { shouldDirty: true });
+                                        }} />
+                                    </div>
+                                </div>
+                           </Card>
+                           <Card className="p-6">
+                                <h3 className="text-lg font-medium mb-4">Digital Card Details</h3>
+                                <FormField
+                                control={businessCardForm.control}
+                                name="title"
+                                render={({ field }) => (
+                                    <FormItem className="mb-4">
+                                    <FormLabel>Job Title</FormLabel>
+                                    <FormControl><Input placeholder="Senior Product Designer" {...field} /></FormControl>
+                                    <FormMessage />
+                                    </FormItem>
+                                )}
+                                />
+                                <FormField
+                                control={businessCardForm.control}
+                                name="company"
+                                render={({ field }) => (
+                                    <FormItem className="mb-4">
+                                    <FormLabel>Company</FormLabel>
+                                    <FormControl><Input placeholder="Acme Inc." {...field} /></FormControl>
+                                    <FormMessage />
+                                    </FormItem>
+                                )}
+                                />
+                                 <FormField
+                                control={businessCardForm.control}
+                                name="location"
+                                render={({ field }) => (
+                                    <FormItem className="mb-4">
+                                    <FormLabel>Location</FormLabel>
+                                    <FormControl><Input placeholder="San Francisco, CA" {...field} /></FormControl>
+                                    <FormMessage />
+                                    </FormItem>
+                                )}
+                                />
+                                <FormField
+                                control={businessCardForm.control}
+                                name="phone"
+                                render={({ field }) => (
+                                    <FormItem className="mb-4">
+                                    <FormLabel>Phone</FormLabel>
+                                    <FormControl><Input type="tel" placeholder="+1 (555) 123-4567" {...field} /></FormControl>
+                                    <FormMessage />
+                                    </FormItem>
+                                )}
+                                />
+                                <FormField
+                                control={businessCardForm.control}
+                                name="email"
+                                render={({ field }) => (
+                                    <FormItem className="mb-4">
+                                    <FormLabel>Email</FormLabel>
+                                    <FormControl><Input type="email" placeholder="jane.doe@acme.com" {...field} /></FormControl>
+                                    <FormMessage />
+                                    </FormItem>
+                                )}
+                                />
+                                <FormField
+                                control={businessCardForm.control}
+                                name="website"
+                                render={({ field }) => (
+                                    <FormItem className="mb-4">
+                                    <FormLabel>Website</FormLabel>
+                                    <FormControl><Input placeholder="https://janedoe.design" {...field} /></FormControl>
+                                    <FormMessage />
+                                    </FormItem>
+                                )}
+                                />
+                                <FormField
+                                control={businessCardForm.control}
+                                name="linkedin"
+                                render={({ field }) => (
+                                    <FormItem className="mb-4">
+                                    <FormLabel>LinkedIn</FormLabel>
+                                    <FormControl><Input placeholder="https://linkedin.com/in/janedoe" {...field} /></FormControl>
+                                    <FormMessage />
+                                    </FormItem>
+                                )}
+                                />
+                           </Card>
+                       </div>
+                       <div className="md:col-span-1 space-y-4">
+                           <h3 className="text-lg font-medium text-center">Live Preview</h3>
+                           <div className="sticky top-20">
+                             <div className="w-full max-w-[280px] bg-muted/30 p-6 rounded-xl shadow-lg border mx-auto">
+                                <div className="text-center">
+                                <Avatar className="h-20 w-20 mx-auto mb-2">
+                                    <AvatarImage src={croppedImageUrl || user.avatarUrl} data-ai-hint="woman smiling"/>
+                                    <AvatarFallback>{user.avatarFallback}</AvatarFallback>
+                                </Avatar>
+                                <p className="font-headline font-semibold text-lg">{watchedPublicProfile.name || 'Your Name'}</p>
+                                <p className="text-primary text-sm">{watchedBusinessCard.title || 'Your Title'}</p>
+                                <p className="text-muted-foreground text-xs flex items-center justify-center gap-1.5 mt-1"><Building className="h-3 w-3"/>{watchedBusinessCard.company || 'Your Company'}</p>
+                                </div>
+                                <div className="flex justify-center mt-4">
+                                {qrCodeUrl ? (
+                                    <QRCode value={qrCodeUrl} size={150} bgColor="transparent" fgColor="hsl(var(--foreground))" level="Q" />
+                                ) : (
+                                    <div className="w-[150px] h-[150px] bg-gray-200 animate-pulse mx-auto rounded-md" />
+                                )}
+                                </div>
+                                <p className="text-xs text-muted-foreground text-center mt-2">Scan to save contact</p>
+                            </div>
+                           </div>
+                       </div>
+                   </div>
                 </CardContent>
                 <CardFooter>
-                  <Button type="submit" disabled={publicProfileForm.formState.isSubmitting || !publicProfileForm.formState.isDirty}>
-                    <Save className="mr-2 h-4 w-4" />
-                    Save Changes
-                  </Button>
-                </CardFooter>
-              </Card>
-            </form>
-          </FormProvider>
-        </TabsContent>
-
-        <TabsContent value="card">
-           <FormProvider {...businessCardForm}>
-              <form onSubmit={businessCardForm.handleSubmit(onBusinessCardSubmit)}>
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Digital Business Card</CardTitle>
-                    <CardDescription>Enter your details to generate a shareable digital business card and QR code.</CardDescription>
-                  </CardHeader>
-                  <CardContent className="grid md:grid-cols-2 gap-8">
-                    <div className="space-y-4">
-                       <FormField
-                          control={businessCardForm.control}
-                          name="title"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Job Title</FormLabel>
-                              <FormControl><Input placeholder="Senior Product Designer" {...field} /></FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                       <FormField
-                          control={businessCardForm.control}
-                          name="company"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Company</FormLabel>
-                              <FormControl><Input placeholder="Acme Inc." {...field} /></FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={businessCardForm.control}
-                          name="phone"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Phone</FormLabel>
-                              <FormControl><Input type="tel" placeholder="+1 (555) 123-4567" {...field} /></FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={businessCardForm.control}
-                          name="email"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Email</FormLabel>
-                              <FormControl><Input type="email" placeholder="jane.doe@acme.com" {...field} /></FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                       <FormField
-                          control={businessCardForm.control}
-                          name="website"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Website</FormLabel>
-                              <FormControl><Input placeholder="https://janedoe.design" {...field} /></FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                       <FormField
-                          control={businessCardForm.control}
-                          name="linkedin"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>LinkedIn</FormLabel>
-                              <FormControl><Input placeholder="https://linkedin.com/in/janedoe" {...field} /></FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                       <FormField
-                          control={businessCardForm.control}
-                          name="location"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Location</FormLabel>
-                              <FormControl><Input placeholder="San Francisco, CA" {...field} /></FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                    </div>
-                    <div className="flex flex-col items-center justify-center bg-muted/50 rounded-lg p-6">
-                      <p className="font-semibold mb-4 text-center">Card Preview</p>
-                      <div className="w-full max-w-[280px] bg-background p-6 rounded-xl shadow-lg border">
-                        <div className="text-center">
-                          <Avatar className="h-20 w-20 mx-auto mb-2">
-                            <AvatarImage src={croppedImageUrl || user.avatarUrl} data-ai-hint="woman smiling"/>
-                            <AvatarFallback>{user.avatarFallback}</AvatarFallback>
-                          </Avatar>
-                          <p className="font-headline font-semibold text-lg">{watchedPublicProfile.name || 'Your Name'}</p>
-                          <p className="text-primary text-sm">{watchedBusinessCard.title || 'Your Title'}</p>
-                        </div>
-                        <div className="flex justify-center mt-4">
-                          {qrCodeUrl ? (
-                            <QRCode value={qrCodeUrl} size={200} bgColor="#ffffff" fgColor="#000000" level="Q" />
-                          ) : (
-                            <div className="w-[200px] h-[200px] bg-gray-200 animate-pulse mx-auto rounded-md" />
-                          )}
-                        </div>
-                         <p className="text-xs text-muted-foreground text-center mt-2">Scan to save contact</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                  <CardFooter>
-                     <Button type="submit" disabled={businessCardForm.formState.isSubmitting || !businessCardForm.formState.isDirty}>
+                    <Button type="button" onClick={handleSaveProfileAndCard} disabled={!isProfileDirty}>
                         <Save className="mr-2 h-4 w-4" />
-                        Update Card
-                     </Button>
-                  </CardFooter>
-                </Card>
-              </form>
-            </FormProvider>
+                        Save Changes
+                    </Button>
+                </CardFooter>
+            </Card>
         </TabsContent>
 
         <TabsContent value="links">
