@@ -85,21 +85,34 @@ export default function ConnectionsPage() {
     const handleToggleFollow = async (targetUser: User, isCurrentlyFollowing: boolean) => {
         if (!user || togglingFollowId) return;
         setTogglingFollowId(targetUser.uid);
+        
+        // Store previous state for potential rollback
+        const previousFollowingList = [...followingList];
+        const previousSuggestedList = [...suggestedList];
+
+        // Optimistic UI Update
+        if (isCurrentlyFollowing) {
+            setFollowingList(prev => prev.filter(u => u.uid !== targetUser.uid));
+        } else {
+            setFollowingList(prev => [...prev, targetUser]);
+            // Also remove from suggestions if they were followed from there
+            setSuggestedList(prev => prev.filter(u => u.uid !== targetUser.uid));
+        }
+        
         try {
             if (isCurrentlyFollowing) {
                 await unfollowUser(user.uid, targetUser.uid);
-                setFollowingList(prev => prev.filter(u => u.uid !== targetUser.uid));
                 toast({ title: `Unfollowed ${targetUser.name}` });
             } else {
                 await followUser(user.uid, targetUser.uid);
-                setFollowingList(prev => [...prev, targetUser]);
                 toast({ title: `You are now following ${targetUser.name}` });
             }
-            // Manually update the suggested list to reflect the change
-            setSuggestedList(prev => prev.filter(u => u.uid !== targetUser.uid));
         } catch (error) {
             console.error("Error following/unfollowing user:", error);
             toast({ title: "Something went wrong", variant: "destructive" });
+            // Rollback UI on error
+            setFollowingList(previousFollowingList);
+            setSuggestedList(previousSuggestedList);
         } finally {
             setTogglingFollowId(null);
         }
@@ -310,23 +323,22 @@ export default function ConnectionsPage() {
                         const isProcessing = togglingFollowId === suggestedUser.uid;
                         return (
                             <Card key={suggestedUser.uid}>
-                                <CardContent className="p-4">
-                                    <div className="flex items-center justify-between gap-4">
-                                        <Link href={`/u/${suggestedUser.handle}`} className="flex items-center gap-4 hover:underline flex-1 truncate">
-                                            <Avatar>
-                                                <AvatarImage src={suggestedUser.avatarUrl} data-ai-hint="person portrait" />
-                                                <AvatarFallback>{suggestedUser.name.charAt(0)}</AvatarFallback>
-                                            </Avatar>
-                                            <div className="truncate">
-                                                <p className="font-semibold truncate">{suggestedUser.name}</p>
-                                                <p className="text-sm text-muted-foreground truncate">@{suggestedUser.handle}</p>
-                                            </div>
-                                        </Link>
-                                        <Button size="sm" variant="default" onClick={() => handleToggleFollow(suggestedUser, false)} className="shrink-0" disabled={isProcessing}>
-                                            {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UserPlus className="mr-2 h-4 w-4" />}
-                                            Follow
-                                        </Button>
-                                    </div>
+                                <CardContent className="p-6 flex flex-col items-center text-center gap-2">
+                                    <Link href={`/u/${suggestedUser.handle}`} className="hover:underline">
+                                        <Avatar className="h-20 w-20 mb-2">
+                                            <AvatarImage src={suggestedUser.avatarUrl} data-ai-hint="person portrait" />
+                                            <AvatarFallback>{suggestedUser.name.charAt(0)}</AvatarFallback>
+                                        </Avatar>
+                                        <p className="font-semibold">{suggestedUser.name}</p>
+                                        <p className="text-sm text-muted-foreground">@{suggestedUser.handle}</p>
+                                    </Link>
+                                    <p className="text-sm text-muted-foreground text-center line-clamp-2 h-10 mt-2">
+                                        {suggestedUser.bio}
+                                    </p>
+                                    <Button size="sm" variant="default" onClick={() => handleToggleFollow(suggestedUser, false)} className="w-full mt-2" disabled={isProcessing}>
+                                        {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UserPlus className="mr-2 h-4 w-4" />}
+                                        Follow
+                                    </Button>
                                 </CardContent>
                             </Card>
                         )
