@@ -12,6 +12,7 @@ import {
   SidebarGroupLabel,
   SidebarSeparator,
   SidebarMenuButton,
+  SidebarFooter,
 } from '@/components/ui/sidebar';
 import { Logo } from './logo';
 import {
@@ -38,6 +39,8 @@ import Link from 'next/link';
 import { Input } from './ui/input';
 import { useAuth } from './auth-provider';
 import { Skeleton } from './ui/skeleton';
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+import { Button } from './ui/button';
 
 export function MainSidebar() {
   const pathname = usePathname();
@@ -108,14 +111,16 @@ export function MainSidebar() {
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
-          <form onSubmit={handleSearchSubmit} className="relative">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search users..."
-              className="w-full pl-8"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
+          <form onSubmit={handleSearchSubmit}>
+            <div className="relative">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search..."
+                className="w-full pl-8"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
           </form>
         </SidebarGroup>
         <SidebarMenu>
@@ -260,6 +265,18 @@ export function MainSidebar() {
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarContent>
+      <SidebarFooter>
+        <SidebarMenu>
+            <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Settings" isActive={isActive('/settings')}>
+                <Link href="/settings">
+                    <Settings />
+                    <span>Settings</span>
+                </Link>
+                </SidebarMenuButton>
+            </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
     </Sidebar>
   );
 }
