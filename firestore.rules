@@ -3,29 +3,64 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-  
-    // Users: 
-    // - Anyone can read public user profiles.
-    // - Only the authenticated user can create or update their own profile.
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    // Users can be read by anyone, but only updated by the owner.
     match /users/{userId} {
       allow read: if true;
-      allow create, update: if request.auth != null && request.auth.uid == userId;
+      allow create: if isSignedIn() && isOwner(userId);
+      allow update: if isSignedIn() && isOwner(userId);
+    }
+
+    // Generic rule for simple content collections
+    match /{collection}/{docId} where collection in ['listings', 'jobs', 'offers', 'businesses'] {
+      allow read: if true;
+      allow create: if isSignedIn() && request.resource.data.authorId == request.auth.uid;
+      allow update, delete: if isSignedIn() && isOwner(resource.data.authorId);
+    }
+
+    // Events can be read by anyone.
+    // RSVPing requires special update handling.
+    match /events/{eventId} {
+      allow read: if true;
+      allow create: if isSignedIn() && request.resource.data.authorId == request.auth.uid;
+      allow delete: if isSignedIn() && isOwner(resource.data.authorId);
+      
+      // Allow owner to update everything.
+      // Allow any signed-in user to update only the 'rsvps' field.
+      allow update: if isSignedIn() && (
+        isOwner(resource.data.authorId) ||
+        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['rsvps']))
+      );
     }
     
-    // Businesses, Listings, Jobs, Events, Offers, Posts:
-    // - Anyone can read.
-    // - Only authenticated authors can write/update/delete their own content.
-    match /{contentCollection}/{docId} where contentCollection in ['businesses', 'listings', 'jobs', 'events', 'offers', 'posts'] {
-      allow read: if true;
-      allow create: if request.auth != null && request.auth.uid == request.resource.data.authorId;
-      allow update, delete: if request.auth != null && request.auth.uid == resource.data.authorId;
+    // Posts can be read by any signed-in user.
+    // Liking requires special update handling.
+    match /posts/{postId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && request.resource.data.authorId == request.auth.uid;
+      allow delete: if isSignedIn() && isOwner(resource.data.authorId);
+
+      // Allow owner to update everything.
+      // Allow any signed-in user to update only the 'likes' and 'likedBy' fields.
+      allow update: if isSignedIn() && (
+        isOwner(resource.data.authorId) ||
+        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes', 'likedBy']))
+      );
     }
 
-    // Diary Notes:
-    // - Only the owner can read or write their own diary notes.
+    // Diary notes are private to the user.
     match /diaryNotes/{noteId} {
-        allow read, write: if request.auth != null && request.auth.uid == resource.data.userId;
+        // noteId is formatted as "userId_eventId"
+        allow read, write: if isSignedIn() && isOwner(noteId.split('_')[0]);
     }
-
   }
 }
