@@ -53,42 +53,38 @@ END:VCARD`;
 
   return (
     <div className="bg-gradient-to-br from-muted/30 via-background to-background min-h-screen flex flex-col items-center justify-center p-4 antialiased">
-      <div className="w-full max-w-2xl space-y-6">
-        <Card className="shadow-2xl rounded-2xl border-primary/10 overflow-hidden backdrop-blur-sm bg-background/80">
-          <CardContent className="p-0 grid md:grid-cols-3">
-              <div className="md:col-span-2 flex flex-col p-6">
-                  <div className="flex items-center gap-4">
-                      <Avatar className="h-20 w-20 border-2 border-primary/20">
-                          <AvatarImage src={avatarUrl} alt={name} data-ai-hint="person portrait"/>
-                          <AvatarFallback>{avatarFallback}</AvatarFallback>
-                      </Avatar>
-                      <div>
-                          <h1 className="font-headline text-2xl font-bold">{name}</h1>
-                          <p className="text-primary">{title}</p>
-                          <p className="text-muted-foreground text-sm flex items-center gap-1.5"><Building className="h-3.5 w-3.5"/>{company}</p>
-                      </div>
-                  </div>
-                  <Separator className="my-4" />
-                  <div className="space-y-3 text-sm flex-grow">
-                      {phone && <a href={`tel:${phone}`} className="flex items-center gap-3 text-muted-foreground hover:text-primary"><Phone className="h-4 w-4 text-primary flex-shrink-0" /><span>{phone}</span></a>}
-                      {email && <a href={`mailto:${email}`} className="flex items-center gap-3 text-muted-foreground hover:text-primary"><Mail className="h-4 w-4 text-primary flex-shrink-0" /><span>{email}</span></a>}
-                      {website && <a href={website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-muted-foreground hover:text-primary"><Globe className="h-4 w-4 text-primary flex-shrink-0" /><span>{website.replace(/^https?:\/\//, '')}</span></a>}
-                      {linkedin && <a href={linkedin} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-muted-foreground hover:text-primary"><Linkedin className="h-4 w-4 text-primary flex-shrink-0" /><span>LinkedIn Profile</span></a>}
-                      {location && <div className="flex items-start gap-3 text-muted-foreground"><MapPin className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" /><span>{location}</span></div>}
-                  </div>
-                  <div className="mt-6 flex flex-wrap gap-2">
-                      <Button onClick={handleSaveToContacts}>
-                          <Save className="mr-2 h-4 w-4" />
-                          Save to Contacts
-                      </Button>
-                      <ShareButton />
-                  </div>
+      <div className="w-full max-w-sm space-y-6">
+        <Card className="shadow-2xl rounded-2xl border-primary/10 overflow-hidden backdrop-blur-sm bg-background/80 w-full">
+          <CardContent className="p-8 flex flex-col items-center text-center">
+              <Avatar className="h-24 w-24 border-4 border-primary/20 ring-4 ring-background">
+                  <AvatarImage src={avatarUrl} alt={name} data-ai-hint="person portrait"/>
+                  <AvatarFallback>{avatarFallback}</AvatarFallback>
+              </Avatar>
+              <h1 className="font-headline text-3xl font-bold mt-4">{name}</h1>
+              <p className="text-primary">{title}</p>
+              <p className="text-muted-foreground text-sm flex items-center gap-1.5"><Building className="h-3.5 w-3.5"/>{company}</p>
+
+              <div className="bg-white p-3 rounded-lg border shadow-inner my-6">
+                  <QRCode value={vCardData} size={200} bgColor="#ffffff" fgColor="#000000" level="Q" />
               </div>
-              <div className="md:col-span-1 bg-muted/50 flex flex-col items-center justify-center p-6 border-l">
-                  <div className="bg-white p-3 rounded-lg border shadow-inner">
-                      <QRCode value={vCardData} size={180} bgColor="#ffffff" fgColor="#000000" level="Q" />
-                  </div>
-                  <p className="text-muted-foreground text-xs font-medium text-center mt-3">Scan to Save Contact</p>
+
+              <Button onClick={handleSaveToContacts} className="w-full">
+                  <Save className="mr-2 h-4 w-4" />
+                  Save to Contacts
+              </Button>
+              
+              <Separator className="my-6" />
+              
+              <div className="space-y-4 text-sm w-full text-left">
+                  {phone && <a href={`tel:${phone}`} className="flex items-center gap-4 text-muted-foreground hover:text-primary"><Phone className="h-5 w-5 text-primary flex-shrink-0" /><span>{phone}</span></a>}
+                  {email && <a href={`mailto:${email}`} className="flex items-center gap-4 text-muted-foreground hover:text-primary"><Mail className="h-5 w-5 text-primary flex-shrink-0" /><span>{email}</span></a>}
+                  {website && <a href={website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 text-muted-foreground hover:text-primary"><Globe className="h-5 w-5 text-primary flex-shrink-0" /><span>{website.replace(/^https?:\/\//, '')}</span></a>}
+                  {linkedin && <a href={linkedin} target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 text-muted-foreground hover:text-primary"><Linkedin className="h-5 w-5 text-primary flex-shrink-0" /><span>LinkedIn Profile</span></a>}
+                  {location && <div className="flex items-start gap-4 text-muted-foreground"><MapPin className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" /><span>{location}</span></div>}
+              </div>
+
+               <div className="mt-8 w-full">
+                  <ShareButton className="w-full" />
               </div>
           </CardContent>
         </Card>
