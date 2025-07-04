@@ -226,7 +226,7 @@ export default function ProfilePage() {
       username: "",
       bio: "",
     },
-    mode: 'onBlur',
+    mode: 'onChange',
   });
 
   const businessCardForm = useForm<BusinessCardFormValues>({
@@ -240,13 +240,13 @@ export default function ProfilePage() {
         linkedin: "",
         location: "",
     },
-    mode: 'onBlur',
+    mode: 'onChange',
   });
 
   const linksForm = useForm<LinksFormValues>({
     resolver: zodResolver(linksFormSchema),
     defaultValues: { links: [] },
-    mode: 'onBlur',
+    mode: 'onChange',
   });
   
   const { fields, append, remove, move } = useFieldArray({
