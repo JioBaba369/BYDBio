@@ -7,14 +7,14 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { PlusCircle, Trash2, User, CreditCard, Link2 as LinkIcon, Upload, GripVertical, Save, Building, Linkedin, Phone, Mail, Globe } from "lucide-react"
+import { PlusCircle, Trash2, User, CreditCard, Link2 as LinkIcon, Upload, GripVertical, Save, Building, Linkedin, Phone, Mail, Globe, ExternalLink } from "lucide-react"
 import HashtagSuggester from "@/components/ai/hashtag-suggester"
 import { useEffect, useState, useRef } from "react";
 import QRCode from 'qrcode.react';
 import { useForm, useFieldArray, FormProvider, useFormContext } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { availableIconNames, linkIconData } from "@/lib/link-icons";
+import { availableIconNames, linkIconData, linkIcons } from "@/lib/link-icons";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
@@ -254,6 +254,8 @@ export default function ProfilePage() {
     name: "links",
   });
   
+  const watchedLinks = linksForm.watch("links");
+
   useEffect(() => {
     if (user) {
       publicProfileForm.reset({
@@ -639,50 +641,97 @@ END:VCARD`;
         </TabsContent>
 
         <TabsContent value="links">
-          <Card>
-            <FormProvider {...linksForm}>
-              <form onSubmit={linksForm.handleSubmit(onLinksSubmit)}>
-                <CardHeader>
-                  <CardTitle>Manage Links</CardTitle>
-                  <CardDescription>Add, edit, or remove links for your link-in-bio page. Drag to reorder.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <DndContext
-                    sensors={sensors}
-                    collisionDetection={closestCenter}
-                    onDragEnd={handleDragEnd}
-                  >
-                    <SortableContext items={fields} strategy={verticalListSortingStrategy}>
-                      <div className="space-y-4">
-                        {fields.map((field, index) => (
-                          <SortableLinkItem
-                            key={field.id}
-                            field={field}
-                            index={index}
-                            remove={remove}
-                          />
-                        ))}
+          <FormProvider {...linksForm}>
+            <form onSubmit={linksForm.handleSubmit(onLinksSubmit)}>
+              <div className="grid md:grid-cols-3 gap-8">
+                <div className="md:col-span-2">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Manage Links</CardTitle>
+                      <CardDescription>Add, edit, or remove links for your link-in-bio page. Drag to reorder.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                      <DndContext
+                        sensors={sensors}
+                        collisionDetection={closestCenter}
+                        onDragEnd={handleDragEnd}
+                      >
+                        <SortableContext items={fields} strategy={verticalListSortingStrategy}>
+                          <div className="space-y-4">
+                            {fields.map((field, index) => (
+                              <SortableLinkItem
+                                key={field.id}
+                                field={field}
+                                index={index}
+                                remove={remove}
+                              />
+                            ))}
+                             {fields.length === 0 && (
+                                <div className="text-center text-sm text-muted-foreground py-10 border-2 border-dashed rounded-lg">
+                                    You haven't added any links yet.
+                                </div>
+                             )}
+                          </div>
+                        </SortableContext>
+                      </DndContext>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="w-full"
+                        onClick={() => append({ icon: 'Link', title: '', url: '' })}
+                      >
+                        <PlusCircle className="mr-2 h-4 w-4" /> Add Link
+                      </Button>
+                    </CardContent>
+                    <CardFooter>
+                       <Button type="submit" disabled={linksForm.formState.isSubmitting || !linksForm.formState.isDirty}>
+                        <Save className="mr-2 h-4 w-4" />
+                        Save Links
+                       </Button>
+                    </CardFooter>
+                  </Card>
+                </div>
+
+                <div className="md:col-span-1">
+                  <h3 className="text-lg font-medium text-center mb-4">Live Preview</h3>
+                  <div className="sticky top-20">
+                    <div className="w-full max-w-[300px] bg-background p-4 rounded-2xl shadow-lg border mx-auto">
+                      <div className="bg-muted/40 p-4 rounded-lg h-[500px] overflow-y-auto">
+                        <div className="flex flex-col items-center text-center">
+                            <Avatar className="h-20 w-20 mb-3 ring-2 ring-primary/20 ring-offset-2 ring-offset-background">
+                                <AvatarImage src={user.avatarUrl} alt={user.name} data-ai-hint="person portrait"/>
+                                <AvatarFallback>{user.avatarFallback}</AvatarFallback>
+                            </Avatar>
+                            <h1 className="font-headline text-xl font-bold">{user.name}</h1>
+                            <p className="text-muted-foreground text-sm">@{user.handle}</p>
+                        </div>
+                        <div className="flex flex-col gap-3 mt-6">
+                            {watchedLinks && watchedLinks.length > 0 ? (
+                                watchedLinks.map((link, index) => {
+                                    const Icon = linkIcons[link.icon as keyof typeof linkIcons] || LinkIcon;
+                                    return (
+                                        <div key={index} className="w-full group">
+                                            <div className="w-full h-14 text-base font-semibold flex items-center p-3 rounded-lg bg-secondary">
+                                                <Icon className="h-5 w-5 text-secondary-foreground/80" />
+                                                <span className="flex-1 text-center text-secondary-foreground">{link.title || "Link Title"}</span>
+                                                <ExternalLink className="h-4 w-4 text-secondary-foreground/50" />
+                                            </div>
+                                        </div>
+                                    )
+                                })
+                            ) : (
+                                <div className="text-center text-sm text-muted-foreground py-10">
+                                    Your links will appear here.
+                                </div>
+                            )}
+                        </div>
                       </div>
-                    </SortableContext>
-                  </DndContext>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="w-full"
-                    onClick={() => append({ icon: 'Link', title: '', url: '' })}
-                  >
-                    <PlusCircle className="mr-2 h-4 w-4" /> Add Link
-                  </Button>
-                </CardContent>
-                <CardFooter>
-                   <Button type="submit" disabled={linksForm.formState.isSubmitting || !linksForm.formState.isDirty}>
-                    <Save className="mr-2 h-4 w-4" />
-                    Save Links
-                   </Button>
-                </CardFooter>
-              </form>
-            </FormProvider>
-          </Card>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </form>
+          </FormProvider>
         </TabsContent>
       </Tabs>
     </div>
