@@ -11,7 +11,7 @@ import { PlusCircle, Trash2, User, CreditCard, Link2 as LinkIcon, Upload, GripVe
 import HashtagSuggester from "@/components/ai/hashtag-suggester"
 import { useEffect, useState, useRef } from "react";
 import QRCode from 'qrcode.react';
-import { useForm, useFieldArray, FormProvider } from "react-hook-form";
+import { useForm, useFieldArray, FormProvider, useFormContext } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { availableIconNames, linkIconData } from "@/lib/link-icons";
@@ -445,7 +445,7 @@ END:VCARD`;
                        <div className="md:col-span-2 space-y-6">
                            <Card className="p-6">
                                <Form {...publicProfileForm}>
-                                   <div>
+                                   <form>
                                        <h3 className="text-lg font-medium mb-4">Public Information</h3>
                                        <FormField
                                         control={publicProfileForm.control}
@@ -515,12 +515,12 @@ END:VCARD`;
                                                 }} />
                                             </div>
                                         </div>
-                                   </div>
+                                   </form>
                                </Form>
                            </Card>
                            <Card className="p-6">
                                <Form {...businessCardForm}>
-                                   <div>
+                                   <form>
                                         <h3 className="text-lg font-medium mb-4">Digital Card Details</h3>
                                         <FormField
                                         control={businessCardForm.control}
@@ -599,7 +599,7 @@ END:VCARD`;
                                             </FormItem>
                                         )}
                                         />
-                                   </div>
+                                   </form>
                                </Form>
                            </Card>
                        </div>
@@ -688,5 +688,3 @@ END:VCARD`;
     </div>
   )
 }
-
-    
