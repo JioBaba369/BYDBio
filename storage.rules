@@ -1,0 +1,37 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // By default, allow public read access to all files, but deny all writes.
+    // We will then explicitly open up write access for specific paths.
+    match /{allPaths=**} {
+      allow read;
+      allow write: if false;
+    }
+
+    // Allow a user to write their own avatar.
+    // Path: /avatars/{userId}
+    match /avatars/{userId} {
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Allow a user to write to any of their own content folders.
+    // This covers:
+    // - businesses/{userId}/...
+    // - events/{userId}/...
+    // - jobs/{userId}/...
+    // - listings/{userId}/...
+    // - offers/{userId}/...
+    // - posts/{userId}/...
+    match /{collection}/{userId}/{allSubPaths=**} {
+      allow write: if request.auth != null && request.auth.uid == userId &&
+                      (collection == 'businesses' ||
+                       collection == 'events' ||
+                       collection == 'jobs' ||
+                       collection == 'listings' ||
+                       collection == 'offers' ||
+                       collection == 'posts');
+    }
+  }
+}

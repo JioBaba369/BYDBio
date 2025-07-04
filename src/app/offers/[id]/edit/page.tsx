@@ -8,6 +8,7 @@ import { useState, useEffect } from "react";
 import { getOffer, updateOffer, type Offer } from "@/lib/offers";
 import { uploadImage } from "@/lib/storage";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useAuth } from "@/components/auth-provider";
 
 const EditOfferPageSkeleton = () => (
     <div className="space-y-6">
@@ -31,6 +32,7 @@ const EditOfferPageSkeleton = () => (
 export default function EditOfferPage() {
     const router = useRouter();
     const params = useParams();
+    const { user } = useAuth();
     const offerId = params.id as string;
     const { toast } = useToast();
     const [isSaving, setIsSaving] = useState(false);
@@ -47,12 +49,16 @@ export default function EditOfferPage() {
     }, [offerId]);
 
     const onSubmit = async (data: OfferFormValues) => {
+        if (!user) {
+            toast({ title: "Authentication Error", description: "You must be logged in.", variant: "destructive" });
+            return;
+        }
         setIsSaving(true);
         try {
             const dataToSave: Partial<OfferFormValues> = { ...data };
 
             if (data.imageUrl && data.imageUrl.startsWith('data:image')) {
-                const newImageUrl = await uploadImage(data.imageUrl, `offers/${offerId}/image`);
+                const newImageUrl = await uploadImage(data.imageUrl, `offers/${user.uid}/${offerId}/image`);
                 dataToSave.imageUrl = newImageUrl;
             }
 

@@ -8,6 +8,7 @@ import { useState, useEffect } from "react";
 import { getBusiness, updateBusiness, type Business } from "@/lib/businesses";
 import { Skeleton } from "@/components/ui/skeleton";
 import { uploadImage } from "@/lib/storage";
+import { useAuth } from "@/components/auth-provider";
 
 const EditBusinessPageSkeleton = () => (
     <div className="space-y-6">
@@ -32,6 +33,7 @@ const EditBusinessPageSkeleton = () => (
 export default function EditBusinessPage() {
     const router = useRouter();
     const params = useParams();
+    const { user } = useAuth();
     const businessId = params.id as string;
     const { toast } = useToast();
     const [isSaving, setIsSaving] = useState(false);
@@ -48,16 +50,20 @@ export default function EditBusinessPage() {
     }, [businessId]);
     
     const onSubmit = async (data: BusinessFormValues) => {
+        if (!user) {
+            toast({ title: "Authentication Error", description: "You must be logged in.", variant: "destructive" });
+            return;
+        }
         setIsSaving(true);
         try {
             const dataToSave = { ...data };
 
             if (dataToSave.imageUrl && dataToSave.imageUrl.startsWith('data:image')) {
-                const newImageUrl = await uploadImage(dataToSave.imageUrl, `businesses/${businessId}/header`);
+                const newImageUrl = await uploadImage(dataToSave.imageUrl, `businesses/${user.uid}/${businessId}/header`);
                 dataToSave.imageUrl = newImageUrl;
             }
             if (dataToSave.logoUrl && dataToSave.logoUrl.startsWith('data:image')) {
-                const newLogoUrl = await uploadImage(dataToSave.logoUrl, `businesses/${businessId}/logo`);
+                const newLogoUrl = await uploadImage(dataToSave.logoUrl, `businesses/${user.uid}/${businessId}/logo`);
                 dataToSave.logoUrl = newLogoUrl;
             }
 

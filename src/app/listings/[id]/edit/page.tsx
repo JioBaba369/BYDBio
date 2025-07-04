@@ -8,6 +8,7 @@ import { useState, useEffect } from "react";
 import { getListing, updateListing, type Listing } from "@/lib/listings";
 import { Skeleton } from "@/components/ui/skeleton";
 import { uploadImage } from "@/lib/storage";
+import { useAuth } from "@/components/auth-provider";
 
 const EditListingPageSkeleton = () => (
     <div className="space-y-6">
@@ -30,6 +31,7 @@ const EditListingPageSkeleton = () => (
 export default function EditListingPage() {
     const router = useRouter();
     const params = useParams();
+    const { user } = useAuth();
     const listingId = params.id as string;
     const { toast } = useToast();
     const [isSaving, setIsSaving] = useState(false);
@@ -46,11 +48,15 @@ export default function EditListingPage() {
     }, [listingId]);
     
     const onSubmit = async (data: ListingFormValues) => {
+        if (!user) {
+            toast({ title: "Authentication Error", description: "You must be logged in.", variant: "destructive" });
+            return;
+        }
         setIsSaving(true);
         try {
             const dataToSave = { ...data };
             if (dataToSave.imageUrl && dataToSave.imageUrl.startsWith('data:image')) {
-                const newImageUrl = await uploadImage(dataToSave.imageUrl, `listings/${listingId}/image`);
+                const newImageUrl = await uploadImage(dataToSave.imageUrl, `listings/${user.uid}/${listingId}/image`);
                 dataToSave.imageUrl = newImageUrl;
             }
 

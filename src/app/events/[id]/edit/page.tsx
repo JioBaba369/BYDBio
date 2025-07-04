@@ -8,6 +8,7 @@ import { useState, useEffect } from "react";
 import { getEvent, updateEvent, type Event } from "@/lib/events";
 import { uploadImage } from "@/lib/storage";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useAuth } from "@/components/auth-provider";
 
 const EditEventPageSkeleton = () => (
     <div className="space-y-6">
@@ -31,6 +32,7 @@ const EditEventPageSkeleton = () => (
 export default function EditEventPage() {
     const router = useRouter();
     const params = useParams();
+    const { user } = useAuth();
     const eventId = params.id as string;
     const { toast } = useToast();
     const [isSaving, setIsSaving] = useState(false);
@@ -47,12 +49,16 @@ export default function EditEventPage() {
     }, [eventId]);
     
     const onSubmit = async (data: EventFormValues) => {
+        if (!user) {
+            toast({ title: "Authentication Error", description: "You must be logged in.", variant: "destructive" });
+            return;
+        }
         setIsSaving(true);
         try {
             const dataToSave: Partial<EventFormValues> = { ...data };
 
             if (data.imageUrl && data.imageUrl.startsWith('data:image')) {
-                const newImageUrl = await uploadImage(data.imageUrl, `events/${eventId}/image`);
+                const newImageUrl = await uploadImage(data.imageUrl, `events/${user.uid}/${eventId}/image`);
                 dataToSave.imageUrl = newImageUrl;
             }
 

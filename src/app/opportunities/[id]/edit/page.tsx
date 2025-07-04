@@ -8,6 +8,7 @@ import { useState, useEffect } from "react";
 import { getJob, updateJob, type Job } from "@/lib/jobs";
 import { uploadImage } from "@/lib/storage";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useAuth } from "@/components/auth-provider";
 
 const EditJobPageSkeleton = () => (
     <div className="space-y-6">
@@ -31,6 +32,7 @@ const EditJobPageSkeleton = () => (
 export default function EditOpportunityPage() {
     const router = useRouter();
     const params = useParams();
+    const { user } = useAuth();
     const opportunityId = params.id as string;
     const { toast } = useToast();
     const [isSaving, setIsSaving] = useState(false);
@@ -47,12 +49,16 @@ export default function EditOpportunityPage() {
     }, [opportunityId]);
 
     const onSubmit = async (data: OpportunityFormValues) => {
+        if (!user) {
+            toast({ title: "Authentication Error", description: "You must be logged in.", variant: "destructive" });
+            return;
+        }
         setIsSaving(true);
         try {
             const dataToSave: Partial<OpportunityFormValues> = { ...data };
 
             if (data.imageUrl && data.imageUrl.startsWith('data:image')) {
-                const newImageUrl = await uploadImage(data.imageUrl, `jobs/${opportunityId}/image`);
+                const newImageUrl = await uploadImage(data.imageUrl, `jobs/${user.uid}/${opportunityId}/image`);
                 dataToSave.imageUrl = newImageUrl;
             }
 
