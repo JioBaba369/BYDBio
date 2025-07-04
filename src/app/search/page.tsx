@@ -30,15 +30,11 @@ const mapUsersWithFollowingState = (users: typeof initialUsers, me: typeof curre
 }
 
 function ClientFormattedDate({ dateString, formatStr }: { dateString: string; formatStr: string }) {
-  const [formattedDate, setFormattedDate] = useState('');
+  const [formattedDate, setFormattedDate] = useState('...');
 
   useEffect(() => {
     setFormattedDate(format(parseISO(dateString), formatStr));
   }, [dateString, formatStr]);
-
-  if (!formattedDate) {
-    return <span>...</span>;
-  }
 
   return <>{formattedDate}</>;
 }
@@ -391,5 +387,3 @@ export default function SearchPage() {
     </div>
   );
 }
-
-    

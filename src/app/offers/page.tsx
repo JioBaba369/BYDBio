@@ -18,17 +18,12 @@ import { Separator } from "@/components/ui/separator";
 
 // This component safely formats the date on the client-side to prevent hydration errors.
 function ClientFormattedDate({ dateString }: { dateString: string }) {
-  const [formattedDate, setFormattedDate] = useState('');
+  const [formattedDate, setFormattedDate] = useState('...');
 
   useEffect(() => {
     // This effect runs only on the client, after the initial render.
     setFormattedDate(format(parseISO(dateString), "PPP"));
   }, [dateString]);
-
-  // Render a placeholder or nothing until the client-side formatting is complete.
-  if (!formattedDate) {
-    return <span>...</span>;
-  }
 
   return <>{formattedDate}</>;
 }

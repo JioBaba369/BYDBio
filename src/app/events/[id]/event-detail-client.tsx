@@ -26,11 +26,11 @@ interface EventDetailClientProps {
 
 // Client-side date formatter to prevent hydration issues
 function ClientFormattedDate({ dateString, formatStr }: { dateString: string; formatStr: string }) {
-  const [formattedDate, setFormattedDate] = useState('');
+  const [formattedDate, setFormattedDate] = useState('...');
   useEffect(() => {
     setFormattedDate(format(parseISO(dateString), formatStr));
   }, [dateString, formatStr]);
-  return <>{formattedDate || '...'}</>;
+  return <>{formattedDate}</>;
 }
 
 
