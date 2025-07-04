@@ -11,6 +11,7 @@ import {
   orderBy,
   limit,
   type Timestamp,
+  getDoc,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { getUsersByIds, type User } from './users';
@@ -39,6 +40,19 @@ export const createNotification = async (
   // Don't notify users about their own actions
   if (userId === actorId) {
     return;
+  }
+
+  // Check user's notification preferences
+  const userDocRef = doc(db, 'users', userId);
+  const userDoc = await getDoc(userDocRef);
+  if (!userDoc.exists()) return;
+  const userData = userDoc.data() as User;
+  
+  if (type === 'new_follower' && userData.notificationSettings?.newFollowers === false) {
+      return; // User has disabled new follower notifications
+  }
+  if (type === 'new_like' && userData.notificationSettings?.newLikes === false) {
+      return; // User has disabled new like notifications
   }
   
   const notificationsRef = collection(db, 'notifications');

@@ -118,16 +118,31 @@ export default function ConnectionsPage() {
     };
 
     const handleQrScanSuccess = (decodedText: string) => {
-      setIsScannerOpen(false);
-      if (decodedText.startsWith('BEGIN:VCARD')) {
-        setScannedVCardData(decodedText);
-        return;
-      }
-      toast({
-        title: "Invalid QR Code",
-        description: "Please scan a valid contact QR code.",
-        variant: "destructive",
-      });
+        setIsScannerOpen(false);
+
+        // Check for vCard
+        if (decodedText.startsWith('BEGIN:VCARD')) {
+            setScannedVCardData(decodedText);
+            return;
+        }
+
+        // Check for app URL
+        try {
+            const url = new URL(decodedText);
+            if (url.origin === window.location.origin && url.pathname.startsWith('/u/')) {
+                router.push(url.pathname);
+                toast({ title: "Profile Found!", description: "Redirecting to user profile..." });
+                return;
+            }
+        } catch (error) {
+            // Not a valid URL, do nothing and fall through to the error toast
+        }
+
+        toast({
+            title: "Invalid QR Code",
+            description: "Please scan a valid profile or contact QR code.",
+            variant: "destructive",
+        });
     };
 
     if (authLoading || isLoading) {

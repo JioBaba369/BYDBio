@@ -18,6 +18,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ChangePasswordDialog } from "@/components/change-password-dialog";
 import { useAuth } from "@/components/auth-provider";
 import { Skeleton } from "@/components/ui/skeleton";
+import { updateUser } from "@/lib/users";
 
 const SettingsPageSkeleton = () => (
     <div className="space-y-6">
@@ -53,9 +54,35 @@ const SettingsPageSkeleton = () => (
 export default function SettingsPage() {
     const { user, loading } = useAuth();
     const { setTheme, theme } = useTheme();
+    const { toast } = useToast();
+    
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [isChangePasswordDialogOpen, setIsChangePasswordDialogOpen] = useState(false);
-    const { toast } = useToast();
+    
+    const [notificationSettings, setNotificationSettings] = useState({
+        newFollowers: user?.notificationSettings?.newFollowers ?? true,
+        newLikes: user?.notificationSettings?.newLikes ?? true,
+        offersAndUpdates: user?.notificationSettings?.offersAndUpdates ?? true,
+    });
+
+    const handleNotificationSettingChange = async (key: keyof typeof notificationSettings, value: boolean) => {
+        if (!user) return;
+        
+        // Optimistic UI update
+        const newSettings = { ...notificationSettings, [key]: value };
+        setNotificationSettings(newSettings);
+
+        try {
+            await updateUser(user.uid, { [`notificationSettings.${key}`]: value });
+            toast({ title: "Settings saved" });
+        } catch (error) {
+            // Revert on error
+            setNotificationSettings(prev => ({ ...prev, [key]: !value }));
+            console.error("Failed to update notification settings:", error);
+            toast({ title: "Error saving settings", variant: "destructive" });
+        }
+    };
+
 
     const handleDeleteAccount = () => {
         // This is a mock action. In a real app, this would make an API call.
@@ -78,14 +105,10 @@ export default function SettingsPage() {
         setIsChangePasswordDialogOpen(false);
     };
 
-    if (loading) {
+    if (loading || !user) {
         return <SettingsPageSkeleton />;
     }
     
-    if (!user) {
-        return <SettingsPageSkeleton />; // Or redirect, though AuthProvider should handle this
-    }
-
     return (
         <>
             <DeleteConfirmationDialog 
@@ -200,7 +223,11 @@ export default function SettingsPage() {
                                             Notify me when someone new follows me.
                                         </p>
                                     </div>
-                                    <Switch id="new-follower" defaultChecked />
+                                    <Switch
+                                        id="new-follower"
+                                        checked={notificationSettings.newFollowers}
+                                        onCheckedChange={(checked) => handleNotificationSettingChange('newFollowers', checked)}
+                                    />
                                 </div>
                                 <Separator />
                                 <div className="flex items-center justify-between">
@@ -210,7 +237,11 @@ export default function SettingsPage() {
                                             Notify me when someone engages with my posts.
                                         </p>
                                     </div>
-                                    <Switch id="post-likes" defaultChecked/>
+                                    <Switch
+                                        id="post-likes"
+                                        checked={notificationSettings.newLikes}
+                                        onCheckedChange={(checked) => handleNotificationSettingChange('newLikes', checked)}
+                                    />
                                 </div>
                                 <Separator />
                                 <div className="flex items-center justify-between">
@@ -220,7 +251,11 @@ export default function SettingsPage() {
                                             Receive emails about new features and special offers.
                                         </p>
                                     </div>
-                                    <Switch id="offers-updates" />
+                                    <Switch
+                                        id="offers-updates"
+                                        checked={notificationSettings.offersAndUpdates}
+                                        onCheckedChange={(checked) => handleNotificationSettingChange('offersAndUpdates', checked)}
+                                    />
                                 </div>
                             </CardContent>
                         </Card>
