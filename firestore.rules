@@ -1,76 +1,112 @@
-
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // --- Helper Functions ---
-    // Checks if the requesting user is the author of a document.
-    function isAuthor() {
-      return request.auth != null && request.auth.uid == resource.data.authorId;
-    }
-    
-    // Checks if the requesting user is the owner of a document (based on userId field).
-    function isOwner() {
-      return request.auth != null && request.auth.uid == resource.data.userId;
+    // --- HELPER FUNCTIONS ---
+    function isUserAuthenticated() {
+      return request.auth != null;
     }
 
-    // --- Collection Rules ---
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
 
-    // USERS: Anyone can read a user profile. Only the user can modify their own profile.
+    // --- COLLECTION RULES ---
+
+    // USER PROFILES
     match /users/{userId} {
-      allow read;
-      allow write: if request.auth != null && request.auth.uid == userId;
+      allow read: if true;
+      allow create: if isUserAuthenticated() && isOwner(userId);
+      allow delete: if false;
+
+      // Rule 1: Allow users to update their own profile.
+      // We exclude 'subscribers' because that should only be modified by the follow/unfollow action.
+      // A user can update their own 'following' array as part of this.
+      allow update: if isOwner(userId)
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'username', 'handle', 'bio', 'avatarUrl', 'avatarFallback', 'links', 'businessCard', 'notificationSettings', 'following', 'searchableKeywords']);
+      
+      // Rule 2: Allow any authenticated user to increment/decrement the subscribers count.
+      // This is part of the follow/unfollow batch write. For better security, this would
+      // be a Cloud Function in a production app.
+      allow update: if isUserAuthenticated()
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['subscribers'])
+                    && (request.resource.data.subscribers == resource.data.subscribers + 1 ||
+                        request.resource.data.subscribers == resource.data.subscribers - 1);
     }
 
-    // POSTS: Anyone can read posts. Only the author can create/delete. Any logged-in user can like a post.
+    // POSTS (Status Updates)
     match /posts/{postId} {
-      allow read;
-      allow create, delete: if isAuthor();
-      allow update: if isAuthor() || (request.auth != null && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes', 'likedBy']));
+      allow read: if true;
+      allow create: if isUserAuthenticated() && isOwner(request.resource.data.authorId);
+      allow delete: if isUserAuthenticated() && isOwner(resource.data.authorId);
+      
+      // Author can update any field. Other users can only update 'likes' and 'likedBy'.
+      allow update: if (isUserAuthenticated() && isOwner(resource.data.authorId)) ||
+                       (isUserAuthenticated() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes', 'likedBy']));
     }
 
-    // EVENTS: Anyone can read events. Only the author can create/delete/fully-update. Any logged-in user can RSVP.
+    // EVENTS
     match /events/{eventId} {
-      allow read;
-      allow create, delete: if isAuthor();
-      allow update: if isAuthor() || (request.auth != null && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['rsvps']));
+      allow read: if true;
+      allow create: if isUserAuthenticated() && isOwner(request.resource.data.authorId);
+      allow delete: if isUserAuthenticated() && isOwner(resource.data.authorId);
+
+      // Author can update any field. Other users can only update 'rsvps'.
+      allow update: if (isUserAuthenticated() && isOwner(resource.data.authorId)) ||
+                       (isUserAuthenticated() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['rsvps']));
     }
 
-    // PUBLIC CONTENT (Listings, Jobs, Offers, Businesses): Readable by all, writable only by the author.
-    match /listings/{listingId} {
-      allow read;
-      allow write: if isAuthor();
-    }
-    
-    match /jobs/{jobId} {
-      allow read;
-      allow write: if isAuthor();
-    }
-    
-    match /offers/{offerId} {
-      allow read;
-      allow write: if isAuthor();
-    }
-
-    match /businesses/{businessId} {
-      allow read;
-      allow write: if isAuthor();
-    }
-
-    // NOTIFICATIONS: A user can only read/update their own notifications. Any authenticated user can create one for someone else.
+    // NOTIFICATIONS
     match /notifications/{notificationId} {
-      allow read, update: if isOwner();
-      allow create: if request.auth != null;
-    }
-
-    // DIARY & REMINDERS (Private): Only the owner can read or write their own notes and reminders.
-    match /diaryNotes/{noteId} {
-      allow read, write: if isOwner();
+      // Authenticated users can create notifications for others (e.g. on follow, like).
+      allow create: if isUserAuthenticated();
+      
+      // Only the recipient can read or update (e.g., mark as read) their notifications.
+      allow read, update, delete: if isUserAuthenticated() && isOwner(resource.data.userId);
     }
     
+    // DIARY NOTES
+    match /diaryNotes/{diaryNoteId} {
+        // User can only create/manage their own diary notes.
+        allow create: if isUserAuthenticated() && isOwner(request.resource.data.userId);
+        allow read, update, delete: if isUserAuthenticated() && isOwner(resource.data.userId);
+    }
+
+    // REMINDERS
     match /reminders/{reminderId} {
-      allow read, write: if isOwner();
+        // User can only create/manage their own reminders.
+        allow create: if isUserAuthenticated() && isOwner(request.resource.data.userId);
+        allow read, update: if isUserAuthenticated() && isOwner(resource.data.userId);
+        allow delete: if false; // Should be handled by a backend process
+    }
+
+    // LISTINGS
+    match /listings/{listingId} {
+      allow read: if true;
+      allow create: if isUserAuthenticated() && isOwner(request.resource.data.authorId);
+      allow update, delete: if isUserAuthenticated() && isOwner(resource.data.authorId);
+    }
+
+    // BUSINESSES
+    match /businesses/{businessId} {
+      allow read: if true;
+      allow create: if isUserAuthenticated() && isOwner(request.resource.data.authorId);
+      allow update, delete: if isUserAuthenticated() && isOwner(resource.data.authorId);
+    }
+
+    // JOBS
+    match /jobs/{jobId} {
+      allow read: if true;
+      allow create: if isUserAuthenticated() && isOwner(request.resource.data.authorId);
+      allow update, delete: if isUserAuthenticated() && isOwner(resource.data.authorId);
+    }
+
+    // OFFERS
+    match /offers/{offerId} {
+      allow read: if true;
+      allow create: if isUserAuthenticated() && isOwner(request.resource.data.authorId);
+      allow update, delete: if isUserAuthenticated() && isOwner(resource.data.authorId);
     }
   }
 }
