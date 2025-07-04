@@ -33,6 +33,9 @@ import {
   Compass,
   Megaphone,
   Mail,
+  Tags,
+  Gift,
+  Building2,
 } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -152,7 +155,7 @@ export function MainSidebar() {
         </SidebarGroup>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarGroupLabel>Main</SidebarGroupLabel>
+            <SidebarGroupLabel>General</SidebarGroupLabel>
           </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton asChild tooltip="Dashboard" isActive={isActive('/')}>
@@ -208,7 +211,7 @@ export function MainSidebar() {
           </SidebarMenuItem>
 
           <SidebarMenuItem>
-            <SidebarGroupLabel>Content</SidebarGroupLabel>
+            <SidebarGroupLabel>Workspace</SidebarGroupLabel>
           </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton asChild tooltip="Profile Editor" isActive={isActive('/profile')}>
@@ -240,13 +243,29 @@ export function MainSidebar() {
           </SidebarMenuItem>
           
           <SidebarMenuItem>
-            <SidebarGroupLabel>Discovery</SidebarGroupLabel>
+            <SidebarGroupLabel>Discover</SidebarGroupLabel>
+          </SidebarMenuItem>
+           <SidebarMenuItem>
+            <SidebarMenuButton asChild tooltip="Listings" isActive={isActive('/listings')}>
+              <Link href="/listings">
+                <Tags />
+                <span>Listings</span>
+              </Link>
+            </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Businesses" isActive={isActive('/businesses')}>
-              <Link href="/businesses">
+            <SidebarMenuButton asChild tooltip="Opportunities" isActive={isActive('/opportunities')}>
+              <Link href="/opportunities">
                 <Briefcase />
-                <span>Businesses</span>
+                <span>Opportunities</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild tooltip="Offers" isActive={isActive('/offers')}>
+              <Link href="/offers">
+                <Gift />
+                <span>Offers</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -258,7 +277,15 @@ export function MainSidebar() {
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
-
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild tooltip="Businesses" isActive={isActive('/businesses')}>
+              <Link href="/businesses">
+                <Building2 />
+                <span>Businesses</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          
           <SidebarMenuItem>
             <SidebarSeparator className="my-1" />
           </SidebarMenuItem>
