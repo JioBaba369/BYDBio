@@ -32,6 +32,6 @@ export const isAuthPath = (path: string) => {
  * @returns `true` if the path is public, `false` otherwise.
  */
 export const isPublicPath = (path: string) => {
-    if (path === '/') return false;
+    if (path === '/') return true;
     return isAuthPath(path) || PUBLIC_CONTENT_PATHS.some(p => path.startsWith(p));
 };

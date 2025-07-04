@@ -95,9 +95,12 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     const { user, loading } = useAuth();
     const pathname = usePathname();
 
-    // The AuthLayout is now a fixed overlay, so we don't need to hide the main layout.
-    // However, we can still hide the Header on auth pages for a cleaner underlying structure.
     const onAuthPage = isAuthPath(pathname);
+    const isLandingPage = pathname === '/' && !user && !loading;
+
+    if (isLandingPage) {
+        return <>{children}</>;
+    }
 
     return (
         <>

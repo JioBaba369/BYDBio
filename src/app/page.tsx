@@ -36,6 +36,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { useMemo, useState, useEffect } from "react"
 import { collection, query, where, getDocs } from "firebase/firestore"
 import { db } from "@/lib/firebase"
+import { LandingPage } from "@/components/landing-page"
 
 const chartData = [
   { month: "January", desktop: 186, mobile: 80 },
@@ -74,8 +75,8 @@ interface ContentCounts {
   posts: number;
 }
 
-export default function Dashboard() {
-  const { user, loading: authLoading } = useAuth();
+function Dashboard() {
+  const { user } = useAuth();
   const [counts, setCounts] = useState<ContentCounts | null>(null);
   const [isCountsLoading, setIsCountsLoading] = useState(true);
 
@@ -132,7 +133,7 @@ export default function Dashboard() {
     return { totalContent: total, barChartData: chart, profileCompletion: completion };
   }, [user, counts]);
   
-  if (authLoading || isCountsLoading) {
+  if (isCountsLoading) {
     return <DashboardSkeleton />;
   }
   
@@ -378,4 +379,18 @@ export default function Dashboard() {
       </Card>
     </div>
   )
+}
+
+export default function HomePage() {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return <DashboardSkeleton />;
+  }
+
+  if (user) {
+    return <Dashboard />;
+  }
+
+  return <LandingPage />;
 }
