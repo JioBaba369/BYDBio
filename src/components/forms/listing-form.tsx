@@ -39,7 +39,13 @@ export function ListingForm({ defaultValues, onSubmit, isSaving }: ListingFormPr
   
   const form = useForm<ListingFormValues>({
     resolver: zodResolver(listingFormSchema),
-    defaultValues,
+    defaultValues: {
+      title: defaultValues?.title || '',
+      description: defaultValues?.description || '',
+      price: defaultValues?.price || '',
+      category: defaultValues?.category || '',
+      imageUrl: defaultValues?.imageUrl || null,
+    },
     mode: "onChange",
   })
   

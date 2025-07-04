@@ -1,3 +1,4 @@
+
 'use client'
 
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -39,7 +40,13 @@ export function OpportunityForm({ defaultValues, onSubmit, isSaving }: Opportuni
   
   const form = useForm<OpportunityFormValues>({
     resolver: zodResolver(opportunityFormSchema),
-    defaultValues,
+    defaultValues: {
+      title: defaultValues?.title || '',
+      company: defaultValues?.company || '',
+      location: defaultValues?.location || '',
+      type: defaultValues?.type || 'Full-time',
+      imageUrl: defaultValues?.imageUrl || null,
+    },
     mode: "onChange",
   })
   

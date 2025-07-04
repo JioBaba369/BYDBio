@@ -1,3 +1,4 @@
+
 'use client'
 
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -46,8 +47,11 @@ export function OfferForm({ defaultValues, onSubmit, isSaving }: OfferFormProps)
   const form = useForm<OfferFormValues>({
     resolver: zodResolver(offerFormSchema),
     defaultValues: {
-      ...defaultValues,
-      releaseDate: defaultValues?.releaseDate ? new Date(defaultValues.releaseDate) : undefined
+      title: defaultValues?.title || '',
+      description: defaultValues?.description || '',
+      category: defaultValues?.category || '',
+      releaseDate: defaultValues?.releaseDate ? new Date(defaultValues.releaseDate) : undefined,
+      imageUrl: defaultValues?.imageUrl || null,
     },
     mode: "onChange",
   })

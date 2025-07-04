@@ -45,7 +45,16 @@ export function BusinessForm({ defaultValues, onSubmit, isSaving }: BusinessForm
   
   const form = useForm<BusinessFormValues>({
     resolver: zodResolver(businessFormSchema),
-    defaultValues,
+    defaultValues: {
+      name: defaultValues?.name || '',
+      description: defaultValues?.description || '',
+      email: defaultValues?.email || '',
+      phone: defaultValues?.phone || '',
+      website: defaultValues?.website || '',
+      address: defaultValues?.address || '',
+      imageUrl: defaultValues?.imageUrl || null,
+      logoUrl: defaultValues?.logoUrl || null,
+    },
     mode: "onChange",
   })
   

@@ -1,3 +1,4 @@
+
 'use client'
 
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -51,8 +52,11 @@ export function EventForm({ defaultValues, onSubmit, isSaving }: EventFormProps)
   const form = useForm<EventFormValues>({
     resolver: zodResolver(eventFormSchema),
     defaultValues: {
-      ...defaultValues,
+      title: defaultValues?.title || '',
+      description: defaultValues?.description || '',
+      location: defaultValues?.location || '',
       date: defaultValues?.date ? new Date(defaultValues.date) : undefined,
+      imageUrl: defaultValues?.imageUrl || null,
       itinerary: defaultValues?.itinerary || [],
     },
     mode: "onChange",
