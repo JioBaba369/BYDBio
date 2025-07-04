@@ -52,6 +52,10 @@ export const getEvent = async (id: string): Promise<Event | null> => {
   const eventDoc = await getDoc(eventDocRef);
   if (eventDoc.exists()) {
     const data = eventDoc.data();
+    if (!data.startDate) {
+        console.warn(`Event ${id} is missing a start date and will be skipped.`);
+        return null;
+    }
     return { 
         id: eventDoc.id, 
         ...data,
@@ -69,13 +73,17 @@ export const getEventsByUser = async (userId: string): Promise<Event[]> => {
   const querySnapshot = await getDocs(q);
   return querySnapshot.docs.map(doc => {
       const data = doc.data();
+      if (!data.startDate) {
+        console.warn(`Event ${doc.id} for user ${userId} is missing a start date and will be skipped.`);
+        return null;
+      }
       return { 
           id: doc.id, 
           ...data,
           startDate: (data.startDate as Timestamp).toDate(),
           endDate: data.endDate ? (data.endDate as Timestamp).toDate() : null
       } as Event
-  });
+  }).filter((event): event is Event => event !== null);
 };
 
 // Function to create a new event
@@ -174,6 +182,11 @@ export const getAllEvents = async (): Promise<EventWithAuthor[]> => {
 
     for (const eventDoc of querySnapshot.docs) {
         const data = eventDoc.data();
+        if (!data.startDate) {
+            console.warn(`Event ${eventDoc.id} is missing a start date and will be skipped from getAllEvents.`);
+            continue;
+        }
+        
         const authorId = data.authorId;
         let author = authorCache[authorId];
 
@@ -270,13 +283,18 @@ export const getDiaryEvents = async (userId: string): Promise<any[]> => {
     const authors = authorIds.length > 0 ? await getDocs(query(collection(db, 'users'), where('uid', 'in', authorIds.slice(0,30)))) : { docs: [] };
     const authorMap = new Map(authors.docs.map(doc => [doc.id, doc.data() as User]));
 
-    return events.map(event => ({
+    return events.map(event => {
+        if (!event.startDate) {
+            console.warn(`Event ${event.id} in diary is missing a start date and will be skipped.`);
+            return null;
+        }
+        return {
         ...event,
         startDate: (event.startDate as Timestamp).toDate(),
         endDate: event.endDate ? (event.endDate as Timestamp).toDate() : null,
         notes: notesMap.get(event.id) || '',
         author: event.source === 'rsvped' ? authorMap.get(event.authorId) : undefined,
-    }));
+    }}).filter((e): e is any => e !== null);
 };
 
 // This function fetches ALL content types for a user for the Content Calendar.

@@ -37,6 +37,10 @@ export const getOffer = async (id: string): Promise<Offer | null> => {
   const offerDoc = await getDoc(offerDocRef);
   if (offerDoc.exists()) {
     const data = offerDoc.data();
+    if (!data.startDate) {
+        console.warn(`Offer ${id} is missing a startDate and will be skipped.`);
+        return null;
+    }
     return { 
         id: offerDoc.id, 
         ...data,
@@ -54,13 +58,17 @@ export const getOffersByUser = async (userId: string): Promise<Offer[]> => {
   const querySnapshot = await getDocs(q);
   return querySnapshot.docs.map(doc => {
       const data = doc.data();
+      if (!data.startDate) {
+          console.warn(`Offer ${doc.id} for user ${userId} is missing a startDate and will be skipped.`);
+          return null;
+      }
       return { 
           id: doc.id, 
           ...data,
           startDate: (data.startDate as Timestamp).toDate(),
           endDate: data.endDate ? (data.endDate as Timestamp).toDate() : null,
       } as Offer
-  });
+  }).filter((offer): offer is Offer => offer !== null);
 };
 
 // Function to create a new offer
