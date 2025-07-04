@@ -15,9 +15,10 @@ import {
   arrayRemove,
   increment,
   writeBatch,
+  setDoc,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { User } from './users';
+import type { User, Listing, Job, Offer } from './users';
 
 export type ItineraryItem = {
   time: string;
@@ -193,51 +194,59 @@ export const saveDiaryNote = async (userId: string, eventId: string, notes: stri
     await setDoc(noteRef, { userId, eventId, notes }, { merge: true });
 }
 
+// This function now fetches ALL content types for a user for the calendar view.
 export const getEventsForDiary = async (userId: string) => {
-    const ownEventsQuery = query(collection(db, 'events'), where('authorId', '==', userId));
+    const eventsQuery = query(collection(db, 'events'), where('authorId', '==', userId));
     const rsvpedEventsQuery = query(collection(db, 'events'), where('rsvps', 'array-contains', userId));
-
-    const [ownEventsSnapshot, rsvpedEventsSnapshot] = await Promise.all([
-        getDocs(ownEventsQuery),
-        getDocs(rsvpedEventsQuery)
-    ]);
+    const offersQuery = query(collection(db, 'offers'), where('authorId', '==', userId));
+    const jobsQuery = query(collection(db, 'jobs'), where('authorId', '==', userId));
+    const listingsQuery = query(collection(db, 'listings'), where('authorId', '==', userId));
     
-    const eventsMap = new Map<string, any>();
-    const authorsToFetch = new Set<string>();
+    const [
+        eventsSnapshot,
+        rsvpedEventsSnapshot,
+        offersSnapshot,
+        jobsSnapshot,
+        listingsSnapshot,
+    ] = await Promise.all([
+        getDocs(eventsQuery),
+        getDocs(rsvpedEventsQuery),
+        getDocs(offersQuery),
+        getDocs(jobsQuery),
+        getDocs(listingsQuery),
+    ]);
 
-    ownEventsSnapshot.forEach(doc => {
-        eventsMap.set(doc.id, { ...doc.data(), id: doc.id, source: 'created' });
+    const itemsMap = new Map<string, any>();
+    
+    eventsSnapshot.forEach(doc => {
+        itemsMap.set(`event-${doc.id}`, { ...doc.data(), id: doc.id, type: 'event', source: 'created' });
     });
-
     rsvpedEventsSnapshot.forEach(doc => {
-        // Avoid adding duplicates if user RSVP'd to their own event
-        if (!eventsMap.has(doc.id)) {
-            const data = doc.data();
-            eventsMap.set(doc.id, { ...data, id: doc.id, source: 'rsvped' });
-            authorsToFetch.add(data.authorId);
+        if (!itemsMap.has(`event-${doc.id}`)) {
+            itemsMap.set(`event-${doc.id}`, { ...doc.data(), id: doc.id, type: 'event', source: 'rsvped' });
         }
     });
-
-    const notesQuery = query(collection(db, 'diaryNotes'), where('userId', '==', userId));
-    const notesSnapshot = await getDocs(notesQuery);
-    const notesMap = new Map<string, string>();
-    notesSnapshot.forEach(doc => {
-        notesMap.set(doc.data().eventId, doc.data().notes);
+    offersSnapshot.forEach(doc => {
+        itemsMap.set(`offer-${doc.id}`, { ...doc.data(), id: doc.id, type: 'offer' });
+    });
+    jobsSnapshot.forEach(doc => {
+        itemsMap.set(`job-${doc.id}`, { ...doc.data(), id: doc.id, type: 'job' });
+    });
+    listingsSnapshot.forEach(doc => {
+        itemsMap.set(`listing-${doc.id}`, { ...doc.data(), id: doc.id, type: 'listing' });
     });
 
-    const authorsMap = new Map<string, User>();
-    if (authorsToFetch.size > 0) {
-        const authorsQuery = query(collection(db, 'users'), where('uid', 'in', Array.from(authorsToFetch)));
-        const authorsSnapshot = await getDocs(authorsQuery);
-        authorsSnapshot.forEach(doc => {
-            authorsMap.set(doc.id, { id: doc.id, ...doc.data() } as User);
-        });
-    }
-
-    return Array.from(eventsMap.values()).map(event => ({
-        ...event,
-        date: (event.date as Timestamp).toDate(),
-        notes: notesMap.get(event.id) || '',
-        author: event.source === 'rsvped' ? authorsMap.get(event.authorId) : undefined,
-    }));
+    return Array.from(itemsMap.values()).map(item => {
+        const dateFields: any = {};
+        if (item.date) dateFields.date = (item.date as Timestamp).toDate();
+        if (item.releaseDate) dateFields.releaseDate = (item.releaseDate as Timestamp).toDate();
+        if (item.postingDate) dateFields.postingDate = (item.postingDate as Timestamp).toDate();
+        // Listings don't have a date for the calendar, but we can use createdAt
+        if (item.type === 'listing' && item.createdAt) dateFields.publishDate = (item.createdAt as Timestamp).toDate();
+        
+        return {
+            ...item,
+            ...dateFields,
+        };
+    });
 };

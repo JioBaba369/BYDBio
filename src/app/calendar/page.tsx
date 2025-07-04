@@ -6,8 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge, badgeVariants } from '@/components/ui/badge';
-import { currentUser } from '@/lib/mock-data';
-import { allUsers } from '@/lib/users';
+import { getEventsForDiary } from '@/lib/events';
+import { useAuth } from '@/components/auth-provider';
 import { format, parseISO, isSameDay, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, addMonths, subMonths, isBefore } from 'date-fns';
 import { Search, MapPin, Tag, Briefcase, DollarSign, X, Clock, ChevronLeft, ChevronRight, MoreHorizontal, Edit, Trash2, PlusCircle, MessageSquare, Tags, Calendar as CalendarIconLucide, Building2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -17,7 +17,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialog';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
-import type { Event } from '@/lib/users';
+import type { Event, Offer, Job, Listing } from '@/lib/users';
 import { Separator } from '@/components/ui/separator';
 import { Label } from '@/components/ui/label';
 
@@ -80,6 +80,7 @@ const CalendarSkeleton = () => (
 
 
 export default function CalendarPage() {
+  const { user, loading: authLoading } = useAuth();
   const [isMounted, setIsMounted] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const [currentMonth, setCurrentMonth] = useState<Date | undefined>();
@@ -91,6 +92,8 @@ export default function CalendarPage() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<CalendarItem | null>(null);
   const { toast } = useToast();
+  const [calendarItems, setCalendarItems] = useState<CalendarItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const today = new Date();
@@ -99,82 +102,79 @@ export default function CalendarPage() {
     setIsMounted(true);
   }, []);
 
-  const [calendarItems, setCalendarItems] = useState<CalendarItem[]>(() => {
-    // User's own content
-    const ownEvents = currentUser.events.map(event => ({
-      id: event.id,
-      type: 'Event' as const,
-      date: parseISO(event.date),
-      title: event.title,
-      description: `Event at ${event.location}`,
-      location: event.location,
-      imageUrl: event.imageUrl,
-      editPath: `/events/${event.id}/edit`,
-      isExternal: false,
-    }));
-    const ownOffers = currentUser.offers.map(offer => ({
-      id: offer.id,
-      type: 'Offer' as const,
-      date: parseISO(offer.releaseDate),
-      title: offer.title,
-      description: offer.description,
-      category: offer.category,
-      imageUrl: offer.imageUrl,
-      editPath: `/offers/${offer.id}/edit`,
-      isExternal: false,
-    }));
-    const ownJobs = currentUser.jobs.map(job => ({
-        id: job.id,
-        type: 'Job' as const,
-        date: parseISO(job.postingDate),
-        title: job.title,
-        description: `${job.type} at ${job.company}`,
-        company: job.company,
-        jobType: job.type,
-        location: job.location,
-        imageUrl: job.imageUrl,
-        editPath: `/opportunities/${job.id}/edit`,
-        isExternal: false,
-    }));
-    const ownListings = currentUser.listings.map(listing => ({
-        id: listing.id,
-        type: 'Listing' as const,
-        date: parseISO(listing.publishDate),
-        title: listing.title,
-        description: listing.description,
-        category: listing.category,
-        price: listing.price,
-        imageUrl: listing.imageUrl,
-        editPath: `/listings/${listing.id}/edit`,
-        isExternal: false,
-    }));
-
-    // Events user has RSVP'd to
-    const rsvpedEvents: CalendarItem[] = [];
-    if (currentUser.rsvpedEventIds) {
-      currentUser.rsvpedEventIds.forEach(eventId => {
-        for (const user of allUsers) {
-            const event = user.events.find(e => e.id === eventId);
-            if (event) {
-                rsvpedEvents.push({
-                    id: event.id,
-                    type: 'Event' as const,
-                    date: parseISO(event.date),
-                    title: event.title,
-                    description: `Attending event at ${event.location}`,
-                    location: event.location,
-                    imageUrl: event.imageUrl,
-                    editPath: `/events/${event.id}`, // Link to public page
-                    isExternal: true,
-                });
-                break;
-            }
-        }
-      });
+  useEffect(() => {
+    if (user) {
+        setIsLoading(true);
+        // This function now fetches all content types for the user's diary/calendar
+        getEventsForDiary(user.uid)
+            .then((items) => {
+                const formattedItems: CalendarItem[] = items.map((item: any) => {
+                    switch(item.type) {
+                        case 'event':
+                            return {
+                                id: item.id,
+                                type: 'Event' as const,
+                                date: item.date as Date,
+                                title: item.title,
+                                description: `Event at ${item.location}`,
+                                location: item.location,
+                                imageUrl: item.imageUrl,
+                                editPath: `/events/${item.id}/edit`,
+                                isExternal: item.source === 'rsvped',
+                            };
+                        case 'offer':
+                             return {
+                                id: item.id,
+                                type: 'Offer' as const,
+                                date: item.releaseDate as Date,
+                                title: item.title,
+                                description: item.description,
+                                category: item.category,
+                                imageUrl: item.imageUrl,
+                                editPath: `/offers/${item.id}/edit`,
+                                isExternal: false,
+                            };
+                        case 'job':
+                             return {
+                                id: item.id,
+                                type: 'Job' as const,
+                                date: item.postingDate as Date,
+                                title: item.title,
+                                description: `${item.type} at ${item.company}`,
+                                company: item.company,
+                                jobType: item.type,
+                                location: item.location,
+                                imageUrl: item.imageUrl,
+                                editPath: `/opportunities/${item.id}/edit`,
+                                isExternal: false,
+                            };
+                        case 'listing':
+                             return {
+                                id: item.id,
+                                type: 'Listing' as const,
+                                date: item.publishDate as Date,
+                                title: item.title,
+                                description: item.description,
+                                category: item.category,
+                                price: item.price,
+                                imageUrl: item.imageUrl,
+                                editPath: `/listings/${item.id}/edit`,
+                                isExternal: false,
+                            };
+                        default:
+                            return null;
+                    }
+                }).filter((item): item is CalendarItem => item !== null);
+                setCalendarItems(formattedItems.sort((a, b) => a.date.getTime() - b.date.getTime()));
+            })
+            .catch(err => {
+                console.error("Failed to fetch calendar items", err);
+                toast({ title: "Error", description: "Could not load calendar items.", variant: "destructive" });
+            })
+            .finally(() => setIsLoading(false));
     }
+  }, [user, toast]);
 
-    return [...ownEvents, ...ownOffers, ...ownJobs, ...ownListings, ...rsvpedEvents].sort((a, b) => a.date.getTime() - b.date.getTime());
-  });
 
   const areFiltersActive = !!searchTerm || !!locationFilter || typeFilters.size < 4;
 
@@ -253,7 +253,7 @@ export default function CalendarPage() {
     { name: 'Listing', icon: Tags, variant: 'outline' },
   ];
 
-  if (!isMounted || !currentMonth) {
+  if (!isMounted || !currentMonth || authLoading || isLoading) {
     return <CalendarSkeleton />;
   }
 

@@ -4,7 +4,8 @@ import { getJobAndAuthor } from '@/lib/jobs';
 import OpportunityDetailClient from './opportunity-detail-client';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import type { Job, User } from '@/lib/jobs';
+import type { User } from '@/lib/users';
+import type { Job } from '@/lib/jobs';
 
 export async function generateMetadata({ params }: { params: { opportunityId: string } }): Promise<Metadata> {
   const data = await getJobAndAuthor(params.opportunityId);

@@ -2,6 +2,7 @@
 import { collection, query, where, getDocs, limit, doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type { User as FirebaseUser } from "firebase/auth";
+import type { Timestamp } from "firebase/firestore";
 
 export type BusinessCard = {
   title: string;
@@ -33,7 +34,60 @@ export type User = {
   subscribers: number;
   links: UserLink[];
   businessCard?: BusinessCard;
+  isFollowedByCurrentUser?: boolean; // Client-side state
 };
+
+// These types are now defined here to be imported by other services
+export type Listing = {
+  id: string;
+  authorId: string;
+  title: string;
+  description: string;
+  price: string;
+  imageUrl: string | null;
+  category: string;
+  status: 'active' | 'archived';
+  createdAt: Timestamp;
+};
+
+export type Offer = {
+  id: string;
+  authorId: string;
+  title: string;
+  description: string;
+  category: string;
+  releaseDate: Timestamp | Date | string;
+  imageUrl: string | null;
+  status: 'active' | 'archived';
+  createdAt: Timestamp;
+};
+
+export type Job = {
+  id: string;
+  authorId: string;
+  title: string;
+  company: string;
+  location: string;
+  type: 'Full-time' | 'Part-time' | 'Contract' | 'Internship';
+  postingDate: Timestamp | Date | string;
+  imageUrl: string | null;
+  status: 'active' | 'archived';
+  createdAt: Timestamp;
+};
+
+export type Event = {
+  id: string;
+  authorId: string;
+  title: string;
+  description: string;
+  date: Timestamp | Date | string;
+  location: string;
+  imageUrl: string | null;
+  status: 'active' | 'archived';
+  rsvps: string[];
+  createdAt: Timestamp;
+};
+
 
 /**
  * Creates a user profile in Firestore if one doesn't already exist.
@@ -91,10 +145,23 @@ export async function getUserByUsername(username: string): Promise<User | null> 
 
 export async function getUsersByIds(uids: string[]): Promise<User[]> {
     if (uids.length === 0) return [];
-    const usersRef = collection(db, "users");
-    const q = query(usersRef, where("uid", "in", uids));
-    const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
+    // Firestore 'in' queries are limited to 30 items per query.
+    // We need to chunk the requests.
+    const chunks: string[][] = [];
+    for (let i = 0; i < uids.length; i += 30) {
+        chunks.push(uids.slice(i, i + 30));
+    }
+    
+    const users: User[] = [];
+    for (const chunk of chunks) {
+        const usersRef = collection(db, "users");
+        const q = query(usersRef, where("uid", "in", chunk));
+        const querySnapshot = await getDocs(q);
+        querySnapshot.forEach(doc => {
+            users.push({ id: doc.id, ...doc.data() } as User)
+        });
+    }
+    return users;
 }
 
 export async function searchUsers(searchText: string): Promise<User[]> {

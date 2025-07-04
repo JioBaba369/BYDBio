@@ -1,22 +1,12 @@
+
 import type { Metadata } from 'next';
-import { allUsers, type User, type Offer } from '@/lib/users';
+import { getOfferAndAuthor } from '@/lib/offers';
 import OfferDetailClient from './offer-detail-client';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 
-// Helper to find offer and its author
-function findOfferAndAuthor(offerId: string): { offer: Offer; author: User } | null {
-    for (const user of allUsers) {
-        const offer = user.offers.find(o => o.id === offerId);
-        if (offer) {
-            return { offer, author: user };
-        }
-    }
-    return null;
-}
-
 export async function generateMetadata({ params }: { params: { offerId: string } }): Promise<Metadata> {
-  const data = findOfferAndAuthor(params.offerId);
+  const data = await getOfferAndAuthor(params.offerId);
 
   if (!data) {
     return {
@@ -48,8 +38,8 @@ export async function generateMetadata({ params }: { params: { offerId: string }
 }
 
 
-export default function PublicOfferPage({ params }: { params: { offerId: string } }) {
-    const data = findOfferAndAuthor(params.offerId);
+export default async function PublicOfferPage({ params }: { params: { offerId: string } }) {
+    const data = await getOfferAndAuthor(params.offerId);
 
     if (!data) {
         return (
