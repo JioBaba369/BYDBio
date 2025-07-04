@@ -67,8 +67,7 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
   
   useEffect(() => {
     setIsFollowing(currentUser?.following?.includes(userProfileData.uid) || false);
-    setFollowerCount(userProfileData.followerCount || 0);
-  }, [currentUser, userProfileData]);
+  }, [currentUser, userProfileData.uid]);
   
   const { toast } = useToast();
   

@@ -1,3 +1,4 @@
+
 rules_version = '2';
 
 service cloud.firestore {
@@ -18,12 +19,17 @@ service cloud.firestore {
     match /users/{userId} {
       allow read: if true;
       allow create: if isOwner(userId);
-      // A user can update their own profile. Follow/unfollow actions are also permitted.
-      allow update: if isOwner(userId) || (isUserAuthenticated() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['followerCount']));
-      allow delete: if isOwner(userId);
+      // A user can update their own profile.
+      // Other authenticated users can only update the followerCount by +/- 1.
+      allow update: if isOwner(userId) || 
+                       (isUserAuthenticated() && 
+                        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['followerCount']) &&
+                        (request.resource.data.followerCount == resource.data.followerCount + 1 || request.resource.data.followerCount == resource.data.followerCount - 1)
+                       );
+      allow delete: if isOwner(userId); // Deletion should ideally be handled by a Cloud Function for cascading deletes
     }
 
-    // POSTS
+    // POSTS (Status Updates)
     match /posts/{postId} {
       allow read: if true;
       allow create: if isOwner(request.resource.data.authorId);
@@ -44,6 +50,7 @@ service cloud.firestore {
     }
     
     // GENERIC PUBLIC CONTENT
+    // Covers: listings, jobs, offers, businesses
     match /{collection}/{docId} where collection in ['listings', 'jobs', 'offers', 'businesses'] {
       allow read: if true;
       allow create: if isOwner(request.resource.data.authorId);
@@ -52,11 +59,11 @@ service cloud.firestore {
     
     // MESSAGES
     match /messages/{messageId} {
-      // Anyone can send a message via the contact form
-      allow create: if true; 
-      // Only the recipient can read or update their messages.
-      // This rule works for the query in the app because the query itself filters by recipientId.
-      allow read, update, delete: if isOwner(resource.data.recipientId);
+      allow create: if true; // Anyone can send a message via the contact form
+      // Only the recipient can read their messages.
+      // This rule works for the query in the app because the query itself filters for documents that would pass this rule.
+      allow read, update: if isOwner(resource.data.recipientId);
+      allow delete: if isOwner(resource.data.recipientId);
     }
 
     // NOTIFICATIONS
@@ -69,13 +76,13 @@ service cloud.firestore {
     // DIARY NOTES
     match /diaryNotes/{diaryNoteId} {
       // A user can only create and manage their own diary notes.
-      allow read, write: if isOwner(resource.data.userId);
+      allow read, write: if isUserAuthenticated() && request.auth.uid == resource.data.userId;
     }
 
     // REMINDERS
     match /reminders/{reminderId} {
       // A user can only create and manage their own reminders.
-      allow read, write: if isOwner(resource.data.userId);
+      allow read, write: if isUserAuthenticated() && request.auth.uid == resource.data.userId;
     }
   }
 }

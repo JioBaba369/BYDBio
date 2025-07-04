@@ -250,6 +250,7 @@ export type DiaryNote = {
 }
 
 const serializeFirestoreTimestamps = (data: any): any => {
+    if (!data) return data;
     const serializedData: { [key: string]: any } = {};
     for (const key in data) {
         if (data[key] instanceof Timestamp) {
