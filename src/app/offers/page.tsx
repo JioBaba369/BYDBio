@@ -190,7 +190,7 @@ export default function OffersPage() {
                     <Button asChild variant="outline" className="w-full">
                         <Link href={`/offer/${offer.id}`}>
                           <ExternalLink className="mr-2 h-4 w-4" />
-                          View Offer
+                          View Details
                         </Link>
                     </Button>
                 </CardFooter>

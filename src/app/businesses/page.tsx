@@ -202,7 +202,7 @@ export default function BusinessesPage() {
                     <Button asChild variant="outline" className="w-full">
                         <Link href={`/b/${item.id}`}>
                             <ExternalLink className="mr-2 h-4 w-4" />
-                            View Public Page
+                            View Details
                         </Link>
                     </Button>
                 </CardFooter>

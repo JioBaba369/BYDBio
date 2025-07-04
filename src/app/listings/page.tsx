@@ -206,7 +206,7 @@ export default function ListingsPage() {
                     <Button asChild variant="outline" className="w-full">
                         <Link href={`/l/${item.id}`}>
                             <ExternalLink className="mr-2 h-4 w-4" />
-                            View Listing
+                            View Details
                         </Link>
                     </Button>
                 </CardFooter>
