@@ -18,13 +18,13 @@ import { type Offer, getOffersByUser, deleteOffer, updateOffer } from "@/lib/off
 import { Skeleton } from "@/components/ui/skeleton";
 
 // This component safely formats the date on the client-side to prevent hydration errors.
-function ClientFormattedDate({ date }: { date: Date }) {
+function ClientFormattedDate({ date, formatStr }: { date: Date, formatStr?: string }) {
   const [formattedDate, setFormattedDate] = useState('...');
 
   useEffect(() => {
     // This effect runs only on the client, after the initial render.
-    setFormattedDate(format(date, "PPP"));
-  }, [date]);
+    setFormattedDate(format(date, formatStr || "PPP"));
+  }, [date, formatStr]);
 
   return <>{formattedDate}</>;
 }
@@ -168,7 +168,10 @@ export default function OffersPage() {
                   <Badge variant="secondary"><Tag className="mr-1 h-3 w-3" />{offer.category}</Badge>
                    <div className="flex items-center pt-2 text-sm text-muted-foreground">
                     <Calendar className="mr-2 h-4 w-4" /> 
-                    <span>Releases: <ClientFormattedDate date={offer.releaseDate as Date} /></span>
+                    <span>
+                        Starts: <ClientFormattedDate date={offer.startDate as Date} />
+                        {offer.endDate && <>, Ends: <ClientFormattedDate date={offer.endDate as Date} /></>}
+                    </span>
                   </div>
                 </CardContent>
                 <Separator />
@@ -246,7 +249,10 @@ export default function OffersPage() {
                     <Badge variant="secondary"><Tag className="mr-1 h-3 w-3" />{offer.category}</Badge>
                      <div className="flex items-center pt-2 text-sm text-muted-foreground">
                       <Calendar className="mr-2 h-4 w-4" /> 
-                      <span>Releases: <ClientFormattedDate date={offer.releaseDate as Date} /></span>
+                      <span>
+                          Starts: <ClientFormattedDate date={offer.startDate as Date} />
+                          {offer.endDate && <>, Ends: <ClientFormattedDate date={offer.endDate as Date} /></>}
+                      </span>
                     </div>
                   </CardContent>
                 </Card>

@@ -46,18 +46,25 @@ export default function EventDetailClient({ event, author }: EventDetailClientPr
     }
 
     const handleAddToCalendar = () => {
-        const date = parseISO(event.date);
-        const icsEvent = {
-            start: [date.getFullYear(), date.getMonth() + 1, date.getDate(), date.getHours(), date.getMinutes()] as ics.DateArray,
-            duration: { hours: 2 }, // Default duration
+        const date = parseISO(event.startDate as string);
+        const icsEvent: ics.EventAttributes = {
+            start: [date.getFullYear(), date.getMonth() + 1, date.getDate(), date.getHours(), date.getMinutes()],
             title: event.title,
             description: event.description,
             location: event.location,
             url: window.location.href,
-            status: 'CONFIRMED' as ics.EventStatus,
-            busyStatus: 'BUSY' as ics.BusyStatus,
+            status: 'CONFIRMED',
+            busyStatus: 'BUSY',
             organizer: { name: author.name, email: 'noreply@byd.bio' }, // Using a placeholder email
         };
+
+        if (event.endDate) {
+            const endDate = parseISO(event.endDate as string);
+            icsEvent.end = [endDate.getFullYear(), endDate.getMonth() + 1, endDate.getDate(), endDate.getHours(), endDate.getMinutes()];
+        } else {
+            icsEvent.duration = { hours: 2 }; // Default duration
+        }
+
 
         const { error, value } = ics.createEvent(icsEvent);
 
@@ -129,24 +136,34 @@ export default function EventDetailClient({ event, author }: EventDetailClientPr
                             <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
                                 <Calendar className="h-6 w-6 text-primary flex-shrink-0" />
                                 <div>
-                                    <p className="font-semibold">Date</p>
-                                    <p className="text-muted-foreground"><ClientFormattedDate dateString={event.date} formatStr="PPP" /></p>
+                                    <p className="font-semibold">{event.endDate ? 'Starts' : 'Date'}</p>
+                                    <p className="text-muted-foreground"><ClientFormattedDate dateString={event.startDate as string} formatStr="PPP" /></p>
                                 </div>
                             </div>
                              <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
                                 <Clock className="h-6 w-6 text-primary flex-shrink-0" />
                                 <div>
                                     <p className="font-semibold">Time</p>
-                                    <p className="text-muted-foreground"><ClientFormattedDate dateString={event.date} formatStr="p" /></p>
+                                    <p className="text-muted-foreground"><ClientFormattedDate dateString={event.startDate as string} formatStr="p" /></p>
                                 </div>
                             </div>
-                             <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
-                                <MapPin className="h-6 w-6 text-primary flex-shrink-0" />
-                                <div>
-                                    <p className="font-semibold">Location</p>
-                                    <p className="text-muted-foreground">{event.location}</p>
+                            {event.endDate ? (
+                                <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+                                    <Calendar className="h-6 w-6 text-primary flex-shrink-0" />
+                                    <div>
+                                        <p className="font-semibold">Ends</p>
+                                        <p className="text-muted-foreground"><ClientFormattedDate dateString={event.endDate as string} formatStr="PPP" /></p>
+                                    </div>
                                 </div>
-                            </div>
+                            ) : (
+                                <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+                                    <MapPin className="h-6 w-6 text-primary flex-shrink-0" />
+                                    <div>
+                                        <p className="font-semibold">Location</p>
+                                        <p className="text-muted-foreground">{event.location}</p>
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         <Separator />

@@ -23,6 +23,8 @@ export type Job = {
   location: string;
   type: 'Full-time' | 'Part-time' | 'Contract' | 'Internship';
   postingDate: Timestamp | Date | string;
+  startDate?: Timestamp | Date | string | null;
+  endDate?: Timestamp | Date | string | null;
   imageUrl: string | null;
   status: 'active' | 'archived';
   views: number;
@@ -40,7 +42,9 @@ export const getJob = async (id: string): Promise<Job | null> => {
     return { 
         id: jobDoc.id, 
         ...data,
-        postingDate: (data.postingDate as Timestamp).toDate()
+        postingDate: (data.postingDate as Timestamp).toDate(),
+        startDate: data.startDate ? (data.startDate as Timestamp).toDate() : null,
+        endDate: data.endDate ? (data.endDate as Timestamp).toDate() : null,
     } as Job;
   }
   return null;
@@ -56,7 +60,9 @@ export const getJobsByUser = async (userId: string): Promise<Job[]> => {
       return { 
           id: doc.id, 
           ...data,
-          postingDate: (data.postingDate as Timestamp).toDate()
+          postingDate: (data.postingDate as Timestamp).toDate(),
+          startDate: data.startDate ? (data.startDate as Timestamp).toDate() : null,
+          endDate: data.endDate ? (data.endDate as Timestamp).toDate() : null,
       } as Job;
   });
 };

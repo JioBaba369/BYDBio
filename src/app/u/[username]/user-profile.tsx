@@ -41,10 +41,10 @@ interface UserProfilePageProps {
   userProfileData: User;
   content: {
     posts: (Omit<Post, 'createdAt'> & { createdAt: string })[];
-    listings: (Omit<Listing, 'createdAt'> & { createdAt: string })[];
-    jobs: (Omit<Job, 'postingDate' | 'createdAt'> & { postingDate: string, createdAt: string })[];
-    events: (Omit<Event, 'date' | 'createdAt'> & { date: string, createdAt: string })[];
-    offers: (Omit<Offer, 'releaseDate' | 'createdAt'> & { releaseDate: string, createdAt: string })[];
+    listings: (Omit<Listing, 'createdAt' | 'startDate' | 'endDate'> & { createdAt: string, startDate?: string | null, endDate?: string | null })[];
+    jobs: (Omit<Job, 'postingDate' | 'createdAt' | 'startDate' | 'endDate'> & { postingDate: string, createdAt: string, startDate?: string | null, endDate?: string | null })[];
+    events: (Omit<Event, 'startDate' | 'endDate' | 'createdAt'> & { startDate: string, endDate?: string | null, createdAt: string })[];
+    offers: (Omit<Offer, 'startDate' | 'endDate' | 'createdAt'> & { startDate: string, endDate?: string | null, createdAt: string })[];
     businesses: (Omit<Business, 'createdAt'> & { createdAt: string })[];
   }
 }
@@ -319,8 +319,17 @@ END:VCARD`;
                               <CardTitle>{item.title}</CardTitle>
                               <CardDescription>{item.description}</CardDescription>
                               </CardHeader>
-                              <CardContent className="flex-grow">
-                              <Badge variant="secondary"><Tags className="mr-1 h-3 w-3" /> {item.category}</Badge>
+                              <CardContent className="flex-grow space-y-2">
+                                <Badge variant="secondary"><Tags className="mr-1 h-3 w-3" /> {item.category}</Badge>
+                                {(item.startDate || item.endDate) && (
+                                    <div className="flex items-center pt-2 text-sm text-muted-foreground">
+                                        <Calendar className="mr-2 h-4 w-4" /> 
+                                        <span>
+                                            {item.startDate && <ClientFormattedDate date={item.startDate} formatStr="PPP" />}
+                                            {item.endDate && <> - <ClientFormattedDate date={item.endDate} formatStr="PPP" /></>}
+                                        </span>
+                                    </div>
+                                )}
                               </CardContent>
                               <CardFooter className="flex justify-between items-center">
                               <p className="font-bold text-lg">{item.price}</p>
@@ -345,6 +354,15 @@ END:VCARD`;
                                   <div className="flex items-center text-muted-foreground">
                                       <Briefcase className="mr-2 h-4 w-4" /> {job.type}
                                   </div>
+                                   {(job.startDate || job.endDate) && (
+                                    <div className="flex items-center pt-2 text-muted-foreground">
+                                        <Calendar className="mr-2 h-4 w-4" /> 
+                                        <span>
+                                            {job.startDate && <ClientFormattedDate date={job.startDate} formatStr="PPP" />}
+                                            {job.endDate && <> - <ClientFormattedDate date={job.endDate} formatStr="PPP" /></>}
+                                        </span>
+                                    </div>
+                                )}
                               </CardContent>
                                <CardFooter>
                                   <Button asChild className="w-full">
@@ -362,10 +380,14 @@ END:VCARD`;
                               </CardHeader>
                               <CardContent className="space-y-2">
                                   <div className="flex items-center text-sm text-muted-foreground">
-                                  <Calendar className="mr-2 h-4 w-4" /> <ClientFormattedDate date={event.date} formatStr="PPP" />
+                                    <Calendar className="mr-2 h-4 w-4" /> 
+                                    <span>
+                                        <ClientFormattedDate date={event.startDate} formatStr="PPP" />
+                                        {event.endDate && <> - <ClientFormattedDate date={event.endDate} formatStr="PPP" /></>}
+                                    </span>
                                   </div>
                                   <div className="flex items-center text-sm text-muted-foreground">
-                                  <MapPin className="mr-2 h-4 w-4" /> {event.location}
+                                    <MapPin className="mr-2 h-4 w-4" /> {event.location}
                                   </div>
                               </CardContent>
                               <CardFooter>
@@ -387,7 +409,10 @@ END:VCARD`;
                                 <Badge variant="secondary"><Tag className="mr-1 h-3 w-3" />{offer.category}</Badge>
                                 <div className="flex items-center pt-4 text-sm text-muted-foreground">
                                     <Calendar className="mr-2 h-4 w-4" /> 
-                                    <span>Releases: <ClientFormattedDate date={offer.releaseDate} formatStr="PPP" /></span>
+                                    <span>
+                                        Starts: <ClientFormattedDate date={offer.startDate} formatStr="PPP" />
+                                        {offer.endDate && <>, Ends: <ClientFormattedDate date={offer.endDate} formatStr="PPP" /></>}
+                                    </span>
                                 </div>
                               </CardContent>
                               <CardFooter>

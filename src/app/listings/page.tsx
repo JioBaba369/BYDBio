@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import Image from "next/image";
-import { PlusCircle, MoreHorizontal, Edit, Trash2, Archive, Tags, Eye, MousePointerClick, ExternalLink } from "lucide-react";
+import { PlusCircle, MoreHorizontal, Edit, Trash2, Archive, Tags, Eye, MousePointerClick, ExternalLink, Calendar } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -13,6 +13,19 @@ import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/components/auth-provider";
 import { type Listing, getListingsByUser, deleteListing, updateListing } from "@/lib/listings";
 import { Skeleton } from "@/components/ui/skeleton";
+import { format } from "date-fns";
+
+// This component safely formats the date on the client-side to prevent hydration errors.
+function ClientFormattedDate({ date, formatStr }: { date: Date, formatStr?: string }) {
+  const [formattedDate, setFormattedDate] = useState('...');
+
+  useEffect(() => {
+    // This effect runs only on the client, after the initial render.
+    setFormattedDate(format(date, formatStr || "PPP"));
+  }, [date, formatStr]);
+
+  return <>{formattedDate}</>;
+}
 
 const ListingPageSkeleton = () => (
     <div className="space-y-6">
@@ -152,11 +165,20 @@ export default function ListingsPage() {
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </CardHeader>
-                <CardContent className="flex-grow">
+                <CardContent className="flex-grow space-y-2">
                   <div className="flex justify-between items-center">
                     <Badge variant="secondary">{item.category}</Badge>
                     <p className="font-bold text-lg">{item.price}</p>
                   </div>
+                  {(item.startDate || item.endDate) && (
+                    <div className="flex items-center pt-2 text-sm text-muted-foreground">
+                        <Calendar className="mr-2 h-4 w-4" /> 
+                        <span>
+                            {item.startDate && <ClientFormattedDate date={item.startDate as Date} />}
+                            {item.endDate && <> - <ClientFormattedDate date={item.endDate as Date} /></>}
+                        </span>
+                    </div>
+                  )}
                 </CardContent>
                 <Separator />
                 <CardFooter className="flex-col items-start gap-4 pt-4">

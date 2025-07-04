@@ -13,7 +13,6 @@ import {
   type Timestamp,
   arrayUnion,
   arrayRemove,
-  increment,
   writeBatch,
   setDoc,
 } from 'firebase/firestore';
@@ -32,7 +31,8 @@ export type Event = {
   authorId: string; // UID of the user who created it
   title: string;
   description: string;
-  date: Timestamp | Date | string; // Allow for server, client, and form states
+  startDate: Timestamp | Date | string;
+  endDate?: Timestamp | Date | string | null;
   location: string;
   imageUrl: string | null;
   status: 'active' | 'archived';
@@ -55,7 +55,8 @@ export const getEvent = async (id: string): Promise<Event | null> => {
     return { 
         id: eventDoc.id, 
         ...data,
-        date: (data.date as Timestamp).toDate() // Convert Firestore Timestamp to JS Date
+        startDate: (data.startDate as Timestamp).toDate(),
+        endDate: data.endDate ? (data.endDate as Timestamp).toDate() : null
     } as Event;
   }
   return null;
@@ -71,7 +72,8 @@ export const getEventsByUser = async (userId: string): Promise<Event[]> => {
       return { 
           id: doc.id, 
           ...data,
-          date: (data.date as Timestamp).toDate()
+          startDate: (data.startDate as Timestamp).toDate(),
+          endDate: data.endDate ? (data.endDate as Timestamp).toDate() : null
       } as Event
   });
 };
@@ -187,13 +189,14 @@ export const getAllEvents = async (): Promise<EventWithAuthor[]> => {
             events.push({
                 id: eventDoc.id,
                 ...data,
-                date: (data.date as Timestamp).toDate(),
+                startDate: (data.startDate as Timestamp).toDate(),
+                endDate: data.endDate ? (data.endDate as Timestamp).toDate() : null,
                 author: { uid: author.uid, name: author.name, username: author.username, avatarUrl: author.avatarUrl }
             } as EventWithAuthor);
         }
     }
 
-    return events.sort((a,b) => (b.date as Date).getTime() - (a.date as Date).getTime());
+    return events.sort((a,b) => (b.startDate as Date).getTime() - (a.startDate as Date).getTime());
 };
 
 // Diary notes
@@ -269,7 +272,8 @@ export const getDiaryEvents = async (userId: string): Promise<any[]> => {
 
     return events.map(event => ({
         ...event,
-        date: (event.date as Timestamp).toDate(),
+        startDate: (event.startDate as Timestamp).toDate(),
+        endDate: event.endDate ? (event.endDate as Timestamp).toDate() : null,
         notes: notesMap.get(event.id) || '',
         author: event.source === 'rsvped' ? authorMap.get(event.authorId) : undefined,
     }));
@@ -324,10 +328,13 @@ export const getCalendarItems = async (userId: string) => {
 
     return allItems.map(item => {
         const dateFields: any = {};
-        if (item.date) dateFields.date = (item.date as Timestamp).toDate();
-        if (item.releaseDate) dateFields.releaseDate = (item.releaseDate as Timestamp).toDate();
-        if (item.postingDate) dateFields.postingDate = (item.postingDate as Timestamp).toDate();
-        if (item.type === 'listing' && item.createdAt) dateFields.publishDate = (item.createdAt as Timestamp).toDate();
+        // Centralize date logic for the calendar view
+        let primaryDate = item.createdAt; // fallback
+        if (item.startDate) primaryDate = item.startDate;
+        else if (item.postingDate) primaryDate = item.postingDate;
+
+        dateFields.date = (primaryDate as Timestamp).toDate();
+        if (item.endDate) dateFields.endDate = (item.endDate as Timestamp).toDate();
         
         const author = authorMap.get(item.authorId);
         return {

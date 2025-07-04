@@ -56,7 +56,8 @@ export default async function PublicOfferPage({ params }: { params: { offerId: s
 
     const serializableOffer = {
       ...data.offer,
-      releaseDate: (data.offer.releaseDate as Date).toISOString(),
+      startDate: (data.offer.startDate as Date).toISOString(),
+      endDate: data.offer.endDate ? (data.offer.endDate as Date).toISOString() : null,
       createdAt: (data.offer.createdAt as Timestamp).toDate().toISOString(),
     };
 

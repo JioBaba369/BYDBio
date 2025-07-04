@@ -65,7 +65,10 @@ export default function OfferDetailClient({ offer, author }: OfferDetailClientPr
                                         <CardDescription className="text-base pt-2">
                                         <div className="flex items-center text-sm text-muted-foreground">
                                             <Calendar className="mr-2 h-4 w-4" /> 
-                                            <span>Releases: <ClientFormattedDate dateString={offer.releaseDate as string} formatStr="PPP" /></span>
+                                            <span>
+                                                Starts: <ClientFormattedDate dateString={offer.startDate as string} formatStr="PPP" />
+                                                {offer.endDate && <>, Ends: <ClientFormattedDate dateString={offer.endDate as string} formatStr="PPP" /></>}
+                                            </span>
                                         </div>
                                         </CardDescription>
                                     </div>

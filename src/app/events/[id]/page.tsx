@@ -56,7 +56,8 @@ export default async function EventDetailPage({ params }: { params: { id: string
 
     const serializableEvent = {
         ...data.event,
-        date: (data.event.date as Date).toISOString(),
+        startDate: (data.event.startDate as Date).toISOString(),
+        endDate: data.event.endDate ? (data.event.endDate as Date).toISOString() : null,
         createdAt: (data.event.createdAt as Timestamp).toDate().toISOString(),
     };
 

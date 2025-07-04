@@ -59,6 +59,8 @@ export default async function PublicOpportunityPage({ params }: { params: { oppo
     const serializableJob = {
         ...data.job,
         postingDate: (data.job.postingDate as Date).toISOString(),
+        startDate: data.job.startDate ? (data.job.startDate as Date).toISOString() : null,
+        endDate: data.job.endDate ? (data.job.endDate as Date).toISOString() : null,
         createdAt: (data.job.createdAt as Timestamp).toDate().toISOString(),
     };
 

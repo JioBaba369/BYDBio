@@ -54,6 +54,8 @@ export type Listing = {
   imageUrl: string | null;
   category: string;
   status: 'active' | 'archived';
+  startDate?: Timestamp | Date | string | null;
+  endDate?: Timestamp | Date | string | null;
   createdAt: Timestamp | string;
 };
 
@@ -63,7 +65,8 @@ export type Offer = {
   title: string;
   description: string;
   category: string;
-  releaseDate: Timestamp | Date | string;
+  startDate: Timestamp | Date | string;
+  endDate?: Timestamp | Date | string | null;
   imageUrl: string | null;
   status: 'active' | 'archived';
   createdAt: Timestamp | string;
@@ -77,6 +80,8 @@ export type Job = {
   location: string;
   type: 'Full-time' | 'Part-time' | 'Contract' | 'Internship';
   postingDate: Timestamp | Date | string;
+  startDate?: Timestamp | Date | string | null;
+  endDate?: Timestamp | Date | string | null;
   imageUrl: string | null;
   status: 'active' | 'archived';
   createdAt: Timestamp | string;
@@ -87,7 +92,8 @@ export type Event = {
   authorId: string;
   title: string;
   description: string;
-  date: Timestamp | Date | string;
+  startDate: Timestamp | Date | string;
+  endDate?: Timestamp | Date | string | null;
   location: string;
   imageUrl: string | null;
   status: 'active' | 'archived';

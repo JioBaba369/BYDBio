@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
@@ -154,9 +155,9 @@ export default function DiaryPage() {
     };
 
     const { upcomingEvents, pastEvents } = useMemo(() => {
-        const sortedEvents = [...events].sort((a, b) => (a.date as Date).getTime() - (b.date as Date).getTime());
-        const upcoming = sortedEvents.filter(e => !isPast(e.date as Date));
-        const past = sortedEvents.filter(e => isPast(e.date as Date)).reverse();
+        const sortedEvents = [...events].sort((a, b) => (a.startDate as Date).getTime() - (b.startDate as Date).getTime());
+        const upcoming = sortedEvents.filter(e => !isPast(e.startDate as Date));
+        const past = sortedEvents.filter(e => isPast(e.startDate as Date)).reverse();
         return { upcomingEvents: upcoming, pastEvents: past };
     }, [events]);
 
@@ -188,7 +189,9 @@ export default function DiaryPage() {
                                         </div>
                                         <CardDescription className="space-y-1 text-sm text-muted-foreground pt-1">
                                             <div className="flex items-center">
-                                                <Calendar className="mr-2 h-4 w-4" /> <ClientFormattedDate date={event.date as Date} formatStr="PPP 'at' p" />
+                                                <Calendar className="mr-2 h-4 w-4" /> 
+                                                <ClientFormattedDate date={event.startDate as Date} formatStr="PPP 'at' p" />
+                                                {event.endDate && <> - <ClientFormattedDate date={event.endDate as Date} formatStr="PPP 'at' p" /></>}
                                             </div>
                                             <div className="flex items-center">
                                                 <MapPin className="mr-2 h-4 w-4" /> {event.location}
@@ -259,7 +262,7 @@ export default function DiaryPage() {
                                         </div>
                                         <CardDescription className="space-y-1 text-sm text-muted-foreground pt-1">
                                             <div className="flex items-center">
-                                                <Calendar className="mr-2 h-4 w-4" /> <ClientFormattedDate date={event.date as Date} formatStr="PPP" /> (<ClientFormattedDate date={event.date as Date} formatStr="" relative={true}/>)
+                                                <Calendar className="mr-2 h-4 w-4" /> <ClientFormattedDate date={event.startDate as Date} formatStr="PPP" /> (<ClientFormattedDate date={event.startDate as Date} formatStr="" relative={true}/>)
                                             </div>
                                              {event.source === 'rsvped' && event.author && (
                                                 <div className="flex items-center pt-2">

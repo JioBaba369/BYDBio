@@ -26,6 +26,8 @@ export type Listing = {
   status: 'active' | 'archived';
   views?: number;
   clicks?: number;
+  startDate?: Timestamp | Date | string | null;
+  endDate?: Timestamp | Date | string | null;
   createdAt: Timestamp | string;
   searchableKeywords: string[];
 };
@@ -35,7 +37,13 @@ export const getListing = async (id: string): Promise<Listing | null> => {
   const listingDocRef = doc(db, 'listings', id);
   const listingDoc = await getDoc(listingDocRef);
   if (listingDoc.exists()) {
-    return { id: listingDoc.id, ...listingDoc.data() } as Listing;
+    const data = listingDoc.data();
+    return { 
+        id: listingDoc.id, 
+        ...data,
+        startDate: data.startDate ? (data.startDate as Timestamp).toDate() : null,
+        endDate: data.endDate ? (data.endDate as Timestamp).toDate() : null,
+    } as Listing;
   }
   return null;
 };
@@ -45,7 +53,15 @@ export const getListingsByUser = async (userId: string): Promise<Listing[]> => {
   const listingsRef = collection(db, 'listings');
   const q = query(listingsRef, where('authorId', '==', userId));
   const querySnapshot = await getDocs(q);
-  return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Listing));
+  return querySnapshot.docs.map(doc => {
+      const data = doc.data();
+      return { 
+          id: doc.id, 
+          ...data,
+          startDate: data.startDate ? (data.startDate as Timestamp).toDate() : null,
+          endDate: data.endDate ? (data.endDate as Timestamp).toDate() : null,
+      } as Listing
+  });
 };
 
 // Function to create a new listing

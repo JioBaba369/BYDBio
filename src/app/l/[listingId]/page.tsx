@@ -1,3 +1,4 @@
+
 import type { Metadata } from 'next';
 import { getListingAndAuthor, type Listing } from '@/lib/listings';
 import ListingDetailClient from './listing-detail-client';
@@ -56,6 +57,8 @@ export default async function PublicListingPage({ params }: { params: { listingI
     const serializableListing = {
         ...data.listing,
         createdAt: (data.listing.createdAt as Timestamp).toDate().toISOString(),
+        startDate: data.listing.startDate ? (data.listing.startDate as Date).toISOString() : null,
+        endDate: data.listing.endDate ? (data.listing.endDate as Date).toISOString() : null,
     };
 
     return <ListingDetailClient listing={serializableListing} author={data.author} />;

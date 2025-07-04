@@ -5,12 +5,27 @@ import type { Job, User } from '@/lib/users';
 import Image from 'next/image';
 import { Card, CardContent, CardTitle, CardDescription, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Building, MapPin } from 'lucide-react';
+import { ArrowLeft, Building, Calendar, MapPin } from 'lucide-react';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Logo } from '@/components/logo';
 import ShareButton from '@/components/share-button';
+import { format, parseISO } from 'date-fns';
+import { useEffect, useState } from 'react';
+
+// This component safely formats the date on the client-side to prevent hydration errors.
+function ClientFormattedDate({ dateString, formatStr }: { dateString: string, formatStr: string }) {
+  const [formattedDate, setFormattedDate] = useState('...');
+
+  useEffect(() => {
+    // This effect runs only on the client, after the initial render.
+    setFormattedDate(format(parseISO(dateString), formatStr));
+  }, [dateString, formatStr]);
+
+  return <>{formattedDate}</>;
+}
+
 
 interface OpportunityDetailClientProps {
     job: Job;
@@ -55,11 +70,20 @@ export default function OpportunityDetailClient({ job, author }: OpportunityDeta
                         </div>
                     </CardHeader>
                     <CardContent>
-                        <div className="flex items-center gap-4 text-muted-foreground mt-4">
+                        <div className="flex items-center gap-4 text-muted-foreground mt-4 text-sm">
                             <div className="flex items-center gap-2">
                                 <MapPin className="h-4 w-4" />
                                 <span>{job.location}</span>
                             </div>
+                             {(job.startDate || job.endDate) && (
+                                <div className="flex items-center pt-2">
+                                    <Calendar className="mr-2 h-4 w-4" /> 
+                                    <span>
+                                        {job.startDate && <ClientFormattedDate dateString={job.startDate as string} formatStr="PPP" />}
+                                        {job.endDate && <> - <ClientFormattedDate dateString={job.endDate as string} formatStr="PPP" /></>}
+                                    </span>
+                                </div>
+                            )}
                         </div>
 
                          <div className="mt-8">

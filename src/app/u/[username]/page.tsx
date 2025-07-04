@@ -88,10 +88,10 @@ export default async function PublicProfilePageWrapper({ params }: { params: { u
     // Serialize date objects before passing to client component
     const content = {
         posts: posts.map(p => ({ ...p, createdAt: p.createdAt.toDate().toISOString() })),
-        listings: listings.map(l => ({ ...l, createdAt: (l.createdAt as Timestamp).toDate().toISOString() })),
-        jobs: jobs.map(j => ({ ...j, postingDate: (j.postingDate as Date).toISOString(), createdAt: (j.createdAt as Timestamp).toDate().toISOString() })),
-        events: events.map(e => ({ ...e, date: (e.date as Date).toISOString(), createdAt: (e.createdAt as Timestamp).toDate().toISOString() })),
-        offers: offers.map(o => ({ ...o, releaseDate: (o.releaseDate as Date).toISOString(), createdAt: (o.createdAt as Timestamp).toDate().toISOString() })),
+        listings: listings.map(l => ({ ...l, createdAt: (l.createdAt as Timestamp).toDate().toISOString(), startDate: l.startDate ? (l.startDate as Date).toISOString() : null, endDate: l.endDate ? (l.endDate as Date).toISOString() : null })),
+        jobs: jobs.map(j => ({ ...j, postingDate: (j.postingDate as Date).toISOString(), createdAt: (j.createdAt as Timestamp).toDate().toISOString(), startDate: j.startDate ? (j.startDate as Date).toISOString() : null, endDate: j.endDate ? (j.endDate as Date).toISOString() : null })),
+        events: events.map(e => ({ ...e, startDate: (e.startDate as Date).toISOString(), endDate: e.endDate ? (e.endDate as Date).toISOString() : null, createdAt: (e.createdAt as Timestamp).toDate().toISOString() })),
+        offers: offers.map(o => ({ ...o, startDate: (o.startDate as Date).toISOString(), endDate: o.endDate ? (o.endDate as Date).toISOString() : null, createdAt: (o.createdAt as Timestamp).toDate().toISOString() })),
         businesses: businesses.map(b => ({ ...b, createdAt: (b.createdAt as Timestamp).toDate().toISOString() })),
     };
 

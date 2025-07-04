@@ -3,7 +3,7 @@
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Briefcase, MapPin, PlusCircle, MoreHorizontal, Edit, Archive, Trash2, Eye, Users } from "lucide-react"
+import { Briefcase, MapPin, PlusCircle, MoreHorizontal, Edit, Archive, Trash2, Eye, Users, Calendar } from "lucide-react"
 import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect } from "react";
@@ -15,6 +15,19 @@ import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/components/auth-provider";
 import { type Job, getJobsByUser, deleteJob, updateJob } from "@/lib/jobs";
 import { Skeleton } from "@/components/ui/skeleton";
+import { format } from "date-fns";
+
+// This component safely formats the date on the client-side to prevent hydration errors.
+function ClientFormattedDate({ date, formatStr }: { date: Date, formatStr?: string }) {
+  const [formattedDate, setFormattedDate] = useState('...');
+
+  useEffect(() => {
+    // This effect runs only on the client, after the initial render.
+    setFormattedDate(format(date, formatStr || "PPP"));
+  }, [date, formatStr]);
+
+  return <>{formattedDate}</>;
+}
 
 const JobPageSkeleton = () => (
     <div className="space-y-6">
@@ -160,6 +173,15 @@ export default function OpportunitiesPage() {
                   <div className="flex items-center text-sm text-muted-foreground">
                     <Briefcase className="mr-2 h-4 w-4" /> {job.type}
                   </div>
+                  {(job.startDate || job.endDate) && (
+                    <div className="flex items-center pt-2 text-sm text-muted-foreground">
+                        <Calendar className="mr-2 h-4 w-4" /> 
+                        <span>
+                            {job.startDate && <ClientFormattedDate date={job.startDate as Date} />}
+                            {job.endDate && <> - <ClientFormattedDate date={job.endDate as Date} /></>}
+                        </span>
+                    </div>
+                  )}
                 </CardContent>
                 <Separator/>
                 <CardFooter className="flex-col items-start gap-4 pt-4">

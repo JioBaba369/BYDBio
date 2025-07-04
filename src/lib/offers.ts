@@ -21,7 +21,8 @@ export type Offer = {
   title: string;
   description: string;
   category: string;
-  releaseDate: Timestamp | Date | string;
+  startDate: Timestamp | Date | string;
+  endDate?: Timestamp | Date | string | null;
   imageUrl: string | null;
   status: 'active' | 'archived';
   views: number;
@@ -39,7 +40,8 @@ export const getOffer = async (id: string): Promise<Offer | null> => {
     return { 
         id: offerDoc.id, 
         ...data,
-        releaseDate: (data.releaseDate as Timestamp).toDate()
+        startDate: (data.startDate as Timestamp).toDate(),
+        endDate: data.endDate ? (data.endDate as Timestamp).toDate() : null,
     } as Offer;
   }
   return null;
@@ -55,7 +57,8 @@ export const getOffersByUser = async (userId: string): Promise<Offer[]> => {
       return { 
           id: doc.id, 
           ...data,
-          releaseDate: (data.releaseDate as Timestamp).toDate()
+          startDate: (data.startDate as Timestamp).toDate(),
+          endDate: data.endDate ? (data.endDate as Timestamp).toDate() : null,
       } as Offer
   });
 };

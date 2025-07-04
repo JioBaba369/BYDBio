@@ -5,12 +5,27 @@ import type { Listing, User } from '@/lib/users';
 import Image from 'next/image';
 import { Card, CardContent, CardTitle, CardDescription, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Tag, DollarSign, MessageSquare } from 'lucide-react';
+import { ArrowLeft, Tag, DollarSign, MessageSquare, Calendar } from 'lucide-react';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Logo } from '@/components/logo';
 import ShareButton from '@/components/share-button';
+import { format, parseISO } from 'date-fns';
+import { useEffect, useState } from 'react';
+
+// This component safely formats the date on the client-side to prevent hydration errors.
+function ClientFormattedDate({ dateString, formatStr }: { dateString: string, formatStr: string }) {
+  const [formattedDate, setFormattedDate] = useState('...');
+
+  useEffect(() => {
+    // This effect runs only on the client, after the initial render.
+    setFormattedDate(format(parseISO(dateString), formatStr));
+  }, [dateString, formatStr]);
+
+  return <>{formattedDate}</>;
+}
+
 
 interface ListingDetailClientProps {
     listing: Listing;
@@ -55,7 +70,16 @@ export default function ListingDetailClient({ listing, author }: ListingDetailCl
                                 </div>
                             </CardHeader>
                             <CardContent>
-                                <h3 className="font-semibold text-lg mb-2">Description</h3>
+                                {(listing.startDate || listing.endDate) && (
+                                    <div className="flex items-center pt-2 text-sm text-muted-foreground">
+                                        <Calendar className="mr-2 h-4 w-4" /> 
+                                        <span>
+                                            {listing.startDate && <ClientFormattedDate dateString={listing.startDate as string} formatStr="PPP" />}
+                                            {listing.endDate && <> - <ClientFormattedDate dateString={listing.endDate as string} formatStr="PPP" /></>}
+                                        </span>
+                                    </div>
+                                )}
+                                <h3 className="font-semibold text-lg mb-2 mt-4">Description</h3>
                                 <p className="text-muted-foreground whitespace-pre-wrap">{listing.description}</p>
                             </CardContent>
                         </Card>

@@ -229,7 +229,11 @@ export default function EventsPage() {
                   </CardHeader>
                   <CardContent className="space-y-2 flex-grow">
                     <div className="flex items-center text-sm text-muted-foreground">
-                      <Calendar className="mr-2 h-4 w-4" /> <ClientFormattedDate date={event.date as Date} />
+                      <Calendar className="mr-2 h-4 w-4" /> 
+                      <span>
+                        <ClientFormattedDate date={event.startDate as Date} />
+                        {event.endDate && <> - <ClientFormattedDate date={event.endDate as Date} formatStr="PPP" /></>}
+                      </span>
                     </div>
                     <div className="flex items-center text-sm text-muted-foreground">
                       <MapPin className="mr-2 h-4 w-4" /> {event.location}
@@ -303,8 +307,8 @@ export default function EventsPage() {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <div className="text-sm font-medium"><ClientFormattedDate date={event.date as Date} formatStr="MMM d, yyyy" /></div>
-                          <div className="text-xs text-muted-foreground"><ClientFormattedDate date={event.date as Date} formatStr="p" /></div>
+                          <div className="text-sm font-medium"><ClientFormattedDate date={event.startDate as Date} formatStr="MMM d, yyyy" /></div>
+                          <div className="text-xs text-muted-foreground"><ClientFormattedDate date={event.startDate as Date} formatStr="p" /></div>
                         </TableCell>
                         <TableCell className="hidden md:table-cell">{event.location}</TableCell>
                         <TableCell className="hidden lg:table-cell">
@@ -381,7 +385,7 @@ export default function EventsPage() {
                   </CardHeader>
                    <CardContent className="space-y-2 flex-grow">
                     <div className="flex items-center text-sm text-muted-foreground">
-                      <Calendar className="mr-2 h-4 w-4" /> <ClientFormattedDate date={event.date as Date} />
+                      <Calendar className="mr-2 h-4 w-4" /> <ClientFormattedDate date={event.startDate as Date} />
                     </div>
                     <div className="flex items-center text-sm text-muted-foreground">
                       <MapPin className="mr-2 h-4 w-4" /> {event.location}

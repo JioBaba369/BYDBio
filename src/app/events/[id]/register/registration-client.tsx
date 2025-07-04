@@ -26,11 +26,11 @@ export default function EventRegistrationClient({ event, author }: EventRegistra
 
   useEffect(() => {
     // This effect runs only on the client, after initial render, to prevent hydration errors.
-    if (event.date) {
-      const dateObj = typeof event.date === 'string' ? parseISO(event.date) : event.date;
+    if (event.startDate) {
+      const dateObj = typeof event.startDate === 'string' ? parseISO(event.startDate) : event.startDate;
       setFormattedDateTime(format(dateObj, "PPP 'at' p"));
     }
-  }, [event.date]);
+  }, [event.startDate]);
 
   const handleRsvp = async () => {
     if (!user) {
