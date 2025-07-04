@@ -24,7 +24,7 @@
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "date",
+          "fieldPath": "startDate",
           "order": "DESCENDING"
         }
       ]
@@ -104,6 +104,20 @@
         {
           "fieldPath": "searchableKeywords",
           "arrayConfig": "CONTAINS"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "reminders",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "status",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "remindAt",
+          "order": "ASCENDING"
         }
       ]
     }

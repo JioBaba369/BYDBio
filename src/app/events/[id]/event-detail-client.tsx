@@ -6,7 +6,7 @@ import type { Event, User } from '@/lib/users';
 import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MapPin, Calendar, Clock, ArrowLeft, Users, Ticket, User as UserIcon, BellRing, CalendarPlus } from 'lucide-react';
+import { MapPin, Calendar, Clock, ArrowLeft, Users, Ticket, User as UserIcon, BellRing, CalendarPlus, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
@@ -18,6 +18,8 @@ import { saveAs } from 'file-saver';
 import { useToast } from '@/hooks/use-toast';
 import { ClientFormattedDate } from '@/components/client-formatted-date';
 import { parseISO } from 'date-fns';
+import { useAuth } from '@/components/auth-provider';
+import { setEventReminder } from '@/lib/reminders';
 
 
 interface EventDetailClientProps {
@@ -26,14 +28,39 @@ interface EventDetailClientProps {
 }
 
 export default function EventDetailClient({ event, author }: EventDetailClientProps) {
-    const attendeeCount = event.rsvps || 0;
+    const { user } = useAuth();
     const { toast } = useToast();
+    const attendeeCount = event.rsvps?.length || 0;
+    const [isReminderLoading, setIsReminderLoading] = useState(false);
 
-    const handleSetReminder = () => {
-        toast({
-            title: "Reminder Set!",
-            description: `We'll remind you about "${event.title}" an hour before it starts.`,
-        });
+    const handleSetReminder = async () => {
+        if (!user) {
+            toast({
+                title: "Please sign in",
+                description: "You need to be logged in to set a reminder.",
+                variant: "destructive",
+            });
+            return;
+        }
+
+        setIsReminderLoading(true);
+        try {
+            const eventDate = parseISO(event.startDate as string);
+            await setEventReminder(user.uid, event.id, event.title, eventDate);
+            toast({
+                title: "Reminder Set!",
+                description: `We'll remind you about "${event.title}" an hour before it starts.`,
+            });
+        } catch (error) {
+            console.error("Error setting reminder:", error);
+            toast({
+                title: "Error",
+                description: "Could not set reminder. Please try again.",
+                variant: "destructive",
+            });
+        } finally {
+            setIsReminderLoading(false);
+        }
     }
 
     const handleAddToCalendar = () => {
@@ -109,9 +136,18 @@ export default function EventDetailClient({ event, author }: EventDetailClientPr
                                     <CalendarPlus className="mr-2 h-4 w-4"/>
                                     Add to Calendar
                                 </Button>
-                                <Button variant="outline" onClick={handleSetReminder}>
-                                    <BellRing className="mr-2 h-4 w-4"/>
-                                    Set Reminder
+                                <Button variant="outline" onClick={handleSetReminder} disabled={isReminderLoading}>
+                                    {isReminderLoading ? (
+                                        <>
+                                            <Loader2 className="mr-2 h-4 w-4 animate-spin"/>
+                                            Setting...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <BellRing className="mr-2 h-4 w-4"/>
+                                            Set Reminder
+                                        </>
+                                    )}
                                 </Button>
                                 <Button asChild size="lg">
                                     <Link href={`/events/${event.id}/register`}>
@@ -208,9 +244,9 @@ export default function EventDetailClient({ event, author }: EventDetailClientPr
                                             </Tooltip>
                                         ))}
                                     </TooltipProvider>
-                                    {event.attendees.length < (event.rsvps || 0) && (
+                                    {event.attendees.length < (event.rsvps?.length || 0) && (
                                         <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center text-xs font-semibold text-muted-foreground">
-                                            +{(event.rsvps || 0) - event.attendees.length}
+                                            +{(event.rsvps?.length || 0) - event.attendees.length}
                                         </div>
                                     )}
                                 </div>
