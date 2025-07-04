@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/components/auth-provider';
 import { getDiaryEvents, saveDiaryNote } from '@/lib/events';
 import type { Event, User } from '@/lib/users';
-import { isPast } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -20,6 +19,9 @@ import { reflectOnEvent } from '@/ai/flows/reflect-on-event';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Separator } from '@/components/ui/separator';
 import { ClientFormattedDate } from '@/components/client-formatted-date';
+import { DayPicker } from 'react-day-picker';
+import 'react-day-picker/dist/style.css';
+import { format, isPast } from 'date-fns';
 
 type EventWithNotes = Event & { 
   notes?: string; 
@@ -27,58 +29,153 @@ type EventWithNotes = Event & {
   author?: Pick<User, 'name' | 'username' | 'avatarUrl'>;
 };
 
+
 const DiarySkeleton = () => (
     <div className="space-y-8 animate-pulse">
         <div>
             <Skeleton className="h-9 w-48" />
             <Skeleton className="h-4 w-72 mt-2" />
         </div>
-        <section className="space-y-4">
-            <Skeleton className="h-7 w-40" />
-            <div className="grid md:grid-cols-2 gap-6">
-                {[...Array(2)].map((_, i) => (
-                    <Card key={i} className="bg-transparent border-dashed">
-                        <CardHeader>
-                            <Skeleton className="h-6 w-3/4" />
-                            <Skeleton className="h-4 w-1/2 mt-2" />
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <Skeleton className="h-4 w-20" />
-                            <Skeleton className="h-24 w-full" />
-                            <Skeleton className="h-9 w-28" />
-                        </CardContent>
-                    </Card>
-                ))}
-            </div>
-        </section>
-        <section className="space-y-4">
-            <Skeleton className="h-7 w-40" />
-            <div className="grid md:grid-cols-2 gap-6">
-                <Card className="bg-transparent border-dashed">
-                    <CardHeader>
-                        <Skeleton className="h-6 w-3/4" />
-                        <Skeleton className="h-4 w-1/2 mt-2" />
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <Skeleton className="h-16 w-full" />
-                        <Skeleton className="h-9 w-40" />
-                    </CardContent>
-                </Card>
-            </div>
-        </section>
+        <div className="grid lg:grid-cols-2 gap-8 items-start">
+            <Card className="w-full">
+                <CardContent className="p-2 sm:p-4 flex justify-center">
+                  <Skeleton className="h-80 w-full" />
+                </CardContent>
+            </Card>
+             <div className="space-y-4">
+                 <Skeleton className="h-7 w-40" />
+                 <Card className="border-dashed"><CardContent className="p-6"><Skeleton className="h-24 w-full" /></CardContent></Card>
+             </div>
+        </div>
     </div>
 );
+
+const EventCard = ({ event }: { event: EventWithNotes }) => {
+    // This is a sub-component to avoid duplicating card logic
+    const { toast } = useToast();
+    const { user } = useAuth();
+    const [isSaving, setIsSaving] = useState(false);
+    const [reflecting, setReflecting] = useState(false);
+    const [reflections, setReflections] = useState<string[]>([]);
+    const [notes, setNotes] = useState(event.notes || '');
+
+    const handleSaveNote = async () => {
+        if (!user) return;
+        setIsSaving(true);
+        try {
+            await saveDiaryNote(user.uid, event.id, notes);
+            toast({ title: "Note Saved!", description: `Your notes for "${event.title}" have been saved.` });
+        } catch (error) {
+            toast({ title: "Failed to save note", variant: "destructive" });
+        } finally {
+            setIsSaving(false);
+        }
+    };
+    
+    const handleGenerateReflections = async () => {
+        setReflecting(true);
+        try {
+            const result = await reflectOnEvent({
+                eventTitle: event.title,
+                eventDescription: event.description,
+                userNotes: notes,
+            });
+            setReflections(result.reflectionPrompts || []);
+        } catch (error) {
+            toast({ title: "AI Reflection Failed", variant: "destructive" });
+        } finally {
+            setReflecting(false);
+        }
+    };
+    
+    const isEventPast = isPast(event.startDate as Date);
+
+    return (
+        <Card>
+            <CardHeader>
+                <div className="flex justify-between items-start">
+                    <CardTitle>{event.title}</CardTitle>
+                    <Badge variant={event.source === 'created' ? 'default' : 'secondary'}>
+                        {isEventPast ? (event.source === 'created' ? 'My Event' : 'Attended') : (event.source === 'created' ? 'My Event' : 'Attending')}
+                    </Badge>
+                </div>
+                <CardDescription className="space-y-1 text-sm text-muted-foreground pt-1">
+                    <div className="flex items-center">
+                        <Calendar className="mr-2 h-4 w-4" /> 
+                        <ClientFormattedDate date={event.startDate as Date} formatStr="PPP 'at' p" />
+                    </div>
+                    <div className="flex items-center">
+                        <MapPin className="mr-2 h-4 w-4" /> {event.location}
+                    </div>
+                    {event.source === 'rsvped' && event.author && (
+                        <div className="flex items-center pt-2">
+                            <Link href={`/u/${event.author.username}`} className="flex items-center gap-2 hover:underline">
+                            <Avatar className="h-6 w-6">
+                                <AvatarImage src={event.author.avatarUrl} data-ai-hint="person portrait" />
+                                <AvatarFallback>{event.author.name.charAt(0)}</AvatarFallback>
+                            </Avatar>
+                            <span className="text-xs">Hosted by {event.author.name}</span>
+                            </Link>
+                        </div>
+                    )}
+                </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                 <div>
+                    <Label htmlFor={`notes-${event.id}`} className="flex items-center gap-2 mb-2"><PencilRuler className="h-4 w-4"/> My Notes / Reflections</Label>
+                    <Textarea
+                        id={`notes-${event.id}`}
+                        placeholder={isEventPast ? "What did you learn? How can you apply it?" : "Jot down your thoughts, questions, or key takeaways..."}
+                        value={notes}
+                        onChange={(e) => setNotes(e.target.value)}
+                        rows={4}
+                    />
+                </div>
+            </CardContent>
+            <CardFooter className="flex-col items-start gap-4">
+                <Button size="sm" onClick={handleSaveNote} disabled={isSaving}>
+                    {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                    {isSaving ? 'Saving...' : 'Save Note'}
+                </Button>
+
+                {isEventPast && (
+                    <>
+                    <Separator />
+                    <div className="space-y-2 w-full">
+                        <Button size="sm" variant="secondary" onClick={handleGenerateReflections} disabled={reflecting}>
+                            {reflecting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+                            {reflecting ? 'Generating...' : 'AI Reflection Prompts'}
+                        </Button>
+                        {reflections.length > 0 && (
+                            <Accordion type="single" collapsible className="w-full">
+                                <AccordionItem value="item-1">
+                                    <AccordionTrigger className="text-sm">View AI Prompts</AccordionTrigger>
+                                    <AccordionContent>
+                                        <ul className="list-disc pl-5 space-y-2 text-muted-foreground">
+                                            {reflections.map((prompt, i) => <li key={i}>{prompt}</li>)}
+                                        </ul>
+                                    </AccordionContent>
+                                </AccordionItem>
+                            </Accordion>
+                        )}
+                    </div>
+                    </>
+                )}
+            </CardFooter>
+        </Card>
+    );
+};
 
 
 export default function DiaryPage() {
     const { user, loading: authLoading } = useAuth();
     const [events, setEvents] = useState<EventWithNotes[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [savingNoteId, setSavingNoteId] = useState<string | null>(null);
-    const [reflectingId, setReflectingId] = useState<string | null>(null);
-    const [reflections, setReflections] = useState<Record<string, string[]>>({});
     const { toast } = useToast();
-
+    
+    const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+    const [month, setMonth] = useState<Date>(new Date());
+    
     useEffect(() => {
         if (user) {
             setIsLoading(true);
@@ -92,61 +189,18 @@ export default function DiaryPage() {
         }
     }, [user, toast]);
 
-    const handleNoteChange = (eventId: string, note: string) => {
-        setEvents(prevEvents => 
-            prevEvents.map(event => 
-                event.id === eventId ? { ...event, notes: note } : event
-            )
-        );
-    };
-
-    const handleSaveNote = async (eventId: string) => {
-        if (!user) return;
-        const event = events.find(e => e.id === eventId);
-        if (!event) return;
-        
-        setSavingNoteId(eventId);
-        try {
-            await saveDiaryNote(user.uid, eventId, event.notes || '');
-            toast({
-                title: "Note Saved!",
-                description: `Your notes for "${event?.title}" have been saved.`,
-            });
-        } catch (error) {
-            console.error(`Saving note for event ${eventId}:`, error);
-            toast({ title: "Failed to save note", variant: "destructive" });
-        } finally {
-            setSavingNoteId(null);
-        }
-    };
-
-    const handleGenerateReflections = async (event: EventWithNotes) => {
-        setReflectingId(event.id);
-        try {
-            const result = await reflectOnEvent({
-                eventTitle: event.title,
-                eventDescription: event.description,
-                userNotes: event.notes,
-            });
-            if (result.reflectionPrompts && result.reflectionPrompts.length > 0) {
-                setReflections(prev => ({...prev, [event.id]: result.reflectionPrompts}));
-            } else {
-                toast({ title: "Could not generate reflections." });
-            }
-        } catch (error) {
-            console.error("Error generating reflections:", error);
-            toast({ title: "AI Reflection Failed", variant: "destructive" });
-        } finally {
-            setReflectingId(null);
-        }
-    };
-
-    const { upcomingEvents, pastEvents } = useMemo(() => {
-        const sortedEvents = [...events].sort((a, b) => (a.startDate as Date).getTime() - (b.startDate as Date).getTime());
-        const upcoming = sortedEvents.filter(e => !isPast(e.startDate as Date));
-        const past = sortedEvents.filter(e => isPast(e.startDate as Date)).reverse();
-        return { upcomingEvents: upcoming, pastEvents: past };
+    const eventDays = useMemo(() => {
+        return events.map(event => new Date(event.startDate));
     }, [events]);
+
+    const selectedDayItems = useMemo(() => {
+        if (!selectedDate) return [];
+        const day = format(selectedDate, 'yyyy-MM-dd');
+        return events
+            .filter(item => format(new Date(item.startDate), 'yyyy-MM-dd') === day)
+            .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
+    }, [selectedDate, events]);
+
 
     if (authLoading || isLoading) {
         return <DiarySkeleton />;
@@ -156,165 +210,45 @@ export default function DiaryPage() {
         <div className="space-y-8">
             <div>
                 <h1 className="text-2xl sm:text-3xl font-bold font-headline">My Diary</h1>
-                <p className="text-muted-foreground">Keep track of your events, notes, and reflections.</p>
+                <p className="text-muted-foreground">A calendar view of your events, notes, and reflections.</p>
             </div>
-
-            <section className="space-y-4">
-                <h2 className="text-xl font-bold font-headline">Upcoming Events</h2>
-                {upcomingEvents.length > 0 ? (
-                    <div className="grid md:grid-cols-2 gap-6">
-                        {upcomingEvents.map(event => {
-                            const isSaving = savingNoteId === event.id;
-                            return (
-                                <Card key={event.id} className="flex flex-col">
-                                    <CardHeader>
-                                        <div className="flex justify-between items-start">
-                                            <CardTitle>{event.title}</CardTitle>
-                                            <Badge variant={event.source === 'created' ? 'default' : 'secondary'}>
-                                                {event.source === 'created' ? 'My Event' : 'Attending'}
-                                            </Badge>
-                                        </div>
-                                        <CardDescription className="space-y-1 text-sm text-muted-foreground pt-1">
-                                            <div className="flex items-center">
-                                                <Calendar className="mr-2 h-4 w-4" /> 
-                                                <ClientFormattedDate date={event.startDate as Date} formatStr="PPP 'at' p" />
-                                                {event.endDate && <> - <ClientFormattedDate date={event.endDate as Date} formatStr="PPP 'at' p" /></>}
-                                            </div>
-                                            <div className="flex items-center">
-                                                <MapPin className="mr-2 h-4 w-4" /> {event.location}
-                                            </div>
-                                            {event.source === 'rsvped' && event.author && (
-                                                <div className="flex items-center pt-2">
-                                                    <Link href={`/u/${event.author.username}`} className="flex items-center gap-2 hover:underline">
-                                                    <Avatar className="h-6 w-6">
-                                                        <AvatarImage src={event.author.avatarUrl} data-ai-hint="person portrait" />
-                                                        <AvatarFallback>{event.author.name.charAt(0)}</AvatarFallback>
-                                                    </Avatar>
-                                                    <span className="text-xs">Hosted by {event.author.name}</span>
-                                                    </Link>
-                                                </div>
-                                            )}
-                                        </CardDescription>
-                                    </CardHeader>
-                                    <CardContent className="space-y-2 flex-grow">
-                                        <Label htmlFor={`notes-${event.id}`} className="flex items-center gap-2"><PencilRuler className="h-4 w-4"/> My Notes</Label>
-                                        <Textarea
-                                            id={`notes-${event.id}`}
-                                            placeholder="Jot down your thoughts, questions, or key takeaways..."
-                                            value={event.notes}
-                                            onChange={(e) => handleNoteChange(event.id, e.target.value)}
-                                            rows={4}
-                                        />
-                                    </CardContent>
-                                    <CardFooter>
-                                        <Button size="sm" onClick={() => handleSaveNote(event.id)} disabled={isSaving}>
-                                            {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                                            {isSaving ? 'Saving...' : 'Save Note'}
-                                        </Button>
-                                    </CardFooter>
-                                </Card>
-                            )
-                        })}
-                    </div>
-                ) : (
-                    <Card className="border-dashed">
-                        <CardContent className="p-10 text-center text-muted-foreground flex flex-col items-center gap-4">
-                            <Calendar className="h-12 w-12" />
-                            <p>You have no upcoming events.</p>
-                             <Button asChild>
-                                <Link href="/events">Explore Events</Link>
-                            </Button>
-                        </CardContent>
-                    </Card>
-                )}
-            </section>
-
-             <section className="space-y-4">
-                <h2 className="text-xl font-bold font-headline">Past Events</h2>
-                {pastEvents.length > 0 ? (
-                    <div className="grid md:grid-cols-2 gap-6">
-                         {pastEvents.map(event => {
-                             const isSaving = savingNoteId === event.id;
-                             const isLoadingReflections = reflectingId === event.id;
-                             const eventReflections = reflections[event.id] || [];
-
-                             return (
-                                <Card key={event.id} className="opacity-90 flex flex-col">
-                                    <CardHeader>
-                                        <div className="flex justify-between items-start">
-                                            <CardTitle>{event.title}</CardTitle>
-                                            <Badge variant={event.source === 'created' ? 'default' : 'secondary'}>
-                                                {event.source === 'created' ? 'My Event' : 'Attended'}
-                                            </Badge>
-                                        </div>
-                                        <CardDescription className="space-y-1 text-sm text-muted-foreground pt-1">
-                                            <div className="flex items-center">
-                                                <Calendar className="mr-2 h-4 w-4" /> 
-                                                <span><ClientFormattedDate date={event.startDate as Date} formatStr="PPP" /> (<ClientFormattedDate date={event.startDate as Date} relative />)</span>
-                                            </div>
-                                             {event.source === 'rsvped' && event.author && (
-                                                <div className="flex items-center pt-2">
-                                                    <Link href={`/u/${event.author.username}`} className="flex items-center gap-2 hover:underline">
-                                                    <Avatar className="h-6 w-6">
-                                                        <AvatarImage src={event.author.avatarUrl} data-ai-hint="person portrait" />
-                                                        <AvatarFallback>{event.author.name.charAt(0)}</AvatarFallback>
-                                                    </Avatar>
-                                                    <span className="text-xs">Hosted by {event.author.name}</span>
-                                                    </Link>
-                                                </div>
-                                            )}
-                                        </CardDescription>
-                                    </CardHeader>
-                                    <CardContent className="space-y-4 flex-grow">
-                                        <div>
-                                            <Label htmlFor={`notes-past-${event.id}`} className="flex items-center gap-2 mb-2"><PencilRuler className="h-4 w-4"/> My Reflections</Label>
-                                            <Textarea
-                                                id={`notes-past-${event.id}`}
-                                                placeholder="Add your reflections..."
-                                                value={event.notes}
-                                                onChange={(e) => handleNoteChange(event.id, e.target.value)}
-                                                rows={4}
-                                            />
-                                        </div>
-                                         <Button size="sm" variant="secondary" onClick={() => handleSaveNote(event.id)} disabled={isSaving}>
-                                            {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                                            {isSaving ? 'Saving...' : 'Save Note'}
-                                        </Button>
-
-                                        <Separator />
-
-                                        <div className="space-y-2">
-                                            <Button size="sm" onClick={() => handleGenerateReflections(event)} disabled={isLoadingReflections}>
-                                                {isLoadingReflections ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-                                                {isLoadingReflections ? 'Generating...' : 'AI Reflection Prompts'}
-                                            </Button>
-                                            {eventReflections.length > 0 && (
-                                                <Accordion type="single" collapsible className="w-full">
-                                                    <AccordionItem value="item-1">
-                                                        <AccordionTrigger className="text-sm">View AI Prompts</AccordionTrigger>
-                                                        <AccordionContent>
-                                                            <ul className="list-disc pl-5 space-y-2 text-muted-foreground">
-                                                                {eventReflections.map((prompt, i) => <li key={i}>{prompt}</li>)}
-                                                            </ul>
-                                                        </AccordionContent>
-                                                    </AccordionItem>
-                                                </Accordion>
-                                            )}
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            )
-                        })}
-                    </div>
-                ) : (
-                    <Card className="border-dashed">
-                        <CardContent className="p-10 text-center text-muted-foreground flex flex-col items-center gap-4">
-                            <BookText className="h-12 w-12" />
-                            <p>Your event diary is empty.<br/>Notes and reflections from past events will appear here.</p>
-                        </CardContent>
-                    </Card>
-                )}
-            </section>
+            
+            <div className="grid lg:grid-cols-2 gap-8 items-start">
+                <Card className="w-full">
+                    <CardContent className="p-2 sm:p-4 flex justify-center">
+                        <DayPicker
+                            mode="single"
+                            selected={selectedDate}
+                            onSelect={setSelectedDate}
+                            month={month}
+                            onMonthChange={setMonth}
+                            modifiers={{ hasEvent: eventDays }}
+                            modifiersClassNames={{ hasEvent: 'day-with-event' }}
+                            className="w-full"
+                        />
+                    </CardContent>
+                </Card>
+                <div className="space-y-4">
+                     <h2 className="text-xl font-bold font-headline">
+                        Schedule for {selectedDate ? format(selectedDate, 'PPP') : '...'}
+                    </h2>
+                    {selectedDayItems.length > 0 ? (
+                        <div className="space-y-6">
+                            {selectedDayItems.map(event => <EventCard key={event.id} event={event} />)}
+                        </div>
+                    ) : (
+                        <Card className="border-dashed">
+                            <CardContent className="p-10 text-center text-muted-foreground flex flex-col items-center gap-4">
+                                <BookText className="h-12 w-12" />
+                                <p>No events scheduled for this day.</p>
+                                <Button asChild>
+                                    <Link href="/events">Explore Events</Link>
+                                </Button>
+                            </CardContent>
+                        </Card>
+                    )}
+                </div>
+            </div>
         </div>
     );
 }
