@@ -146,12 +146,13 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
                     href={link.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-full"
+                    className="w-full group"
                   >
-                    <Button variant="outline" className="w-full h-14 text-base font-semibold justify-start p-4 hover:bg-primary/10 hover:border-primary">
+                    <div className="w-full h-14 text-lg font-semibold flex items-center p-4 rounded-lg bg-secondary hover:scale-[1.02] transition-transform duration-200 ease-out">
                       {Icon && <Icon className="h-5 w-5" />}
                       <span className="flex-1 text-center">{link.title}</span>
-                    </Button>
+                      <ExternalLink className="h-5 w-5 text-secondary-foreground/50 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </div>
                   </a>
                 )
             })}

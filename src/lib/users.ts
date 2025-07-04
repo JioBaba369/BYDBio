@@ -170,18 +170,12 @@ export async function searchUsers(searchText: string): Promise<User[]> {
     const usersRef = collection(db, "users");
     
     // This is a simplified search. For production, consider a dedicated search service like Algolia.
-    // This queries by username and handle prefixes.
-    const usernameQuery = query(usersRef, where('username', '>=', lowerCaseQuery), where('username', '<=', lowerCaseQuery + '\uf8ff'));
-    const handleQuery = query(usersRef, where('handle', '>=', lowerCaseQuery), where('handle', '<=', lowerCaseQuery + '\uf8ff'));
+    const q = query(usersRef, where('username', '>=', lowerCaseQuery), where('username', '<=', lowerCaseQuery + '\uf8ff'));
 
-    const [usernameSnapshot, handleSnapshot] = await Promise.all([
-        getDocs(usernameQuery),
-        getDocs(handleQuery)
-    ]);
+    const querySnapshot = await getDocs(q);
 
     const usersMap = new Map<string, User>();
-    usernameSnapshot.forEach(doc => usersMap.set(doc.id, { id: doc.id, ...doc.data() } as User));
-    handleSnapshot.forEach(doc => usersMap.set(doc.id, { id: doc.id, ...doc.data() } as User));
+    querySnapshot.forEach(doc => usersMap.set(doc.id, { id: doc.id, ...doc.data() } as User));
     
     return Array.from(usersMap.values());
 }
