@@ -1,3 +1,4 @@
+
 // The paths for authentication which should never have the app layout.
 const AUTH_PATHS = [
     '/auth/sign-in',
@@ -13,7 +14,8 @@ const PUBLIC_CONTENT_PATHS = [
     '/l/',
     '/o/',
     '/offer/',
-    '/events/'
+    '/events/',
+    '/explore',
 ];
 
 /**

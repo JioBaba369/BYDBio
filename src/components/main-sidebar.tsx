@@ -34,6 +34,7 @@ import {
   BookUser,
   BookText,
   DraftingCompass,
+  Compass,
 } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -164,6 +165,14 @@ export function MainSidebar() {
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
+            <SidebarMenuButton asChild tooltip="Explore" isActive={isActive('/explore')}>
+              <Link href="/explore">
+                <Compass />
+                <span>Explore</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
             <SidebarMenuButton asChild tooltip="Status Feed" isActive={isActive('/feed')}>
               <Link href="/feed">
                 <MessageSquare />
@@ -212,10 +221,10 @@ export function MainSidebar() {
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Content Calendar" isActive={isActive('/calendar')}>
+            <SidebarMenuButton asChild tooltip="My Content" isActive={isActive('/calendar')}>
               <Link href="/calendar">
                 <CalendarDays />
-                <span>Content Calendar</span>
+                <span>My Content</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
