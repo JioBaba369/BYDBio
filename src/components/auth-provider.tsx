@@ -7,7 +7,7 @@ import { doc, onSnapshot } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import { createUserProfileIfNotExists, type User as AppUser } from '@/lib/users';
 import { usePathname, useRouter } from 'next/navigation';
-import { isPublicPath } from '@/lib/paths';
+import { isPublicPath, isAuthPath } from '@/lib/paths';
 
 interface AuthContextType {
   user: AppUser | null;
@@ -74,7 +74,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (loading) return;
 
-    const onAuthPage = pathname.startsWith('/auth');
+    const onAuthPage = isAuthPath(pathname);
     const publicPath = isPublicPath(pathname);
 
     // If user is not logged in AND path is not public, redirect to sign-in

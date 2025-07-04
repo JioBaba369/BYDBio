@@ -4,7 +4,7 @@
 import { usePathname } from 'next/navigation';
 import { MainSidebar } from './main-sidebar';
 import { SidebarInset, SidebarTrigger } from './ui/sidebar';
-import { isPublicPath } from '@/lib/paths';
+import { isAuthPath } from '@/lib/paths';
 import { useAuth } from './auth-provider';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from './ui/dropdown-menu';
 import { Button } from './ui/button';
@@ -93,8 +93,10 @@ function Header() {
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
+    const { user, loading } = useAuth();
     
-    if (isPublicPath(pathname)) {
+    // Auth pages have their own layout and should not be wrapped by the app layout.
+    if (isAuthPath(pathname)) {
         return <>{children}</>;
     }
     
@@ -102,7 +104,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         <>
             <MainSidebar />
             <SidebarInset className="flex flex-col flex-1">
-                <Header />
+                {user && !loading && <Header />}
                 <main className="p-4 sm:p-6 lg:p-8 flex-1 overflow-y-auto">
                     {children}
                 </main>
