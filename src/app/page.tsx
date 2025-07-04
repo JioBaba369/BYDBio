@@ -30,37 +30,13 @@ import {
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { useAuth } from "@/components/auth-provider"
-import { Skeleton } from "@/components/ui/skeleton"
 import { useMemo, useState, useEffect } from "react"
 import { collection, query, where, getDocs } from "firebase/firestore"
 import { db } from "@/lib/firebase"
 import { LandingPage } from "@/components/landing-page"
 import { getRecentActivity, type ActivityItem } from "@/lib/dashboard"
 import { ClientFormattedDate } from "@/components/client-formatted-date"
-
-const DashboardSkeleton = () => (
-    <div className="flex flex-col gap-8 animate-pulse">
-      <div className="flex items-center justify-between">
-        <Skeleton className="h-9 w-48" />
-        <Skeleton className="h-10 w-32" />
-      </div>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Skeleton className="h-28 rounded-lg" />
-        <Skeleton className="h-28 rounded-lg" />
-        <Skeleton className="h-28 rounded-lg" />
-        <Skeleton className="h-28 rounded-lg" />
-      </div>
-      <Card>
-        <CardHeader>
-          <Skeleton className="h-7 w-48" />
-          <Skeleton className="h-4 w-full max-w-lg mt-1" />
-        </CardHeader>
-        <CardContent>
-          <Skeleton className="h-40 w-full" />
-        </CardContent>
-      </Card>
-    </div>
-)
+import { DashboardSkeleton } from "@/components/dashboard-skeleton"
 
 interface ContentCounts {
   jobs: number;
