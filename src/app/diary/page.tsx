@@ -10,7 +10,7 @@ import type { Event, User } from '@/lib/users';
 import { useToast } from '@/hooks/use-toast';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { BookText, Calendar, MapPin, Save, Loader2, Wand2, Sparkles, PencilRuler } from 'lucide-react';
+import { BookText, Calendar, MapPin, Save, Loader2, Sparkles, PencilRuler } from 'lucide-react';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
@@ -36,16 +36,14 @@ const DiarySkeleton = () => (
             <Skeleton className="h-9 w-48" />
             <Skeleton className="h-4 w-72 mt-2" />
         </div>
-        <div className="grid lg:grid-cols-2 gap-8 items-start">
-            <Card className="w-full">
-                <CardContent className="p-2 sm:p-4 flex justify-center">
-                  <Skeleton className="h-80 w-full" />
-                </CardContent>
-            </Card>
-             <div className="space-y-4">
-                 <Skeleton className="h-7 w-40" />
-                 <Card className="border-dashed"><CardContent className="p-6"><Skeleton className="h-24 w-full" /></CardContent></Card>
-             </div>
+        <Card className="w-full">
+            <CardContent className="p-2 sm:p-4 flex justify-center">
+              <Skeleton className="h-80 w-full max-w-sm" />
+            </CardContent>
+        </Card>
+        <div className="space-y-4">
+             <Skeleton className="h-7 w-40" />
+             <Card className="border-dashed"><CardContent className="p-6"><Skeleton className="h-24 w-full" /></CardContent></Card>
         </div>
     </div>
 );
@@ -137,22 +135,20 @@ const EventCard = ({ event }: { event: EventWithNotes }) => {
                                     rows={4}
                                 />
                             </div>
-                            <div className="flex flex-col items-start gap-4">
+                            <div className="flex flex-col sm:flex-row items-center gap-4">
                                 <Button size="sm" onClick={handleSaveNote} disabled={isSaving}>
                                     {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                                     {isSaving ? 'Saving...' : 'Save Note'}
                                 </Button>
 
                                 {isEventPast && (
-                                    <>
-                                    <Separator />
-                                    <div className="space-y-2 w-full">
-                                        <Button size="sm" variant="secondary" onClick={handleGenerateReflections} disabled={reflecting}>
+                                    <div className="flex-1 w-full">
+                                        <Button size="sm" variant="secondary" onClick={handleGenerateReflections} disabled={reflecting} className="w-full sm:w-auto">
                                             {reflecting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
                                             {reflecting ? 'Generating...' : 'AI Reflection Prompts'}
                                         </Button>
                                         {reflections.length > 0 && (
-                                            <Accordion type="single" collapsible className="w-full">
+                                            <Accordion type="single" collapsible className="w-full mt-2">
                                                 <AccordionItem value="item-1">
                                                     <AccordionTrigger className="text-sm">View AI Prompts</AccordionTrigger>
                                                     <AccordionContent>
@@ -164,7 +160,6 @@ const EventCard = ({ event }: { event: EventWithNotes }) => {
                                             </Accordion>
                                         )}
                                     </div>
-                                    </>
                                 )}
                             </div>
                         </AccordionContent>
@@ -210,13 +205,6 @@ export default function DiaryPage() {
             .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
     }, [selectedDate, events]);
     
-    const pastEvents = useMemo(() => {
-        return events
-            .filter(event => isPast(new Date(event.startDate)))
-            .sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
-    }, [events]);
-
-
     if (authLoading || isLoading) {
         return <DiarySkeleton />;
     }
@@ -225,58 +213,42 @@ export default function DiaryPage() {
         <div className="space-y-8">
             <div>
                 <h1 className="text-2xl sm:text-3xl font-bold font-headline">My Diary</h1>
-                <p className="text-muted-foreground">A calendar view of your events, notes, and reflections.</p>
+                <p className="text-muted-foreground">Select a date to view your schedule and add reflections.</p>
             </div>
             
-            <div className="grid lg:grid-cols-2 gap-8 items-start">
-                <Card className="w-full">
-                    <CardContent className="p-2 sm:p-4 flex justify-center">
-                        <DayPicker
-                            mode="single"
-                            selected={selectedDate}
-                            onSelect={setSelectedDate}
-                            month={month}
-                            onMonthChange={setMonth}
-                            modifiers={{ hasEvent: eventDays }}
-                            modifiersClassNames={{ hasEvent: 'day-with-event' }}
-                            className="w-full"
-                        />
-                    </CardContent>
-                </Card>
-                <div className="space-y-4">
-                     <h2 className="text-xl font-bold font-headline">
-                        Schedule for {selectedDate ? format(selectedDate, 'PPP') : '...'}
-                    </h2>
-                    {selectedDayItems.length > 0 ? (
-                        <div className="space-y-6">
-                            {selectedDayItems.map(event => <EventCard key={event.id} event={event} />)}
-                        </div>
-                    ) : (
-                        <Card className="border-dashed">
-                            <CardContent className="p-10 text-center text-muted-foreground flex flex-col items-center gap-4">
-                                <BookText className="h-12 w-12" />
-                                <p>No events scheduled for this day.</p>
-                                <Button asChild>
-                                    <Link href="/events">Explore Events</Link>
-                                </Button>
-                            </CardContent>
-                        </Card>
-                    )}
-                </div>
-            </div>
+            <Card>
+                <CardContent className="p-2 sm:p-4 flex justify-center">
+                    <DayPicker
+                        mode="single"
+                        selected={selectedDate}
+                        onSelect={setSelectedDate}
+                        month={month}
+                        onMonthChange={setMonth}
+                        modifiers={{ hasEvent: eventDays }}
+                        modifiersClassNames={{ hasEvent: 'day-with-event' }}
+                        className="w-full"
+                    />
+                </CardContent>
+            </Card>
 
             <Separator />
+
             <div className="space-y-4">
-                <h2 className="text-2xl font-bold font-headline">Reflect on Past Events</h2>
-                <p className="text-muted-foreground">Look back on your experiences and capture your thoughts.</p>
-                {pastEvents.length > 0 ? (
-                    <div className="grid md:grid-cols-2 gap-6">
-                        {pastEvents.map(event => <EventCard key={event.id} event={event} />)}
+                 <h2 className="text-xl font-bold font-headline">
+                    Schedule for {selectedDate ? format(selectedDate, 'PPP') : '...'}
+                </h2>
+                {selectedDayItems.length > 0 ? (
+                    <div className="space-y-6">
+                        {selectedDayItems.map(event => <EventCard key={event.id} event={event} />)}
                     </div>
                 ) : (
                     <Card className="border-dashed">
-                        <CardContent className="p-10 text-center text-muted-foreground">
-                            <p>You have no past events to reflect on yet.</p>
+                        <CardContent className="p-10 text-center text-muted-foreground flex flex-col items-center gap-4">
+                            <BookText className="h-12 w-12" />
+                            <p>No events scheduled for this day.</p>
+                            <Button asChild>
+                                <Link href="/events">Explore Events</Link>
+                            </Button>
                         </CardContent>
                     </Card>
                 )}
