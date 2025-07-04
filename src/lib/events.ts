@@ -346,10 +346,12 @@ export const getCalendarItems = async (userId: string) => {
 
     return allItems.map(item => {
         const dateFields: any = {};
-        // Centralize date logic for the calendar view
-        let primaryDate = item.createdAt; // fallback
+        let primaryDate = item.createdAt; 
         if (item.startDate) primaryDate = item.startDate;
         else if (item.postingDate) primaryDate = item.postingDate;
+        else if (item.releaseDate) primaryDate = item.releaseDate;
+        else if (item.publishDate) primaryDate = item.publishDate;
+
 
         dateFields.date = (primaryDate as Timestamp).toDate();
         if (item.endDate) dateFields.endDate = (item.endDate as Timestamp).toDate();
