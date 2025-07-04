@@ -86,7 +86,7 @@ export default function ExplorePage() {
         : true;
       
       const locationMatch = locationFilter.length > 0
-        ? 'location' in item && item.location?.toLowerCase().includes(locationFilter.toLowerCase())
+        ? ('location' in item && item.location?.toLowerCase().includes(locationFilter.toLowerCase()) || ('address' in item && item.address?.toLowerCase().includes(locationFilter.toLowerCase())))
         : true;
 
       return searchMatch && locationMatch;
@@ -135,6 +135,17 @@ export default function ExplorePage() {
           case 'business': return `/b/${item.id}`;
       }
   }
+  
+    const getPrimaryStat = (item: PublicContentItem) => {
+        switch (item.type) {
+            case 'event': return { icon: Users, value: (item as any).rsvps?.length ?? 0 };
+            case 'offer': return { icon: Gift, value: (item as any).claims ?? 0 };
+            case 'job': return { icon: Users, value: (item as any).applicants ?? 0 };
+            case 'listing': return { icon: MousePointerClick, value: (item as any).clicks ?? 0 };
+            case 'business': return { icon: MousePointerClick, value: (item as any).clicks ?? 0 };
+            default: return null;
+        }
+    }
 
   if (isLoading) {
     return <ExploreSkeleton />;
@@ -192,36 +203,53 @@ export default function ExplorePage() {
                   <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                       {filteredItems.map((item) => {
                           const title = (item as any).title || (item as any).name;
+                          const description = (item as any).description;
+                          const primaryStat = getPrimaryStat(item);
+                          
                           return (
-                          <Card key={`${item.type}-${item.id}`} className="shadow-sm flex flex-col">
-                              {item.imageUrl && (
-                                <div className="overflow-hidden rounded-t-lg">
-                                  <Image src={item.imageUrl} alt={title} width={600} height={400} className="w-full object-cover aspect-video" data-ai-hint="office laptop" />
-                                </div>
-                              )}
-                              <CardHeader className="p-4 pb-2">
-                                  <div className="flex justify-between items-start">
-                                      <div>
-                                        <Badge variant={getBadgeVariant(item.type)}>{item.type}</Badge>
-                                        <CardTitle className="text-base mt-2">{title}</CardTitle>
-                                      </div>
-                                  </div>
-                              </CardHeader>
-                              <CardContent className="p-4 pt-2 space-y-2 text-sm text-muted-foreground flex-grow">
-                                  {'location' in item && item.location && <div className="flex items-center gap-2"><MapPin className="h-4 w-4" /><span>{item.location}</span></div>}
-                                  {'category' in item && item.category && <div className="flex items-center gap-2"><Tag className="h-4 w-4" /><span>{item.category}</span></div>}
-                                  {'company' in item && item.company && <div className="flex items-center gap-2"><Briefcase className="h-4 w-4" /><span>{item.company}</span></div>}
-                                  {'price' in item && item.price && <div className="flex items-center gap-2"><DollarSign className="h-4 w-4" /><span className="font-semibold">{formatCurrency(item.price)}</span></div>}
-                              </CardContent>
-                              <CardFooter className="border-t pt-4 px-4 pb-4">
-                                <Button asChild className="w-full">
-                                    <Link href={getLink(item)}>
-                                        <ExternalLink className="mr-2 h-4 w-4" />
-                                        View Details
+                            <Card key={`${item.type}-${item.id}`} className="shadow-sm flex flex-col">
+                                {item.imageUrl && (
+                                    <Link href={getLink(item)} className="block overflow-hidden rounded-t-lg">
+                                        <Image src={item.imageUrl} alt={title} width={600} height={400} className="w-full object-cover aspect-video transition-transform hover:scale-105" data-ai-hint="office laptop" />
                                     </Link>
-                                </Button>
-                              </CardFooter>
-                          </Card>
+                                )}
+                                <CardHeader className="p-4 pb-2">
+                                    <Badge variant={getBadgeVariant(item.type)} className="w-fit capitalize">{item.type}</Badge>
+                                    <CardTitle className="text-lg mt-1"><Link href={getLink(item)} className="hover:underline">{title}</Link></CardTitle>
+                                    {'company' in item && item.company && <CardDescription>{item.company}</CardDescription>}
+                                </CardHeader>
+                                <CardContent className="p-4 pt-2 space-y-3 text-sm text-muted-foreground flex-grow">
+                                    <p className="line-clamp-2">{description}</p>
+                                    <div className="flex items-center pt-1">
+                                        <Link href={`/u/${item.author.username}`} className="flex items-center gap-2 hover:underline">
+                                            <Avatar className="h-6 w-6">
+                                                <AvatarImage src={item.author.avatarUrl} data-ai-hint="person portrait"/>
+                                                <AvatarFallback>{item.author.name.charAt(0)}</AvatarFallback>
+                                            </Avatar>
+                                            <span className="text-xs">{item.author.name}</span>
+                                        </Link>
+                                    </div>
+                                </CardContent>
+                                <CardFooter className="flex-col items-start gap-4 border-t pt-4 px-4 pb-4">
+                                    <div className="flex justify-between w-full text-sm">
+                                        <div className="flex items-center gap-2">
+                                            <Eye className="h-4 w-4 text-primary" />
+                                            <span>{(item as any).views?.toLocaleString() ?? 0} views</span>
+                                        </div>
+                                        {primaryStat && (
+                                        <div className="flex items-center gap-2">
+                                            <primaryStat.icon className="h-4 w-4 text-primary" />
+                                            <span>{primaryStat.value.toLocaleString()}</span>
+                                        </div>
+                                        )}
+                                    </div>
+                                    <Button asChild variant="outline" className="w-full">
+                                        <Link href={getLink(item)}>
+                                            View Details
+                                        </Link>
+                                    </Button>
+                                </CardFooter>
+                            </Card>
                           )
                         })}
                   </div>
