@@ -72,7 +72,7 @@ export default function OfferDetailClient({ offer, author }: OfferDetailClientPr
                     <div className="md:col-span-2">
                         <Card>
                             {offer.imageUrl && (
-                                <div className="overflow-hidden rounded-t-lg h-64 sm:h-80 bg-muted">
+                                <div className="overflow-hidden rounded-t-lg h-52 sm:h-64 bg-muted">
                                     <Image
                                         src={offer.imageUrl}
                                         alt={offer.title}
@@ -100,14 +100,14 @@ export default function OfferDetailClient({ offer, author }: OfferDetailClientPr
                                     </div>
                                     <div className="flex items-center gap-2">
                                         {isOwner && (
-                                            <Button asChild variant="secondary">
+                                            <Button asChild variant="outline">
                                                 <Link href={`/offers/${offer.id}/edit`}>
                                                     <Edit className="mr-2 h-4 w-4"/>
                                                     Edit
                                                 </Link>
                                             </Button>
                                         )}
-                                        <ShareButton />
+                                        <ShareButton variant="outline" />
                                     </div>
                                 </div>
                             </CardHeader>

@@ -133,9 +133,9 @@ export default function EventDetailClient({ event, author }: EventDetailClientPr
                             </div>
                             <div className='flex items-center gap-2 flex-wrap justify-end'>
                                 {isOwner && (
-                                    <Button asChild size="lg">
+                                    <Button asChild variant="outline">
                                         <Link href={`/events/${event.id}/edit`}>
-                                            <Edit className="mr-2 h-5 w-5"/>
+                                            <Edit className="mr-2 h-4 w-4"/>
                                             Edit Event
                                         </Link>
                                     </Button>
@@ -165,7 +165,7 @@ export default function EventDetailClient({ event, author }: EventDetailClientPr
                                         </Link>
                                     </Button>
                                 )}
-                                <ShareButton />
+                                <ShareButton variant="outline" />
                             </div>
                         </div>
 

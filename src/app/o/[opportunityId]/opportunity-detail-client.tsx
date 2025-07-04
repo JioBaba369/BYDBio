@@ -94,7 +94,15 @@ export default function OpportunityDetailClient({ job, author }: OpportunityDeta
                                     </CardDescription>
                                 </div>
                                 <div className="flex items-center gap-2 w-full sm:w-auto shrink-0">
-                                    <ShareButton variant="outline" size="lg" />
+                                    {isOwner && (
+                                        <Button asChild variant="outline">
+                                            <Link href={`/opportunities/${job.id}/edit`}>
+                                                <Edit className="mr-2 h-4 w-4"/>
+                                                Edit
+                                            </Link>
+                                        </Button>
+                                    )}
+                                    <ShareButton variant="outline" />
                                 </div>
                             </CardHeader>
                             <CardContent>
@@ -139,28 +147,21 @@ export default function OpportunityDetailClient({ job, author }: OpportunityDeta
                                 )}
                             </CardContent>
                             <CardFooter>
-                                {isOwner ? (
-                                    <Button asChild size="lg" className="w-full">
-                                        <Link href={`/opportunities/${job.id}/edit`}>
-                                            <Edit className="mr-2 h-4 w-4"/>
-                                            Edit Opportunity
-                                        </Link>
-                                    </Button>
-                                ) : job.applicationUrl ? (
+                                {!isOwner && job.applicationUrl ? (
                                     <Button asChild size="lg" className="w-full">
                                         <a href={job.applicationUrl} target="_blank" rel="noopener noreferrer">
                                             <ExternalLink className="mr-2 h-4 w-4" />
                                             Apply Online
                                         </a>
                                     </Button>
-                                ) : (
+                                ) : !isOwner ? (
                                     <Button asChild size="lg" className="w-full">
                                         <Link href={`/u/${author.username}#contact`}>
                                             <MessageSquare className="mr-2 h-4 w-4" />
                                             Contact to Apply
                                         </Link>
                                     </Button>
-                                ) }
+                                ) : null }
                             </CardFooter>
                         </Card>
                     </div>

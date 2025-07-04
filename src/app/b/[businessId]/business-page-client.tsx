@@ -99,14 +99,14 @@ export default function BusinessPageClient({ business, author }: BusinessPageCli
                                             <CardTitle className="text-3xl font-bold font-headline">{business.name}</CardTitle>
                                             <div className="flex items-center gap-2">
                                                 {isOwner && (
-                                                    <Button asChild variant="secondary">
+                                                    <Button asChild variant="outline">
                                                         <Link href={`/businesses/${business.id}/edit`}>
                                                             <Edit className="mr-2 h-4 w-4"/>
                                                             Edit
                                                         </Link>
                                                     </Button>
                                                 )}
-                                                <ShareButton />
+                                                <ShareButton variant="outline" />
                                             </div>
                                         </div>
                                         <CardDescription className="text-base pt-2">{business.description}</CardDescription>
