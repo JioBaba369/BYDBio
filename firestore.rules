@@ -1,62 +1,113 @@
+
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper function to check if a user is authenticated
-    function isAuthenticated() {
+    // --- HELPER FUNCTIONS ---
+    function isUserAuthenticated() {
       return request.auth != null;
     }
 
-    // Helper function to check if the user is the owner of a document
     function isOwner(userId) {
       return request.auth.uid == userId;
     }
 
-    // Users collection rules
+    // --- COLLECTION RULES ---
+
+    // USER PROFILES
     match /users/{userId} {
-      // Anyone can read a user's public profile
-      allow read;
-      // Only the authenticated owner can write to their own profile
-      allow write: if isAuthenticated() && isOwner(userId);
-    }
-    
-    // Content collections (posts, listings, jobs, events, offers, businesses)
-    match /{collectionId}/{documentId} 
-      where collectionId in ['posts', 'listings', 'jobs', 'events', 'offers', 'businesses'] {
-      
-      // Anyone can read any content document
-      allow read;
-      
-      // Only authenticated users can create documents
-      allow create: if isAuthenticated() && isOwner(request.resource.data.authorId);
+      allow read: if true;
+      allow create: if isUserAuthenticated() && isOwner(userId);
+      allow delete: if false;
 
-      // Only the original author can update or delete their own documents
-      allow update, delete: if isAuthenticated() && isOwner(resource.data.authorId);
+      // Rule 1: Allow users to update their own profile.
+      // We exclude 'subscribers' because that should only be modified by the follow/unfollow action.
+      // A user can update their own 'following' array as part of this.
+      allow update: if isOwner(userId)
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'username', 'handle', 'bio', 'avatarUrl', 'avatarFallback', 'links', 'businessCard', 'notificationSettings', 'following', 'searchableKeywords']);
+      
+      // Rule 2: Allow any authenticated user to increment/decrement the subscribers count.
+      // This is part of the follow/unfollow batch write. For better security, this would
+      // be a Cloud Function in a production app.
+      allow update: if isUserAuthenticated()
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['subscribers'])
+                    && (request.resource.data.subscribers == resource.data.subscribers + 1 ||
+                        request.resource.data.subscribers == resource.data.subscribers - 1);
     }
-    
-    // Notifications collection rules
+
+    // POSTS (Status Updates)
+    match /posts/{postId} {
+      allow read: if true;
+      allow create: if isUserAuthenticated() && isOwner(request.resource.data.authorId);
+      allow delete: if isUserAuthenticated() && isOwner(resource.data.authorId);
+      
+      // Author can update any field. Other users can only update 'likes' and 'likedBy'.
+      allow update: if (isUserAuthenticated() && isOwner(resource.data.authorId)) ||
+                       (isUserAuthenticated() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes', 'likedBy']));
+    }
+
+    // EVENTS
+    match /events/{eventId} {
+      allow read: if true;
+      allow create: if isUserAuthenticated() && isOwner(request.resource.data.authorId);
+      allow delete: if isUserAuthenticated() && isOwner(resource.data.authorId);
+
+      // Author can update any field. Other users can only update 'rsvps'.
+      allow update: if (isUserAuthenticated() && isOwner(resource.data.authorId)) ||
+                       (isUserAuthenticated() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['rsvps']));
+    }
+
+    // NOTIFICATIONS
     match /notifications/{notificationId} {
-        // Only the recipient of the notification can read it
-        allow read: if isAuthenticated() && isOwner(resource.data.userId);
-        
-        // Notifications are created by the system/backend, but we can allow
-        // authenticated users to create them for actions like 'liking'
-        allow create: if isAuthenticated();
-        
-        // Only the recipient can mark their own notification as read (update)
-        allow update: if isAuthenticated() && isOwner(resource.data.userId);
+      // Authenticated users can create notifications for others (e.g. on follow, like).
+      allow create: if isUserAuthenticated();
+      
+      // Only the recipient can read or update (e.g., mark as read) their notifications.
+      allow read, update, delete: if isUserAuthenticated() && isOwner(resource.data.userId);
+    }
+    
+    // DIARY NOTES
+    match /diaryNotes/{diaryNoteId} {
+        // User can only create/manage their own diary notes.
+        allow create: if isUserAuthenticated() && isOwner(request.resource.data.userId);
+        allow read, update, delete: if isUserAuthenticated() && isOwner(resource.data.userId);
     }
 
-    // Reminders collection rules
+    // REMINDERS
     match /reminders/{reminderId} {
-      // A user can read their own reminders.
-      allow read: if isAuthenticated() && isOwner(resource.data.userId);
-      
-      // A user can create or update their own reminders. `setDoc` with `merge: true`
-      // on the client can trigger either a create or an update operation.
-      // This rule ensures the user can only write reminders for themselves.
-      allow write: if isAuthenticated() && isOwner(request.resource.data.userId);
+        // User can only create/manage their own reminders.
+        allow create: if isUserAuthenticated() && isOwner(request.resource.data.userId);
+        allow read, update: if isUserAuthenticated() && isOwner(resource.data.userId);
+        allow delete: if false; // Should be handled by a backend process
+    }
+
+    // LISTINGS
+    match /listings/{listingId} {
+      allow read: if true;
+      allow create: if isUserAuthenticated() && isOwner(request.resource.data.authorId);
+      allow update, delete: if isUserAuthenticated() && isOwner(resource.data.authorId);
+    }
+
+    // BUSINESSES
+    match /businesses/{businessId} {
+      allow read: if true;
+      allow create: if isUserAuthenticated() && isOwner(request.resource.data.authorId);
+      allow update, delete: if isUserAuthenticated() && isOwner(resource.data.authorId);
+    }
+
+    // JOBS
+    match /jobs/{jobId} {
+      allow read: if true;
+      allow create: if isUserAuthenticated() && isOwner(request.resource.data.authorId);
+      allow update, delete: if isUserAuthenticated() && isOwner(resource.data.authorId);
+    }
+
+    // OFFERS
+    match /offers/{offerId} {
+      allow read: if true;
+      allow create: if isUserAuthenticated() && isOwner(request.resource.data.authorId);
+      allow update, delete: if isUserAuthenticated() && isOwner(resource.data.authorId);
     }
   }
 }
