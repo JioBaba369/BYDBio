@@ -1,112 +1,43 @@
-rules_version = '2';
 
+rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // --- HELPER FUNCTIONS ---
-    function isUserAuthenticated() {
-      return request.auth != null;
-    }
-
-    function isOwner(userId) {
-      return request.auth.uid == userId;
-    }
-
-    // --- COLLECTION RULES ---
-
-    // USER PROFILES
-    match /users/{userId} {
-      allow read: if true;
-      allow create: if isUserAuthenticated() && isOwner(userId);
-      allow delete: if false;
-
-      // Rule 1: Allow users to update their own profile.
-      // We exclude 'subscribers' because that should only be modified by the follow/unfollow action.
-      // A user can update their own 'following' array as part of this.
-      allow update: if isOwner(userId)
-                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'username', 'handle', 'bio', 'avatarUrl', 'avatarFallback', 'links', 'businessCard', 'notificationSettings', 'following', 'searchableKeywords']);
-      
-      // Rule 2: Allow any authenticated user to increment/decrement the subscribers count.
-      // This is part of the follow/unfollow batch write. For better security, this would
-      // be a Cloud Function in a production app.
-      allow update: if isUserAuthenticated()
-                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['subscribers'])
-                    && (request.resource.data.subscribers == resource.data.subscribers + 1 ||
-                        request.resource.data.subscribers == resource.data.subscribers - 1);
-    }
-
-    // POSTS (Status Updates)
-    match /posts/{postId} {
-      allow read: if true;
-      allow create: if isUserAuthenticated() && isOwner(request.resource.data.authorId);
-      allow delete: if isUserAuthenticated() && isOwner(resource.data.authorId);
-      
-      // Author can update any field. Other users can only update 'likes' and 'likedBy'.
-      allow update: if (isUserAuthenticated() && isOwner(resource.data.authorId)) ||
-                       (isUserAuthenticated() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes', 'likedBy']));
-    }
-
-    // EVENTS
-    match /events/{eventId} {
-      allow read: if true;
-      allow create: if isUserAuthenticated() && isOwner(request.resource.data.authorId);
-      allow delete: if isUserAuthenticated() && isOwner(resource.data.authorId);
-
-      // Author can update any field. Other users can only update 'rsvps'.
-      allow update: if (isUserAuthenticated() && isOwner(resource.data.authorId)) ||
-                       (isUserAuthenticated() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['rsvps']));
-    }
-
-    // NOTIFICATIONS
-    match /notifications/{notificationId} {
-      // Authenticated users can create notifications for others (e.g. on follow, like).
-      allow create: if isUserAuthenticated();
-      
-      // Only the recipient can read or update (e.g., mark as read) their notifications.
-      allow read, update, delete: if isUserAuthenticated() && isOwner(resource.data.userId);
-    }
     
-    // DIARY NOTES
-    match /diaryNotes/{diaryNoteId} {
-        // User can only create/manage their own diary notes.
-        allow create: if isUserAuthenticated() && isOwner(request.resource.data.userId);
-        allow read, update, delete: if isUserAuthenticated() && isOwner(resource.data.userId);
+    // Users can manage their own profile. Anyone can read a user's public profile.
+    match /users/{userId} {
+      allow read;
+      allow write: if request.auth.uid == userId;
     }
 
-    // REMINDERS
+    // Logged-in users can read their own notifications.
+    match /notifications/{notificationId} {
+      allow read, update: if request.auth.uid == resource.data.userId;
+    }
+
+    // Logged-in users can read their own diary notes.
+    match /diaryNotes/{noteId} {
+      allow read, write: if request.auth.uid == resource.data.userId;
+    }
+
+    // Logged-in users can create and read their own reminders
     match /reminders/{reminderId} {
-        // User can only create/manage their own reminders.
-        allow create: if isUserAuthenticated() && isOwner(request.resource.data.userId);
-        allow read, update: if isUserAuthenticated() && isOwner(resource.data.userId);
-        allow delete: if false; // Should be handled by a backend process
+      allow read, write: if request.auth.uid == resource.data.userId;
     }
 
-    // LISTINGS
-    match /listings/{listingId} {
-      allow read: if true;
-      allow create: if isUserAuthenticated() && isOwner(request.resource.data.authorId);
-      allow update, delete: if isUserAuthenticated() && isOwner(resource.data.authorId);
+    // Logged-in users can read messages sent to them, and anyone can send a message.
+    match /messages/{messageId} {
+      allow read, update: if request.auth.uid == resource.data.recipientId;
+      allow create; // Anyone can send a message
     }
 
-    // BUSINESSES
-    match /businesses/{businessId} {
-      allow read: if true;
-      allow create: if isUserAuthenticated() && isOwner(request.resource.data.authorId);
-      allow update, delete: if isUserAuthenticated() && isOwner(resource.data.authorId);
-    }
-
-    // JOBS
-    match /jobs/{jobId} {
-      allow read: if true;
-      allow create: if isUserAuthenticated() && isOwner(request.resource.data.authorId);
-      allow update, delete: if isUserAuthenticated() && isOwner(resource.data.authorId);
-    }
-
-    // OFFERS
-    match /offers/{offerId} {
-      allow read: if true;
-      allow create: if isUserAuthenticated() && isOwner(request.resource.data.authorId);
-      allow update, delete: if isUserAuthenticated() && isOwner(resource.data.authorId);
+    // All these content types are public to read, but only the author can create/update/delete
+    match /{collection}/{docId} 
+        where collection in ['posts', 'events', 'listings', 'offers', 'jobs', 'businesses'] {
+      allow read;
+      // Allow create if user is authenticated
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.authorId;
+      // Allow update and delete if user is the author
+      allow update, delete: if request.auth != null && request.auth.uid == resource.data.authorId;
     }
   }
 }
