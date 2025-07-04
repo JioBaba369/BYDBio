@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { BarChart, Briefcase, Calendar, DollarSign, File, LineChart, ListFilter, MessageSquare, PlusCircle, Tags } from "lucide-react"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
-import { Bar, CartesianGrid, XAxis, YAxis, Tooltip, Legend, BarChart as BarChartComponent, AreaChart as AreaChartComponent } from "recharts"
+import { Area, Bar, CartesianGrid, XAxis, YAxis, Tooltip, Legend, BarChart as BarChartComponent, AreaChart as AreaChartComponent } from "recharts"
 import Link from "next/link"
 import {
   DropdownMenu,
