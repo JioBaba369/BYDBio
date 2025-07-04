@@ -20,6 +20,10 @@ import Link from 'next/link';
 import type { Event, Offer, Job, Listing } from '@/lib/users';
 import { Separator } from '@/components/ui/separator';
 import { Label } from '@/components/ui/label';
+import { deleteListing } from '@/lib/listings';
+import { deleteJob } from '@/lib/jobs';
+import { deleteEvent, toggleRsvp } from '@/lib/events';
+import { deleteOffer } from '@/lib/offers';
 
 type CalendarItem = {
   id: string;
@@ -227,12 +231,40 @@ export default function CalendarPage() {
     setIsDeleteDialogOpen(true);
   }
 
-  const handleDelete = () => {
-    if (!selectedItem) return;
-    setCalendarItems(prev => prev.filter(item => item.id !== selectedItem.id));
-    toast({ title: `${selectedItem.type} deleted!` });
-    setIsDeleteDialogOpen(false);
-    setSelectedItem(null);
+  const handleDelete = async () => {
+    if (!selectedItem || !user) return;
+    try {
+        switch (selectedItem.type) {
+            case 'Event':
+                if (selectedItem.isExternal) {
+                    await toggleRsvp(selectedItem.id, user.uid);
+                    toast({ title: 'Removed from diary', description: `You are no longer attending "${selectedItem.title}".`});
+                } else {
+                    await deleteEvent(selectedItem.id);
+                    toast({ title: 'Event deleted!' });
+                }
+                break;
+            case 'Offer':
+                await deleteOffer(selectedItem.id);
+                toast({ title: 'Offer deleted!' });
+                break;
+            case 'Job':
+                await deleteJob(selectedItem.id);
+                toast({ title: 'Job deleted!' });
+                break;
+            case 'Listing':
+                await deleteListing(selectedItem.id);
+                toast({ title: 'Listing deleted!' });
+                break;
+        }
+        setCalendarItems(prev => prev.filter(item => item.id !== selectedItem.id));
+    } catch (error) {
+        console.error(`Error deleting ${selectedItem.type}:`, error);
+        toast({ title: 'Error', description: `Failed to delete ${selectedItem.type}.`, variant: 'destructive' });
+    } finally {
+        setIsDeleteDialogOpen(false);
+        setSelectedItem(null);
+    }
   };
 
   const getBadgeVariant = (item: CalendarItem): VariantProps<typeof badgeVariants>['variant'] => {

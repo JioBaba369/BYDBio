@@ -110,7 +110,7 @@ export const createUserProfileIfNotExists = async (user: FirebaseUser, additiona
             username: username,
             handle: username,
             avatarUrl: user.photoURL || `https://placehold.co/200x200.png`,
-            avatarFallback: (additionalData?.name || user.displayName)?.charAt(0).toUpperCase() || 'U',
+            avatarFallback: (additionalData?.name || user.displayName || 'U').charAt(0).toUpperCase(),
             bio: "",
             following: [],
             subscribers: 0,
