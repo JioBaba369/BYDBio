@@ -62,9 +62,16 @@ export function EventForm({ defaultValues, onSubmit, isSaving }: EventFormProps)
   const form = useForm<EventFormValues>({
     resolver: zodResolver(eventFormSchema),
     defaultValues: {
+      title: "",
+      description: "",
+      location: "",
+      startDate: undefined,
+      endDate: null,
+      imageUrl: null,
+      itinerary: [],
       ...defaultValues,
       startDate: defaultValues?.startDate ? new Date(defaultValues.startDate) : undefined,
-      endDate: defaultValues?.endDate ? new Date(defaultValues.endDate) : undefined,
+      endDate: defaultValues?.endDate ? new Date(defaultValues.endDate) : null,
     },
     mode: "onChange",
   })

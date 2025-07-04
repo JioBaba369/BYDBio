@@ -55,9 +55,16 @@ export function ListingForm({ defaultValues, onSubmit, isSaving }: ListingFormPr
   const form = useForm<ListingFormValues>({
     resolver: zodResolver(listingFormSchema),
     defaultValues: {
+      title: "",
+      description: "",
+      price: "",
+      category: "",
+      imageUrl: null,
+      startDate: null,
+      endDate: null,
       ...defaultValues,
-      startDate: defaultValues?.startDate ? new Date(defaultValues.startDate) : undefined,
-      endDate: defaultValues?.endDate ? new Date(defaultValues.endDate) : undefined,
+      startDate: defaultValues?.startDate ? new Date(defaultValues.startDate) : null,
+      endDate: defaultValues?.endDate ? new Date(defaultValues.endDate) : null,
     },
     mode: "onChange",
   })

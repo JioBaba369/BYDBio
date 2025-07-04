@@ -55,9 +55,15 @@ export function OfferForm({ defaultValues, onSubmit, isSaving }: OfferFormProps)
   const form = useForm<OfferFormValues>({
     resolver: zodResolver(offerFormSchema),
     defaultValues: {
+      title: "",
+      description: "",
+      category: "",
+      startDate: undefined,
+      endDate: null,
+      imageUrl: null,
       ...defaultValues,
       startDate: defaultValues?.startDate ? new Date(defaultValues.startDate) : undefined,
-      endDate: defaultValues?.endDate ? new Date(defaultValues.endDate) : undefined,
+      endDate: defaultValues?.endDate ? new Date(defaultValues.endDate) : null,
     },
     mode: "onChange",
   })
