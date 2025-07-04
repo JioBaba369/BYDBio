@@ -33,6 +33,11 @@ export type SuggestHashtagsOutput = z.infer<typeof SuggestHashtagsOutputSchema>;
 export async function suggestHashtags(
   input: SuggestHashtagsInput
 ): Promise<SuggestHashtagsOutput> {
+  if (!process.env.GOOGLE_API_KEY && !process.env.GEMINI_API_KEY) {
+    throw new Error(
+      "GOOGLE_API_KEY is not set. Please get a key from Google AI Studio and add it to your project's .env file to use AI features."
+    );
+  }
   return suggestHashtagsFlow(input);
 }
 
