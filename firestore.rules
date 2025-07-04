@@ -1,4 +1,3 @@
-
 rules_version = '2';
 
 service cloud.firestore {
@@ -9,74 +8,55 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    // Helper function to check if the user is the owner of the document
+    // Helper function to check if the user is the owner of a document
     function isOwner(userId) {
       return request.auth.uid == userId;
     }
 
-    // Users can be read by anyone (for public profiles).
-    // They can only update their own profile.
+    // Users collection rules
     match /users/{userId} {
-      allow read: if true;
-      allow create: if isOwner(userId); // Allow creation only if the user is creating their own profile
-      allow update: if isAuthenticated() && isOwner(userId);
-      allow delete: if false; // Disallow deleting user profiles
+      // Anyone can read a user's public profile
+      allow read;
+      // Only the authenticated owner can write to their own profile
+      allow write: if isAuthenticated() && isOwner(userId);
     }
-
-    // Posts can be read by anyone.
-    // Users can only create/update/delete their own posts.
-    match /posts/{postId} {
-      allow read: if true;
+    
+    // Content collections (posts, listings, jobs, events, offers, businesses)
+    match /{collectionId}/{documentId} 
+      where collectionId in ['posts', 'listings', 'jobs', 'events', 'offers', 'businesses'] {
+      
+      // Anyone can read any content document
+      allow read;
+      
+      // Only authenticated users can create documents
       allow create: if isAuthenticated() && isOwner(request.resource.data.authorId);
+
+      // Only the original author can update or delete their own documents
       allow update, delete: if isAuthenticated() && isOwner(resource.data.authorId);
     }
-
-    // Notifications can only be read/updated by the recipient user.
+    
+    // Notifications collection rules
     match /notifications/{notificationId} {
-      allow read, update, delete: if isAuthenticated() && isOwner(resource.data.userId);
-      allow create: if isAuthenticated(); // Notifications are created by trusted server logic or by authenticated users
-    }
-    
-    // Diary notes are private to the user.
-    match /diaryNotes/{noteId} {
-       allow read, create, update, delete: if isAuthenticated() && isOwner(resource.data.userId);
-    }
-
-    // Businesses are publicly readable, but only the author can write/delete them.
-    match /businesses/{businessId} {
-      allow read: if true;
-      allow create: if isAuthenticated() && isOwner(request.resource.data.authorId);
-      allow update, delete: if isAuthenticated() && isOwner(resource.data.authorId);
+        // Only the recipient of the notification can read it
+        allow read: if isAuthenticated() && isOwner(resource.data.userId);
+        
+        // Notifications are created by the system/backend, but we can allow
+        // authenticated users to create them for actions like 'liking'
+        allow create: if isAuthenticated();
+        
+        // Only the recipient can mark their own notification as read (update)
+        allow update: if isAuthenticated() && isOwner(resource.data.userId);
     }
 
-    // Events are publicly readable. Author can do anything. Authenticated users can RSVP.
-    match /events/{eventId} {
-      allow read: if true;
-      allow create: if isAuthenticated() && isOwner(request.resource.data.authorId);
-      // Allow update if owner OR if only the rsvps array is being changed by an authenticated user
-      allow update: if isAuthenticated() && (isOwner(resource.data.authorId) || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['rsvps']));
-      allow delete: if isAuthenticated() && isOwner(resource.data.authorId);
-    }
-
-    // Jobs are publicly readable, but only the author can write/delete them.
-    match /jobs/{jobId} {
-      allow read: if true;
-      allow create: if isAuthenticated() && isOwner(request.resource.data.authorId);
-      allow update, delete: if isAuthenticated() && isOwner(resource.data.authorId);
-    }
-    
-    // Listings are publicly readable, but only the author can write/delete them.
-    match /listings/{listingId} {
-      allow read: if true;
-      allow create: if isAuthenticated() && isOwner(request.resource.data.authorId);
-      allow update, delete: if isAuthenticated() && isOwner(resource.data.authorId);
-    }
-    
-    // Offers are publicly readable, but only the author can write/delete them.
-    match /offers/{offerId} {
-      allow read: if true;
-      allow create: if isAuthenticated() && isOwner(request.resource.data.authorId);
-      allow update, delete: if isAuthenticated() && isOwner(resource.data.authorId);
+    // Reminders collection rules
+    match /reminders/{reminderId} {
+      // A user can read their own reminders.
+      allow read: if isAuthenticated() && isOwner(resource.data.userId);
+      
+      // A user can create or update their own reminders. `setDoc` with `merge: true`
+      // on the client can trigger either a create or an update operation.
+      // This rule ensures the user can only write reminders for themselves.
+      allow write: if isAuthenticated() && isOwner(request.resource.data.userId);
     }
   }
 }
