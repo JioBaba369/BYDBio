@@ -26,7 +26,7 @@ export type Offer = {
   status: 'active' | 'archived';
   views: number;
   claims: number;
-  createdAt: Timestamp;
+  createdAt: Timestamp | string;
 };
 
 // Function to fetch a single offer by its ID

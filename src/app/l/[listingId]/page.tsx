@@ -3,6 +3,7 @@ import { getListingAndAuthor, type Listing } from '@/lib/listings';
 import ListingDetailClient from './listing-detail-client';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import type { Timestamp } from 'firebase/firestore';
 
 export async function generateMetadata({ params }: { params: { listingId: string } }): Promise<Metadata> {
   const data = await getListingAndAuthor(params.listingId);
@@ -52,5 +53,10 @@ export default async function PublicListingPage({ params }: { params: { listingI
         )
     }
 
-    return <ListingDetailClient listing={data.listing} author={data.author} />;
+    const serializableListing = {
+        ...data.listing,
+        createdAt: (data.listing.createdAt as Timestamp).toDate().toISOString(),
+    };
+
+    return <ListingDetailClient listing={serializableListing} author={data.author} />;
 }

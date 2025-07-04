@@ -4,6 +4,7 @@ import { getOfferAndAuthor } from '@/lib/offers';
 import OfferDetailClient from './offer-detail-client';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import type { Timestamp } from 'firebase/firestore';
 
 export async function generateMetadata({ params }: { params: { offerId: string } }): Promise<Metadata> {
   const data = await getOfferAndAuthor(params.offerId);
@@ -53,5 +54,11 @@ export default async function PublicOfferPage({ params }: { params: { offerId: s
         )
     }
 
-    return <OfferDetailClient offer={data.offer} author={data.author} />;
+    const serializableOffer = {
+      ...data.offer,
+      releaseDate: (data.offer.releaseDate as Date).toISOString(),
+      createdAt: (data.offer.createdAt as Timestamp).toDate().toISOString(),
+    };
+
+    return <OfferDetailClient offer={serializableOffer} author={data.author} />;
 }

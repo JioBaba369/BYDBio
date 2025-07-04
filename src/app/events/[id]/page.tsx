@@ -4,6 +4,7 @@ import { getEventAndAuthor } from '@/lib/events';
 import EventDetailClient from './event-detail-client';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import type { Timestamp } from 'firebase/firestore';
 
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
   const data = await getEventAndAuthor(params.id);
@@ -53,5 +54,11 @@ export default async function EventDetailPage({ params }: { params: { id: string
         )
     }
 
-    return <EventDetailClient event={data.event} author={data.author} />;
+    const serializableEvent = {
+        ...data.event,
+        date: (data.event.date as Date).toISOString(),
+        createdAt: (data.event.createdAt as Timestamp).toDate().toISOString(),
+    };
+
+    return <EventDetailClient event={serializableEvent} author={data.author} />;
 }

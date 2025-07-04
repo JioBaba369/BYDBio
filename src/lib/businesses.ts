@@ -29,7 +29,7 @@ export type Business = {
   status: 'active' | 'archived';
   views?: number;
   clicks?: number;
-  createdAt: Timestamp;
+  createdAt: Timestamp | string;
 };
 
 // Function to fetch a single business by its ID

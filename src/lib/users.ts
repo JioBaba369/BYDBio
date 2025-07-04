@@ -47,7 +47,7 @@ export type Listing = {
   imageUrl: string | null;
   category: string;
   status: 'active' | 'archived';
-  createdAt: Timestamp;
+  createdAt: Timestamp | string;
 };
 
 export type Offer = {
@@ -59,7 +59,7 @@ export type Offer = {
   releaseDate: Timestamp | Date | string;
   imageUrl: string | null;
   status: 'active' | 'archived';
-  createdAt: Timestamp;
+  createdAt: Timestamp | string;
 };
 
 export type Job = {
@@ -72,7 +72,7 @@ export type Job = {
   postingDate: Timestamp | Date | string;
   imageUrl: string | null;
   status: 'active' | 'archived';
-  createdAt: Timestamp;
+  createdAt: Timestamp | string;
 };
 
 export type Event = {
@@ -85,7 +85,7 @@ export type Event = {
   imageUrl: string | null;
   status: 'active' | 'archived';
   rsvps: string[];
-  createdAt: Timestamp;
+  createdAt: Timestamp | string;
 };
 
 

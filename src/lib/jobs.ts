@@ -27,7 +27,7 @@ export type Job = {
   status: 'active' | 'archived';
   views: number;
   applicants: number;
-  createdAt: Timestamp;
+  createdAt: Timestamp | string;
 };
 
 // Function to fetch a single job by its ID

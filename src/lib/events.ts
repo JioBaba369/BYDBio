@@ -39,7 +39,7 @@ export type Event = {
   views: number;
   rsvps: string[]; // Array of user UIDs who have RSVP'd
   itinerary: ItineraryItem[];
-  createdAt: Timestamp;
+  createdAt: Timestamp | string;
 };
 
 export type EventWithAuthor = Event & { author: Pick<User, 'id' | 'name' | 'username' | 'avatarUrl'> };

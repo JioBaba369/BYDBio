@@ -26,7 +26,7 @@ export type Listing = {
   status: 'active' | 'archived';
   views?: number;
   clicks?: number;
-  createdAt: Timestamp;
+  createdAt: Timestamp | string;
 };
 
 // Function to fetch a single listing by its ID

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import type { User } from '@/lib/users';
 import type { Job } from '@/lib/jobs';
+import type { Timestamp } from 'firebase/firestore';
 
 export async function generateMetadata({ params }: { params: { opportunityId: string } }): Promise<Metadata> {
   const data = await getJobAndAuthor(params.opportunityId);
@@ -55,5 +56,11 @@ export default async function PublicOpportunityPage({ params }: { params: { oppo
         )
     }
 
-    return <OpportunityDetailClient job={data.job} author={data.author} />;
+    const serializableJob = {
+        ...data.job,
+        postingDate: (data.job.postingDate as Date).toISOString(),
+        createdAt: (data.job.createdAt as Timestamp).toDate().toISOString(),
+    };
+
+    return <OpportunityDetailClient job={serializableJob} author={data.author} />;
 }

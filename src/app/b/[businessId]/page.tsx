@@ -4,6 +4,7 @@ import { getBusinessAndAuthor } from '@/lib/businesses';
 import BusinessPageClient from './business-page-client';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import type { Timestamp } from 'firebase/firestore';
 
 export async function generateMetadata({ params }: { params: { businessId: string } }): Promise<Metadata> {
   const data = await getBusinessAndAuthor(params.businessId);
@@ -60,5 +61,10 @@ export default async function PublicBusinessPage({ params }: { params: { busines
         )
     }
 
-    return <BusinessPageClient business={data.business} author={data.author} />;
+    const serializableBusiness = {
+      ...data.business,
+      createdAt: (data.business.createdAt as Timestamp).toDate().toISOString(),
+    };
+
+    return <BusinessPageClient business={serializableBusiness} author={data.author} />;
 }
