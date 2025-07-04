@@ -315,8 +315,8 @@ export default function EventsPage() {
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
                               <DropdownMenuItem asChild><Link href={`/events/${event.id}/edit`} className="cursor-pointer"><Edit className="mr-2 h-4 w-4"/>Edit</Link></DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleArchive(event.id, event.status)} className="cursor-pointer"><Archive className="mr-2 h-4 w-4"/>Archive</Link></DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => openDeleteDialog(event.id)} className="text-destructive cursor-pointer"><Trash2 className="mr-2 h-4 w-4"/>Delete</Link></DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleArchive(event.id, event.status)} className="cursor-pointer"><Archive className="mr-2 h-4 w-4"/>Archive</DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => openDeleteDialog(event.id)} className="text-destructive cursor-pointer"><Trash2 className="mr-2 h-4 w-4"/>Delete</DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
                           ) : user && (
