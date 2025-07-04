@@ -56,14 +56,21 @@ export const createNotification = async (
   }
   
   const notificationsRef = collection(db, 'notifications');
-  await addDoc(notificationsRef, {
+  
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const notificationData: any = {
     userId,
     type,
     actorId,
-    entityId,
     read: false,
     createdAt: serverTimestamp(),
-  });
+  };
+
+  if (entityId) {
+    notificationData.entityId = entityId;
+  }
+
+  await addDoc(notificationsRef, notificationData);
 };
 
 // Get notifications for a user
