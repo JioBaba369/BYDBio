@@ -79,3 +79,20 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer utilities {
+  .day-with-event {
+    position: relative;
+  }
+  .day-with-event::after {
+    content: '';
+    position: absolute;
+    bottom: 4px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background-color: hsl(var(--primary));
+  }
+}
