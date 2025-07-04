@@ -103,7 +103,7 @@ export default function BioGenerator({ onSelectBio }: BioGeneratorProps) {
           {suggestions.map((bio, index) => (
             <div key={index} className="p-3 flex items-center justify-between gap-4 rounded-md bg-background border text-sm">
                 <p className="flex-1">{bio}</p>
-                <Button size="sm" variant="outline" onClick={() => onSelectBio(bio)}>Use</Button>
+                <Button type="button" size="sm" variant="outline" onClick={() => onSelectBio(bio)}>Use</Button>
             </div>
           ))}
         </div>
