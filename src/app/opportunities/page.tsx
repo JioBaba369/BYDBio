@@ -16,6 +16,7 @@ import { useAuth } from "@/components/auth-provider";
 import { type Job, getJobsByUser, deleteJob, updateJob } from "@/lib/jobs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ClientFormattedDate } from "@/components/client-formatted-date";
+import { formatCurrency } from "@/lib/utils";
 
 const JobPageSkeleton = () => (
     <div className="space-y-6">
@@ -163,7 +164,7 @@ export default function OpportunitiesPage() {
                   </div>
                    {job.remuneration && (
                     <div className="flex items-center text-sm text-muted-foreground">
-                      <DollarSign className="mr-2 h-4 w-4" /> {job.remuneration}
+                      <DollarSign className="mr-2 h-4 w-4" /> {formatCurrency(job.remuneration)}
                     </div>
                   )}
                   {job.closingDate && (

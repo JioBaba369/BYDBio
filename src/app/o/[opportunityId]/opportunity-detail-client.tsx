@@ -12,6 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import ShareButton from '@/components/share-button';
 import { ClientFormattedDate } from '@/components/client-formatted-date';
 import { useAuth } from '@/components/auth-provider';
+import { formatCurrency } from '@/lib/utils';
 
 
 interface OpportunityDetailClientProps {
@@ -82,7 +83,7 @@ export default function OpportunityDetailClient({ job, author }: OpportunityDeta
                                     <DollarSign className="h-5 w-5 text-primary flex-shrink-0" />
                                     <div>
                                         <p className="font-semibold">Salary</p>
-                                        <p className="text-muted-foreground">{job.remuneration}</p>
+                                        <p className="text-muted-foreground">{formatCurrency(job.remuneration)}</p>
                                     </div>
                                 </div>
                             )}

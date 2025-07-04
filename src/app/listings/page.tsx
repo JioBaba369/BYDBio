@@ -14,6 +14,7 @@ import { useAuth } from "@/components/auth-provider";
 import { type Listing, getListingsByUser, deleteListing, updateListing } from "@/lib/listings";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ClientFormattedDate } from "@/components/client-formatted-date";
+import { formatCurrency } from "@/lib/utils";
 
 const ListingPageSkeleton = () => (
     <div className="space-y-6">
@@ -164,7 +165,7 @@ export default function ListingsPage() {
                 <CardContent className="flex-grow space-y-2">
                   <div className="flex justify-between items-center">
                     <Badge variant="secondary">{item.category}</Badge>
-                    <p className="font-bold text-lg">{item.price}</p>
+                    <p className="font-bold text-lg">{formatCurrency(item.price)}</p>
                   </div>
                   {(item.startDate || item.endDate) && (
                     <div className="flex items-center pt-2 text-sm text-muted-foreground">
@@ -250,7 +251,7 @@ export default function ListingsPage() {
                   <CardContent className="flex-grow">
                      <div className="flex justify-between items-center">
                         <Badge variant="secondary">{item.category}</Badge>
-                        <p className="font-bold text-lg">{item.price}</p>
+                        <p className="font-bold text-lg">{formatCurrency(item.price)}</p>
                     </div>
                   </CardContent>
                 </Card>

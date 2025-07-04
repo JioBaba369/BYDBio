@@ -11,6 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import ShareButton from '@/components/share-button';
 import { ClientFormattedDate } from '@/components/client-formatted-date';
 import { useAuth } from '@/components/auth-provider';
+import { formatCurrency } from '@/lib/utils';
 
 
 interface ListingDetailClientProps {
@@ -52,7 +53,7 @@ export default function ListingDetailClient({ listing, author }: ListingDetailCl
                                         <CardTitle className="text-3xl font-bold font-headline">{listing.title}</CardTitle>
                                         <div className="flex items-center gap-4 pt-2">
                                             <Badge variant="secondary"><Tag className="mr-1 h-3 w-3" />{listing.category}</Badge>
-                                            <p className="font-bold text-2xl text-primary flex items-center"><DollarSign className="mr-1 h-6 w-6" />{listing.price}</p>
+                                            <p className="font-bold text-2xl text-primary flex items-center"><DollarSign className="mr-1 h-6 w-6" />{formatCurrency(listing.price)}</p>
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-2">

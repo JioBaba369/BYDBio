@@ -11,7 +11,6 @@ import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import Image from "next/image";
-import { format, parseISO } from "date-fns";
 import type { User } from '@/lib/users';
 import { useAuth } from '@/components/auth-provider';
 import { searchUsers, getUsersByIds } from '@/lib/users';
@@ -21,6 +20,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { getDocs, collection, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Listing, Offer, Job, Event } from '@/lib/users';
+import { ClientFormattedDate } from '@/components/client-formatted-date';
+import { formatCurrency } from '@/lib/utils';
 
 type ItemWithAuthor<T> = T & { author: User };
 type SearchResults = {
@@ -30,15 +31,6 @@ type SearchResults = {
     events: ItemWithAuthor<Event>[];
     offers: ItemWithAuthor<Offer>[];
 }
-
-function ClientFormattedDate({ dateString, formatStr }: { dateString: string; formatStr: string }) {
-  const [formattedDate, setFormattedDate] = useState('...');
-  useEffect(() => {
-    setFormattedDate(format(parseISO(dateString), formatStr));
-  }, [dateString, formatStr]);
-  return <>{formattedDate}</>;
-}
-
 
 export default function SearchPage() {
   const searchParams = useSearchParams();
@@ -240,7 +232,7 @@ export default function SearchPage() {
                                 <Badge variant="secondary">{item.category}</Badge>
                             </CardContent>
                             <CardFooter className="flex justify-between items-center">
-                                <p className="font-bold text-lg">{item.price}</p>
+                                <p className="font-bold text-lg">{formatCurrency(item.price)}</p>
                                 <Button asChild>
                                     <Link href={`/l/${item.id}`}>View</Link>
                                 </Button>
@@ -282,7 +274,7 @@ export default function SearchPage() {
                                 </div>
                                 {job.remuneration && (
                                     <div className="flex items-center text-sm text-muted-foreground">
-                                        <DollarSign className="mr-2 h-4 w-4" /> {job.remuneration}
+                                        <DollarSign className="mr-2 h-4 w-4" /> {formatCurrency(job.remuneration)}
                                     </div>
                                 )}
                             </CardContent>
@@ -320,7 +312,7 @@ export default function SearchPage() {
                             </CardHeader>
                             <CardContent className="space-y-2 flex-grow">
                                 <div className="flex items-center text-sm text-muted-foreground">
-                                    <Calendar className="mr-2 h-4 w-4" /> <ClientFormattedDate dateString={event.date} formatStr="PPP" />
+                                    <Calendar className="mr-2 h-4 w-4" /> <ClientFormattedDate date={event.date} formatStr="PPP" />
                                 </div>
                                 <div className="flex items-center text-sm text-muted-foreground">
                                     <MapPin className="mr-2 h-4 w-4" /> {event.location}
@@ -363,7 +355,7 @@ export default function SearchPage() {
                                 <Badge variant="secondary"><Tag className="mr-1 h-3 w-3" />{offer.category}</Badge>
                                 <div className="flex items-center pt-2 text-sm text-muted-foreground">
                                     <Calendar className="mr-2 h-4 w-4" />
-                                    <span>Releases: <ClientFormattedDate dateString={offer.releaseDate} formatStr="PPP" /></span>
+                                    <span>Releases: <ClientFormattedDate date={offer.releaseDate} formatStr="PPP" /></span>
                                 </div>
                             </CardContent>
                             <CardFooter>
