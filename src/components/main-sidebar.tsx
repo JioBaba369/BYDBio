@@ -30,7 +30,6 @@ import {
   Bell,
   BookUser,
   BookText,
-  DraftingCompass,
   Compass,
   Megaphone,
 } from 'lucide-react';
@@ -207,14 +206,6 @@ export function MainSidebar() {
               <Link href="/profile">
                 <User />
                 <span>Profile Editor</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Wireframe" isActive={isActive('/wireframe')}>
-              <Link href="/wireframe">
-                <DraftingCompass />
-                <span>Wireframe</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
