@@ -20,6 +20,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { User } from './users';
+import { formatCurrency } from './utils';
 
 const serializeTimestamps = (data: { [key: string]: any }): { [key: string]: any } => {
     const serializedData: { [key: string]: any } = {};
@@ -58,6 +59,28 @@ export type Event = {
 };
 
 export type EventWithAuthor = Event & { author: Pick<User, 'uid' | 'name' | 'username' | 'avatarUrl'> };
+
+export type CalendarItem = {
+  id: string;
+  type: 'Event' | 'Offer' | 'Job' | 'Listing';
+  date: string;
+  title: string;
+  description: string;
+  location?: string;
+  category?: string;
+  company?: string;
+  jobType?: string;
+  price?: string;
+  imageUrl?: string | null;
+  editPath: string;
+  isExternal?: boolean;
+  status: 'active' | 'archived';
+  views?: number;
+  clicks?: number;
+  claims?: number;
+  applicants?: number;
+  rsvps?: string[];
+};
 
 
 // Function to fetch a single event by its ID
@@ -310,7 +333,7 @@ export const getDiaryEvents = async (userId: string): Promise<any[]> => {
 };
 
 // This function fetches ALL content types for a user for the Content Calendar.
-export const getCalendarItems = async (userId: string) => {
+export const getCalendarItems = async (userId: string): Promise<CalendarItem[]> => {
     const eventsQuery = query(collection(db, 'events'), where('authorId', '==', userId));
     const rsvpedEventsQuery = query(collection(db, 'events'), where('rsvps', 'array-contains', userId));
     const offersQuery = query(collection(db, 'offers'), where('authorId', '==', userId));
@@ -352,24 +375,76 @@ export const getCalendarItems = async (userId: string) => {
     });
 
     const allItems = Array.from(itemsMap.values());
-    const authorIds = [...new Set(allItems.map(item => item.authorId).filter(Boolean))];
-    const authors = authorIds.length > 0 ? await getDocs(query(collection(db, 'users'), where('uid', 'in', authorIds.slice(0, 30)))) : { docs: [] };
-    const authorMap = new Map(authors.docs.map(doc => [doc.id, { uid: doc.id, ...doc.data() } as User]));
-
-    return allItems.map(item => {
-        const author = authorMap.get(item.authorId);
-        
-        let primaryDate = item.createdAt; 
-        if (item.startDate) {
-            primaryDate = item.startDate;
-        } else if (item.postingDate) {
-            primaryDate = item.postingDate;
+    
+    const formattedItems: CalendarItem[] = allItems.map((item: any) => {
+        switch(item.type) {
+            case 'event':
+                return {
+                    id: item.id,
+                    type: 'Event' as const,
+                    date: item.startDate,
+                    title: item.title,
+                    description: `Event at ${item.location}`,
+                    location: item.location,
+                    imageUrl: item.imageUrl,
+                    editPath: `/events/${item.id}/edit`,
+                    isExternal: item.source === 'rsvped',
+                    status: item.status,
+                    views: item.views,
+                    rsvps: item.rsvps,
+                };
+            case 'offer':
+                 return {
+                    id: item.id,
+                    type: 'Offer' as const,
+                    date: item.startDate,
+                    title: item.title,
+                    description: item.description,
+                    category: item.category,
+                    imageUrl: item.imageUrl,
+                    editPath: `/offers/${item.id}/edit`,
+                    isExternal: false,
+                    status: item.status,
+                    views: item.views,
+                    claims: item.claims,
+                };
+            case 'job':
+                 return {
+                    id: item.id,
+                    type: 'Job' as const,
+                    date: item.postingDate,
+                    title: item.title,
+                    description: `${item.type} at ${item.company}`,
+                    company: item.company,
+                    jobType: item.type,
+                    location: item.location,
+                    imageUrl: item.imageUrl,
+                    editPath: `/opportunities/${item.id}/edit`,
+                    isExternal: false,
+                    status: item.status,
+                    views: item.views,
+                    applicants: item.applicants
+                };
+            case 'listing':
+                 return {
+                    id: item.id,
+                    type: 'Listing' as const,
+                    date: item.createdAt,
+                    title: item.title,
+                    description: item.description,
+                    category: item.category,
+                    price: item.price,
+                    imageUrl: item.imageUrl,
+                    editPath: `/listings/${item.id}/edit`,
+                    isExternal: false,
+                    status: item.status,
+                    views: item.views,
+                    clicks: item.clicks,
+                };
+            default:
+                return null;
         }
+    }).filter((item): item is CalendarItem => item !== null && !!item.date);
 
-        return {
-            ...item,
-            date: primaryDate,
-            author: author ? { name: author.name, username: author.username, avatarUrl: author.avatarUrl } : undefined,
-        };
-    });
+    return formattedItems.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 };

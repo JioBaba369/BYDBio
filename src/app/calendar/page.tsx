@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge, badgeVariants } from '@/components/ui/badge';
-import { getCalendarItems } from '@/lib/events';
+import { getCalendarItems, toggleRsvp, deleteEvent, type CalendarItem } from '@/lib/events';
 import { useAuth } from '@/components/auth-provider';
 import { Search, MapPin, Tag, Briefcase, DollarSign, X, Clock, MoreHorizontal, Edit, Trash2, PlusCircle, Tags, Calendar as CalendarIconLucide, Building2, List, LayoutGrid, Eye, MousePointerClick, Gift, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -16,12 +16,10 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialog';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
-import type { Event, Offer, Job, Listing } from '@/lib/users';
 import { Separator } from '@/components/ui/separator';
 import { Label } from '@/components/ui/label';
 import { deleteListing } from '@/lib/listings';
 import { deleteJob } from '@/lib/jobs';
-import { deleteEvent, toggleRsvp } from '@/lib/events';
 import { deleteOffer } from '@/lib/offers';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -30,28 +28,6 @@ import { formatCurrency } from '@/lib/utils';
 import { DayPicker } from 'react-day-picker';
 import 'react-day-picker/dist/style.css';
 import { format } from 'date-fns';
-
-type CalendarItem = {
-  id: string;
-  type: 'Event' | 'Offer' | 'Job' | 'Listing';
-  date: string;
-  title: string;
-  description: string;
-  location?: string;
-  category?: string;
-  company?: string;
-  jobType?: string;
-  price?: string;
-  imageUrl?: string | null;
-  editPath: string;
-  isExternal?: boolean;
-  status: 'active' | 'archived';
-  views?: number;
-  clicks?: number;
-  claims?: number;
-  applicants?: number;
-  rsvps?: string[];
-};
 
 const ContentHubSkeleton = () => (
     <div className="space-y-6 animate-pulse">
@@ -105,78 +81,7 @@ export default function CalendarPage() {
     if (user) {
         setIsLoading(true);
         getCalendarItems(user.uid)
-            .then((items) => {
-                const formattedItems: CalendarItem[] = items.map((item: any) => {
-                    switch(item.type) {
-                        case 'event':
-                            return {
-                                id: item.id,
-                                type: 'Event' as const,
-                                date: item.date,
-                                title: item.title,
-                                description: `Event at ${item.location}`,
-                                location: item.location,
-                                imageUrl: item.imageUrl,
-                                editPath: `/events/${item.id}/edit`,
-                                isExternal: item.source === 'rsvped',
-                                status: item.status,
-                                views: item.views,
-                                rsvps: item.rsvps,
-                            };
-                        case 'offer':
-                             return {
-                                id: item.id,
-                                type: 'Offer' as const,
-                                date: item.date,
-                                title: item.title,
-                                description: item.description,
-                                category: item.category,
-                                imageUrl: item.imageUrl,
-                                editPath: `/offers/${item.id}/edit`,
-                                isExternal: false,
-                                status: item.status,
-                                views: item.views,
-                                claims: item.claims,
-                            };
-                        case 'job':
-                             return {
-                                id: item.id,
-                                type: 'Job' as const,
-                                date: item.date,
-                                title: item.title,
-                                description: `${item.type} at ${item.company}`,
-                                company: item.company,
-                                jobType: item.type,
-                                location: item.location,
-                                imageUrl: item.imageUrl,
-                                editPath: `/opportunities/${item.id}/edit`,
-                                isExternal: false,
-                                status: item.status,
-                                views: item.views,
-                                applicants: item.applicants
-                            };
-                        case 'listing':
-                             return {
-                                id: item.id,
-                                type: 'Listing' as const,
-                                date: item.date,
-                                title: item.title,
-                                description: item.description,
-                                category: item.category,
-                                price: item.price,
-                                imageUrl: item.imageUrl,
-                                editPath: `/listings/${item.id}/edit`,
-                                isExternal: false,
-                                status: item.status,
-                                views: item.views,
-                                clicks: item.clicks,
-                            };
-                        default:
-                            return null;
-                    }
-                }).filter((item): item is CalendarItem => item !== null);
-                setAllItems(formattedItems.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
-            })
+            .then(setAllItems)
             .catch(err => {
                 console.error("Failed to fetch calendar items", err);
                 toast({ title: "Error", description: "Could not load calendar items.", variant: "destructive" });
