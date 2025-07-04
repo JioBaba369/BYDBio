@@ -22,18 +22,6 @@ import { db } from '@/lib/firebase';
 import type { User } from './users';
 import { formatCurrency } from './utils';
 
-const serializeTimestamps = (data: { [key: string]: any }): { [key: string]: any } => {
-    const serializedData: { [key: string]: any } = {};
-    for (const key in data) {
-        if (data[key] && typeof data[key].toDate === 'function') {
-            serializedData[key] = data[key].toDate().toISOString();
-        } else {
-            serializedData[key] = data[key];
-        }
-    }
-    return serializedData;
-};
-
 export type ItineraryItem = {
   time: string;
   title: string;
@@ -286,16 +274,28 @@ export const getDiaryEvents = async (userId: string): Promise<any[]> => {
     ]);
     
     const eventsMap = new Map<string, any>();
-
-    createdSnapshot.forEach(doc => {
-        eventsMap.set(doc.id, { ...serializeTimestamps(doc.data()), id: doc.id, source: 'created' });
-    });
-
-    rsvpedSnapshot.forEach(doc => {
-        if (!eventsMap.has(doc.id)) {
-            eventsMap.set(doc.id, { ...serializeTimestamps(doc.data()), id: doc.id, source: 'rsvped' });
+    
+    const processEventDoc = (doc: any, source: 'created' | 'rsvped') => {
+        const key = doc.id;
+        if (source === 'rsvped' && eventsMap.has(key)) return;
+        
+        const data = doc.data();
+        const serializedData = { ...data };
+        if (data.createdAt && typeof data.createdAt.toDate === 'function') {
+            serializedData.createdAt = data.createdAt.toDate().toISOString();
         }
-    });
+        if (data.startDate && typeof data.startDate.toDate === 'function') {
+            serializedData.startDate = data.startDate.toDate().toISOString();
+        }
+        if (data.endDate && typeof data.endDate.toDate === 'function') {
+            serializedData.endDate = data.endDate.toDate().toISOString();
+        }
+        
+        eventsMap.set(key, { ...serializedData, id: doc.id, source });
+    }
+
+    createdSnapshot.forEach(doc => processEventDoc(doc, 'created'));
+    rsvpedSnapshot.forEach(doc => processEventDoc(doc, 'rsvped'));
     
     const events = Array.from(eventsMap.values());
     if (events.length === 0) return [];
@@ -356,33 +356,60 @@ export const getCalendarItems = async (userId: string): Promise<CalendarItem[]> 
 
     const itemsMap = new Map<string, any>();
     
-    eventsSnapshot.forEach(doc => {
-        itemsMap.set(`event-${doc.id}`, { ...serializeTimestamps(doc.data()), id: doc.id, type: 'event', source: 'created' });
-    });
-    rsvpedEventsSnapshot.forEach(doc => {
-        if (!itemsMap.has(`event-${doc.id}`)) {
-            itemsMap.set(`event-${doc.id}`, { ...serializeTimestamps(doc.data()), id: doc.id, type: 'event', source: 'rsvped' });
+    const processDoc = (doc: any, type: string, source?: string) => {
+        const key = `${type}-${doc.id}`;
+        // Don't overwrite events from `createdEventsQuery` with `rsvpedEventsQuery`
+        if (source === 'rsvped' && itemsMap.has(key)) return;
+
+        const data = doc.data();
+        const serializedData = { ...data };
+        // Explicitly serialize all known date fields
+        if (data.createdAt && typeof data.createdAt.toDate === 'function') {
+            serializedData.createdAt = data.createdAt.toDate().toISOString();
         }
-    });
-    offersSnapshot.forEach(doc => {
-        itemsMap.set(`offer-${doc.id}`, { ...serializeTimestamps(doc.data()), id: doc.id, type: 'offer' });
-    });
-    jobsSnapshot.forEach(doc => {
-        itemsMap.set(`job-${doc.id}`, { ...serializeTimestamps(doc.data()), id: doc.id, type: 'job' });
-    });
-    listingsSnapshot.forEach(doc => {
-        itemsMap.set(`listing-${doc.id}`, { ...serializeTimestamps(doc.data()), id: doc.id, type: 'listing' });
-    });
+        if (data.startDate && typeof data.startDate.toDate === 'function') {
+            serializedData.startDate = data.startDate.toDate().toISOString();
+        }
+        if (data.endDate && typeof data.endDate.toDate === 'function') {
+            serializedData.endDate = data.endDate.toDate().toISOString();
+        }
+        if (data.postingDate && typeof data.postingDate.toDate === 'function') {
+            serializedData.postingDate = data.postingDate.toDate().toISOString();
+        }
+        if (data.closingDate && typeof data.closingDate.toDate === 'function') {
+            serializedData.closingDate = data.closingDate.toDate().toISOString();
+        }
+        
+        itemsMap.set(key, { ...serializedData, id: doc.id, type, source });
+    };
+
+    eventsSnapshot.forEach(doc => processDoc(doc, 'event', 'created'));
+    rsvpedEventsSnapshot.forEach(doc => processDoc(doc, 'event', 'rsvped'));
+    offersSnapshot.forEach(doc => processDoc(doc, 'offer'));
+    jobsSnapshot.forEach(doc => processDoc(doc, 'job'));
+    listingsSnapshot.forEach(doc => processDoc(doc, 'listing'));
+
 
     const allItems = Array.from(itemsMap.values());
     
     const formattedItems: CalendarItem[] = allItems.map((item: any) => {
+        let primaryDate: string | null = null;
+        if (item.type === 'event' || item.type === 'offer') {
+            primaryDate = item.startDate;
+        } else if (item.type === 'job') {
+            primaryDate = item.postingDate;
+        } else if (item.type === 'listing') {
+            primaryDate = item.createdAt;
+        }
+
+        if (!primaryDate) return null;
+
         switch(item.type) {
             case 'event':
                 return {
                     id: item.id,
                     type: 'Event' as const,
-                    date: item.startDate,
+                    date: primaryDate,
                     title: item.title,
                     description: `Event at ${item.location}`,
                     location: item.location,
@@ -397,7 +424,7 @@ export const getCalendarItems = async (userId: string): Promise<CalendarItem[]> 
                  return {
                     id: item.id,
                     type: 'Offer' as const,
-                    date: item.startDate,
+                    date: primaryDate,
                     title: item.title,
                     description: item.description,
                     category: item.category,
@@ -412,7 +439,7 @@ export const getCalendarItems = async (userId: string): Promise<CalendarItem[]> 
                  return {
                     id: item.id,
                     type: 'Job' as const,
-                    date: item.postingDate,
+                    date: primaryDate,
                     title: item.title,
                     description: `${item.type} at ${item.company}`,
                     company: item.company,
@@ -429,7 +456,7 @@ export const getCalendarItems = async (userId: string): Promise<CalendarItem[]> 
                  return {
                     id: item.id,
                     type: 'Listing' as const,
-                    date: item.createdAt,
+                    date: primaryDate,
                     title: item.title,
                     description: item.description,
                     category: item.category,
