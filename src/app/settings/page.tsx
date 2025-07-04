@@ -15,10 +15,11 @@ import { Monitor, Moon, Sun } from "lucide-react";
 import { useState } from "react";
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { ChangePasswordDialog } from "@/components/change-password-dialog";
 import { useAuth } from "@/components/auth-provider";
 import { Skeleton } from "@/components/ui/skeleton";
-import { deleteUserAccount, updateUser } from "@/lib/users";
+import { deleteUserAccount, updateUser, type NotificationSettings } from "@/lib/users";
+import { sendPasswordResetEmail } from "firebase/auth";
+import { auth } from "@/lib/firebase";
 
 const SettingsPageSkeleton = () => (
     <div className="space-y-6">
@@ -57,27 +58,15 @@ export default function SettingsPage() {
     const { toast } = useToast();
     
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-    const [isChangePasswordDialogOpen, setIsChangePasswordDialogOpen] = useState(false);
     
-    const [notificationSettings, setNotificationSettings] = useState({
-        newFollowers: user?.notificationSettings?.newFollowers ?? true,
-        newLikes: user?.notificationSettings?.newLikes ?? true,
-        offersAndUpdates: user?.notificationSettings?.offersAndUpdates ?? true,
-    });
-
-    const handleNotificationSettingChange = async (key: keyof typeof notificationSettings, value: boolean) => {
+    const handleNotificationSettingChange = async (key: keyof NotificationSettings, value: boolean) => {
         if (!user) return;
         
-        // Optimistic UI update
-        const newSettings = { ...notificationSettings, [key]: value };
-        setNotificationSettings(newSettings);
-
         try {
+            // This uses dot notation to update a single field in the 'notificationSettings' map in Firestore.
             await updateUser(user.uid, { [`notificationSettings.${key}`]: value });
             toast({ title: "Settings saved" });
         } catch (error) {
-            // Revert on error
-            setNotificationSettings(prev => ({ ...prev, [key]: !value }));
             console.error("Failed to update notification settings:", error);
             toast({ title: "Error saving settings", variant: "destructive" });
         }
@@ -118,14 +107,31 @@ export default function SettingsPage() {
         }
     };
 
-    const handleChangePassword = () => {
-        // Mock function
-        toast({
-            title: "Password Changed",
-            description: "Your password has been successfully updated.",
-        });
-        setIsChangePasswordDialogOpen(false);
+    const handleSendResetEmail = async () => {
+        if (!user?.email) {
+            toast({
+                title: "Error",
+                description: "No email address found for this account.",
+                variant: "destructive",
+            });
+            return;
+        }
+        try {
+            await sendPasswordResetEmail(auth, user.email);
+            toast({
+                title: "Reset Link Sent",
+                description: "A password reset link has been sent to your email address.",
+            });
+        } catch (error: any) {
+            console.error("Password reset error:", error);
+            toast({
+                title: "Error Sending Link",
+                description: error.message || "An unexpected error occurred.",
+                variant: "destructive",
+            });
+        }
     };
+
 
     if (loading || !user) {
         return <SettingsPageSkeleton />;
@@ -140,11 +146,6 @@ export default function SettingsPage() {
                 itemName="account"
                 confirmationText={user.username}
                 confirmationLabel={`This action is permanent. To confirm, please type your username "${user.username}" below.`}
-            />
-            <ChangePasswordDialog
-                open={isChangePasswordDialogOpen}
-                onOpenChange={setIsChangePasswordDialogOpen}
-                onConfirm={handleChangePassword}
             />
             <div className="space-y-6">
                 <div>
@@ -249,7 +250,7 @@ export default function SettingsPage() {
                                     </div>
                                     <Switch
                                         id="new-follower"
-                                        checked={notificationSettings.newFollowers}
+                                        checked={user.notificationSettings?.newFollowers ?? true}
                                         onCheckedChange={(checked) => handleNotificationSettingChange('newFollowers', checked)}
                                     />
                                 </div>
@@ -263,7 +264,7 @@ export default function SettingsPage() {
                                     </div>
                                     <Switch
                                         id="post-likes"
-                                        checked={notificationSettings.newLikes}
+                                        checked={user.notificationSettings?.newLikes ?? true}
                                         onCheckedChange={(checked) => handleNotificationSettingChange('newLikes', checked)}
                                     />
                                 </div>
@@ -277,7 +278,7 @@ export default function SettingsPage() {
                                     </div>
                                     <Switch
                                         id="offers-updates"
-                                        checked={notificationSettings.offersAndUpdates}
+                                        checked={user.notificationSettings?.offersAndUpdates ?? true}
                                         onCheckedChange={(checked) => handleNotificationSettingChange('offersAndUpdates', checked)}
                                     />
                                 </div>
@@ -298,10 +299,10 @@ export default function SettingsPage() {
                                     <div>
                                         <p className="font-medium">Change Password</p>
                                         <p className="text-sm text-muted-foreground">
-                                            It's a good idea to use a strong password that you're not using elsewhere.
+                                            We will send a secure link to your email to reset your password.
                                         </p>
                                     </div>
-                                    <Button variant="outline" onClick={() => setIsChangePasswordDialogOpen(true)}>Change Password</Button>
+                                    <Button variant="outline" onClick={handleSendResetEmail}>Send Reset Link</Button>
                                 </div>
                                 <Separator />
                                 <div className="flex items-center justify-between">
