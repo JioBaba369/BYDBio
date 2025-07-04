@@ -5,7 +5,7 @@ import type { Job, User } from '@/lib/users';
 import Image from 'next/image';
 import { Card, CardContent, CardTitle, CardDescription, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Building, Calendar, MapPin, Edit, DollarSign, Clock } from 'lucide-react';
+import { ArrowLeft, Building, Calendar, MapPin, Edit, DollarSign, Clock, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -63,9 +63,14 @@ export default function OpportunityDetailClient({ job, author }: OpportunityDeta
                                         Edit
                                     </Link>
                                 </Button>
-                            ) : (
-                                <Button size="lg" className="flex-1 sm:flex-none">Apply Now</Button>
-                            )}
+                            ) : job.applicationUrl ? (
+                                <Button asChild size="lg" className="flex-1 sm:flex-none">
+                                    <a href={job.applicationUrl} target="_blank" rel="noopener noreferrer">
+                                        <ExternalLink className="mr-2 h-4 w-4" />
+                                        Apply Online
+                                    </a>
+                                </Button>
+                            ) : null }
                             <ShareButton variant="outline" size="lg" />
                         </div>
                     </CardHeader>
@@ -102,6 +107,13 @@ export default function OpportunityDetailClient({ job, author }: OpportunityDeta
                             <h3 className="font-semibold text-lg mb-2">Job Description</h3>
                             <p className="text-muted-foreground whitespace-pre-wrap">{job.description}</p>
                         </div>
+
+                        {job.contactInfo && (
+                            <div className="mt-8">
+                                <h3 className="font-semibold text-lg mb-2">How to Apply</h3>
+                                <p className="text-muted-foreground whitespace-pre-wrap">{job.contactInfo}</p>
+                            </div>
+                        )}
 
                         <div className="mt-8 pt-6 border-t">
                             <h3 className="font-semibold text-lg mb-4">About the Poster</h3>

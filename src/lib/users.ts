@@ -88,6 +88,8 @@ export type Job = {
   imageUrl: string | null;
   status: 'active' | 'archived';
   createdAt: Timestamp | string;
+  applicationUrl?: string;
+  contactInfo?: string;
 };
 
 export type Event = {

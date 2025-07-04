@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { Button } from "@/components/ui/button"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import Image from "next/image"
@@ -31,6 +31,8 @@ const opportunityFormSchema = z.object({
   imageUrl: z.string().optional().nullable(),
   startDate: z.date().optional().nullable(),
   endDate: z.date().optional().nullable(),
+  applicationUrl: z.string().url({ message: "Please enter a valid URL." }).optional().or(z.literal('')),
+  contactInfo: z.string().max(1000, "Contact info must be less than 1000 characters.").optional(),
 }).refine(data => {
     if (data.startDate && data.endDate) {
         return data.endDate >= data.startDate;
@@ -320,6 +322,43 @@ export function OpportunityForm({ defaultValues, onSubmit, isSaving }: Opportuni
                                 )}
                                 />
                             </div>
+                            <FormField
+                                control={form.control}
+                                name="applicationUrl"
+                                render={({ field }) => (
+                                    <FormItem>
+                                    <FormLabel>Application URL (Optional)</FormLabel>
+                                    <FormControl>
+                                        <Input placeholder="https://company.com/apply/job123" {...field} />
+                                    </FormControl>
+                                    <FormDescription>
+                                        A direct link to the application page.
+                                    </FormDescription>
+                                    <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="contactInfo"
+                                render={({ field }) => (
+                                    <FormItem>
+                                    <FormLabel>Contact / How to Apply (Optional)</FormLabel>
+                                    <FormControl>
+                                        <Textarea
+                                        placeholder="e.g. To apply, please send your resume and a cover letter to contact@company.com with the subject line 'Job Title Application'."
+                                        className="resize-none"
+                                        rows={4}
+                                        {...field}
+                                        />
+                                    </FormControl>
+                                    <FormDescription>
+                                        Use this for manual application instructions if an application URL is not available.
+                                    </FormDescription>
+                                    <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
                         </CardContent>
                     </Card>
                 </div>

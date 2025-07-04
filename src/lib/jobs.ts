@@ -34,6 +34,8 @@ export type Job = {
   applicants: number;
   createdAt: Timestamp | string;
   searchableKeywords: string[];
+  applicationUrl?: string;
+  contactInfo?: string;
 };
 
 // Function to fetch a single job by its ID
@@ -89,6 +91,7 @@ export const createJob = async (userId: string, data: Omit<Job, 'id' | 'authorId
     ...data.description.toLowerCase().split(' ').filter(Boolean),
     ...data.location.toLowerCase().split(' ').filter(Boolean),
     data.type.toLowerCase(),
+    ...(data.contactInfo ? data.contactInfo.toLowerCase().split(' ').filter(Boolean) : [])
   ];
 
   await addDoc(jobsRef, {
@@ -108,7 +111,7 @@ export const updateJob = async (id: string, data: Partial<Omit<Job, 'id' | 'auth
   const jobDocRef = doc(db, 'jobs', id);
   const dataToUpdate = { ...data };
 
-  if (data.title || data.company || data.location || data.type || data.description) {
+  if (data.title || data.company || data.location || data.type || data.description || data.contactInfo) {
     const jobDoc = await getDoc(jobDocRef);
     const existingData = jobDoc.data() as Job;
     const newTitle = data.title ?? existingData.title;
@@ -116,6 +119,7 @@ export const updateJob = async (id: string, data: Partial<Omit<Job, 'id' | 'auth
     const newLocation = data.location ?? existingData.location;
     const newType = data.type ?? existingData.type;
     const newDescription = data.description ?? existingData.description;
+    const newContactInfo = data.contactInfo ?? existingData.contactInfo;
 
     const keywords = [
         ...newTitle.toLowerCase().split(' ').filter(Boolean),
@@ -123,6 +127,7 @@ export const updateJob = async (id: string, data: Partial<Omit<Job, 'id' | 'auth
         ...newDescription.toLowerCase().split(' ').filter(Boolean),
         ...newLocation.toLowerCase().split(' ').filter(Boolean),
         newType.toLowerCase(),
+        ...(newContactInfo ? newContactInfo.toLowerCase().split(' ').filter(Boolean) : [])
     ];
     dataToUpdate.searchableKeywords = [...new Set(keywords)];
   }
