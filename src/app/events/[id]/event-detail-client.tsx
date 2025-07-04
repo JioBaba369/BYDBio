@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -6,13 +5,12 @@ import type { Event, User } from '@/lib/users';
 import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MapPin, Calendar, Clock, ArrowLeft, Users, Ticket, User as UserIcon, BellRing, CalendarPlus, Loader2 } from 'lucide-react';
+import { MapPin, Calendar, Clock, ArrowLeft, Users, Ticket, User as UserIcon, BellRing, CalendarPlus, Loader2, Edit } from 'lucide-react';
 import Link from 'next/link';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { Separator } from '@/components/ui/separator';
 import ShareButton from '@/components/share-button';
-import { Logo } from '@/components/logo';
 import * as ics from 'ics';
 import { saveAs } from 'file-saver';
 import { useToast } from '@/hooks/use-toast';
@@ -32,6 +30,7 @@ export default function EventDetailClient({ event, author }: EventDetailClientPr
     const { toast } = useToast();
     const attendeeCount = event.rsvps?.length || 0;
     const [isReminderLoading, setIsReminderLoading] = useState(false);
+    const isOwner = user && user.uid === author.uid;
 
     const handleSetReminder = async () => {
         if (!user) {
@@ -132,29 +131,40 @@ export default function EventDetailClient({ event, author }: EventDetailClientPr
                                 <CardDescription className="text-base pt-2 flex items-center gap-2">Hosted by <Link href={`/u/${author.username}`} className="font-semibold text-primary hover:underline">{author.name}</Link></CardDescription>
                             </div>
                             <div className='flex items-center gap-2 flex-wrap justify-end'>
-                                <Button variant="outline" onClick={handleAddToCalendar}>
-                                    <CalendarPlus className="mr-2 h-4 w-4"/>
-                                    Add to Calendar
-                                </Button>
-                                <Button variant="outline" onClick={handleSetReminder} disabled={isReminderLoading}>
-                                    {isReminderLoading ? (
-                                        <>
-                                            <Loader2 className="mr-2 h-4 w-4 animate-spin"/>
-                                            Setting...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <BellRing className="mr-2 h-4 w-4"/>
-                                            Set Reminder
-                                        </>
-                                    )}
-                                </Button>
-                                <Button asChild size="lg">
-                                    <Link href={`/events/${event.id}/register`}>
-                                        <Ticket className="mr-2 h-5 w-5"/>
-                                        Register Now
-                                    </Link>
-                                </Button>
+                                {isOwner ? (
+                                    <Button asChild size="lg">
+                                        <Link href={`/events/${event.id}/edit`}>
+                                            <Edit className="mr-2 h-5 w-5"/>
+                                            Edit Event
+                                        </Link>
+                                    </Button>
+                                ) : (
+                                    <>
+                                        <Button variant="outline" onClick={handleAddToCalendar}>
+                                            <CalendarPlus className="mr-2 h-4 w-4"/>
+                                            Add to Calendar
+                                        </Button>
+                                        <Button variant="outline" onClick={handleSetReminder} disabled={isReminderLoading}>
+                                            {isReminderLoading ? (
+                                                <>
+                                                    <Loader2 className="mr-2 h-4 w-4 animate-spin"/>
+                                                    Setting...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <BellRing className="mr-2 h-4 w-4"/>
+                                                    Set Reminder
+                                                </>
+                                            )}
+                                        </Button>
+                                        <Button asChild size="lg">
+                                            <Link href={`/events/${event.id}/register`}>
+                                                <Ticket className="mr-2 h-5 w-5"/>
+                                                Register Now
+                                            </Link>
+                                        </Button>
+                                    </>
+                                )}
                                 <ShareButton />
                             </div>
                         </div>

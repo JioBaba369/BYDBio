@@ -1,17 +1,16 @@
-
 'use client';
 
 import type { Offer, User } from '@/lib/users';
 import Image from 'next/image';
 import { Card, CardContent, CardTitle, CardDescription, CardHeader, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Tag, Calendar, Gift, MessageSquare } from 'lucide-react';
+import { ArrowLeft, Tag, Calendar, Gift, MessageSquare, Edit } from 'lucide-react';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Logo } from '@/components/logo';
 import ShareButton from '@/components/share-button';
 import { ClientFormattedDate } from '@/components/client-formatted-date';
+import { useAuth } from '@/components/auth-provider';
 
 
 interface OfferDetailClientProps {
@@ -20,6 +19,9 @@ interface OfferDetailClientProps {
 }
 
 export default function OfferDetailClient({ offer, author }: OfferDetailClientProps) {
+    const { user: currentUser } = useAuth();
+    const isOwner = currentUser && currentUser.uid === author.uid;
+
     return (
         <div className="bg-muted/40 min-h-screen py-8 px-4">
             <div className="max-w-4xl mx-auto space-y-6">
@@ -59,7 +61,17 @@ export default function OfferDetailClient({ offer, author }: OfferDetailClientPr
                                         </div>
                                         </CardDescription>
                                     </div>
-                                    <ShareButton />
+                                    <div className="flex items-center gap-2">
+                                        {isOwner && (
+                                            <Button asChild variant="secondary">
+                                                <Link href={`/offers/${offer.id}/edit`}>
+                                                    <Edit className="mr-2 h-4 w-4"/>
+                                                    Edit
+                                                </Link>
+                                            </Button>
+                                        )}
+                                        <ShareButton />
+                                    </div>
                                 </div>
                             </CardHeader>
                             <CardContent>

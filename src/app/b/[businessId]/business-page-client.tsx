@@ -1,14 +1,13 @@
-
 'use client';
 
 import { type Business, type User } from '@/lib/users';
 import Image from 'next/image';
 import { Card, CardContent, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Mail, Phone, Globe, MapPin, ArrowLeft } from 'lucide-react';
+import { Mail, Phone, Globe, MapPin, ArrowLeft, Edit } from 'lucide-react';
 import Link from 'next/link';
-import { Logo } from '@/components/logo';
 import ShareButton from '@/components/share-button';
+import { useAuth } from '@/components/auth-provider';
 
 interface BusinessPageClientProps {
     business: Business;
@@ -16,6 +15,9 @@ interface BusinessPageClientProps {
 }
 
 export default function BusinessPageClient({ business, author }: BusinessPageClientProps) {
+    const { user: currentUser } = useAuth();
+    const isOwner = currentUser && currentUser.uid === author.uid;
+
     return (
         <div className="bg-muted/40 min-h-screen py-8 px-4">
             <div className="max-w-4xl mx-auto space-y-6">
@@ -53,7 +55,17 @@ export default function BusinessPageClient({ business, author }: BusinessPageCli
                             <div className="pt-16 flex-1">
                                 <div className="flex justify-between items-start gap-4">
                                     <CardTitle className="text-3xl font-bold font-headline">{business.name}</CardTitle>
-                                    <ShareButton />
+                                    <div className="flex items-center gap-2">
+                                        {isOwner && (
+                                            <Button asChild variant="secondary">
+                                                <Link href={`/businesses/${business.id}/edit`}>
+                                                    <Edit className="mr-2 h-4 w-4"/>
+                                                    Edit
+                                                </Link>
+                                            </Button>
+                                        )}
+                                        <ShareButton />
+                                    </div>
                                 </div>
                                 <CardDescription className="text-base pt-2">{business.description}</CardDescription>
                             </div>
