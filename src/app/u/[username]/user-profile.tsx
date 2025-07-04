@@ -152,7 +152,7 @@ END:VCARD`;
   const hasContent = allContent.length > 0;
 
   return (
-    <div className="flex justify-center bg-muted/40 py-8 px-4">
+    <div className="flex justify-center bg-dot py-8 px-4">
       <div className="w-full max-w-xl mx-auto space-y-8">
         <Card className="bg-background/80 backdrop-blur-sm p-6 sm:p-8 shadow-2xl rounded-2xl border-primary/10">
           <div className="flex flex-col items-center text-center">

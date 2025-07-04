@@ -50,7 +50,7 @@ END:VCARD`;
   };
 
   return (
-    <div className="bg-muted min-h-screen flex flex-col items-center justify-center p-4 antialiased relative">
+    <div className="bg-dot min-h-screen flex flex-col items-center justify-center p-4 antialiased relative">
         <div className="absolute top-4 left-4">
             <Button asChild variant="ghost" size="sm">
             <Link href={`/u/${user.username}`} className="inline-flex items-center gap-2 text-muted-foreground hover:text-primary">

@@ -139,7 +139,7 @@ export default function EventDetailClient({ event, author }: EventDetailClientPr
 
 
     return (
-        <div className="bg-muted/40 min-h-screen py-8 px-4">
+        <div className="bg-dot min-h-screen py-8 px-4">
             <div className="max-w-4xl mx-auto space-y-6">
                  <Button asChild variant="ghost" className="pl-0">
                     <Link href={`/u/${author.username}`} className="inline-flex items-center gap-2 text-primary hover:underline">
