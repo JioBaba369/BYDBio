@@ -1,88 +1,87 @@
-
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    function isAuthenticated() {
+    // Helper Functions
+    function isSignedIn() {
       return request.auth != null;
     }
+    
+    function isOwner(docData) {
+      return request.auth.uid == docData.authorId;
+    }
 
-    // Users can be read by anyone, but only the authenticated user can create/modify their own document.
+    function isTogglingLike() {
+      let isLiking = request.resource.data.likedBy == resource.data.likedBy.concat([request.auth.uid])
+                     && request.resource.data.likes == resource.data.likes + 1;
+      let isUnliking = resource.data.likedBy == request.resource.data.likedBy.concat([request.auth.uid])
+                       && request.resource.data.likes == resource.data.likes - 1;
+      // Ensure no other fields are being modified
+      let onlyAllowedFieldsModified = request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes', 'likedBy']);
+
+      return onlyAllowedFieldsModified && (isLiking || isUnliking);
+    }
+    
+    function isTogglingRsvp() {
+        let isRsvping = request.resource.data.rsvps == resource.data.rsvps.concat([request.auth.uid]);
+        let isUnRsvping = resource.data.rsvps == request.resource.data.rsvps.concat([request.auth.uid]);
+        let onlyRsvpFieldModified = request.resource.data.diff(resource.data).affectedKeys().hasOnly(['rsvps']);
+
+        return onlyRsvpFieldModified && (isRsvping || isUnRsvping);
+    }
+
+    // Collection Rules
     match /users/{userId} {
       allow read: if true;
-      allow create, update: if isAuthenticated() && request.auth.uid == userId;
-      // Generally, users shouldn't delete their own record directly, handle this via a Cloud Function.
-      allow delete: if false;
+      allow create: if request.auth.uid == userId;
+      allow update: if request.auth.uid == userId;
     }
 
-    // Generic function to check if the authenticated user is the author of a document.
-    // To be used for `update` and `delete` where `resource.data` exists.
-    function isAuthor() {
-      return isAuthenticated() && request.auth.uid == resource.data.authorId;
+    match /posts/{postId} {
+      allow read: if true;
+      allow create: if isSignedIn() && isOwner(request.resource.data);
+      allow update: if isSignedIn() && (isOwner(resource.data) || isTogglingLike());
+      allow delete: if isSignedIn() && isOwner(resource.data);
     }
-
-    // Generic function to check if the authenticated user is creating a document for themselves.
-    // To be used for `create` where `request.resource.data` is used.
-    function isCreatingForSelf() {
-    	return isAuthenticated() && request.auth.uid == request.resource.data.authorId;
+    
+    match /events/{eventId} {
+      allow read: if true;
+      allow create: if isSignedIn() && isOwner(request.resource.data);
+      allow update: if isSignedIn() && (isOwner(resource.data) || isTogglingRsvp());
+      allow delete: if isSignedIn() && isOwner(resource.data);
     }
 
     match /businesses/{businessId} {
-      allow read: if true;
-      allow create: if isCreatingForSelf();
-      allow update, delete: if isAuthor();
+        allow read: if true;
+        allow create: if isSignedIn() && isOwner(request.resource.data);
+        allow update: if isSignedIn() && isOwner(resource.data);
+        allow delete: if isSignedIn() && isOwner(resource.data);
     }
 
     match /listings/{listingId} {
-      allow read: if true;
-      allow create: if isCreatingForSelf();
-      allow update, delete: if isAuthor();
+        allow read: if true;
+        allow create: if isSignedIn() && isOwner(request.resource.data);
+        allow update: if isSignedIn() && isOwner(resource.data);
+        allow delete: if isSignedIn() && isOwner(resource.data);
+    }
+    
+    match /jobs/{jobId} {
+        allow read: if true;
+        allow create: if isSignedIn() && isOwner(request.resource.data);
+        allow update: if isSignedIn() && isOwner(resource.data);
+        allow delete: if isSignedIn() && isOwner(resource.data);
     }
 
     match /offers/{offerId} {
-      allow read: if true;
-      allow create: if isCreatingForSelf();
-      allow update, delete: if isAuthor();
-    }
-
-    match /jobs/{jobId} {
-      allow read: if true;
-      allow create: if isCreatingForSelf();
-      allow update, delete: if isAuthor();
-    }
-
-    // Events: Anyone can read.
-    // RSVPing (updating 'rsvps' array) only requires authentication.
-    match /events/{eventId} {
-      allow read: if true;
-      allow create: if isCreatingForSelf();
-      allow delete: if isAuthor();
-      allow update: if isAuthenticated() && (
-          isAuthor() ||
-          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['rsvps'])
-      );
-    }
-
-    // Posts: Readable by anyone.
-    // Liking (updating 'likedBy' and 'likes') requires authentication.
-    match /posts/{postId} {
         allow read: if true;
-        allow create: if isCreatingForSelf();
-        allow delete: if isAuthor();
-        allow update: if isAuthenticated() && (
-          isAuthor() ||
-          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likedBy', 'likes'])
-        );
+        allow create: if isSignedIn() && isOwner(request.resource.data);
+        allow update: if isSignedIn() && isOwner(resource.data);
+        allow delete: if isSignedIn() && isOwner(resource.data);
     }
 
-    // Diary Notes: Only accessible by the owner.
-    // The document ID is composite {userId}_{eventId}
-    function isDiaryNoteOwner(noteId) {
-    	return isAuthenticated() && request.auth.uid == noteId.split('_')[0];
-    }
     match /diaryNotes/{noteId} {
-      allow read, write: if isDiaryNoteOwner(noteId);
+      allow read, write: if isSignedIn() && request.auth.uid == resource.data.userId;
     }
   }
 }
