@@ -1,11 +1,11 @@
-
 'use client';
 
+import { useState, useEffect } from 'react';
 import type { Listing, User } from '@/lib/users';
 import Image from 'next/image';
 import { Card, CardContent, CardTitle, CardDescription, CardHeader, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Tag, DollarSign, MessageSquare, Calendar, Edit, ShoppingCart } from 'lucide-react';
+import { ArrowLeft, Tag, DollarSign, MessageSquare, Calendar, Edit, ShoppingCart, UserPlus, UserCheck, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -13,6 +13,8 @@ import ShareButton from '@/components/share-button';
 import { ClientFormattedDate } from '@/components/client-formatted-date';
 import { useAuth } from '@/components/auth-provider';
 import { formatCurrency } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
+import { followUser, unfollowUser } from '@/lib/connections';
 
 
 interface ListingDetailClientProps {
@@ -22,7 +24,42 @@ interface ListingDetailClientProps {
 
 export default function ListingDetailClient({ listing, author }: ListingDetailClientProps) {
     const { user: currentUser } = useAuth();
+    const { toast } = useToast();
     const isOwner = currentUser && currentUser.uid === author.uid;
+    
+    const [isFollowing, setIsFollowing] = useState(currentUser?.following?.includes(author.uid) || false);
+    const [isFollowLoading, setIsFollowLoading] = useState(false);
+
+    useEffect(() => {
+        setIsFollowing(currentUser?.following?.includes(author.uid) || false);
+    }, [currentUser, author.uid]);
+    
+    const handleFollowToggle = async () => {
+        if (!currentUser) {
+            toast({ title: "Please sign in to follow users.", variant: "destructive" });
+            return;
+        }
+        if (currentUser.uid === author.uid) return;
+
+        setIsFollowLoading(true);
+        const currentlyFollowing = isFollowing;
+
+        try {
+            if (currentlyFollowing) {
+                await unfollowUser(currentUser.uid, author.uid);
+                toast({ title: `Unfollowed ${author.name}` });
+            } else {
+                await followUser(currentUser.uid, author.uid);
+                toast({ title: `You are now following ${author.name}` });
+            }
+            setIsFollowing(!currentlyFollowing);
+        } catch (error) {
+            toast({ title: "Something went wrong", variant: "destructive" });
+        } finally {
+            setIsFollowLoading(false);
+        }
+    };
+
 
     return (
         <div className="bg-muted/40 min-h-screen py-8 px-4">
@@ -107,12 +144,25 @@ export default function ListingDetailClient({ listing, author }: ListingDetailCl
                                 </Link>
                                 <Link href={`/u/${author.username}`} className="font-semibold hover:underline">{author.name}</Link>
                                 <p className="text-sm text-muted-foreground">@{author.handle}</p>
-                                <Button asChild className="mt-4 w-full">
-                                    <Link href={`/u/${author.username}#contact`}>
-                                        <MessageSquare className="mr-2 h-4 w-4" />
-                                        Contact Seller
-                                    </Link>
-                                </Button>
+                                <div className="mt-4 w-full space-y-2">
+                                    <Button asChild className="w-full">
+                                        <Link href={`/u/${author.username}#contact`}>
+                                            <MessageSquare className="mr-2 h-4 w-4" />
+                                            Contact Seller
+                                        </Link>
+                                    </Button>
+                                    {currentUser && !isOwner && (
+                                        <Button 
+                                            variant="outline"
+                                            className="w-full"
+                                            onClick={handleFollowToggle}
+                                            disabled={isFollowLoading}
+                                        >
+                                            {isFollowLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : isFollowing ? <UserCheck className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
+                                            {isFollowing ? 'Following' : 'Follow'}
+                                        </Button>
+                                    )}
+                                </div>
                             </CardContent>
                         </Card>
                     </div>
