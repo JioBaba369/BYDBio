@@ -256,7 +256,7 @@ export const getDiaryEvents = async (userId: string): Promise<any[]> => {
 
     rsvpedSnapshot.forEach(doc => {
         if (!eventsMap.has(doc.id)) {
-            eventsMap.set(doc.id, { ...doc.data(), id: doc.id, source: 'rsvped' });
+            itemsMap.set(doc.id, { ...doc.data(), id: doc.id, source: 'rsvped' });
         }
     });
     
@@ -347,20 +347,24 @@ export const getCalendarItems = async (userId: string) => {
     return allItems.map(item => {
         const author = authorMap.get(item.authorId);
         
-        let primaryDate = item.createdAt; 
-        if (item.startDate) primaryDate = item.startDate;
-        else if (item.postingDate) primaryDate = item.postingDate;
-
         const serializedItem: any = { ...item };
         for (const key in serializedItem) {
-            if (serializedItem[key] instanceof Timestamp) {
+            // Using a more robust check for Timestamp-like objects
+            if (serializedItem[key] && typeof serializedItem[key].toDate === 'function') {
                 serializedItem[key] = serializedItem[key].toDate().toISOString();
             }
         }
         
+        let primaryDate = serializedItem.createdAt; 
+        if (serializedItem.startDate) {
+            primaryDate = serializedItem.startDate;
+        } else if (serializedItem.postingDate) {
+            primaryDate = serializedItem.postingDate;
+        }
+
         return {
             ...serializedItem,
-            date: (primaryDate as Timestamp).toDate().toISOString(),
+            date: primaryDate,
             author: author ? { name: author.name, username: author.username, avatarUrl: author.avatarUrl } : undefined,
         };
     });
