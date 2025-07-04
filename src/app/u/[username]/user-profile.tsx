@@ -38,12 +38,12 @@ import { useRouter } from "next/navigation";
 interface UserProfilePageProps {
   userProfileData: User;
   content: {
-    posts: Post[];
-    listings: Listing[];
-    jobs: Job[];
-    events: Event[];
-    offers: Offer[];
-    businesses: Business[];
+    posts: (Omit<Post, 'createdAt'> & { createdAt: string })[];
+    listings: (Omit<Listing, 'createdAt'> & { createdAt: string })[];
+    jobs: (Omit<Job, 'postingDate' | 'createdAt'> & { postingDate: string, createdAt: string })[];
+    events: (Omit<Event, 'date' | 'createdAt'> & { date: string, createdAt: string })[];
+    offers: (Omit<Offer, 'releaseDate' | 'createdAt'> & { releaseDate: string, createdAt: string })[];
+    businesses: (Omit<Business, 'createdAt'> & { createdAt: string })[];
   }
 }
 
@@ -242,7 +242,7 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
                                     <MessageCircle className="h-4 w-4" />
                                     <span>{post.comments}</span>
                                 </div>
-                                <span className="ml-auto text-xs">{formatDistanceToNow(post.createdAt.toDate(), { addSuffix: true })}</span>
+                                <span className="ml-auto text-xs">{formatDistanceToNow(parseISO(post.createdAt), { addSuffix: true })}</span>
                             </CardFooter>
                             </Card>
                         ))}
@@ -331,7 +331,7 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
                                 </CardHeader>
                                 <CardContent className="space-y-2">
                                     <div className="flex items-center text-sm text-muted-foreground">
-                                    <Calendar className="mr-2 h-4 w-4" /> <ClientFormattedDate date={event.date as Date} formatStr="PPP" />
+                                    <Calendar className="mr-2 h-4 w-4" /> <ClientFormattedDate date={event.date} formatStr="PPP" />
                                     </div>
                                     <div className="flex items-center text-sm text-muted-foreground">
                                     <MapPin className="mr-2 h-4 w-4" /> {event.location}
@@ -356,7 +356,7 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
                                   <Badge variant="secondary"><Tag className="mr-1 h-3 w-3" />{offer.category}</Badge>
                                   <div className="flex items-center pt-4 text-sm text-muted-foreground">
                                       <Calendar className="mr-2 h-4 w-4" /> 
-                                      <span>Releases: <ClientFormattedDate date={offer.releaseDate as Date} formatStr="PPP" /></span>
+                                      <span>Releases: <ClientFormattedDate date={offer.releaseDate} formatStr="PPP" /></span>
                                   </div>
                                 </CardContent>
                                 <CardFooter>

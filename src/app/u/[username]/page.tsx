@@ -11,6 +11,7 @@ import { getJobsByUser } from '@/lib/jobs';
 import { getEventsByUser } from '@/lib/events';
 import { getOffersByUser } from '@/lib/offers';
 import { getBusinessesByUser } from '@/lib/businesses';
+import type { Timestamp } from 'firebase/firestore';
 
 export async function generateMetadata({ params }: { params: { username: string } }): Promise<Metadata> {
   const username = params.username;
@@ -84,7 +85,15 @@ export default async function PublicProfilePageWrapper({ params }: { params: { u
         getBusinessesByUser(userProfileData.uid)
     ]);
     
-    const content = { posts, listings, jobs, events, offers, businesses };
+    // Serialize date objects before passing to client component
+    const content = {
+        posts: posts.map(p => ({ ...p, createdAt: p.createdAt.toDate().toISOString() })),
+        listings: listings.map(l => ({ ...l, createdAt: (l.createdAt as Timestamp).toDate().toISOString() })),
+        jobs: jobs.map(j => ({ ...j, postingDate: (j.postingDate as Date).toISOString(), createdAt: (j.createdAt as Timestamp).toDate().toISOString() })),
+        events: events.map(e => ({ ...e, date: (e.date as Date).toISOString(), createdAt: (e.createdAt as Timestamp).toDate().toISOString() })),
+        offers: offers.map(o => ({ ...o, releaseDate: (o.releaseDate as Date).toISOString(), createdAt: (o.createdAt as Timestamp).toDate().toISOString() })),
+        businesses: businesses.map(b => ({ ...b, createdAt: (b.createdAt as Timestamp).toDate().toISOString() })),
+    };
 
     return <UserProfilePage userProfileData={userProfileData} content={content} />;
 }
