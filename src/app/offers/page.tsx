@@ -13,9 +13,10 @@ import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuIte
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/components/auth-provider";
-import { type Offer, getOffersByUser, deleteOffer, updateOffer } from "@/lib/offers";
+import { type Offer, deleteOffer, updateOffer, getAllOffers, type OfferWithAuthor } from "@/lib/offers";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ClientFormattedDate } from "@/components/client-formatted-date";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const OfferPageSkeleton = () => (
     <div className="space-y-6">
@@ -49,20 +50,18 @@ const OfferPageSkeleton = () => (
 
 export default function OffersPage() {
   const { user, loading: authLoading } = useAuth();
-  const [offers, setOffers] = useState<Offer[]>([]);
+  const [offers, setOffers] = useState<OfferWithAuthor[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedOfferId, setSelectedOfferId] = useState<string | null>(null);
   const { toast } = useToast();
   
   useEffect(() => {
-    if (user?.uid) {
-      setIsLoading(true);
-      getOffersByUser(user.uid)
-        .then(setOffers)
-        .finally(() => setIsLoading(false));
-    }
-  }, [user]);
+    setIsLoading(true);
+    getAllOffers()
+      .then(setOffers)
+      .finally(() => setIsLoading(false));
+  }, []);
 
   const handleArchive = async (offerId: string, currentStatus: 'active' | 'archived') => {
     const newStatus = currentStatus === 'active' ? 'archived' : 'active';
@@ -97,7 +96,7 @@ export default function OffersPage() {
   }
   
   const activeOffers = offers.filter(o => o.status === 'active');
-  const archivedOffers = offers.filter(o => o.status === 'archived');
+  const archivedOffers = user ? offers.filter(o => o.status === 'archived' && o.authorId === user.uid) : [];
 
   if (authLoading || isLoading) {
     return <OfferPageSkeleton />;
@@ -115,19 +114,23 @@ export default function OffersPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold font-headline">Offers</h1>
-            <p className="text-muted-foreground">Manage your special offers and deals.</p>
+            <p className="text-muted-foreground">Discover special offers and deals from the community.</p>
           </div>
-          <Button asChild>
-            <Link href="/offers/create">
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Create Offer
-            </Link>
-          </Button>
+          {user && (
+            <Button asChild>
+              <Link href="/offers/create">
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Create Offer
+              </Link>
+            </Button>
+          )}
         </div>
 
         {activeOffers.length > 0 ? (
           <div className="grid gap-6 md:grid-cols-2">
-            {activeOffers.map((offer) => (
+            {activeOffers.map((offer) => {
+              const isOwner = user && offer.authorId === user.uid;
+              return (
               <Card key={offer.id} className="flex flex-col">
                 {offer.imageUrl && (
                   <div className="overflow-hidden rounded-t-lg">
@@ -135,22 +138,32 @@ export default function OffersPage() {
                   </div>
                 )}
                 <CardHeader className="flex flex-row justify-between items-start">
-                  <div>
+                  <div className="flex-1">
                     <CardTitle>{offer.title}</CardTitle>
-                    <CardDescription>{offer.description}</CardDescription>
+                    <CardDescription className="pt-2">
+                        <Link href={`/u/${offer.author.username}`} className="flex items-center gap-2 hover:underline">
+                            <Avatar className="h-6 w-6">
+                                <AvatarImage src={offer.author.avatarUrl} data-ai-hint="person portrait" />
+                                <AvatarFallback>{offer.author.name.charAt(0)}</AvatarFallback>
+                            </Avatar>
+                            <span className="text-xs">by {offer.author.name}</span>
+                        </Link>
+                    </CardDescription>
                   </div>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem asChild><Link href={`/offers/${offer.id}/edit`} className="cursor-pointer"><Edit className="mr-2 h-4 w-4"/>Edit</Link></DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleArchive(offer.id, offer.status)} className="cursor-pointer"><Archive className="mr-2 h-4 w-4"/>Archive</DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => openDeleteDialog(offer.id)} className="text-destructive cursor-pointer"><Trash2 className="mr-2 h-4 w-4"/>Delete</DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  {isOwner && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem asChild><Link href={`/offers/${offer.id}/edit`} className="cursor-pointer"><Edit className="mr-2 h-4 w-4"/>Edit</Link></DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleArchive(offer.id, offer.status)} className="cursor-pointer"><Archive className="mr-2 h-4 w-4"/>Archive</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => openDeleteDialog(offer.id)} className="text-destructive cursor-pointer"><Trash2 className="mr-2 h-4 w-4"/>Delete</DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
                 </CardHeader>
                 <CardContent className="space-y-2 flex-grow">
                   <Badge variant="secondary"><Tag className="mr-1 h-3 w-3" />{offer.category}</Badge>
@@ -182,31 +195,33 @@ export default function OffersPage() {
                     </Button>
                 </CardFooter>
               </Card>
-            ))}
+            )})}
           </div>
         ) : (
           <Card className="text-center">
             <CardHeader>
                 <CardTitle>No Active Offers</CardTitle>
-                <CardDescription>Create an offer to attract customers.</CardDescription>
+                <CardDescription>No one has posted an offer yet. Be the first!</CardDescription>
             </CardHeader>
             <CardContent className="flex justify-center items-center p-10">
                 <DollarSign className="h-16 w-16 text-muted-foreground" />
             </CardContent>
-            <CardFooter>
-                <Button asChild className="w-full">
-                    <Link href="/offers/create">
-                      <PlusCircle className="mr-2 h-4 w-4" />
-                      Create Your First Offer
-                    </Link>
-                </Button>
-            </CardFooter>
+            {user && (
+              <CardFooter>
+                  <Button asChild className="w-full">
+                      <Link href="/offers/create">
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Create Your First Offer
+                      </Link>
+                  </Button>
+              </CardFooter>
+            )}
           </Card>
         )}
 
         {archivedOffers.length > 0 && (
-          <div className="space-y-4">
-             <h2 className="text-xl font-bold font-headline">Archived Offers</h2>
+          <div className="space-y-4 pt-8">
+             <h2 className="text-xl font-bold font-headline">My Archived Offers</h2>
              <div className="grid gap-6 md:grid-cols-2">
               {archivedOffers.map((offer) => (
                 <Card key={offer.id} className="flex flex-col opacity-70">

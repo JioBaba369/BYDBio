@@ -33,6 +33,8 @@ export type Listing = {
   searchableKeywords: string[];
 };
 
+export type ListingWithAuthor = Listing & { author: Pick<User, 'uid' | 'name' | 'username' | 'avatarUrl'> };
+
 // Function to fetch a single listing by its ID
 export const getListing = async (id: string): Promise<Listing | null> => {
   const listingDocRef = doc(db, 'listings', id);
@@ -130,3 +132,39 @@ export const getListingAndAuthor = async (listingId: string): Promise<{ listing:
     const author = { uid: userDoc.id, ...userDoc.data() } as User;
     return { listing, author };
 }
+
+// Function to get all active listings from all users
+export const getAllListings = async (): Promise<ListingWithAuthor[]> => {
+    const listingsRef = collection(db, 'listings');
+    const q = query(listingsRef, where('status', '==', 'active'));
+    const querySnapshot = await getDocs(q);
+
+    const listings: ListingWithAuthor[] = [];
+    const authorCache: { [key: string]: User } = {};
+
+    for (const listingDoc of querySnapshot.docs) {
+        const data = listingDoc.data();
+        const authorId = data.authorId;
+        let author = authorCache[authorId];
+
+        if (!author) {
+            const userDoc = await getDoc(doc(db, 'users', authorId));
+            if (userDoc.exists()) {
+                author = { uid: userDoc.id, ...userDoc.data() } as User;
+                authorCache[authorId] = author;
+            }
+        }
+        
+        if (author) {
+            listings.push({
+                id: listingDoc.id,
+                ...data,
+                startDate: data.startDate ? (data.startDate as Timestamp).toDate() : null,
+                endDate: data.endDate ? (data.endDate as Timestamp).toDate() : null,
+                author: { uid: author.uid, name: author.name, username: author.username, avatarUrl: author.avatarUrl }
+            } as ListingWithAuthor);
+        }
+    }
+
+    return listings.sort((a,b) => (b.createdAt as Timestamp).toMillis() - (a.createdAt as Timestamp).toMillis());
+};

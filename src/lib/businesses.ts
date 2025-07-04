@@ -33,6 +33,8 @@ export type Business = {
   searchableKeywords: string[];
 };
 
+export type BusinessWithAuthor = Business & { author: Pick<User, 'uid' | 'name' | 'username' | 'avatarUrl'> };
+
 // Function to fetch a single business by its ID
 export const getBusiness = async (id: string): Promise<Business | null> => {
   const businessDocRef = doc(db, 'businesses', id);
@@ -118,3 +120,37 @@ export const getBusinessAndAuthor = async (businessId: string): Promise<{ busine
     const author = { uid: userDoc.id, ...userDoc.data() } as User;
     return { business, author };
 }
+
+// Function to get all active businesses from all users
+export const getAllBusinesses = async (): Promise<BusinessWithAuthor[]> => {
+    const businessesRef = collection(db, 'businesses');
+    const q = query(businessesRef, where('status', '==', 'active'));
+    const querySnapshot = await getDocs(q);
+
+    const businesses: BusinessWithAuthor[] = [];
+    const authorCache: { [key: string]: User } = {};
+
+    for (const businessDoc of querySnapshot.docs) {
+        const data = businessDoc.data();
+        const authorId = data.authorId;
+        let author = authorCache[authorId];
+
+        if (!author) {
+            const userDoc = await getDoc(doc(db, 'users', authorId));
+            if (userDoc.exists()) {
+                author = { uid: userDoc.id, ...userDoc.data() } as User;
+                authorCache[authorId] = author;
+            }
+        }
+        
+        if (author) {
+            businesses.push({
+                id: businessDoc.id,
+                ...data,
+                author: { uid: author.uid, name: author.name, username: author.username, avatarUrl: author.avatarUrl }
+            } as BusinessWithAuthor);
+        }
+    }
+
+    return businesses.sort((a,b) => (b.createdAt as Timestamp).toMillis() - (a.createdAt as Timestamp).toMillis());
+};

@@ -12,8 +12,9 @@ import { useToast } from "@/hooks/use-toast";
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/components/auth-provider";
-import { type Business, getBusinessesByUser, deleteBusiness, updateBusiness } from "@/lib/businesses";
+import { type Business, getBusinessesByUser, deleteBusiness, updateBusiness, getAllBusinesses, type BusinessWithAuthor } from "@/lib/businesses";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const BusinessPageSkeleton = () => (
     <div className="space-y-6">
@@ -63,20 +64,18 @@ const BusinessPageSkeleton = () => (
 
 export default function BusinessesPage() {
   const { user, loading: authLoading } = useAuth();
-  const [businesses, setBusinesses] = useState<Business[]>([]);
+  const [businesses, setBusinesses] = useState<BusinessWithAuthor[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedBusinessId, setSelectedBusinessId] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
-    if (user?.uid) {
-      setIsLoading(true);
-      getBusinessesByUser(user.uid)
-        .then(setBusinesses)
-        .finally(() => setIsLoading(false));
-    }
-  }, [user]);
+    setIsLoading(true);
+    getAllBusinesses()
+      .then(setBusinesses)
+      .finally(() => setIsLoading(false));
+  }, []);
 
   const handleArchive = async (businessId: string, currentStatus: 'active' | 'archived') => {
     const newStatus = currentStatus === 'active' ? 'archived' : 'active';
@@ -111,7 +110,7 @@ export default function BusinessesPage() {
   }
   
   const activeBusinesses = businesses.filter(b => b.status === 'active');
-  const archivedBusinesses = businesses.filter(b => b.status === 'archived');
+  const archivedBusinesses = user ? businesses.filter(b => b.status === 'archived' && b.authorId === user.uid) : [];
   
   if (authLoading || isLoading) {
     return <BusinessPageSkeleton />;
@@ -128,43 +127,57 @@ export default function BusinessesPage() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold font-headline">My Business Pages</h1>
-            <p className="text-muted-foreground">Manage your business profiles and information.</p>
+            <h1 className="text-2xl sm:text-3xl font-bold font-headline">Business Pages</h1>
+            <p className="text-muted-foreground">Discover businesses from across the community.</p>
           </div>
-          <Button asChild>
-            <Link href="/businesses/create">
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Create Business Page
-            </Link>
-          </Button>
+          {user && (
+            <Button asChild>
+              <Link href="/businesses/create">
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Create Business Page
+              </Link>
+            </Button>
+          )}
         </div>
         
         {activeBusinesses.length > 0 ? (
           <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
-            {activeBusinesses.map((item) => (
+            {activeBusinesses.map((item) => {
+              const isOwner = user && item.authorId === user.uid;
+              return (
               <Card key={item.id} className="flex flex-col">
                 {item.imageUrl &&
                   <div className="overflow-hidden rounded-t-lg">
                     <Image src={item.imageUrl} alt={item.name} width={600} height={300} className="w-full object-cover aspect-[2/1]" data-ai-hint="office storefront"/>
                   </div>
                 }
-                <CardHeader className="flex flex-row justify-between items-start">
-                  <div>
+                <CardHeader className="flex flex-col sm:flex-row justify-between items-start gap-4">
+                  <div className="flex-1">
                     <CardTitle>{item.name}</CardTitle>
-                    <CardDescription>{item.description}</CardDescription>
+                     <CardDescription className="pt-2">
+                        <Link href={`/u/${item.author.username}`} className="flex items-center gap-2 hover:underline">
+                            <Avatar className="h-6 w-6">
+                                <AvatarImage src={item.author.avatarUrl} data-ai-hint="person portrait" />
+                                <AvatarFallback>{item.author.name.charAt(0)}</AvatarFallback>
+                            </Avatar>
+                            <span className="text-xs">by {item.author.name}</span>
+                        </Link>
+                    </CardDescription>
                   </div>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem asChild><Link href={`/businesses/${item.id}/edit`} className="cursor-pointer"><Edit className="mr-2 h-4 w-4"/>Edit</Link></DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleArchive(item.id, item.status)} className="cursor-pointer"><Archive className="mr-2 h-4 w-4"/>Archive</DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => openDeleteDialog(item.id)} className="text-destructive cursor-pointer"><Trash2 className="mr-2 h-4 w-4"/>Delete</DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  {isOwner && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem asChild><Link href={`/businesses/${item.id}/edit`} className="cursor-pointer"><Edit className="mr-2 h-4 w-4"/>Edit</Link></DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleArchive(item.id, item.status)} className="cursor-pointer"><Archive className="mr-2 h-4 w-4"/>Archive</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => openDeleteDialog(item.id)} className="text-destructive cursor-pointer"><Trash2 className="mr-2 h-4 w-4"/>Delete</DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
                 </CardHeader>
                 <CardContent className="flex-grow">
                     <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm text-muted-foreground">
@@ -194,7 +207,7 @@ export default function BusinessesPage() {
                     </Button>
                 </CardFooter>
               </Card>
-            ))}
+            )})}
           </div>
         ) : (
           <Card className="text-center">
@@ -205,20 +218,22 @@ export default function BusinessesPage() {
             <CardContent className="flex justify-center items-center p-10">
                 <Building2 className="h-16 w-16 text-muted-foreground" />
             </CardContent>
-            <CardFooter>
-                <Button asChild className="w-full">
-                    <Link href="/businesses/create">
-                      <PlusCircle className="mr-2 h-4 w-4" />
-                      Create Your First Business Page
-                    </Link>
-                </Button>
-            </CardFooter>
+            {user && (
+              <CardFooter>
+                  <Button asChild className="w-full">
+                      <Link href="/businesses/create">
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Create Your First Business Page
+                      </Link>
+                  </Button>
+              </CardFooter>
+            )}
           </Card>
         )}
 
         {archivedBusinesses.length > 0 && (
-           <div className="space-y-4">
-             <h2 className="text-xl font-bold font-headline">Archived Business Pages</h2>
+           <div className="space-y-4 pt-8">
+             <h2 className="text-xl font-bold font-headline">My Archived Pages</h2>
              <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
               {archivedBusinesses.map((item) => (
                 <Card key={item.id} className="flex flex-col opacity-70">

@@ -38,6 +38,8 @@ export type Job = {
   contactInfo?: string;
 };
 
+export type JobWithAuthor = Job & { author: Pick<User, 'uid' | 'name' | 'username' | 'avatarUrl'> };
+
 // Function to fetch a single job by its ID
 export const getJob = async (id: string): Promise<Job | null> => {
   const jobDocRef = doc(db, 'jobs', id);
@@ -156,3 +158,46 @@ export const getJobAndAuthor = async (jobId: string): Promise<{ job: Job; author
     const author = { uid: userDoc.id, ...userDoc.data() } as User;
     return { job, author };
 }
+
+// Function to get all active jobs from all users
+export const getAllJobs = async (): Promise<JobWithAuthor[]> => {
+    const jobsRef = collection(db, 'jobs');
+    const q = query(jobsRef, where('status', '==', 'active'));
+    const querySnapshot = await getDocs(q);
+
+    const jobs: JobWithAuthor[] = [];
+    const authorCache: { [key: string]: User } = {};
+
+    for (const jobDoc of querySnapshot.docs) {
+        const data = jobDoc.data();
+        if (!data.postingDate) {
+            console.warn(`Job ${jobDoc.id} is missing a postingDate and will be skipped.`);
+            continue;
+        }
+
+        const authorId = data.authorId;
+        let author = authorCache[authorId];
+
+        if (!author) {
+            const userDoc = await getDoc(doc(db, 'users', authorId));
+            if (userDoc.exists()) {
+                author = { uid: userDoc.id, ...userDoc.data() } as User;
+                authorCache[authorId] = author;
+            }
+        }
+        
+        if (author) {
+            jobs.push({
+                id: jobDoc.id,
+                ...data,
+                postingDate: (data.postingDate as Timestamp).toDate(),
+                closingDate: data.closingDate ? (data.closingDate as Timestamp).toDate() : null,
+                startDate: data.startDate ? (data.startDate as Timestamp).toDate() : null,
+                endDate: data.endDate ? (data.endDate as Timestamp).toDate() : null,
+                author: { uid: author.uid, name: author.name, username: author.username, avatarUrl: author.avatarUrl }
+            } as JobWithAuthor);
+        }
+    }
+
+    return jobs.sort((a,b) => (b.postingDate as Date).getTime() - (a.postingDate as Date).getTime());
+};

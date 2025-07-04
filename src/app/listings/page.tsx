@@ -12,10 +12,11 @@ import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuIte
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/components/auth-provider";
-import { type Listing, getListingsByUser, deleteListing, updateListing } from "@/lib/listings";
+import { type Listing, deleteListing, updateListing, getAllListings, type ListingWithAuthor } from "@/lib/listings";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ClientFormattedDate } from "@/components/client-formatted-date";
 import { formatCurrency } from "@/lib/utils";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const ListingPageSkeleton = () => (
     <div className="space-y-6">
@@ -52,20 +53,18 @@ const ListingPageSkeleton = () => (
 
 export default function ListingsPage() {
   const { user, loading: authLoading } = useAuth();
-  const [listings, setListings] = useState<Listing[]>([]);
+  const [listings, setListings] = useState<ListingWithAuthor[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedListingId, setSelectedListingId] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
-    if (user?.uid) {
-      setIsLoading(true);
-      getListingsByUser(user.uid)
-        .then(setListings)
-        .finally(() => setIsLoading(false));
-    }
-  }, [user]);
+    setIsLoading(true);
+    getAllListings()
+      .then(setListings)
+      .finally(() => setIsLoading(false));
+  }, []);
 
   const handleArchive = async (listingId: string, currentStatus: 'active' | 'archived') => {
     const newStatus = currentStatus === 'active' ? 'archived' : 'active';
@@ -100,7 +99,7 @@ export default function ListingsPage() {
   }
   
   const activeListings = listings.filter(l => l.status === 'active');
-  const archivedListings = listings.filter(l => l.status === 'archived');
+  const archivedListings = user ? listings.filter(l => l.status === 'archived' && l.authorId === user.uid) : [];
 
   if (authLoading || isLoading) {
     return <ListingPageSkeleton />;
@@ -118,19 +117,23 @@ export default function ListingsPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold font-headline">Product & Service Listings</h1>
-            <p className="text-muted-foreground">Manage your products, services, and digital goods.</p>
+            <p className="text-muted-foreground">Discover products, services, and digital goods from the community.</p>
           </div>
-          <Button asChild>
-            <Link href="/listings/create">
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Create Listing
-            </Link>
-          </Button>
+          {user && (
+            <Button asChild>
+              <Link href="/listings/create">
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Create Listing
+              </Link>
+            </Button>
+          )}
         </div>
         
         {activeListings.length > 0 ? (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {activeListings.map((item) => (
+            {activeListings.map((item) => {
+              const isOwner = user && item.authorId === user.uid;
+              return (
               <Card key={item.id} className="flex flex-col">
                 {item.imageUrl && (
                     <div className="overflow-hidden rounded-t-lg">
@@ -138,30 +141,40 @@ export default function ListingsPage() {
                     </div>
                 )}
                 <CardHeader className="flex flex-row justify-between items-start">
-                  <div>
+                  <div className="flex-1">
                     <CardTitle>{item.title}</CardTitle>
-                    <CardDescription>{item.description}</CardDescription>
-                  </div>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem asChild>
-                        <Link href={`/listings/${item.id}/edit`} className="cursor-pointer">
-                          <Edit className="mr-2 h-4 w-4"/>Edit
+                     <CardDescription className="pt-2">
+                        <Link href={`/u/${item.author.username}`} className="flex items-center gap-2 hover:underline">
+                            <Avatar className="h-6 w-6">
+                                <AvatarImage src={item.author.avatarUrl} data-ai-hint="person portrait" />
+                                <AvatarFallback>{item.author.name.charAt(0)}</AvatarFallback>
+                            </Avatar>
+                            <span className="text-xs">by {item.author.name}</span>
                         </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleArchive(item.id, item.status)} className="cursor-pointer">
-                        <Archive className="mr-2 h-4 w-4"/>Archive
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => openDeleteDialog(item.id)} className="text-destructive cursor-pointer">
-                        <Trash2 className="mr-2 h-4 w-4"/>Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                    </CardDescription>
+                  </div>
+                  {isOwner && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem asChild>
+                          <Link href={`/listings/${item.id}/edit`} className="cursor-pointer">
+                            <Edit className="mr-2 h-4 w-4"/>Edit
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleArchive(item.id, item.status)} className="cursor-pointer">
+                          <Archive className="mr-2 h-4 w-4"/>Archive
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => openDeleteDialog(item.id)} className="text-destructive cursor-pointer">
+                          <Trash2 className="mr-2 h-4 w-4"/>Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
                 </CardHeader>
                 <CardContent className="flex-grow space-y-2">
                   <div className="flex justify-between items-center">
@@ -198,31 +211,33 @@ export default function ListingsPage() {
                     </Button>
                 </CardFooter>
               </Card>
-            ))}
+            )})}
           </div>
         ) : (
           <Card className="text-center">
             <CardHeader>
                 <CardTitle>No Listings Yet</CardTitle>
-                <CardDescription>Get started by creating your first listing.</CardDescription>
+                <CardDescription>No one has posted a listing yet. Be the first!</CardDescription>
             </CardHeader>
             <CardContent className="flex justify-center items-center p-10">
                 <Tags className="h-16 w-16 text-muted-foreground" />
             </CardContent>
-            <CardFooter>
-                <Button asChild className="w-full">
-                    <Link href="/listings/create">
-                      <PlusCircle className="mr-2 h-4 w-4" />
-                      Create Your First Listing
-                    </Link>
-                </Button>
-            </CardFooter>
+            {user && (
+              <CardFooter>
+                  <Button asChild className="w-full">
+                      <Link href="/listings/create">
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Create Your First Listing
+                      </Link>
+                  </Button>
+              </CardFooter>
+            )}
           </Card>
         )}
 
         {archivedListings.length > 0 && (
-           <div className="space-y-4">
-             <h2 className="text-xl font-bold font-headline">Archived Listings</h2>
+           <div className="space-y-4 pt-8">
+             <h2 className="text-xl font-bold font-headline">My Archived Listings</h2>
              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {archivedListings.map((item) => (
                 <Card key={item.id} className="flex flex-col opacity-70">

@@ -31,6 +31,8 @@ export type Offer = {
   searchableKeywords: string[];
 };
 
+export type OfferWithAuthor = Offer & { author: Pick<User, 'uid' | 'name' | 'username' | 'avatarUrl'> };
+
 // Function to fetch a single offer by its ID
 export const getOffer = async (id: string): Promise<Offer | null> => {
   const offerDocRef = doc(db, 'offers', id);
@@ -134,3 +136,44 @@ export const getOfferAndAuthor = async (offerId: string): Promise<{ offer: Offer
     const author = { uid: userDoc.id, ...userDoc.data() } as User;
     return { offer, author };
 }
+
+// Function to get all active offers from all users
+export const getAllOffers = async (): Promise<OfferWithAuthor[]> => {
+    const offersRef = collection(db, 'offers');
+    const q = query(offersRef, where('status', '==', 'active'));
+    const querySnapshot = await getDocs(q);
+
+    const offers: OfferWithAuthor[] = [];
+    const authorCache: { [key: string]: User } = {};
+
+    for (const offerDoc of querySnapshot.docs) {
+        const data = offerDoc.data();
+        if (!data.startDate) {
+            console.warn(`Offer ${offerDoc.id} is missing a startDate and will be skipped.`);
+            continue;
+        }
+
+        const authorId = data.authorId;
+        let author = authorCache[authorId];
+
+        if (!author) {
+            const userDoc = await getDoc(doc(db, 'users', authorId));
+            if (userDoc.exists()) {
+                author = { uid: userDoc.id, ...userDoc.data() } as User;
+                authorCache[authorId] = author;
+            }
+        }
+        
+        if (author) {
+            offers.push({
+                id: offerDoc.id,
+                ...data,
+                startDate: (data.startDate as Timestamp).toDate(),
+                endDate: data.endDate ? (data.endDate as Timestamp).toDate() : null,
+                author: { uid: author.uid, name: author.name, username: author.username, avatarUrl: author.avatarUrl }
+            } as OfferWithAuthor);
+        }
+    }
+
+    return offers.sort((a,b) => (b.startDate as Date).getTime() - (a.startDate as Date).getTime());
+};
