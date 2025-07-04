@@ -444,155 +444,163 @@ END:VCARD`;
                    <div className="grid md:grid-cols-3 gap-8">
                        <div className="md:col-span-2 space-y-6">
                            <Card className="p-6">
-                               <h3 className="text-lg font-medium mb-4">Public Information</h3>
-                               <FormField
-                                control={publicProfileForm.control}
-                                name="name"
-                                render={({ field }) => (
-                                    <FormItem className="mb-4">
-                                    <FormLabel>Full Name</FormLabel>
-                                    <FormControl>
-                                        <Input placeholder="Jane Doe" {...field} />
-                                    </FormControl>
-                                    <FormMessage />
-                                    </FormItem>
-                                )}
-                                />
-                                <FormField
-                                control={publicProfileForm.control}
-                                name="username"
-                                render={({ field }) => (
-                                    <FormItem className="mb-4">
-                                    <FormLabel>Username</FormLabel>
-                                    <FormControl>
-                                        <Input placeholder="janedoe" {...field} />
-                                    </FormControl>
-                                    <FormDescription>
-                                        This will be used in your public profile URL.
-                                    </FormDescription>
-                                    <FormMessage />
-                                    </FormItem>
-                                )}
-                                />
-                                <div className="space-y-2 mb-4">
-                                    <Label>Profile Picture</Label>
-                                    <div className="flex items-center gap-4">
-                                    <Avatar className="h-20 w-20">
-                                        <AvatarImage src={croppedImageUrl || user.avatarUrl} data-ai-hint="woman smiling"/>
-                                        <AvatarFallback>{user.avatarFallback}</AvatarFallback>
-                                    </Avatar>
-                                    <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}><Upload className="mr-2 h-4 w-4"/> Change Photo</Button>
-                                    <input
-                                        type="file"
-                                        ref={fileInputRef}
-                                        className="hidden"
-                                        accept="image/png, image/jpeg"
-                                        onChange={onFileChange}
-                                    />
-                                    </div>
-                                </div>
-                                <div className="space-y-4">
-                                    <FormField
-                                    control={publicProfileForm.control}
-                                    name="bio"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                        <FormLabel>Bio</FormLabel>
-                                        <FormControl>
-                                            <Textarea rows={3} {...field} placeholder="Tell everyone a little bit about yourself..." />
-                                        </FormControl>
-                                        <FormMessage />
-                                        </FormItem>
-                                    )}
-                                    />
-                                    <BioGenerator onSelectBio={(bio) => publicProfileForm.setValue('bio', bio, { shouldDirty: true })} />
-                                    <div className="space-y-2">
-                                        <HashtagSuggester content={watchedBio || ''} onSelectHashtag={(tag) => {
-                                        const currentBio = publicProfileForm.getValues('bio') || '';
-                                        publicProfileForm.setValue('bio', `${currentBio.trim()} ${tag}`, { shouldDirty: true });
-                                        }} />
-                                    </div>
-                                </div>
+                               <Form {...publicProfileForm}>
+                                   <div>
+                                       <h3 className="text-lg font-medium mb-4">Public Information</h3>
+                                       <FormField
+                                        control={publicProfileForm.control}
+                                        name="name"
+                                        render={({ field }) => (
+                                            <FormItem className="mb-4">
+                                            <FormLabel>Full Name</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="Jane Doe" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                            </FormItem>
+                                        )}
+                                        />
+                                        <FormField
+                                        control={publicProfileForm.control}
+                                        name="username"
+                                        render={({ field }) => (
+                                            <FormItem className="mb-4">
+                                            <FormLabel>Username</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="janedoe" {...field} />
+                                            </FormControl>
+                                            <FormDescription>
+                                                This will be used in your public profile URL.
+                                            </FormDescription>
+                                            <FormMessage />
+                                            </FormItem>
+                                        )}
+                                        />
+                                        <div className="space-y-2 mb-4">
+                                            <Label>Profile Picture</Label>
+                                            <div className="flex items-center gap-4">
+                                            <Avatar className="h-20 w-20">
+                                                <AvatarImage src={croppedImageUrl || user.avatarUrl} data-ai-hint="woman smiling"/>
+                                                <AvatarFallback>{user.avatarFallback}</AvatarFallback>
+                                            </Avatar>
+                                            <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}><Upload className="mr-2 h-4 w-4"/> Change Photo</Button>
+                                            <input
+                                                type="file"
+                                                ref={fileInputRef}
+                                                className="hidden"
+                                                accept="image/png, image/jpeg"
+                                                onChange={onFileChange}
+                                            />
+                                            </div>
+                                        </div>
+                                        <div className="space-y-4">
+                                            <FormField
+                                            control={publicProfileForm.control}
+                                            name="bio"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                <FormLabel>Bio</FormLabel>
+                                                <FormControl>
+                                                    <Textarea rows={3} {...field} placeholder="Tell everyone a little bit about yourself..." />
+                                                </FormControl>
+                                                <FormMessage />
+                                                </FormItem>
+                                            )}
+                                            />
+                                            <BioGenerator onSelectBio={(bio) => publicProfileForm.setValue('bio', bio, { shouldDirty: true })} />
+                                            <div className="space-y-2">
+                                                <HashtagSuggester content={watchedBio || ''} onSelectHashtag={(tag) => {
+                                                const currentBio = publicProfileForm.getValues('bio') || '';
+                                                publicProfileForm.setValue('bio', `${currentBio.trim()} ${tag}`, { shouldDirty: true });
+                                                }} />
+                                            </div>
+                                        </div>
+                                   </div>
+                               </Form>
                            </Card>
                            <Card className="p-6">
-                                <h3 className="text-lg font-medium mb-4">Digital Card Details</h3>
-                                <FormField
-                                control={businessCardForm.control}
-                                name="title"
-                                render={({ field }) => (
-                                    <FormItem className="mb-4">
-                                    <FormLabel>Job Title</FormLabel>
-                                    <FormControl><Input placeholder="Senior Product Designer" {...field} /></FormControl>
-                                    <FormMessage />
-                                    </FormItem>
-                                )}
-                                />
-                                <FormField
-                                control={businessCardForm.control}
-                                name="company"
-                                render={({ field }) => (
-                                    <FormItem className="mb-4">
-                                    <FormLabel>Company</FormLabel>
-                                    <FormControl><Input placeholder="Acme Inc." {...field} /></FormControl>
-                                    <FormMessage />
-                                    </FormItem>
-                                )}
-                                />
-                                 <FormField
-                                control={businessCardForm.control}
-                                name="location"
-                                render={({ field }) => (
-                                    <FormItem className="mb-4">
-                                    <FormLabel>Location</FormLabel>
-                                    <FormControl><Input placeholder="San Francisco, CA" {...field} /></FormControl>
-                                    <FormMessage />
-                                    </FormItem>
-                                )}
-                                />
-                                <FormField
-                                control={businessCardForm.control}
-                                name="phone"
-                                render={({ field }) => (
-                                    <FormItem className="mb-4">
-                                    <FormLabel>Phone</FormLabel>
-                                    <FormControl><Input type="tel" placeholder="+1 (555) 123-4567" {...field} /></FormControl>
-                                    <FormMessage />
-                                    </FormItem>
-                                )}
-                                />
-                                <FormField
-                                control={businessCardForm.control}
-                                name="email"
-                                render={({ field }) => (
-                                    <FormItem className="mb-4">
-                                    <FormLabel>Email</FormLabel>
-                                    <FormControl><Input type="email" placeholder="jane.doe@acme.com" {...field} /></FormControl>
-                                    <FormMessage />
-                                    </FormItem>
-                                )}
-                                />
-                                <FormField
-                                control={businessCardForm.control}
-                                name="website"
-                                render={({ field }) => (
-                                    <FormItem className="mb-4">
-                                    <FormLabel>Website</FormLabel>
-                                    <FormControl><Input placeholder="https://janedoe.design" {...field} /></FormControl>
-                                    <FormMessage />
-                                    </FormItem>
-                                )}
-                                />
-                                <FormField
-                                control={businessCardForm.control}
-                                name="linkedin"
-                                render={({ field }) => (
-                                    <FormItem className="mb-4">
-                                    <FormLabel>LinkedIn</FormLabel>
-                                    <FormControl><Input placeholder="https://linkedin.com/in/janedoe" {...field} /></FormControl>
-                                    <FormMessage />
-                                    </FormItem>
-                                )}
-                                />
+                               <Form {...businessCardForm}>
+                                   <div>
+                                        <h3 className="text-lg font-medium mb-4">Digital Card Details</h3>
+                                        <FormField
+                                        control={businessCardForm.control}
+                                        name="title"
+                                        render={({ field }) => (
+                                            <FormItem className="mb-4">
+                                            <FormLabel>Job Title</FormLabel>
+                                            <FormControl><Input placeholder="Senior Product Designer" {...field} /></FormControl>
+                                            <FormMessage />
+                                            </FormItem>
+                                        )}
+                                        />
+                                        <FormField
+                                        control={businessCardForm.control}
+                                        name="company"
+                                        render={({ field }) => (
+                                            <FormItem className="mb-4">
+                                            <FormLabel>Company</FormLabel>
+                                            <FormControl><Input placeholder="Acme Inc." {...field} /></FormControl>
+                                            <FormMessage />
+                                            </FormItem>
+                                        )}
+                                        />
+                                        <FormField
+                                        control={businessCardForm.control}
+                                        name="location"
+                                        render={({ field }) => (
+                                            <FormItem className="mb-4">
+                                            <FormLabel>Location</FormLabel>
+                                            <FormControl><Input placeholder="San Francisco, CA" {...field} /></FormControl>
+                                            <FormMessage />
+                                            </FormItem>
+                                        )}
+                                        />
+                                        <FormField
+                                        control={businessCardForm.control}
+                                        name="phone"
+                                        render={({ field }) => (
+                                            <FormItem className="mb-4">
+                                            <FormLabel>Phone</FormLabel>
+                                            <FormControl><Input type="tel" placeholder="+1 (555) 123-4567" {...field} /></FormControl>
+                                            <FormMessage />
+                                            </FormItem>
+                                        )}
+                                        />
+                                        <FormField
+                                        control={businessCardForm.control}
+                                        name="email"
+                                        render={({ field }) => (
+                                            <FormItem className="mb-4">
+                                            <FormLabel>Email</FormLabel>
+                                            <FormControl><Input type="email" placeholder="jane.doe@acme.com" {...field} /></FormControl>
+                                            <FormMessage />
+                                            </FormItem>
+                                        )}
+                                        />
+                                        <FormField
+                                        control={businessCardForm.control}
+                                        name="website"
+                                        render={({ field }) => (
+                                            <FormItem className="mb-4">
+                                            <FormLabel>Website</FormLabel>
+                                            <FormControl><Input placeholder="https://janedoe.design" {...field} /></FormControl>
+                                            <FormMessage />
+                                            </FormItem>
+                                        )}
+                                        />
+                                        <FormField
+                                        control={businessCardForm.control}
+                                        name="linkedin"
+                                        render={({ field }) => (
+                                            <FormItem className="mb-4">
+                                            <FormLabel>LinkedIn</FormLabel>
+                                            <FormControl><Input placeholder="https://linkedin.com/in/janedoe" {...field} /></FormControl>
+                                            <FormMessage />
+                                            </FormItem>
+                                        )}
+                                        />
+                                   </div>
+                               </Form>
                            </Card>
                        </div>
                        <div className="md:col-span-1 space-y-4">
@@ -680,3 +688,5 @@ END:VCARD`;
     </div>
   )
 }
+
+    
