@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge, badgeVariants } from '@/components/ui/badge';
-import { getEventsForDiary } from '@/lib/events';
+import { getCalendarItems } from '@/lib/events';
 import { useAuth } from '@/components/auth-provider';
 import { format, parseISO, isSameDay, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, addMonths, subMonths, isBefore } from 'date-fns';
 import { Search, MapPin, Tag, Briefcase, DollarSign, X, Clock, ChevronLeft, ChevronRight, MoreHorizontal, Edit, Trash2, PlusCircle, MessageSquare, Tags, Calendar as CalendarIconLucide, Building2 } from 'lucide-react';
@@ -110,7 +110,7 @@ export default function CalendarPage() {
     if (user) {
         setIsLoading(true);
         // This function now fetches all content types for the user's diary/calendar
-        getEventsForDiary(user.uid)
+        getCalendarItems(user.uid)
             .then((items) => {
                 const formattedItems: CalendarItem[] = items.map((item: any) => {
                     switch(item.type) {

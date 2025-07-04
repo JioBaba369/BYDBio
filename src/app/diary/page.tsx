@@ -5,7 +5,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/components/auth-provider';
-import { type Event, getEventsForDiary, saveDiaryNote, getDiaryNote } from '@/lib/events';
+import { type Event, getDiaryEvents, saveDiaryNote } from '@/lib/events';
 import type { User } from '@/lib/users';
 import { format, parseISO, isPast } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
@@ -71,7 +71,7 @@ export default function DiaryPage() {
     useEffect(() => {
         if (user) {
             setIsLoading(true);
-            getEventsForDiary(user.uid)
+            getDiaryEvents(user.uid)
                 .then(setEvents)
                 .catch(err => {
                     console.error("Error fetching diary events:", err);

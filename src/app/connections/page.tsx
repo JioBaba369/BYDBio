@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { UserPlus, UserCheck, UserMinus, QrCode, Loader2 } from "lucide-react";
+import { UserPlus, UserCheck, UserMinus, QrCode, Loader2, Users, Search } from "lucide-react";
 import { useState, useMemo, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import {
@@ -223,94 +223,127 @@ export default function ConnectionsPage() {
             <TabsTrigger value="following">Following ({followingList.length})</TabsTrigger>
             <TabsTrigger value="suggestions">Suggestions ({suggestedList.length})</TabsTrigger>
           </TabsList>
-          <TabsContent value="followers">
-              <div className="flex flex-col gap-4">
-                  {followersList.map((followerUser) => {
-                      const isFollowedByCurrentUser = followingList.some(f => f.uid === followerUser.uid);
-                      const isProcessing = togglingFollowId === followerUser.uid;
-                      return (
-                      <Card key={followerUser.uid}>
-                          <CardContent className="p-4">
-                              <div className="flex items-center justify-between gap-4">
-                                  <Link href={`/u/${followerUser.handle}`} className="flex items-center gap-4 hover:underline">
-                                      <Avatar>
-                                          <AvatarImage src={followerUser.avatarUrl} data-ai-hint="person portrait" />
-                                          <AvatarFallback>{followerUser.name.charAt(0)}</AvatarFallback>
-                                      </Avatar>
-                                      <div>
-                                          <p className="font-semibold">{followerUser.name}</p>
-                                          <p className="text-sm text-muted-foreground">@{followerUser.handle}</p>
-                                      </div>
-                                  </Link>
-                                  <div className="flex items-center gap-2 flex-shrink-0">
-                                      <Button size="sm" variant={isFollowedByCurrentUser ? 'secondary' : 'default'} onClick={() => handleToggleFollow(followerUser.uid, isFollowedByCurrentUser)} disabled={isProcessing}>
-                                          {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : isFollowedByCurrentUser ? <UserCheck className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
-                                          {isFollowedByCurrentUser ? 'Following' : 'Follow Back'}
-                                      </Button>
-                                  </div>
-                              </div>
-                          </CardContent>
-                      </Card>
-                  )})}
-              </div>
-          </TabsContent>
-          <TabsContent value="following">
-             <div className="flex flex-col gap-4">
-                {followingList.map((followingUser) => {
-                    const isProcessing = togglingFollowId === followingUser.uid;
-                    return (
-                        <Card key={followingUser.uid}>
+          <TabsContent value="followers" className="pt-4">
+              {followersList.length > 0 ? (
+                <div className="flex flex-col gap-4">
+                    {followersList.map((followerUser) => {
+                        const isFollowedByCurrentUser = followingList.some(f => f.uid === followerUser.uid);
+                        const isProcessing = togglingFollowId === followerUser.uid;
+                        return (
+                        <Card key={followerUser.uid}>
                             <CardContent className="p-4">
                                 <div className="flex items-center justify-between gap-4">
-                                    <Link href={`/u/${followingUser.handle}`} className="flex items-center gap-4 hover:underline">
+                                    <Link href={`/u/${followerUser.handle}`} className="flex items-center gap-4 hover:underline">
                                         <Avatar>
-                                            <AvatarImage src={followingUser.avatarUrl} data-ai-hint="person portrait" />
-                                            <AvatarFallback>{followingUser.name.charAt(0)}</AvatarFallback>
+                                            <AvatarImage src={followerUser.avatarUrl} data-ai-hint="person portrait" />
+                                            <AvatarFallback>{followerUser.name.charAt(0)}</AvatarFallback>
                                         </Avatar>
                                         <div>
-                                            <p className="font-semibold">{followingUser.name}</p>
-                                            <p className="text-sm text-muted-foreground">@{followingUser.handle}</p>
+                                            <p className="font-semibold">{followerUser.name}</p>
+                                            <p className="text-sm text-muted-foreground">@{followerUser.handle}</p>
                                         </div>
                                     </Link>
-                                    <Button size="sm" variant="secondary" onClick={() => handleToggleFollow(followingUser.uid, true)} disabled={isProcessing}>
-                                        {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UserCheck className="mr-2 h-4 w-4" />}
-                                        Unfollow
-                                    </Button>
+                                    <div className="flex items-center gap-2 flex-shrink-0">
+                                        <Button size="sm" variant={isFollowedByCurrentUser ? 'secondary' : 'default'} onClick={() => handleToggleFollow(followerUser.uid, isFollowedByCurrentUser)} disabled={isProcessing}>
+                                            {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : isFollowedByCurrentUser ? <UserCheck className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
+                                            {isFollowedByCurrentUser ? 'Following' : 'Follow Back'}
+                                        </Button>
+                                    </div>
                                 </div>
                             </CardContent>
                         </Card>
-                    )
-                })}
-            </div>
+                    )})}
+                </div>
+              ) : (
+                <Card>
+                    <CardContent className="p-10 text-center text-muted-foreground flex flex-col items-center gap-4">
+                        <Users className="h-12 w-12" />
+                        <h3 className="font-semibold text-foreground">No Followers Yet</h3>
+                        <p>When other users follow you, they'll appear here.</p>
+                    </CardContent>
+                </Card>
+              )}
+          </TabsContent>
+          <TabsContent value="following" className="pt-4">
+            {followingList.length > 0 ? (
+                <div className="flex flex-col gap-4">
+                    {followingList.map((followingUser) => {
+                        const isProcessing = togglingFollowId === followingUser.uid;
+                        return (
+                            <Card key={followingUser.uid}>
+                                <CardContent className="p-4">
+                                    <div className="flex items-center justify-between gap-4">
+                                        <Link href={`/u/${followingUser.handle}`} className="flex items-center gap-4 hover:underline">
+                                            <Avatar>
+                                                <AvatarImage src={followingUser.avatarUrl} data-ai-hint="person portrait" />
+                                                <AvatarFallback>{followingUser.name.charAt(0)}</AvatarFallback>
+                                            </Avatar>
+                                            <div>
+                                                <p className="font-semibold">{followingUser.name}</p>
+                                                <p className="text-sm text-muted-foreground">@{followingUser.handle}</p>
+                                            </div>
+                                        </Link>
+                                        <Button size="sm" variant="secondary" onClick={() => handleToggleFollow(followingUser.uid, true)} disabled={isProcessing}>
+                                            {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UserCheck className="mr-2 h-4 w-4" />}
+                                            Unfollow
+                                        </Button>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        )
+                    })}
+                </div>
+            ) : (
+                <Card>
+                    <CardContent className="p-10 text-center text-muted-foreground flex flex-col items-center gap-4">
+                        <Search className="h-12 w-12" />
+                        <h3 className="font-semibold text-foreground">Start Connecting</h3>
+                        <p>You aren't following anyone yet. Explore suggestions to get started.</p>
+                         <Button asChild>
+                            <Link href="/connections?tab=suggestions">Find People to Follow</Link>
+                        </Button>
+                    </CardContent>
+                </Card>
+            )}
         </TabsContent>
-        <TabsContent value="suggestions">
-            <div className="grid md:grid-cols-2 gap-4">
-                {suggestedList.map((suggestedUser) => {
-                    const isProcessing = togglingFollowId === suggestedUser.uid;
-                    return (
-                        <Card key={suggestedUser.uid}>
-                            <CardContent className="p-4">
-                                <div className="flex items-center justify-between gap-4">
-                                    <Link href={`/u/${suggestedUser.handle}`} className="flex items-center gap-4 hover:underline flex-1 truncate">
-                                        <Avatar>
-                                            <AvatarImage src={suggestedUser.avatarUrl} data-ai-hint="person portrait" />
-                                            <AvatarFallback>{suggestedUser.name.charAt(0)}</AvatarFallback>
-                                        </Avatar>
-                                        <div className="truncate">
-                                            <p className="font-semibold truncate">{suggestedUser.name}</p>
-                                            <p className="text-sm text-muted-foreground truncate">@{suggestedUser.handle}</p>
-                                        </div>
-                                    </Link>
-                                    <Button size="sm" variant="default" onClick={() => handleToggleFollow(suggestedUser.uid, false)} className="shrink-0" disabled={isProcessing}>
-                                        {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UserPlus className="mr-2 h-4 w-4" />}
-                                        Follow
-                                    </Button>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    )
-                })}
-            </div>
+        <TabsContent value="suggestions" className="pt-4">
+            {suggestedList.length > 0 ? (
+                <div className="grid md:grid-cols-2 gap-4">
+                    {suggestedList.map((suggestedUser) => {
+                        const isProcessing = togglingFollowId === suggestedUser.uid;
+                        return (
+                            <Card key={suggestedUser.uid}>
+                                <CardContent className="p-4">
+                                    <div className="flex items-center justify-between gap-4">
+                                        <Link href={`/u/${suggestedUser.handle}`} className="flex items-center gap-4 hover:underline flex-1 truncate">
+                                            <Avatar>
+                                                <AvatarImage src={suggestedUser.avatarUrl} data-ai-hint="person portrait" />
+                                                <AvatarFallback>{suggestedUser.name.charAt(0)}</AvatarFallback>
+                                            </Avatar>
+                                            <div className="truncate">
+                                                <p className="font-semibold truncate">{suggestedUser.name}</p>
+                                                <p className="text-sm text-muted-foreground truncate">@{suggestedUser.handle}</p>
+                                            </div>
+                                        </Link>
+                                        <Button size="sm" variant="default" onClick={() => handleToggleFollow(suggestedUser.uid, false)} className="shrink-0" disabled={isProcessing}>
+                                            {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UserPlus className="mr-2 h-4 w-4" />}
+                                            Follow
+                                        </Button>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        )
+                    })}
+                </div>
+             ) : (
+                <Card>
+                    <CardContent className="p-10 text-center text-muted-foreground flex flex-col items-center gap-4">
+                        <UserCheck className="h-12 w-12" />
+                        <h3 className="font-semibold text-foreground">All Caught Up</h3>
+                        <p>There are no new suggestions right now. Check back later!</p>
+                    </CardContent>
+                </Card>
+            )}
         </TabsContent>
       </Tabs>
     </div>

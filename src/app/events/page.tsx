@@ -3,7 +3,7 @@
 
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Calendar, MapPin, PlusCircle, MoreHorizontal, Archive, Trash2, Edit, Eye, Users, CheckCircle2, LayoutGrid, List, Loader2 } from "lucide-react"
+import { Calendar, MapPin, PlusCircle, MoreHorizontal, Archive, Trash2, Edit, Eye, Users, CheckCircle2, LayoutGrid, List, Loader2, ExternalLink } from "lucide-react"
 import { format, parseISO } from "date-fns";
 import Image from "next/image";
 import Link from "next/link";
@@ -248,13 +248,16 @@ export default function EventsPage() {
                           </div>
                       </div>
                       <div className="w-full flex gap-2">
-                        <Button asChild className="flex-1">
-                            <Link href={`/events/${event.id}`}>Learn More</Link>
+                        <Button asChild variant="outline" className="flex-1">
+                            <Link href={`/events/${event.id}`}>
+                                <ExternalLink className="mr-2 h-4 w-4" />
+                                View Details
+                            </Link>
                         </Button>
                         {!isOwner && user && (
-                          <Button variant={isRsvped ? "secondary" : "default"} onClick={() => handleRsvp(event.id, event.title)} disabled={isProcessing}>
+                          <Button className="flex-1" variant={isRsvped ? "secondary" : "default"} onClick={() => handleRsvp(event.id, event.title)} disabled={isProcessing}>
                               {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : isRsvped ? <CheckCircle2 className="mr-2 h-4 w-4"/> : <PlusCircle className="mr-2 h-4 w-4"/>}
-                              {isRsvped ? 'Attending' : 'Add to Diary'}
+                              {isRsvped ? 'Attending' : 'RSVP'}
                           </Button>
                         )}
                       </div>
@@ -327,7 +330,7 @@ export default function EventsPage() {
                           ) : user && (
                             <Button size="sm" variant={isRsvped ? "secondary" : "default"} onClick={() => handleRsvp(event.id, event.title)} disabled={isProcessing}>
                                 {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : isRsvped ? <CheckCircle2 className="mr-2 h-4 w-4"/> : <PlusCircle className="mr-2 h-4 w-4"/>}
-                                {isRsvped ? 'Attending' : 'Attend'}
+                                {isRsvped ? 'Attending' : 'RSVP'}
                             </Button>
                           )}
                         </TableCell>

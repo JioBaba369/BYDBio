@@ -194,8 +194,65 @@ export const saveDiaryNote = async (userId: string, eventId: string, notes: stri
     await setDoc(noteRef, { userId, eventId, notes }, { merge: true });
 }
 
-// This function now fetches ALL content types for a user for the calendar view.
-export const getEventsForDiary = async (userId: string) => {
+/**
+ * Fetches all events for a user's diary, including created and RSVP'd events, and their personal notes.
+ * @param userId The UID of the user.
+ * @returns A sorted array of events for the user's diary.
+ */
+export const getDiaryEvents = async (userId: string): Promise<any[]> => {
+    const createdEventsQuery = query(collection(db, 'events'), where('authorId', '==', userId));
+    const rsvpedEventsQuery = query(collection(db, 'events'), where('rsvps', 'array-contains', userId));
+
+    const [createdSnapshot, rsvpedSnapshot] = await Promise.all([
+        getDocs(createdEventsQuery),
+        getDocs(rsvpedEventsQuery),
+    ]);
+    
+    const eventsMap = new Map<string, any>();
+
+    createdSnapshot.forEach(doc => {
+        eventsMap.set(doc.id, { ...doc.data(), id: doc.id, source: 'created' });
+    });
+
+    rsvpedSnapshot.forEach(doc => {
+        if (!eventsMap.has(doc.id)) {
+            eventsMap.set(doc.id, { ...doc.data(), id: doc.id, source: 'rsvped' });
+        }
+    });
+    
+    const events = Array.from(eventsMap.values());
+    if (events.length === 0) return [];
+    
+    const eventIds = events.map(event => event.id);
+    // Firestore 'in' queries are limited to 30 items. Chunk if necessary.
+    const notePromises = [];
+    for (let i = 0; i < eventIds.length; i += 30) {
+        const chunk = eventIds.slice(i, i + 30);
+        const notesQuery = query(collection(db, 'diaryNotes'), where('userId', '==', userId), where('eventId', 'in', chunk));
+        notePromises.push(getDocs(notesQuery));
+    }
+    const notesSnapshots = await Promise.all(notePromises);
+    const notesMap = new Map<string, string>();
+    notesSnapshots.forEach(snapshot => {
+        snapshot.forEach(doc => {
+            notesMap.set(doc.data().eventId, doc.data().notes);
+        });
+    });
+    
+    const authorIds = [...new Set(events.filter(e => e.source === 'rsvped').map(e => e.authorId))];
+    const authors = authorIds.length > 0 ? await getDocs(query(collection(db, 'users'), where('uid', 'in', authorIds.slice(0,30)))) : { docs: [] };
+    const authorMap = new Map(authors.docs.map(doc => [doc.id, doc.data() as User]));
+
+    return events.map(event => ({
+        ...event,
+        date: (event.date as Timestamp).toDate(),
+        notes: notesMap.get(event.id) || '',
+        author: event.source === 'rsvped' ? authorMap.get(event.authorId) : undefined,
+    }));
+};
+
+// This function fetches ALL content types for a user for the Content Calendar.
+export const getCalendarItems = async (userId: string) => {
     const eventsQuery = query(collection(db, 'events'), where('authorId', '==', userId));
     const rsvpedEventsQuery = query(collection(db, 'events'), where('rsvps', 'array-contains', userId));
     const offersQuery = query(collection(db, 'offers'), where('authorId', '==', userId));
@@ -238,7 +295,7 @@ export const getEventsForDiary = async (userId: string) => {
 
     const allItems = Array.from(itemsMap.values());
     const authorIds = [...new Set(allItems.map(item => item.authorId).filter(Boolean))];
-    const authors = authorIds.length > 0 ? await getDocs(query(collection(db, 'users'), where('uid', 'in', authorIds))) : { docs: [] };
+    const authors = authorIds.length > 0 ? await getDocs(query(collection(db, 'users'), where('uid', 'in', authorIds.slice(0, 30)))) : { docs: [] };
     const authorMap = new Map(authors.docs.map(doc => [doc.id, { uid: doc.id, ...doc.data() } as User]));
 
     return allItems.map(item => {

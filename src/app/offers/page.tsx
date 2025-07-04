@@ -3,7 +3,7 @@
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Tag, Calendar, PlusCircle, MoreHorizontal, Edit, Archive, Trash2, DollarSign, Eye, Gift } from "lucide-react"
+import { Tag, Calendar, PlusCircle, MoreHorizontal, Edit, Archive, Trash2, DollarSign, Eye, Gift, ExternalLink } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { format } from "date-fns";
 import Image from "next/image";
@@ -183,8 +183,11 @@ export default function OffersPage() {
                             <span>{offer.claims?.toLocaleString() ?? 0} claims</span>
                         </div>
                     </div>
-                    <Button asChild className="w-full">
-                        <Link href={`/offer/${offer.id}`}>Claim Offer</Link>
+                    <Button asChild variant="outline" className="w-full">
+                        <Link href={`/offer/${offer.id}`}>
+                          <ExternalLink className="mr-2 h-4 w-4" />
+                          View Offer
+                        </Link>
                     </Button>
                 </CardFooter>
               </Card>
