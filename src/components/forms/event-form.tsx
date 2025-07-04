@@ -52,12 +52,8 @@ export function EventForm({ defaultValues, onSubmit, isSaving }: EventFormProps)
   const form = useForm<EventFormValues>({
     resolver: zodResolver(eventFormSchema),
     defaultValues: {
-      title: defaultValues?.title || '',
-      description: defaultValues?.description || '',
-      location: defaultValues?.location || '',
+      ...defaultValues,
       date: defaultValues?.date ? new Date(defaultValues.date) : undefined,
-      imageUrl: defaultValues?.imageUrl || null,
-      itinerary: defaultValues?.itinerary || [],
     },
     mode: "onChange",
   })
@@ -290,7 +286,7 @@ export function EventForm({ defaultValues, onSubmit, isSaving }: EventFormProps)
                     </Card>
                 </div>
             </div>
-            <Button type="submit" disabled={isSaving}>
+            <Button type="submit" disabled={isSaving || !form.formState.isDirty}>
                 {isSaving ? "Saving..." : "Save Changes"}
             </Button>
         </form>

@@ -40,13 +40,7 @@ export function OpportunityForm({ defaultValues, onSubmit, isSaving }: Opportuni
   
   const form = useForm<OpportunityFormValues>({
     resolver: zodResolver(opportunityFormSchema),
-    defaultValues: {
-      title: defaultValues?.title || '',
-      company: defaultValues?.company || '',
-      location: defaultValues?.location || '',
-      type: defaultValues?.type || 'Full-time',
-      imageUrl: defaultValues?.imageUrl || null,
-    },
+    defaultValues: defaultValues,
     mode: "onChange",
   })
   
@@ -182,7 +176,7 @@ export function OpportunityForm({ defaultValues, onSubmit, isSaving }: Opportuni
                     </Card>
                 </div>
             </div>
-            <Button type="submit" disabled={isSaving}>
+            <Button type="submit" disabled={isSaving || !form.formState.isDirty}>
                 {isSaving ? "Saving..." : "Save Changes"}
             </Button>
         </form>

@@ -39,13 +39,7 @@ export function ListingForm({ defaultValues, onSubmit, isSaving }: ListingFormPr
   
   const form = useForm<ListingFormValues>({
     resolver: zodResolver(listingFormSchema),
-    defaultValues: {
-      title: defaultValues?.title || '',
-      description: defaultValues?.description || '',
-      price: defaultValues?.price || '',
-      category: defaultValues?.category || '',
-      imageUrl: defaultValues?.imageUrl || null,
-    },
+    defaultValues: defaultValues,
     mode: "onChange",
   })
   
@@ -180,7 +174,7 @@ export function ListingForm({ defaultValues, onSubmit, isSaving }: ListingFormPr
                     </Card>
                 </div>
             </div>
-            <Button type="submit" disabled={isSaving}>
+            <Button type="submit" disabled={isSaving || !form.formState.isDirty}>
                 {isSaving ? "Saving..." : "Save Changes"}
             </Button>
         </form>

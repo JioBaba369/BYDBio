@@ -45,16 +45,7 @@ export function BusinessForm({ defaultValues, onSubmit, isSaving }: BusinessForm
   
   const form = useForm<BusinessFormValues>({
     resolver: zodResolver(businessFormSchema),
-    defaultValues: {
-      name: defaultValues?.name || '',
-      description: defaultValues?.description || '',
-      email: defaultValues?.email || '',
-      phone: defaultValues?.phone || '',
-      website: defaultValues?.website || '',
-      address: defaultValues?.address || '',
-      imageUrl: defaultValues?.imageUrl || null,
-      logoUrl: defaultValues?.logoUrl || null,
-    },
+    defaultValues: defaultValues,
     mode: "onChange",
   })
   
@@ -278,7 +269,7 @@ export function BusinessForm({ defaultValues, onSubmit, isSaving }: BusinessForm
                     </Card>
                 </div>
             </div>
-            <Button type="submit" disabled={isSaving}>
+            <Button type="submit" disabled={isSaving || !form.formState.isDirty}>
                 {isSaving ? "Saving..." : "Save Changes"}
             </Button>
         </form>

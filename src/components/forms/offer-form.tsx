@@ -47,11 +47,8 @@ export function OfferForm({ defaultValues, onSubmit, isSaving }: OfferFormProps)
   const form = useForm<OfferFormValues>({
     resolver: zodResolver(offerFormSchema),
     defaultValues: {
-      title: defaultValues?.title || '',
-      description: defaultValues?.description || '',
-      category: defaultValues?.category || '',
+      ...defaultValues,
       releaseDate: defaultValues?.releaseDate ? new Date(defaultValues.releaseDate) : undefined,
-      imageUrl: defaultValues?.imageUrl || null,
     },
     mode: "onChange",
   })
@@ -213,7 +210,7 @@ export function OfferForm({ defaultValues, onSubmit, isSaving }: OfferFormProps)
                     </Card>
                 </div>
             </div>
-            <Button type="submit" disabled={isSaving}>
+            <Button type="submit" disabled={isSaving || !form.formState.isDirty}>
                 {isSaving ? "Saving..." : "Save Changes"}
             </Button>
         </form>
