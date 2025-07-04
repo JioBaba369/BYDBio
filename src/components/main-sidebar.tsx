@@ -114,7 +114,7 @@ export function MainSidebar() {
                   <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input
                     placeholder="Search..."
-                    className="w-full pl-8"
+                    className="w-full pl-8 bg-white text-black placeholder:text-gray-500 border-gray-200 focus-visible:ring-black"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />
@@ -143,7 +143,7 @@ export function MainSidebar() {
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search..."
-                className="w-full pl-8"
+                className="w-full pl-8 bg-white text-black placeholder:text-gray-500 border-gray-200 focus-visible:ring-black"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
