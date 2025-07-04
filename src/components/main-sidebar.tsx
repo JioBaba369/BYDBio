@@ -46,7 +46,12 @@ export function MainSidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const [searchQuery, setSearchQuery] = React.useState('');
-  const { user, loading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
+  const [isMounted, setIsMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const isActive = (path: string) => {
     // Exact match for dashboard and the main bio page
@@ -67,6 +72,8 @@ export function MainSidebar() {
       router.push(`/search?q=${searchQuery.trim()}`);
     }
   };
+
+  const loading = authLoading || !isMounted;
 
   if (loading) {
      return (
