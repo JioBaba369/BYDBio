@@ -1,37 +1,47 @@
+
 rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
+    
+    // Helper function for authentication
+    function isAuthenticated() {
+      return request.auth != null;
+    }
 
-    // By default, allow public read access to all files, but deny all writes.
-    // We will then explicitly open up write access for specific paths.
+    // Public read access for all files, as images are meant to be public.
     match /{allPaths=**} {
-      allow read;
-      allow write: if false;
+      allow read: if true;
     }
 
-    // Allow a user to write their own avatar.
-    // Path: /avatars/{userId}
-    match /avatars/{userId} {
-      allow write: if request.auth != null && request.auth.uid == userId;
+    // Only authenticated users can write to their own dedicated folders.
+    // The path structure in the app matches these rules (e.g., "avatars/{userId}/...").
+    match /avatars/{userId}/{allPaths=**} {
+      allow write: if isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    match /posts/{userId}/{allPaths=**} {
+      allow write: if isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    match /listings/{userId}/{allPaths=**} {
+      allow write: if isAuthenticated() && request.auth.uid == userId;
     }
 
-    // Allow a user to write to any of their own content folders.
-    // This covers:
-    // - businesses/{userId}/...
-    // - events/{userId}/...
-    // - jobs/{userId}/...
-    // - listings/{userId}/...
-    // - offers/{userId}/...
-    // - posts/{userId}/...
-    match /{collection}/{userId}/{allSubPaths=**} {
-      allow write: if request.auth != null && request.auth.uid == userId &&
-                      (collection == 'businesses' ||
-                       collection == 'events' ||
-                       collection == 'jobs' ||
-                       collection == 'listings' ||
-                       collection == 'offers' ||
-                       collection == 'posts');
+    match /jobs/{userId}/{allPaths=**} {
+      allow write: if isAuthenticated() && request.auth.uid == userId;
+    }
+
+    match /events/{userId}/{allPaths=**} {
+      allow write: if isAuthenticated() && request.auth.uid == userId;
+    }
+
+    match /offers/{userId}/{allPaths=**} {
+      allow write: if isAuthenticated() && request.auth.uid == userId;
+    }
+
+    match /businesses/{userId}/{allPaths=**} {
+      allow write: if isAuthenticated() && request.auth.uid == userId;
     }
   }
 }

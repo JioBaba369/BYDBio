@@ -1,87 +1,82 @@
+
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper Functions
-    function isSignedIn() {
+    // Helper function to check if a user is authenticated
+    function isAuthenticated() {
       return request.auth != null;
     }
-    
-    function isOwner(docData) {
-      return request.auth.uid == docData.authorId;
+
+    // Helper function to check if the user is the owner of the document
+    function isOwner(userId) {
+      return request.auth.uid == userId;
     }
 
-    function isTogglingLike() {
-      let isLiking = request.resource.data.likedBy == resource.data.likedBy.concat([request.auth.uid])
-                     && request.resource.data.likes == resource.data.likes + 1;
-      let isUnliking = resource.data.likedBy == request.resource.data.likedBy.concat([request.auth.uid])
-                       && request.resource.data.likes == resource.data.likes - 1;
-      // Ensure no other fields are being modified
-      let onlyAllowedFieldsModified = request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes', 'likedBy']);
-
-      return onlyAllowedFieldsModified && (isLiking || isUnliking);
-    }
-    
-    function isTogglingRsvp() {
-        let isRsvping = request.resource.data.rsvps == resource.data.rsvps.concat([request.auth.uid]);
-        let isUnRsvping = resource.data.rsvps == request.resource.data.rsvps.concat([request.auth.uid]);
-        let onlyRsvpFieldModified = request.resource.data.diff(resource.data).affectedKeys().hasOnly(['rsvps']);
-
-        return onlyRsvpFieldModified && (isRsvping || isUnRsvping);
-    }
-
-    // Collection Rules
+    // Users can be read by anyone (for public profiles).
+    // They can only update their own profile.
     match /users/{userId} {
       allow read: if true;
-      allow create: if request.auth.uid == userId;
-      allow update: if request.auth.uid == userId;
+      allow create: if isOwner(userId); // Allow creation only if the user is creating their own profile
+      allow update: if isAuthenticated() && isOwner(userId);
+      allow delete: if false; // Disallow deleting user profiles
     }
 
+    // Posts can be read by anyone.
+    // Users can only create/update/delete their own posts.
     match /posts/{postId} {
       allow read: if true;
-      allow create: if isSignedIn() && isOwner(request.resource.data);
-      allow update: if isSignedIn() && (isOwner(resource.data) || isTogglingLike());
-      allow delete: if isSignedIn() && isOwner(resource.data);
+      allow create: if isAuthenticated() && isOwner(request.resource.data.authorId);
+      allow update, delete: if isAuthenticated() && isOwner(resource.data.authorId);
+    }
+
+    // Notifications can only be read/updated by the recipient user.
+    match /notifications/{notificationId} {
+      allow read, update, delete: if isAuthenticated() && isOwner(resource.data.userId);
+      allow create: if isAuthenticated(); // Notifications are created by trusted server logic or by authenticated users
     }
     
+    // Diary notes are private to the user.
+    match /diaryNotes/{noteId} {
+       allow read, create, update, delete: if isAuthenticated() && isOwner(resource.data.userId);
+    }
+
+    // Businesses are publicly readable, but only the author can write/delete them.
+    match /businesses/{businessId} {
+      allow read: if true;
+      allow create: if isAuthenticated() && isOwner(request.resource.data.authorId);
+      allow update, delete: if isAuthenticated() && isOwner(resource.data.authorId);
+    }
+
+    // Events are publicly readable. Author can do anything. Authenticated users can RSVP.
     match /events/{eventId} {
       allow read: if true;
-      allow create: if isSignedIn() && isOwner(request.resource.data);
-      allow update: if isSignedIn() && (isOwner(resource.data) || isTogglingRsvp());
-      allow delete: if isSignedIn() && isOwner(resource.data);
+      allow create: if isAuthenticated() && isOwner(request.resource.data.authorId);
+      // Allow update if owner OR if only the rsvps array is being changed by an authenticated user
+      allow update: if isAuthenticated() && (isOwner(resource.data.authorId) || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['rsvps']));
+      allow delete: if isAuthenticated() && isOwner(resource.data.authorId);
     }
 
-    match /businesses/{businessId} {
-        allow read: if true;
-        allow create: if isSignedIn() && isOwner(request.resource.data);
-        allow update: if isSignedIn() && isOwner(resource.data);
-        allow delete: if isSignedIn() && isOwner(resource.data);
-    }
-
-    match /listings/{listingId} {
-        allow read: if true;
-        allow create: if isSignedIn() && isOwner(request.resource.data);
-        allow update: if isSignedIn() && isOwner(resource.data);
-        allow delete: if isSignedIn() && isOwner(resource.data);
+    // Jobs are publicly readable, but only the author can write/delete them.
+    match /jobs/{jobId} {
+      allow read: if true;
+      allow create: if isAuthenticated() && isOwner(request.resource.data.authorId);
+      allow update, delete: if isAuthenticated() && isOwner(resource.data.authorId);
     }
     
-    match /jobs/{jobId} {
-        allow read: if true;
-        allow create: if isSignedIn() && isOwner(request.resource.data);
-        allow update: if isSignedIn() && isOwner(resource.data);
-        allow delete: if isSignedIn() && isOwner(resource.data);
+    // Listings are publicly readable, but only the author can write/delete them.
+    match /listings/{listingId} {
+      allow read: if true;
+      allow create: if isAuthenticated() && isOwner(request.resource.data.authorId);
+      allow update, delete: if isAuthenticated() && isOwner(resource.data.authorId);
     }
-
+    
+    // Offers are publicly readable, but only the author can write/delete them.
     match /offers/{offerId} {
-        allow read: if true;
-        allow create: if isSignedIn() && isOwner(request.resource.data);
-        allow update: if isSignedIn() && isOwner(resource.data);
-        allow delete: if isSignedIn() && isOwner(resource.data);
-    }
-
-    match /diaryNotes/{noteId} {
-      allow read, write: if isSignedIn() && request.auth.uid == resource.data.userId;
+      allow read: if true;
+      allow create: if isAuthenticated() && isOwner(request.resource.data.authorId);
+      allow update, delete: if isAuthenticated() && isOwner(resource.data.authorId);
     }
   }
 }
