@@ -45,9 +45,25 @@ export default function SignInPage() {
       router.push('/');
     } catch (error: any) {
       console.error("Sign in error:", error);
+      let description = "An unexpected error occurred. Please try again.";
+      
+      switch (error.code) {
+        case 'auth/invalid-credential':
+          description = "Invalid email or password. Please check your credentials and try again.";
+          break;
+        case 'auth/user-disabled':
+          description = "This account has been disabled. Please contact support.";
+          break;
+        case 'auth/too-many-requests':
+          description = "Too many failed login attempts. Please reset your password or try again later.";
+          break;
+        default:
+          description = error.message || "An unexpected error occurred. Please try again.";
+      }
+      
       toast({
         title: "Sign In Failed",
-        description: error.message || "An unexpected error occurred. Please check your credentials.",
+        description: description,
         variant: "destructive",
       });
     } finally {
