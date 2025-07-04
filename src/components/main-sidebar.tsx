@@ -255,7 +255,7 @@ export function MainSidebar() {
           </SidebarMenuItem>
           
           <SidebarMenuItem>
-            <SidebarGroupLabel>Public Pages</SidebarGroupLabel>
+            <SidebarGroupLabel>My Public Profile</SidebarGroupLabel>
           </SidebarMenuItem>
            <SidebarMenuItem>
             <SidebarMenuButton asChild tooltip="Bio Page" isActive={isActive(`/u/${user.username}`)}>

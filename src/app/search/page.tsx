@@ -5,13 +5,13 @@ import { useSearchParams } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { UserPlus, UserCheck, Search as SearchIcon, Briefcase, MapPin, Tag, Calendar, Users, Tags, DollarSign, Gift, Eye } from "lucide-react";
+import { UserPlus, UserCheck, Search as SearchIcon, Briefcase, MapPin, Tag, Calendar, Users, Tags, DollarSign, Gift, Eye, Building2, ExternalLink } from "lucide-react";
 import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import Image from "next/image";
-import type { User } from '@/lib/users';
+import type { User, Business } from '@/lib/users';
 import { useAuth } from '@/components/auth-provider';
 import { searchUsers, getUsersByIds } from '@/lib/users';
 import { followUser, unfollowUser } from '@/lib/connections';
@@ -22,6 +22,7 @@ import { db } from '@/lib/firebase';
 import type { Listing, Offer, Job, Event } from '@/lib/users';
 import { ClientFormattedDate } from '@/components/client-formatted-date';
 import { formatCurrency } from '@/lib/utils';
+import { Separator } from '@/components/ui/separator';
 
 type ItemWithAuthor<T> = T & { author: User };
 type SearchResults = {
@@ -30,6 +31,7 @@ type SearchResults = {
     opportunities: ItemWithAuthor<Job>[];
     events: ItemWithAuthor<Event>[];
     offers: ItemWithAuthor<Offer>[];
+    businesses: ItemWithAuthor<Business>[];
 }
 
 export default function SearchPage() {
@@ -39,7 +41,7 @@ export default function SearchPage() {
   const { toast } = useToast();
 
   const [isLoading, setIsLoading] = useState(false);
-  const [results, setResults] = useState<SearchResults>({ users: [], listings: [], opportunities: [], events: [], offers: [] });
+  const [results, setResults] = useState<SearchResults>({ users: [], listings: [], opportunities: [], events: [], offers: [], businesses: [] });
 
   useEffect(() => {
     const performSearch = async () => {
@@ -76,6 +78,7 @@ export default function SearchPage() {
                 opportunities: [],
                 events: [],
                 offers: [],
+                businesses: [],
             };
 
             allContent.forEach(item => {
@@ -84,8 +87,9 @@ export default function SearchPage() {
                     switch (item.type) {
                         case 'listing': newResults.listings.push({ ...item, author }); break;
                         case 'job': newResults.opportunities.push({ ...item, author }); break;
-                        case 'event': newResults.events.push({ ...item, date: item.date.toDate().toISOString(), author }); break;
-                        case 'offer': newResults.offers.push({ ...item, releaseDate: item.releaseDate.toDate().toISOString(), author }); break;
+                        case 'event': newResults.events.push({ ...item, author }); break;
+                        case 'offer': newResults.offers.push({ ...item, author }); break;
+                        case 'business': newResults.businesses.push({ ...item, author }); break;
                     }
                 }
             });
@@ -169,8 +173,9 @@ export default function SearchPage() {
       </div>
 
       <Tabs defaultValue="users" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-5">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-6">
             <TabsTrigger value="users">Users ({results.users.length})</TabsTrigger>
+            <TabsTrigger value="businesses">Businesses ({results.businesses.length})</TabsTrigger>
             <TabsTrigger value="listings">Listings ({results.listings.length})</TabsTrigger>
             <TabsTrigger value="opportunities">Jobs ({results.opportunities.length})</TabsTrigger>
             <TabsTrigger value="events">Events ({results.events.length})</TabsTrigger>
@@ -195,7 +200,7 @@ export default function SearchPage() {
                                 <p className="text-sm text-muted-foreground">@{u.handle}</p>
                             </div>
                             </Link>
-                            <Button size="sm" variant={isFollowedByCurrentUser ? 'secondary' : 'default'} onClick={() => handleToggleFollow(u.uid, isFollowedByCurrentUser)}>
+                            <Button size="sm" variant={isFollowedByCurrentUser ? 'secondary' : 'default'} onClick={() => handleToggleFollow(u.uid, isCurrentlyFollowing)}>
                             {isFollowedByCurrentUser ? <UserCheck className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
                             {isFollowedByCurrentUser ? 'Following' : 'Follow'}
                             </Button>
@@ -213,6 +218,54 @@ export default function SearchPage() {
                 </Card>
             )}
         </TabsContent>
+
+        <TabsContent value="businesses" className="pt-4">
+             {results.businesses.length > 0 ? (
+                <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
+                  {results.businesses.map((item) => (
+                    <Card key={item.id} className="flex flex-col">
+                      {item.imageUrl &&
+                        <div className="overflow-hidden rounded-t-lg">
+                          <Image src={item.imageUrl} alt={item.name} width={600} height={300} className="w-full object-cover aspect-[2/1]" data-ai-hint="office storefront"/>
+                        </div>
+                      }
+                      <CardHeader>
+                        <CardTitle>{item.name}</CardTitle>
+                          <CardDescription className="pt-2">
+                              <Link href={`/u/${item.author.username}`} className="flex items-center gap-2 hover:underline">
+                                  <Avatar className="h-6 w-6">
+                                      <AvatarImage src={item.author.avatarUrl} data-ai-hint="person portrait" />
+                                      <AvatarFallback>{item.author.name.charAt(0)}</AvatarFallback>
+                                  </Avatar>
+                                  <span className="text-xs">by {item.author.name}</span>
+                              </Link>
+                          </CardDescription>
+                      </CardHeader>
+                      <CardContent className="flex-grow">
+                          <p className="text-sm text-muted-foreground line-clamp-3">{item.description}</p>
+                      </CardContent>
+                      <Separator className="my-4" />
+                      <CardFooter>
+                          <Button asChild variant="outline" className="w-full">
+                              <Link href={`/b/${item.id}`}>
+                                  <ExternalLink className="mr-2 h-4 w-4" />
+                                  View Details
+                              </Link>
+                          </Button>
+                      </CardFooter>
+                    </Card>
+                  ))}
+                </div>
+             ) : (
+                 <Card>
+                    <CardContent className="p-10 text-center text-muted-foreground">
+                        <Building2 className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                        <h3 className="text-lg font-semibold text-foreground">No Businesses Found</h3>
+                        <p>We couldn't find any businesses matching "{queryParam}". Try a different search.</p>
+                    </CardContent>
+                </Card>
+             )}
+        </TabsContent>
         
         <TabsContent value="listings" className="pt-4">
              {results.listings.length > 0 ? (
@@ -226,15 +279,25 @@ export default function SearchPage() {
                             )}
                             <CardHeader>
                                 <CardTitle>{item.title}</CardTitle>
-                                <CardDescription>{item.description}</CardDescription>
+                                <CardDescription className="pt-2">
+                                  <Link href={`/u/${item.author.username}`} className="flex items-center gap-2 hover:underline">
+                                      <Avatar className="h-6 w-6">
+                                          <AvatarImage src={item.author.avatarUrl} data-ai-hint="person portrait" />
+                                          <AvatarFallback>{item.author.name.charAt(0)}</AvatarFallback>
+                                      </Avatar>
+                                      <span className="text-xs">by {item.author.name}</span>
+                                  </Link>
+                                </CardDescription>
                             </CardHeader>
-                            <CardContent className="flex-grow space-y-3">
-                                <Badge variant="secondary">{item.category}</Badge>
+                            <CardContent className="flex-grow space-y-2">
+                                <div className="flex justify-between items-center">
+                                  <Badge variant="secondary">{item.category}</Badge>
+                                  <p className="font-bold text-lg">{formatCurrency(item.price)}</p>
+                                </div>
                             </CardContent>
-                            <CardFooter className="flex justify-between items-center">
-                                <p className="font-bold text-lg">{formatCurrency(item.price)}</p>
-                                <Button asChild>
-                                    <Link href={`/l/${item.id}`}>View</Link>
+                            <CardFooter>
+                                <Button asChild className="w-full">
+                                    <Link href={`/l/${item.id}`}>View Details</Link>
                                 </Button>
                             </CardFooter>
                         </Card>
@@ -256,14 +319,18 @@ export default function SearchPage() {
                 <div className="grid gap-6 md:grid-cols-2">
                     {results.opportunities.map((job) => (
                         <Card key={job.id} className="flex flex-col transition-all hover:shadow-md">
-                            {job.imageUrl && (
-                                <div className="overflow-hidden rounded-t-lg">
-                                <Image src={job.imageUrl} alt={job.title} width={600} height={400} className="w-full object-cover aspect-video" data-ai-hint="office workspace" />
-                                </div>
-                            )}
                             <CardHeader>
                                 <CardTitle>{job.title}</CardTitle>
                                 <CardDescription>{job.company}</CardDescription>
+                                <CardDescription className="pt-2">
+                                  <Link href={`/u/${job.author.username}`} className="flex items-center gap-2 hover:underline">
+                                      <Avatar className="h-6 w-6">
+                                          <AvatarImage src={job.author.avatarUrl} data-ai-hint="person portrait" />
+                                          <AvatarFallback>{job.author.name.charAt(0)}</AvatarFallback>
+                                      </Avatar>
+                                      <span className="text-xs">by {job.author.name}</span>
+                                  </Link>
+                                </CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-2 flex-grow">
                                 <div className="flex items-center text-sm text-muted-foreground">
@@ -272,11 +339,6 @@ export default function SearchPage() {
                                 <div className="flex items-center text-sm text-muted-foreground">
                                     <Briefcase className="mr-2 h-4 w-4" /> {job.type}
                                 </div>
-                                {job.remuneration && (
-                                    <div className="flex items-center text-sm text-muted-foreground">
-                                        <DollarSign className="mr-2 h-4 w-4" /> {formatCurrency(job.remuneration)}
-                                    </div>
-                                )}
                             </CardContent>
                             <CardFooter>
                                 <Button asChild className="w-full">
@@ -309,10 +371,19 @@ export default function SearchPage() {
                             )}
                             <CardHeader>
                                 <CardTitle>{event.title}</CardTitle>
+                                <CardDescription className="pt-2">
+                                  <Link href={`/u/${event.author.username}`} className="flex items-center gap-2 hover:underline">
+                                      <Avatar className="h-6 w-6">
+                                          <AvatarImage src={event.author.avatarUrl} data-ai-hint="person portrait" />
+                                          <AvatarFallback>{event.author.name.charAt(0)}</AvatarFallback>
+                                      </Avatar>
+                                      <span className="text-xs">by {event.author.name}</span>
+                                  </Link>
+                                </CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-2 flex-grow">
                                 <div className="flex items-center text-sm text-muted-foreground">
-                                    <Calendar className="mr-2 h-4 w-4" /> <ClientFormattedDate date={event.date} formatStr="PPP" />
+                                    <Calendar className="mr-2 h-4 w-4" /> <ClientFormattedDate date={event.startDate} formatStr="PPP" />
                                 </div>
                                 <div className="flex items-center text-sm text-muted-foreground">
                                     <MapPin className="mr-2 h-4 w-4" /> {event.location}
@@ -342,21 +413,21 @@ export default function SearchPage() {
                 <div className="grid gap-6 md:grid-cols-2">
                     {results.offers.map((offer) => (
                         <Card key={offer.id} className="flex flex-col transition-all hover:shadow-md">
-                            {offer.imageUrl && (
-                                <div className="overflow-hidden rounded-t-lg">
-                                <Image src={offer.imageUrl} alt={offer.title} width={600} height={400} className="w-full object-cover aspect-video" data-ai-hint="special offer" />
-                                </div>
-                            )}
-                            <CardHeader>
+                           <CardHeader>
                                 <CardTitle>{offer.title}</CardTitle>
-                                <CardDescription>{offer.description}</CardDescription>
+                                 <CardDescription className="pt-2">
+                                  <Link href={`/u/${offer.author.username}`} className="flex items-center gap-2 hover:underline">
+                                      <Avatar className="h-6 w-6">
+                                          <AvatarImage src={offer.author.avatarUrl} data-ai-hint="person portrait" />
+                                          <AvatarFallback>{offer.author.name.charAt(0)}</AvatarFallback>
+                                      </Avatar>
+                                      <span className="text-xs">by {offer.author.name}</span>
+                                  </Link>
+                                </CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-2 flex-grow">
                                 <Badge variant="secondary"><Tag className="mr-1 h-3 w-3" />{offer.category}</Badge>
-                                <div className="flex items-center pt-2 text-sm text-muted-foreground">
-                                    <Calendar className="mr-2 h-4 w-4" />
-                                    <span>Releases: <ClientFormattedDate date={offer.releaseDate} formatStr="PPP" /></span>
-                                </div>
+                                <p className="text-sm text-muted-foreground line-clamp-2">{offer.description}</p>
                             </CardContent>
                             <CardFooter>
                                 <Button asChild className="w-full">
