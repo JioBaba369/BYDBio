@@ -111,7 +111,7 @@ export default function EventDetailClient({ event, author }: EventDetailClientPr
                                 </Button>
                                 <Button variant="outline" onClick={handleSetReminder}>
                                     <BellRing className="mr-2 h-4 w-4"/>
-                                    Set Reminder
+                                    is this button working
                                 </Button>
                                 <Button asChild size="lg">
                                     <Link href={`/events/${event.id}/register`}>
