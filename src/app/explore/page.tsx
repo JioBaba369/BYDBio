@@ -20,6 +20,7 @@ import { formatCurrency } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const ExploreSkeleton = () => (
     <div className="space-y-6 animate-pulse">
@@ -59,6 +60,7 @@ export default function ExplorePage() {
   const [allItems, setAllItems] = useState<PublicContentItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [view, setView] = useState<'grid' | 'list'>('grid');
+  const [sortBy, setSortBy] = useState<'date' | 'views' | 'popularity'>('date');
 
   useEffect(() => {
     setIsLoading(true);
@@ -93,6 +95,36 @@ export default function ExplorePage() {
     });
   }, [allItems, searchTerm, locationFilter, typeFilters]);
   
+  const getPopularity = (item: PublicContentItem) => {
+    switch (item.type) {
+        case 'event': return (item as any).rsvps?.length ?? 0;
+        case 'offer': return (item as any).claims ?? 0;
+        case 'job': return (item as any).applicants ?? 0;
+        case 'listing': return (item as any).clicks ?? 0;
+        case 'business': return (item as any).clicks ?? 0;
+        default: return 0;
+    }
+  };
+  
+  const sortedItems = useMemo(() => {
+    let sorted = [...filteredItems];
+    switch (sortBy) {
+        case 'views':
+            sorted.sort((a, b) => ((b as any).views ?? 0) - ((a as any).views ?? 0));
+            break;
+        case 'popularity':
+            sorted.sort((a, b) => getPopularity(b) - getPopularity(a));
+            break;
+        case 'date':
+        default:
+            // The initial fetch is already sorted by date, so we can rely on that order
+            // for the filtered list as well.
+            break;
+    }
+    return sorted;
+  }, [filteredItems, sortBy]);
+
+
   const handleClearFilters = () => {
     setSearchTerm('');
     setLocationFilter('');
@@ -136,16 +168,13 @@ export default function ExplorePage() {
       }
   }
   
-    const getPrimaryStat = (item: PublicContentItem) => {
-        switch (item.type) {
-            case 'event': return { icon: Users, value: (item as any).rsvps?.length ?? 0 };
-            case 'offer': return { icon: Gift, value: (item as any).claims ?? 0 };
-            case 'job': return { icon: Users, value: (item as any).applicants ?? 0 };
-            case 'listing': return { icon: MousePointerClick, value: (item as any).clicks ?? 0 };
-            case 'business': return { icon: MousePointerClick, value: (item as any).clicks ?? 0 };
-            default: return null;
-        }
-    }
+  const getPrimaryStat = (item: PublicContentItem) => {
+        const value = getPopularity(item);
+        let icon = MousePointerClick; // default
+        if (item.type === 'event' || item.type === 'job') icon = Users;
+        if (item.type === 'offer') icon = Gift;
+        return { icon, value };
+  }
 
   if (isLoading) {
     return <ExploreSkeleton />;
@@ -189,19 +218,31 @@ export default function ExplorePage() {
         </Card>
         
         <div className="space-y-4">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-4">
                 <h2 className="text-xl font-bold font-headline">
-                    Community Content ({filteredItems.length})
+                    Community Content ({sortedItems.length})
                 </h2>
-                <div className="flex items-center gap-1 rounded-md bg-muted p-1">
-                    <Button variant={view === 'list' ? 'secondary' : 'ghost'} size="icon" className="h-8 w-8" onClick={() => setView('list')}><List className="h-4 w-4" /></Button>
-                    <Button variant={view === 'grid' ? 'secondary' : 'ghost'} size="icon" className="h-8 w-8" onClick={() => setView('grid')}><LayoutGrid className="h-4 w-4" /></Button>
+                <div className="flex items-center gap-2">
+                    <Select value={sortBy} onValueChange={(value) => setSortBy(value as any)}>
+                        <SelectTrigger className="w-[150px] h-9 text-sm">
+                            <SelectValue placeholder="Sort by" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="date">Newest</SelectItem>
+                            <SelectItem value="views">Most Viewed</SelectItem>
+                            <SelectItem value="popularity">Most Popular</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <div className="flex items-center gap-1 rounded-md bg-muted p-1">
+                        <Button variant={view === 'list' ? 'secondary' : 'ghost'} size="icon" className="h-8 w-8" onClick={() => setView('list')}><List className="h-4 w-4" /></Button>
+                        <Button variant={view === 'grid' ? 'secondary' : 'ghost'} size="icon" className="h-8 w-8" onClick={() => setView('grid')}><LayoutGrid className="h-4 w-4" /></Button>
+                    </div>
                 </div>
               </div>
-              {filteredItems.length > 0 ? (
+              {sortedItems.length > 0 ? (
                   view === 'grid' ? (
                   <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {filteredItems.map((item) => {
+                      {sortedItems.map((item) => {
                           const title = (item as any).title || (item as any).name;
                           const description = (item as any).description;
                           const primaryStat = getPrimaryStat(item);
@@ -223,7 +264,7 @@ export default function ExplorePage() {
                                     <div className="flex items-center pt-1">
                                         <Link href={`/u/${item.author.username}`} className="flex items-center gap-2 hover:underline">
                                             <Avatar className="h-6 w-6">
-                                                <AvatarImage src={item.author.avatarUrl} data-ai-hint="person portrait"/>
+                                                <AvatarImage src={item.author.avatarUrl} alt={item.author.name} data-ai-hint="person portrait"/>
                                                 <AvatarFallback>{item.author.name.charAt(0)}</AvatarFallback>
                                             </Avatar>
                                             <span className="text-xs">{item.author.name}</span>
@@ -266,7 +307,7 @@ export default function ExplorePage() {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {filteredItems.map(item => {
+                                {sortedItems.map(item => {
                                     const title = (item as any).title || (item as any).name;
                                     return (
                                     <TableRow key={`${item.type}-${item.id}`}>
@@ -274,11 +315,11 @@ export default function ExplorePage() {
                                             <div className="font-medium">{title}</div>
                                             {'company' in item && <div className="text-xs text-muted-foreground">{item.company}</div>}
                                         </TableCell>
-                                        <TableCell><Badge variant={getBadgeVariant(item.type)}>{item.type}</Badge></TableCell>
+                                        <TableCell><Badge variant={getBadgeVariant(item.type)} className="capitalize">{item.type}</Badge></TableCell>
                                         <TableCell className="hidden md:table-cell">
                                             <Link href={`/u/${item.author.username}`} className="flex items-center gap-2 hover:underline">
                                                 <Avatar className="h-6 w-6">
-                                                    <AvatarImage src={item.author.avatarUrl} data-ai-hint="person portrait"/>
+                                                    <AvatarImage src={item.author.avatarUrl} alt={item.author.name} data-ai-hint="person portrait"/>
                                                     <AvatarFallback>{item.author.name.charAt(0)}</AvatarFallback>
                                                 </Avatar>
                                                 <span className="text-xs">{item.author.name}</span>
