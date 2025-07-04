@@ -17,11 +17,11 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { reflectOnEvent } from '@/ai/flows/reflect-on-event';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Separator } from '@/components/ui/separator';
 import { ClientFormattedDate } from '@/components/client-formatted-date';
 import { DayPicker } from 'react-day-picker';
 import 'react-day-picker/dist/style.css';
 import { format, isPast } from 'date-fns';
+import { HolidayFeed } from '@/components/holiday-feed';
 
 type EventWithNotes = Event & { 
   notes?: string; 
@@ -36,14 +36,26 @@ const DiarySkeleton = () => (
             <Skeleton className="h-9 w-48" />
             <Skeleton className="h-4 w-72 mt-2" />
         </div>
-        <Card className="w-full">
-            <CardContent className="p-2 sm:p-4 flex justify-center">
-              <Skeleton className="h-80 w-full max-w-sm" />
-            </CardContent>
-        </Card>
-        <div className="space-y-4">
-             <Skeleton className="h-7 w-40" />
-             <Card className="border-dashed"><CardContent className="p-6"><Skeleton className="h-24 w-full" /></CardContent></Card>
+        <div className="grid lg:grid-cols-3 gap-8 items-start">
+            <div className="lg:col-span-1 space-y-8">
+                <Card className="w-full">
+                    <CardContent className="p-2 sm:p-4 flex justify-center">
+                        <Skeleton className="h-80 w-full max-w-sm" />
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader><Skeleton className="h-6 w-3/4" /></CardHeader>
+                    <CardContent className="space-y-4">
+                        <Skeleton className="h-4 w-full" />
+                        <Skeleton className="h-4 w-full" />
+                        <Skeleton className="h-4 w-full" />
+                    </CardContent>
+                </Card>
+            </div>
+            <div className="lg:col-span-2 space-y-4">
+                <Skeleton className="h-7 w-40" />
+                <Card className="border-dashed"><CardContent className="p-6"><Skeleton className="h-24 w-full" /></CardContent></Card>
+            </div>
         </div>
     </div>
 );
@@ -216,42 +228,45 @@ export default function DiaryPage() {
                 <p className="text-muted-foreground">Select a date to view your schedule and add reflections.</p>
             </div>
             
-            <Card>
-                <CardContent className="p-2 sm:p-4 flex justify-center">
-                    <DayPicker
-                        mode="single"
-                        selected={selectedDate}
-                        onSelect={setSelectedDate}
-                        month={month}
-                        onMonthChange={setMonth}
-                        modifiers={{ hasEvent: eventDays }}
-                        modifiersClassNames={{ hasEvent: 'day-with-event' }}
-                        className="w-full"
-                    />
-                </CardContent>
-            </Card>
-
-            <Separator />
-
-            <div className="space-y-4">
-                 <h2 className="text-xl font-bold font-headline">
-                    Schedule for {selectedDate ? format(selectedDate, 'PPP') : '...'}
-                </h2>
-                {selectedDayItems.length > 0 ? (
-                    <div className="space-y-6">
-                        {selectedDayItems.map(event => <EventCard key={event.id} event={event} />)}
-                    </div>
-                ) : (
-                    <Card className="border-dashed">
-                        <CardContent className="p-10 text-center text-muted-foreground flex flex-col items-center gap-4">
-                            <BookText className="h-12 w-12" />
-                            <p>No events scheduled for this day.</p>
-                            <Button asChild>
-                                <Link href="/events">Explore Events</Link>
-                            </Button>
+            <div className="grid lg:grid-cols-3 gap-8 items-start">
+                <div className="lg:col-span-1 space-y-8">
+                    <Card>
+                        <CardContent className="p-2 sm:p-4 flex justify-center">
+                            <DayPicker
+                                mode="single"
+                                selected={selectedDate}
+                                onSelect={setSelectedDate}
+                                month={month}
+                                onMonthChange={setMonth}
+                                modifiers={{ hasEvent: eventDays }}
+                                modifiersClassNames={{ hasEvent: 'day-with-event' }}
+                                className="w-full"
+                            />
                         </CardContent>
                     </Card>
-                )}
+                    <HolidayFeed />
+                </div>
+                
+                <div className="lg:col-span-2 space-y-4">
+                     <h2 className="text-xl font-bold font-headline">
+                        Schedule for {selectedDate ? format(selectedDate, 'PPP') : '...'}
+                    </h2>
+                    {selectedDayItems.length > 0 ? (
+                        <div className="space-y-6">
+                            {selectedDayItems.map(event => <EventCard key={event.id} event={event} />)}
+                        </div>
+                    ) : (
+                        <Card className="border-dashed">
+                            <CardContent className="p-10 text-center text-muted-foreground flex flex-col items-center gap-4">
+                                <BookText className="h-12 w-12" />
+                                <p>No events scheduled for this day.</p>
+                                <Button asChild>
+                                    <Link href="/events">Explore Events</Link>
+                                </Button>
+                            </CardContent>
+                        </Card>
+                    )}
+                </div>
             </div>
         </div>
     );
