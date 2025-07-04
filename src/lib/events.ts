@@ -345,21 +345,22 @@ export const getCalendarItems = async (userId: string) => {
     const authorMap = new Map(authors.docs.map(doc => [doc.id, { uid: doc.id, ...doc.data() } as User]));
 
     return allItems.map(item => {
-        const dateFields: any = {};
+        const author = authorMap.get(item.authorId);
+        
         let primaryDate = item.createdAt; 
         if (item.startDate) primaryDate = item.startDate;
         else if (item.postingDate) primaryDate = item.postingDate;
-        else if (item.releaseDate) primaryDate = item.releaseDate;
-        else if (item.publishDate) primaryDate = item.publishDate;
 
-
-        dateFields.date = (primaryDate as Timestamp).toDate().toISOString();
-        if (item.endDate) dateFields.endDate = (item.endDate as Timestamp).toDate().toISOString();
+        const serializedItem: any = { ...item };
+        for (const key in serializedItem) {
+            if (serializedItem[key] instanceof Timestamp) {
+                serializedItem[key] = serializedItem[key].toDate().toISOString();
+            }
+        }
         
-        const author = authorMap.get(item.authorId);
         return {
-            ...item,
-            ...dateFields,
+            ...serializedItem,
+            date: (primaryDate as Timestamp).toDate().toISOString(),
             author: author ? { name: author.name, username: author.username, avatarUrl: author.avatarUrl } : undefined,
         };
     });
