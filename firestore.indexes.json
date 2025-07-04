@@ -1,3 +1,4 @@
+
 {
   "indexes": [
     {
@@ -35,6 +36,13 @@
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "username", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "users",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "searchableKeywords", "arrayConfig": "CONTAINS" }
       ]
     },
     {

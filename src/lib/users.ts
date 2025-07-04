@@ -33,6 +33,7 @@ export type User = {
   subscribers: number;
   links: UserLink[];
   businessCard?: BusinessCard;
+  searchableKeywords: string[];
   isFollowedByCurrentUser?: boolean; // Client-side state
 };
 
@@ -99,21 +100,29 @@ export const createUserProfileIfNotExists = async (user: FirebaseUser, additiona
     const userDoc = await getDoc(userDocRef);
 
     if (!userDoc.exists()) {
-        const username = user.email?.split('@')[0] || `user${user.uid.substring(0,5)}`;
+        const username = user.email?.split('@')[0].replace(/[^a-zA-Z0-9]/g, '') || `user${user.uid.substring(0,5)}`;
+        const name = additionalData?.name || user.displayName || "New User";
         // In a real app, you might want to check if this username is unique and handle collisions.
+
+        const searchableKeywords = [...new Set([
+            ...name.toLowerCase().split(' ').filter(Boolean),
+            username.toLowerCase()
+        ])];
+
         await setDoc(userDocRef, {
             uid: user.uid,
             email: user.email,
-            name: additionalData?.name || user.displayName || "New User",
+            name: name,
             username: username,
             handle: username,
             avatarUrl: user.photoURL || `https://placehold.co/200x200.png`,
-            avatarFallback: (additionalData?.name || user.displayName || 'U').charAt(0).toUpperCase(),
+            avatarFallback: name.charAt(0).toUpperCase(),
             bio: "",
             following: [],
             subscribers: 0,
             links: [],
             businessCard: {},
+            searchableKeywords: searchableKeywords,
         });
     }
 };
@@ -125,7 +134,22 @@ export const createUserProfileIfNotExists = async (user: FirebaseUser, additiona
  */
 export const updateUser = async (uid: string, data: Partial<User>) => {
     const userDocRef = doc(db, "users", uid);
-    await updateDoc(userDocRef, data);
+    const dataToUpdate = { ...data };
+
+    // If name or username is being updated, also update searchableKeywords
+    if (data.name || data.username) {
+        const userDoc = await getDoc(userDocRef);
+        if (userDoc.exists()) {
+            const existingData = userDoc.data() as User;
+            const newName = data.name ?? existingData.name;
+            const newUsername = data.username ?? existingData.username;
+            dataToUpdate.searchableKeywords = [...new Set([
+                ...newName.toLowerCase().split(' ').filter(Boolean),
+                newUsername.toLowerCase()
+            ])];
+        }
+    }
+    await updateDoc(userDocRef, dataToUpdate);
 };
 
 export async function getUserByUsername(username: string): Promise<User | null> {
@@ -168,7 +192,7 @@ export async function searchUsers(searchText: string): Promise<User[]> {
     const usersRef = collection(db, "users");
     
     // This is a simplified search. For production, consider a dedicated search service like Algolia.
-    const q = query(usersRef, where('username', '>=', lowerCaseQuery), where('username', '<=', lowerCaseQuery + '\uf8ff'));
+    const q = query(usersRef, where('searchableKeywords', 'array-contains', lowerCaseQuery));
 
     const querySnapshot = await getDocs(q);
 

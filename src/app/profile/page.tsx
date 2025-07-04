@@ -491,8 +491,9 @@ END:VCARD`;
                     />
                     <BioGenerator onSelectBio={(bio) => publicProfileForm.setValue('bio', bio, { shouldDirty: true })} />
                     <div className="space-y-2">
-                        <HashtagSuggester content={watchedBio} onSelectHashtag={(tag) => {
-                          publicProfileForm.setValue('bio', `${watchedBio.trim()} ${tag}`, { shouldDirty: true });
+                        <HashtagSuggester content={watchedBio || ''} onSelectHashtag={(tag) => {
+                          const currentBio = publicProfileForm.getValues('bio') || '';
+                          publicProfileForm.setValue('bio', `${currentBio.trim()} ${tag}`, { shouldDirty: true });
                         }} />
                     </div>
                   </div>
