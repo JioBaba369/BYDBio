@@ -280,6 +280,11 @@ export default function SearchPage() {
                                 <div className="flex items-center text-sm text-muted-foreground">
                                     <Briefcase className="mr-2 h-4 w-4" /> {job.type}
                                 </div>
+                                {job.remuneration && (
+                                    <div className="flex items-center text-sm text-muted-foreground">
+                                        <DollarSign className="mr-2 h-4 w-4" /> {job.remuneration}
+                                    </div>
+                                )}
                             </CardContent>
                             <CardFooter>
                                 <Button asChild className="w-full">
