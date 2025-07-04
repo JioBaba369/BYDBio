@@ -1,3 +1,4 @@
+
 'use client'
 
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -8,7 +9,6 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent } from "@/components/ui/card"
-import { Listing } from "@/lib/users"
 import Image from "next/image"
 import { Upload } from "lucide-react"
 import { useRef, useState } from "react"
@@ -20,7 +20,7 @@ const listingFormSchema = z.object({
   description: z.string().min(10, "Description must be at least 10 characters.").max(500, "Description must not be longer than 500 characters."),
   price: z.string().min(1, "Price is required."),
   category: z.string().min(2, "Category is required."),
-  imageUrl: z.string().url("A valid image URL is required."),
+  imageUrl: z.string().optional().nullable(),
 })
 
 export type ListingFormValues = z.infer<typeof listingFormSchema>
@@ -154,7 +154,7 @@ export function ListingForm({ defaultValues, onSubmit, isSaving }: ListingFormPr
                             <div className="space-y-2">
                                 <div className="aspect-video w-full rounded-md border border-dashed flex items-center justify-center">
                                     {watchedImageUrl ? (
-                                        <Image src={watchedImageUrl} alt="Listing image" width={300} height={169} className="object-cover rounded-md" />
+                                        <Image src={watchedImageUrl} alt="Listing image" width={300} height={169} className="object-cover rounded-md" data-ai-hint="product design" />
                                     ) : (
                                         <p className="text-sm text-muted-foreground">No image</p>
                                     )}

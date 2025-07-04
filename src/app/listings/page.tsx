@@ -3,36 +3,92 @@
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { currentUser } from "@/lib/mock-data";
 import Image from "next/image";
 import { PlusCircle, MoreHorizontal, Edit, Trash2, Archive, Tags, Eye, MousePointerClick, ExternalLink } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
-import { Listing } from "@/lib/users";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
 import { Separator } from "@/components/ui/separator";
+import { useAuth } from "@/components/auth-provider";
+import { type Listing, getListingsByUser, deleteListing, updateListing } from "@/lib/listings";
+import { Skeleton } from "@/components/ui/skeleton";
+
+const ListingPageSkeleton = () => (
+    <div className="space-y-6">
+        <div className="flex items-center justify-between">
+            <div>
+                <Skeleton className="h-9 w-64" />
+                <Skeleton className="h-4 w-80 mt-2" />
+            </div>
+            <Skeleton className="h-10 w-36" />
+        </div>
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {[...Array(3)].map((_, i) => (
+                <Card key={i}>
+                    <Skeleton className="h-48 w-full rounded-t-lg" />
+                    <CardHeader>
+                        <Skeleton className="h-6 w-3/4" />
+                        <Skeleton className="h-4 w-1/2" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="flex justify-between items-center">
+                            <Skeleton className="h-6 w-20" />
+                            <Skeleton className="h-6 w-16" />
+                        </div>
+                    </CardContent>
+                    <CardFooter>
+                        <Skeleton className="h-10 w-full" />
+                    </CardFooter>
+                </Card>
+            ))}
+        </div>
+    </div>
+);
+
 
 export default function ListingsPage() {
-  const [listings, setListings] = useState<Listing[]>(currentUser.listings);
+  const { user, loading: authLoading } = useAuth();
+  const [listings, setListings] = useState<Listing[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedListingId, setSelectedListingId] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const handleArchive = (listingId: string) => {
-    setListings(prev => prev.map(listing => 
-      listing.id === listingId ? { ...listing, status: listing.status === 'active' ? 'archived' : 'active' } : listing
-    ));
-    toast({ title: 'Listing status updated!' });
+  useEffect(() => {
+    if (user?.uid) {
+      setIsLoading(true);
+      getListingsByUser(user.uid)
+        .then(setListings)
+        .finally(() => setIsLoading(false));
+    }
+  }, [user]);
+
+  const handleArchive = async (listingId: string, currentStatus: 'active' | 'archived') => {
+    const newStatus = currentStatus === 'active' ? 'archived' : 'active';
+    try {
+      await updateListing(listingId, { status: newStatus });
+      setListings(prev => prev.map(listing => 
+        listing.id === listingId ? { ...listing, status: newStatus } : listing
+      ));
+      toast({ title: 'Listing status updated!' });
+    } catch (error) {
+      toast({ title: 'Error updating status', variant: 'destructive' });
+    }
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!selectedListingId) return;
-    setListings(prev => prev.filter(listing => listing.id !== selectedListingId));
-    toast({ title: 'Listing deleted!' });
-    setIsDeleteDialogOpen(false);
-    setSelectedListingId(null);
+    try {
+      await deleteListing(selectedListingId);
+      setListings(prev => prev.filter(listing => listing.id !== selectedListingId));
+      toast({ title: 'Listing deleted!' });
+    } catch (error) {
+      toast({ title: 'Error deleting listing', variant: 'destructive' });
+    } finally {
+      setIsDeleteDialogOpen(false);
+      setSelectedListingId(null);
+    }
   };
   
   const openDeleteDialog = (listingId: string) => {
@@ -42,6 +98,10 @@ export default function ListingsPage() {
   
   const activeListings = listings.filter(l => l.status === 'active');
   const archivedListings = listings.filter(l => l.status === 'archived');
+
+  if (authLoading || isLoading) {
+    return <ListingPageSkeleton />;
+  }
 
   return (
     <>
@@ -69,9 +129,11 @@ export default function ListingsPage() {
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {activeListings.map((item) => (
               <Card key={item.id} className="flex flex-col">
-                <div className="overflow-hidden rounded-t-lg">
-                  <Image src={item.imageUrl} alt={item.title} width={600} height={400} className="w-full object-cover aspect-video" data-ai-hint="product design"/>
-                </div>
+                {item.imageUrl && (
+                    <div className="overflow-hidden rounded-t-lg">
+                    <Image src={item.imageUrl} alt={item.title} width={600} height={400} className="w-full object-cover aspect-video" data-ai-hint="product design"/>
+                    </div>
+                )}
                 <CardHeader className="flex flex-row justify-between items-start">
                   <div>
                     <CardTitle>{item.title}</CardTitle>
@@ -85,7 +147,7 @@ export default function ListingsPage() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem asChild><Link href={`/listings/${item.id}/edit`} className="cursor-pointer"><Edit className="mr-2 h-4 w-4"/>Edit</Link></DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleArchive(item.id)} className="cursor-pointer"><Archive className="mr-2 h-4 w-4"/>Archive</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleArchive(item.id, item.status)} className="cursor-pointer"><Archive className="mr-2 h-4 w-4"/>Archive</DropdownMenuItem>
                       <DropdownMenuItem onClick={() => openDeleteDialog(item.id)} className="text-destructive cursor-pointer"><Trash2 className="mr-2 h-4 w-4"/>Delete</DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -144,10 +206,12 @@ export default function ListingsPage() {
              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {archivedListings.map((item) => (
                 <Card key={item.id} className="flex flex-col opacity-70">
-                  <div className="overflow-hidden rounded-t-lg relative">
-                    <Image src={item.imageUrl} alt={item.title} width={600} height={400} className="w-full object-cover aspect-video" data-ai-hint="product design"/>
-                    <Badge className="absolute top-2 right-2">Archived</Badge>
-                  </div>
+                  {item.imageUrl && (
+                    <div className="overflow-hidden rounded-t-lg relative">
+                        <Image src={item.imageUrl} alt={item.title} width={600} height={400} className="w-full object-cover aspect-video" data-ai-hint="product design"/>
+                        <Badge className="absolute top-2 right-2">Archived</Badge>
+                    </div>
+                  )}
                    <CardHeader className="flex flex-row justify-between items-start">
                     <div>
                       <CardTitle>{item.title}</CardTitle>
@@ -160,7 +224,7 @@ export default function ListingsPage() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => handleArchive(item.id)} className="cursor-pointer"><Archive className="mr-2 h-4 w-4"/>Unarchive</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleArchive(item.id, item.status)} className="cursor-pointer"><Archive className="mr-2 h-4 w-4"/>Unarchive</DropdownMenuItem>
                         <DropdownMenuItem onClick={() => openDeleteDialog(item.id)} className="text-destructive cursor-pointer"><Trash2 className="mr-2 h-4 w-4"/>Delete</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>

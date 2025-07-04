@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { createBusiness } from "@/lib/businesses";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { uploadImage } from "@/lib/storage";
 
 export default function CreateBusinessPage() {
     const router = useRouter();
@@ -21,7 +22,18 @@ export default function CreateBusinessPage() {
         }
         setIsSaving(true);
         try {
-            await createBusiness(user.uid, data);
+            const dataToSave = { ...data };
+
+            if (dataToSave.imageUrl && dataToSave.imageUrl.startsWith('data:image')) {
+                const newImageUrl = await uploadImage(dataToSave.imageUrl, `businesses/${user.uid}/${Date.now()}_header`);
+                dataToSave.imageUrl = newImageUrl;
+            }
+            if (dataToSave.logoUrl && dataToSave.logoUrl.startsWith('data:image')) {
+                const newLogoUrl = await uploadImage(dataToSave.logoUrl, `businesses/${user.uid}/${Date.now()}_logo`);
+                dataToSave.logoUrl = newLogoUrl;
+            }
+
+            await createBusiness(user.uid, dataToSave);
             toast({
                 title: "Business Page Created!",
                 description: "Your new business page has been created successfully.",

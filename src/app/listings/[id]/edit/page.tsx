@@ -1,10 +1,31 @@
+
 'use client';
 
 import { ListingForm, ListingFormValues } from "@/components/forms/listing-form";
 import { useToast } from "@/hooks/use-toast";
-import { currentUser } from "@/lib/mock-data";
 import { useParams, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { getListing, updateListing, type Listing } from "@/lib/listings";
+import { Skeleton } from "@/components/ui/skeleton";
+import { uploadImage } from "@/lib/storage";
+
+const EditListingPageSkeleton = () => (
+    <div className="space-y-6">
+        <div>
+            <Skeleton className="h-9 w-64" />
+            <Skeleton className="h-4 w-80 mt-2" />
+        </div>
+        <div className="grid md:grid-cols-3 gap-8">
+            <div className="md:col-span-2">
+                <Skeleton className="h-64 rounded-lg" />
+            </div>
+            <div className="space-y-6">
+                <Skeleton className="h-48 rounded-lg" />
+            </div>
+        </div>
+        <Skeleton className="h-10 w-32" />
+    </div>
+);
 
 export default function EditListingPage() {
     const router = useRouter();
@@ -12,22 +33,47 @@ export default function EditListingPage() {
     const listingId = params.id as string;
     const { toast } = useToast();
     const [isSaving, setIsSaving] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
+    const [listingToEdit, setListingToEdit] = useState<Listing | null>(null);
 
-    // In a real app, you would fetch this data from an API
-    const listingToEdit = currentUser.listings.find(l => l.id === listingId);
+    useEffect(() => {
+        if (listingId) {
+            setIsLoading(true);
+            getListing(listingId)
+                .then(setListingToEdit)
+                .finally(() => setIsLoading(false));
+        }
+    }, [listingId]);
     
-    // This is a mock function. In a real app, this would be an API call.
-    const onSubmit = (data: ListingFormValues) => {
+    const onSubmit = async (data: ListingFormValues) => {
         setIsSaving(true);
-        console.log("Updating listing:", listingId, data);
-        setTimeout(() => {
+        try {
+            const dataToSave = { ...data };
+            if (dataToSave.imageUrl && dataToSave.imageUrl.startsWith('data:image')) {
+                const newImageUrl = await uploadImage(dataToSave.imageUrl, `listings/${listingId}/image`);
+                dataToSave.imageUrl = newImageUrl;
+            }
+
+            await updateListing(listingId, dataToSave);
             toast({
                 title: "Listing Updated!",
                 description: "Your listing has been updated successfully.",
             });
-            setIsSaving(false);
             router.push('/listings');
-        }, 1000);
+        } catch (error) {
+            console.error("Error updating listing:", error);
+            toast({
+                title: "Error",
+                description: "Failed to update listing. Please try again.",
+                variant: "destructive",
+            });
+        } finally {
+            setIsSaving(false);
+        }
+    }
+
+    if (isLoading) {
+        return <EditListingPageSkeleton />;
     }
 
     if (!listingToEdit) {

@@ -7,6 +7,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { getBusiness, updateBusiness, type Business } from "@/lib/businesses";
 import { Skeleton } from "@/components/ui/skeleton";
+import { uploadImage } from "@/lib/storage";
 
 const EditBusinessPageSkeleton = () => (
     <div className="space-y-6">
@@ -49,7 +50,18 @@ export default function EditBusinessPage() {
     const onSubmit = async (data: BusinessFormValues) => {
         setIsSaving(true);
         try {
-            await updateBusiness(businessId, data);
+            const dataToSave = { ...data };
+
+            if (dataToSave.imageUrl && dataToSave.imageUrl.startsWith('data:image')) {
+                const newImageUrl = await uploadImage(dataToSave.imageUrl, `businesses/${businessId}/header`);
+                dataToSave.imageUrl = newImageUrl;
+            }
+            if (dataToSave.logoUrl && dataToSave.logoUrl.startsWith('data:image')) {
+                const newLogoUrl = await uploadImage(dataToSave.logoUrl, `businesses/${businessId}/logo`);
+                dataToSave.logoUrl = newLogoUrl;
+            }
+
+            await updateBusiness(businessId, dataToSave);
             toast({
                 title: "Business Page Updated!",
                 description: "Your business page has been updated successfully.",

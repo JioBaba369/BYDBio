@@ -1,27 +1,49 @@
+
 'use client';
 
 import { ListingForm, ListingFormValues } from "@/components/forms/listing-form";
+import { useAuth } from "@/components/auth-provider";
 import { useToast } from "@/hooks/use-toast";
+import { createListing } from "@/lib/listings";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { uploadImage } from "@/lib/storage";
 
 export default function CreateListingPage() {
     const router = useRouter();
+    const { user } = useAuth();
     const { toast } = useToast();
     const [isSaving, setIsSaving] = useState(false);
     
-    // This is a mock function. In a real app, this would be an API call.
-    const onSubmit = (data: ListingFormValues) => {
+    const onSubmit = async (data: ListingFormValues) => {
+        if (!user) {
+            toast({ title: "Authentication Error", description: "You must be logged in to create a listing.", variant: "destructive" });
+            return;
+        }
         setIsSaving(true);
-        console.log("Creating new listing:", data);
-        setTimeout(() => {
+        try {
+            const dataToSave = { ...data };
+            if (dataToSave.imageUrl && dataToSave.imageUrl.startsWith('data:image')) {
+                const newImageUrl = await uploadImage(dataToSave.imageUrl, `listings/${user.uid}/${Date.now()}`);
+                dataToSave.imageUrl = newImageUrl;
+            }
+
+            await createListing(user.uid, dataToSave);
             toast({
                 title: "Listing Created!",
                 description: "Your new listing has been created successfully.",
             });
-            setIsSaving(false);
             router.push('/listings');
-        }, 1000);
+        } catch (error) {
+            console.error("Error creating listing:", error);
+            toast({
+                title: "Error",
+                description: "Failed to create listing. Please try again.",
+                variant: "destructive",
+            });
+        } finally {
+            setIsSaving(false);
+        }
     }
 
     return (

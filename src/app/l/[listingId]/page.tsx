@@ -1,22 +1,11 @@
 import type { Metadata } from 'next';
-import { allUsers, type User, type Listing } from '@/lib/users';
+import { getListingAndAuthor, type Listing } from '@/lib/listings';
 import ListingDetailClient from './listing-detail-client';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 
-// Helper to find listing and its author
-function findListingAndAuthor(listingId: string): { listing: Listing; author: User } | null {
-    for (const user of allUsers) {
-        const listing = user.listings.find(l => l.id === listingId);
-        if (listing) {
-            return { listing, author: user };
-        }
-    }
-    return null;
-}
-
 export async function generateMetadata({ params }: { params: { listingId: string } }): Promise<Metadata> {
-  const data = findListingAndAuthor(params.listingId);
+  const data = await getListingAndAuthor(params.listingId);
 
   if (!data) {
     return {
@@ -48,8 +37,8 @@ export async function generateMetadata({ params }: { params: { listingId: string
 }
 
 
-export default function PublicListingPage({ params }: { params: { listingId: string } }) {
-    const data = findListingAndAuthor(params.listingId);
+export default async function PublicListingPage({ params }: { params: { listingId: string } }) {
+    const data = await getListingAndAuthor(params.listingId);
 
     if (!data) {
         return (
