@@ -168,12 +168,13 @@ export const getAllOffers = async (): Promise<OfferWithAuthor[]> => {
             offers.push({
                 id: offerDoc.id,
                 ...data,
-                startDate: (data.startDate as Timestamp).toDate(),
-                endDate: data.endDate ? (data.endDate as Timestamp).toDate() : null,
+                createdAt: (data.createdAt as Timestamp).toDate().toISOString(),
+                startDate: (data.startDate as Timestamp).toDate().toISOString(),
+                endDate: data.endDate ? (data.endDate as Timestamp).toDate().toISOString() : null,
                 author: { uid: author.uid, name: author.name, username: author.username, avatarUrl: author.avatarUrl }
             } as OfferWithAuthor);
         }
     }
 
-    return offers.sort((a,b) => (b.startDate as Date).getTime() - (a.startDate as Date).getTime());
+    return offers.sort((a,b) => new Date(b.startDate as string).getTime() - new Date(a.startDate as string).getTime());
 };

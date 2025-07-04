@@ -20,7 +20,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { uploadImage } from "@/lib/storage"
 import { ClientFormattedDate } from "@/components/client-formatted-date"
 
-type FeedItem = Post & { author: User; isLiked: boolean; };
+type FeedItem = Omit<Post, 'createdAt'> & { createdAt: string; author: User; isLiked: boolean; };
 
 const PostCardSkeleton = () => (
     <Card>
@@ -54,7 +54,7 @@ const PostCard = ({ item, handleLike }: { item: FeedItem, handleLike: (postId: s
             </Avatar>
             <div>
                 <p className="font-semibold">{item.author.name}</p>
-                <p className="text-sm text-muted-foreground">@{item.author.handle} · <ClientFormattedDate date={item.createdAt.toDate()} relative /></p>
+                <p className="text-sm text-muted-foreground">@{item.author.handle} · <ClientFormattedDate date={item.createdAt} relative /></p>
             </div>
             </Link>
             <Button variant="ghost" size="icon">

@@ -227,14 +227,15 @@ export const getAllEvents = async (): Promise<EventWithAuthor[]> => {
             events.push({
                 id: eventDoc.id,
                 ...data,
-                startDate: (data.startDate as Timestamp).toDate(),
-                endDate: data.endDate ? (data.endDate as Timestamp).toDate() : null,
+                createdAt: (data.createdAt as Timestamp).toDate().toISOString(),
+                startDate: (data.startDate as Timestamp).toDate().toISOString(),
+                endDate: data.endDate ? (data.endDate as Timestamp).toDate().toISOString() : null,
                 author: { uid: author.uid, name: author.name, username: author.username, avatarUrl: author.avatarUrl }
             } as EventWithAuthor);
         }
     }
 
-    return events.sort((a,b) => (b.startDate as Date).getTime() - (a.startDate as Date).getTime());
+    return events.sort((a,b) => new Date(b.startDate as string).getTime() - new Date(a.startDate as string).getTime());
 };
 
 // Diary notes
@@ -244,6 +245,22 @@ export type DiaryNote = {
   eventId: string;
   notes: string;
 }
+
+const serializeFirestoreTimestamps = (data: any): any => {
+    const serializedData: { [key: string]: any } = {};
+    for (const key in data) {
+        if (data[key] instanceof Timestamp) {
+            serializedData[key] = data[key].toDate().toISOString();
+        } else if (data[key] && typeof data[key] === 'object' && !Array.isArray(data[key])) {
+             serializedData[key] = serializeFirestoreTimestamps(data[key]);
+        }
+        else {
+            serializedData[key] = data[key];
+        }
+    }
+    return serializedData;
+}
+
 
 export const getDiaryNote = async (userId: string, eventId: string): Promise<DiaryNote | null> => {
     const noteRef = doc(db, 'diaryNotes', `${userId}_${eventId}`);
@@ -280,16 +297,7 @@ export const getDiaryEvents = async (userId: string): Promise<any[]> => {
         if (source === 'rsvped' && eventsMap.has(key)) return;
         
         const data = doc.data();
-        const serializedData = { ...data };
-        if (data.createdAt && typeof data.createdAt.toDate === 'function') {
-            serializedData.createdAt = data.createdAt.toDate().toISOString();
-        }
-        if (data.startDate && typeof data.startDate.toDate === 'function') {
-            serializedData.startDate = data.startDate.toDate().toISOString();
-        }
-        if (data.endDate && typeof data.endDate.toDate === 'function') {
-            serializedData.endDate = data.endDate.toDate().toISOString();
-        }
+        const serializedData = serializeFirestoreTimestamps(data);
         
         eventsMap.set(key, { ...serializedData, id: doc.id, source });
     }
@@ -362,23 +370,7 @@ export const getCalendarItems = async (userId: string): Promise<CalendarItem[]> 
         if (source === 'rsvped' && itemsMap.has(key)) return;
 
         const data = doc.data();
-        const serializedData = { ...data };
-        // Explicitly serialize all known date fields
-        if (data.createdAt && typeof data.createdAt.toDate === 'function') {
-            serializedData.createdAt = data.createdAt.toDate().toISOString();
-        }
-        if (data.startDate && typeof data.startDate.toDate === 'function') {
-            serializedData.startDate = data.startDate.toDate().toISOString();
-        }
-        if (data.endDate && typeof data.endDate.toDate === 'function') {
-            serializedData.endDate = data.endDate.toDate().toISOString();
-        }
-        if (data.postingDate && typeof data.postingDate.toDate === 'function') {
-            serializedData.postingDate = data.postingDate.toDate().toISOString();
-        }
-        if (data.closingDate && typeof data.closingDate.toDate === 'function') {
-            serializedData.closingDate = data.closingDate.toDate().toISOString();
-        }
+        const serializedData = serializeFirestoreTimestamps(data);
         
         itemsMap.set(key, { ...serializedData, id: doc.id, type, source });
     };

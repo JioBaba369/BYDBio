@@ -190,14 +190,15 @@ export const getAllJobs = async (): Promise<JobWithAuthor[]> => {
             jobs.push({
                 id: jobDoc.id,
                 ...data,
-                postingDate: (data.postingDate as Timestamp).toDate(),
-                closingDate: data.closingDate ? (data.closingDate as Timestamp).toDate() : null,
-                startDate: data.startDate ? (data.startDate as Timestamp).toDate() : null,
-                endDate: data.endDate ? (data.endDate as Timestamp).toDate() : null,
+                createdAt: (data.createdAt as Timestamp).toDate().toISOString(),
+                postingDate: (data.postingDate as Timestamp).toDate().toISOString(),
+                closingDate: data.closingDate ? (data.closingDate as Timestamp).toDate().toISOString() : null,
+                startDate: data.startDate ? (data.startDate as Timestamp).toDate().toISOString() : null,
+                endDate: data.endDate ? (data.endDate as Timestamp).toDate().toISOString() : null,
                 author: { uid: author.uid, name: author.name, username: author.username, avatarUrl: author.avatarUrl }
             } as JobWithAuthor);
         }
     }
 
-    return jobs.sort((a,b) => (b.postingDate as Date).getTime() - (a.postingDate as Date).getTime());
+    return jobs.sort((a,b) => new Date(b.postingDate as string).getTime() - new Date(a.postingDate as string).getTime());
 };

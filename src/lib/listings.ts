@@ -159,12 +159,13 @@ export const getAllListings = async (): Promise<ListingWithAuthor[]> => {
             listings.push({
                 id: listingDoc.id,
                 ...data,
-                startDate: data.startDate ? (data.startDate as Timestamp).toDate() : null,
-                endDate: data.endDate ? (data.endDate as Timestamp).toDate() : null,
+                createdAt: (data.createdAt as Timestamp).toDate().toISOString(),
+                startDate: data.startDate ? (data.startDate as Timestamp).toDate().toISOString() : null,
+                endDate: data.endDate ? (data.endDate as Timestamp).toDate().toISOString() : null,
                 author: { uid: author.uid, name: author.name, username: author.username, avatarUrl: author.avatarUrl }
             } as ListingWithAuthor);
         }
     }
 
-    return listings.sort((a,b) => (b.createdAt as Timestamp).toMillis() - (a.createdAt as Timestamp).toMillis());
+    return listings.sort((a,b) => new Date(b.createdAt as string).getTime() - new Date(a.createdAt as string).getTime());
 };

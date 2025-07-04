@@ -100,7 +100,7 @@ export const toggleLikePost = async (postId: string, userId: string) => {
 }
 
 // Function to fetch posts for the user's feed
-export const getFeedPosts = async (followingIds: string[]): Promise<(Post & { author: User })[]> => {
+export const getFeedPosts = async (followingIds: string[]): Promise<(Omit<Post, 'createdAt'> & { author: User; createdAt: string })[]> => {
     if (followingIds.length === 0) {
         return [];
     }
@@ -109,21 +109,31 @@ export const getFeedPosts = async (followingIds: string[]): Promise<(Post & { au
     const q = query(postsRef, where('authorId', 'in', followingIds), orderBy('createdAt', 'desc'), limit(50));
     const querySnapshot = await getDocs(q);
 
-    const posts: (Post & { author: User })[] = [];
-    const authorPromises: Promise<void>[] = [];
+    const posts: (Omit<Post, 'createdAt'> & { author: User; createdAt: string; })[] = [];
+    const authorCache: { [key: string]: User } = {};
 
     for (const postDoc of querySnapshot.docs) {
-        const post = { id: postDoc.id, ...postDoc.data() } as Post;
-        const authorPromise = getDoc(doc(db, 'users', post.authorId)).then(userDoc => {
+        const postData = postDoc.data() as Omit<Post, 'id' | 'createdAt'>;
+        const postCreatedAt = (postDoc.data().createdAt as Timestamp);
+        
+        let author = authorCache[postData.authorId];
+        if (!author) {
+            const userDoc = await getDoc(doc(db, 'users', postData.authorId));
             if (userDoc.exists()) {
-                posts.push({ ...post, author: userDoc.data() as User });
+                author = userDoc.data() as User;
+                authorCache[postData.authorId] = author;
             }
-        });
-        authorPromises.push(authorPromise);
+        }
+
+        if (author) {
+            posts.push({ 
+                id: postDoc.id,
+                 ...postData, 
+                 author: author,
+                 createdAt: postCreatedAt.toDate().toISOString(),
+            });
+        }
     }
 
-    await Promise.all(authorPromises);
-
-    // Sort again as promises may resolve out of order
-    return posts.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
+    return posts;
 };

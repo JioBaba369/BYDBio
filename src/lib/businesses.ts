@@ -147,10 +147,11 @@ export const getAllBusinesses = async (): Promise<BusinessWithAuthor[]> => {
             businesses.push({
                 id: businessDoc.id,
                 ...data,
+                createdAt: (data.createdAt as Timestamp).toDate().toISOString(),
                 author: { uid: author.uid, name: author.name, username: author.username, avatarUrl: author.avatarUrl }
             } as BusinessWithAuthor);
         }
     }
 
-    return businesses.sort((a,b) => (b.createdAt as Timestamp).toMillis() - (a.createdAt as Timestamp).toMillis());
+    return businesses.sort((a,b) => new Date(b.createdAt as string).getTime() - new Date(a.createdAt as string).getTime());
 };
