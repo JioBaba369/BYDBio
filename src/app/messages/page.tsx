@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -101,7 +100,7 @@ export default function MessagesPage() {
                                     >
                                         <div className="flex items-center gap-4 w-full">
                                             <Avatar className={cn("h-10 w-10", !message.read && "ring-2 ring-primary/50 ring-offset-2 ring-offset-background")}>
-                                                <AvatarFallback>{message.senderName.charAt(0).toUpperCase()}</AvatarFallback>
+                                                <AvatarFallback>{message.senderName?.charAt(0).toUpperCase() || 'S'}</AvatarFallback>
                                             </Avatar>
                                             <div className="flex-1">
                                                 <div className="flex justify-between items-baseline">
