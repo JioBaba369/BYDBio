@@ -79,7 +79,7 @@ export default function ExplorePage() {
         return false;
       }
       const searchMatch = searchTerm.length > 0
-        ? (item.title?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+        ? ((item as any).title?.toLowerCase() || (item as any).name?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
           (item.description?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
           ('company' in item && item.company?.toLowerCase().includes(searchTerm.toLowerCase())) ||
           ('category' in item && item.category?.toLowerCase().includes(searchTerm.toLowerCase()))
@@ -190,18 +190,20 @@ export default function ExplorePage() {
               {filteredItems.length > 0 ? (
                   view === 'grid' ? (
                   <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {filteredItems.map((item) => (
+                      {filteredItems.map((item) => {
+                          const title = (item as any).title || (item as any).name;
+                          return (
                           <Card key={`${item.type}-${item.id}`} className="shadow-sm flex flex-col">
                               {item.imageUrl && (
                                 <div className="overflow-hidden rounded-t-lg">
-                                  <Image src={item.imageUrl} alt={item.title} width={600} height={400} className="w-full object-cover aspect-video" data-ai-hint="office laptop" />
+                                  <Image src={item.imageUrl} alt={title} width={600} height={400} className="w-full object-cover aspect-video" data-ai-hint="office laptop" />
                                 </div>
                               )}
                               <CardHeader className="p-4 pb-2">
                                   <div className="flex justify-between items-start">
                                       <div>
                                         <Badge variant={getBadgeVariant(item.type)}>{item.type}</Badge>
-                                        <CardTitle className="text-base mt-2">{item.title}</CardTitle>
+                                        <CardTitle className="text-base mt-2">{title}</CardTitle>
                                       </div>
                                   </div>
                               </CardHeader>
@@ -220,7 +222,8 @@ export default function ExplorePage() {
                                 </Button>
                               </CardFooter>
                           </Card>
-                      ))}
+                          )
+                        })}
                   </div>
                   ) : (
                     <Card>
@@ -235,10 +238,12 @@ export default function ExplorePage() {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {filteredItems.map(item => (
+                                {filteredItems.map(item => {
+                                    const title = (item as any).title || (item as any).name;
+                                    return (
                                     <TableRow key={`${item.type}-${item.id}`}>
                                         <TableCell>
-                                            <div className="font-medium">{item.title}</div>
+                                            <div className="font-medium">{title}</div>
                                             {'company' in item && <div className="text-xs text-muted-foreground">{item.company}</div>}
                                         </TableCell>
                                         <TableCell><Badge variant={getBadgeVariant(item.type)}>{item.type}</Badge></TableCell>
@@ -260,7 +265,7 @@ export default function ExplorePage() {
                                             </Button>
                                         </TableCell>
                                     </TableRow>
-                                ))}
+                                )})}
                             </TableBody>
                         </Table>
                     </Card>
