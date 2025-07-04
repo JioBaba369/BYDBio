@@ -5,8 +5,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { UserPlus, UserCheck, UserMinus, QrCode, Loader2, Users, Search } from "lucide-react";
-import { useState, useMemo, useEffect } from "react";
+import { UserPlus, UserCheck, QrCode, Loader2, Users, Search as SearchIcon } from "lucide-react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import {
   AlertDialog,
@@ -82,24 +82,21 @@ export default function ConnectionsPage() {
         }
     }, [user, toast]);
 
-    const handleToggleFollow = async (targetUserId: string, isCurrentlyFollowing: boolean) => {
+    const handleToggleFollow = async (targetUser: User, isCurrentlyFollowing: boolean) => {
         if (!user || togglingFollowId) return;
-        setTogglingFollowId(targetUserId);
+        setTogglingFollowId(targetUser.uid);
         try {
             if (isCurrentlyFollowing) {
-                await unfollowUser(user.uid, targetUserId);
-                setFollowingList(prev => prev.filter(u => u.uid !== targetUserId));
-                toast({ title: "Unfollowed" });
+                await unfollowUser(user.uid, targetUser.uid);
+                setFollowingList(prev => prev.filter(u => u.uid !== targetUser.uid));
+                toast({ title: `Unfollowed ${targetUser.name}` });
             } else {
-                await followUser(user.uid, targetUserId);
-                const userToFollow = suggestedList.find(u => u.uid === targetUserId) || followersList.find(u => u.uid === targetUserId);
-                if (userToFollow) {
-                    setFollowingList(prev => [...prev, userToFollow]);
-                }
-                toast({ title: "Followed" });
+                await followUser(user.uid, targetUser.uid);
+                setFollowingList(prev => [...prev, targetUser]);
+                toast({ title: `You are now following ${targetUser.name}` });
             }
             // Manually update the suggested list to reflect the change
-            setSuggestedList(prev => prev.filter(u => u.uid !== targetUserId));
+            setSuggestedList(prev => prev.filter(u => u.uid !== targetUser.uid));
         } catch (error) {
             console.error("Error following/unfollowing user:", error);
             toast({ title: "Something went wrong", variant: "destructive" });
@@ -244,9 +241,9 @@ export default function ConnectionsPage() {
                                         </div>
                                     </Link>
                                     <div className="flex items-center gap-2 flex-shrink-0">
-                                        <Button size="sm" variant={isFollowedByCurrentUser ? 'secondary' : 'default'} onClick={() => handleToggleFollow(followerUser.uid, isFollowedByCurrentUser)} disabled={isProcessing}>
+                                        <Button size="sm" variant={isFollowedByCurrentUser ? 'secondary' : 'default'} onClick={() => handleToggleFollow(followerUser, isFollowedByCurrentUser)} disabled={isProcessing}>
                                             {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : isFollowedByCurrentUser ? <UserCheck className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
-                                            {isFollowedByCurrentUser ? 'Following' : 'Follow Back'}
+                                            {isFollowedByCurrentUser ? 'Following' : 'Follow'}
                                         </Button>
                                     </div>
                                 </div>
@@ -283,9 +280,9 @@ export default function ConnectionsPage() {
                                                 <p className="text-sm text-muted-foreground">@{followingUser.handle}</p>
                                             </div>
                                         </Link>
-                                        <Button size="sm" variant="secondary" onClick={() => handleToggleFollow(followingUser.uid, true)} disabled={isProcessing}>
+                                        <Button size="sm" variant="secondary" onClick={() => handleToggleFollow(followingUser, true)} disabled={isProcessing}>
                                             {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UserCheck className="mr-2 h-4 w-4" />}
-                                            Unfollow
+                                            Following
                                         </Button>
                                     </div>
                                 </CardContent>
@@ -296,7 +293,7 @@ export default function ConnectionsPage() {
             ) : (
                 <Card>
                     <CardContent className="p-10 text-center text-muted-foreground flex flex-col items-center gap-4">
-                        <Search className="h-12 w-12" />
+                        <SearchIcon className="h-12 w-12" />
                         <h3 className="font-semibold text-foreground">Start Connecting</h3>
                         <p>You aren't following anyone yet. Explore suggestions to get started.</p>
                          <Button asChild>
@@ -325,7 +322,7 @@ export default function ConnectionsPage() {
                                                 <p className="text-sm text-muted-foreground truncate">@{suggestedUser.handle}</p>
                                             </div>
                                         </Link>
-                                        <Button size="sm" variant="default" onClick={() => handleToggleFollow(suggestedUser.uid, false)} className="shrink-0" disabled={isProcessing}>
+                                        <Button size="sm" variant="default" onClick={() => handleToggleFollow(suggestedUser, false)} className="shrink-0" disabled={isProcessing}>
                                             {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UserPlus className="mr-2 h-4 w-4" />}
                                             Follow
                                         </Button>

@@ -61,7 +61,7 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
   const router = useRouter();
   
   const [isFollowing, setIsFollowing] = useState(currentUser?.following?.includes(userProfileData.uid) || false);
-  const [subscribers, setSubscribers] = useState(userProfileData.subscribers || 0);
+  const [followerCount, setFollowerCount] = useState(userProfileData.followerCount || 0);
   const [isFollowLoading, setIsFollowLoading] = useState(false);
   
   useEffect(() => {
@@ -101,7 +101,7 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
     const currentlyFollowing = isFollowing;
 
     setIsFollowing(!currentlyFollowing);
-    setSubscribers(prev => prev + (!currentlyFollowing ? 1 : -1));
+    setFollowerCount(prev => prev + (!currentlyFollowing ? 1 : -1));
 
     try {
         if (currentlyFollowing) {
@@ -113,7 +113,7 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
         }
     } catch (error) {
         setIsFollowing(currentlyFollowing);
-        setSubscribers(prev => prev + (currentlyFollowing ? 1 : -1));
+        setFollowerCount(prev => prev + (currentlyFollowing ? 1 : -1));
         toast({ title: "Something went wrong", variant: "destructive" });
     } finally {
         setIsFollowLoading(false);
@@ -192,8 +192,8 @@ END:VCARD`;
                 {isFollowing ? 'Following' : 'Follow'}
               </Button>
               <div className="text-center p-2 rounded-md bg-muted/50 w-28">
-                <p className="font-bold text-lg text-foreground">{subscribers}</p>
-                <p className="text-xs text-muted-foreground tracking-wide">Subscribers</p>
+                <p className="font-bold text-lg text-foreground">{followerCount}</p>
+                <p className="text-xs text-muted-foreground tracking-wide">Followers</p>
               </div>
             </div>
           </div>

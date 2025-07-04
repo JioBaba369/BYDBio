@@ -5,18 +5,17 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
-import { Heart, Image as ImageIcon, MessageCircle, MoreHorizontal, Share2, Send, X } from "lucide-react"
+import { Heart, Image as ImageIcon, MessageCircle, MoreHorizontal, Share2, Send, X, Users } from "lucide-react"
 import Image from "next/image"
 import HashtagSuggester from "@/components/ai/hashtag-suggester"
-import { useState, useMemo, useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/components/auth-provider"
 import { useToast } from "@/hooks/use-toast"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import ImageCropper from "@/components/image-cropper"
 import { getFeedPosts, createPost, toggleLikePost, Post } from "@/lib/posts"
-import { type User, getUsersByIds } from "@/lib/users"
+import { type User } from "@/lib/users"
 import { Skeleton } from "@/components/ui/skeleton"
 import { uploadImage } from "@/lib/storage"
 import { ClientFormattedDate } from "@/components/client-formatted-date"
@@ -192,10 +191,6 @@ export default function FeedPage() {
     }
   };
   
-  // "For You" feed is not implemented with a real algorithm.
-  // We'll just show an empty state for now.
-  const forYouFeedItems: FeedItem[] = [];
-
   if (authLoading) {
       return (
          <div className="max-w-2xl mx-auto space-y-6">
@@ -267,40 +262,24 @@ export default function FeedPage() {
           </CardFooter>
         </Card>
 
-        <Tabs defaultValue="following" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="following">Following</TabsTrigger>
-              <TabsTrigger value="for-you">For You</TabsTrigger>
-            </TabsList>
-            <TabsContent value="following" className="space-y-6 mt-6">
-                {isLoading ? (
-                    <PostCardSkeleton />
-                ) : feedItems.length > 0 ? (
-                    feedItems.map(item => (
-                        <PostCard key={item.id} item={item} handleLike={handleLike} />
-                    ))
-                ) : (
-                  <Card>
-                      <CardContent className="p-10 text-center text-muted-foreground">
-                          Follow other users to see their updates here.
-                      </CardContent>
-                  </Card>
-                )}
-            </TabsContent>
-            <TabsContent value="for-you" className="space-y-6 mt-6">
-                {forYouFeedItems.length > 0 ? (
-                    forYouFeedItems.map(item => (
-                        <PostCard key={item.id} item={item} handleLike={handleLike} />
-                    ))
-                ) : (
-                  <Card>
-                      <CardContent className="p-10 text-center text-muted-foreground">
-                          No new posts to discover right now. Check back later!
-                      </CardContent>
-                  </Card>
-                )}
-            </TabsContent>
-        </Tabs>
+        <div className="space-y-6 mt-6">
+            {isLoading ? (
+                <PostCardSkeleton />
+            ) : feedItems.length > 0 ? (
+                feedItems.map(item => (
+                    <PostCard key={item.id} item={item} handleLike={handleLike} />
+                ))
+            ) : (
+              <Card>
+                  <CardContent className="p-10 text-center text-muted-foreground flex flex-col items-center gap-4">
+                    <Users className="h-12 w-12" />
+                    <h3 className="font-semibold text-foreground">Your Feed is Empty</h3>
+                    <p>Follow other users to see their status updates here.</p>
+                    <Button asChild><Link href="/connections?tab=suggestions">Find People to Follow</Link></Button>
+                  </CardContent>
+              </Card>
+            )}
+        </div>
       </div>
     </>
   )

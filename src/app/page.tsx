@@ -10,9 +10,7 @@ import {
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
-import { BarChart, Briefcase, Calendar, DollarSign, ListFilter, MessageSquare, PlusCircle, Tags, ExternalLink } from "lucide-react"
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
-import { Bar, BarChart as BarChartComponent } from "recharts"
+import { Briefcase, Calendar, DollarSign, ListFilter, MessageSquare, PlusCircle, Tags, Users, UserCheck } from "lucide-react"
 import Link from "next/link"
 import {
   DropdownMenu,
@@ -51,10 +49,6 @@ const DashboardSkeleton = () => (
         <Skeleton className="h-28 rounded-lg" />
         <Skeleton className="h-28 rounded-lg" />
         <Skeleton className="h-28 rounded-lg" />
-      </div>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        <Skeleton className="col-span-4 h-80 rounded-lg" />
-        <Skeleton className="col-span-3 h-80 rounded-lg" />
       </div>
       <Card>
         <CardHeader>
@@ -121,24 +115,15 @@ function Dashboard() {
     }
   }, [user]);
 
-  const { totalContent, barChartData, profileCompletion } = useMemo(() => {
+  const { totalContent, profileCompletion } = useMemo(() => {
     if (!user) {
-      return { totalContent: 0, barChartData: [], profileCompletion: 0 };
+      return { totalContent: 0, profileCompletion: 0 };
     }
 
     const total = (counts?.jobs || 0) + 
                   (counts?.events || 0) + 
                   (counts?.offers || 0) + 
                   (counts?.listings || 0);
-
-    const chart = [
-      { name: 'Jobs', value: counts?.jobs || 0 },
-      { name: 'Events', value: counts?.events || 0 },
-      { name: 'Offers', value: counts?.offers || 0 },
-      { name: 'Listings', value: counts?.listings || 0 },
-      { name: 'Posts', value: counts?.posts || 0 },
-      { name: 'Links', value: user.links?.length || 0 },
-    ];
     
     let completion = 0;
     if (user.bio) completion += 20;
@@ -147,7 +132,7 @@ function Dashboard() {
     if (total > 0 || (counts?.posts || 0) > 0) completion += 20;
     if (user.businessCard && user.businessCard.title && user.businessCard.company) completion += 20;
 
-    return { totalContent: total, barChartData: chart, profileCompletion: completion };
+    return { totalContent: total, profileCompletion: completion };
   }, [user, counts]);
   
   if (isCountsLoading || isActivityLoading) {
@@ -223,28 +208,28 @@ function Dashboard() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Profile Views
+              Followers
             </CardTitle>
-            <BarChart className="h-4 w-4 text-muted-foreground" />
+            <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">1,345</div>
-            <p className="text-xs text-muted-foreground">
-              +20.1% from last month
+            <div className="text-2xl font-bold">{user.followerCount}</div>
+             <p className="text-xs text-muted-foreground">
+              Total number of followers
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Link Clicks
+              Following
             </CardTitle>
-            <BarChart className="h-4 w-4 text-muted-foreground" />
+            <UserCheck className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">8,921</div>
+            <div className="text-2xl font-bold">{user.following.length}</div>
             <p className="text-xs text-muted-foreground">
-              +15% from last month
+              Total number of users you follow
             </p>
           </CardContent>
         </Card>

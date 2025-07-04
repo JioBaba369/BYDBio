@@ -1,7 +1,6 @@
 
 import {
   doc,
-  updateDoc,
   arrayUnion,
   arrayRemove,
   getDoc,
@@ -27,7 +26,7 @@ export const followUser = async (currentUserId: string, targetUserId: string) =>
 
   const targetUserRef = doc(db, 'users', targetUserId);
   batch.update(targetUserRef, {
-      subscribers: increment(1)
+      followerCount: increment(1)
   });
 
   await batch.commit();
@@ -45,7 +44,7 @@ export const unfollowUser = async (currentUserId: string, targetUserId: string) 
 
   const targetUserRef = doc(db, 'users', targetUserId);
   batch.update(targetUserRef, {
-      subscribers: increment(-1)
+      followerCount: increment(-1)
   });
   
   await batch.commit();

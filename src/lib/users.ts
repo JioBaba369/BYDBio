@@ -36,7 +36,7 @@ export type User = {
   avatarFallback: string;
   bio: string;
   following: string[]; // Array of user IDs this user follows
-  subscribers: number;
+  followerCount: number;
   links: UserLink[];
   businessCard?: BusinessCard;
   notificationSettings: NotificationSettings;
@@ -107,6 +107,23 @@ export type Event = {
   createdAt: Timestamp | string;
 };
 
+export type Business = {
+  id: string; // Document ID from Firestore
+  authorId: string; // UID of the user who created it
+  name: string;
+  description: string;
+  email: string;
+  phone?: string;
+  website?: string;
+  address?: string;
+  imageUrl?: string | null;
+  logoUrl?: string | null;
+  status: 'active' | 'archived';
+  views?: number;
+  clicks?: number;
+  createdAt: Timestamp | string;
+  searchableKeywords: string[];
+};
 
 /**
  * Creates a user profile in Firestore if one doesn't already exist.
@@ -138,7 +155,7 @@ export const createUserProfileIfNotExists = async (user: FirebaseUser, additiona
             avatarFallback: name.charAt(0).toUpperCase(),
             bio: "",
             following: [],
-            subscribers: 0,
+            followerCount: 0,
             links: [],
             businessCard: {},
             notificationSettings: {
