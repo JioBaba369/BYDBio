@@ -12,7 +12,7 @@ import { type Business } from "@/lib/businesses";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Send, Briefcase, Calendar, Tag, MapPin, Heart, MessageCircle, DollarSign, Building2, Tags, ExternalLink, Globe, UserCheck, UserPlus } from "lucide-react";
+import { Send, Briefcase, Calendar, Tag, MapPin, Heart, MessageCircle, DollarSign, Building2, Tags, ExternalLink, Globe, UserCheck, UserPlus, QrCode } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
@@ -33,6 +33,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/components/auth-provider";
 import { followUser, unfollowUser } from "@/lib/connections";
 import { useRouter } from "next/navigation";
+import QRCode from "qrcode.react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 
 interface UserProfilePageProps {
@@ -153,8 +155,20 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
   };
 
 
-  const { name, username, avatarUrl, avatarFallback, bio, links, handle } = userProfileData;
+  const { name, username, avatarUrl, avatarFallback, bio, links, handle, businessCard } = userProfileData;
   const { posts, listings, jobs, events, offers, businesses } = content;
+
+  const vCardData = `BEGIN:VCARD
+VERSION:3.0
+FN:${name}
+ORG:${businessCard?.company || ''}
+TITLE:${businessCard?.title || ''}
+TEL;TYPE=WORK,VOICE:${businessCard?.phone || ''}
+EMAIL:${businessCard?.email || ''}
+URL:${businessCard?.website || ''}
+X-SOCIALPROFILE;type=linkedin:${businessCard?.linkedin || ''}
+ADR;TYPE=WORK:;;${businessCard?.location || ''}
+END:VCARD`;
   
   const hasContent = posts.length > 0 || businesses.length > 0 || listings.length > 0 || jobs.length > 0 || events.length > 0 || offers.length > 0;
 
@@ -169,8 +183,25 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
             </Avatar>
             <h1 className="font-headline text-3xl font-bold text-foreground">{name}</h1>
             <p className="mt-2 text-muted-foreground font-body">{bio}</p>
-             <div className="mt-4">
-              <ShareButton />
+             <div className="mt-4 flex items-center justify-center gap-2">
+                <ShareButton />
+                <Dialog>
+                    <DialogTrigger asChild>
+                        <Button variant="outline">
+                            <QrCode className="mr-2 h-4 w-4" />
+                            QR Code
+                        </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Scan to save contact</DialogTitle>
+                        </DialogHeader>
+                        <div className="flex flex-col items-center justify-center p-4 gap-4">
+                            <QRCode value={vCardData} size={256} bgColor="#ffffff" fgColor="#000000" level="Q" />
+                            <p className="text-sm text-muted-foreground text-center">Scan this code with your phone's camera to save {name}'s contact details.</p>
+                        </div>
+                    </DialogContent>
+                </Dialog>
             </div>
             <div className="mt-6 flex w-full items-center gap-4">
               <Button 
