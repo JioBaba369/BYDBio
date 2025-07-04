@@ -5,53 +5,78 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
-import { Heart, Image as ImageIcon, MessageCircle, MoreHorizontal, Share2, Send, X, Users, Trash2 } from "lucide-react"
+import { Heart, Image as ImageIcon, MessageCircle, MoreHorizontal, Share2, Send, X, Users, Trash2, Compass } from "lucide-react"
 import Image from "next/image"
 import HashtagSuggester from "@/components/ai/hashtag-suggester"
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useAuth } from "@/components/auth-provider"
 import { useToast } from "@/hooks/use-toast"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
 import ImageCropper from "@/components/image-cropper"
-import { getFeedPosts, createPost, toggleLikePost, Post, deletePost } from "@/lib/posts"
+import { getFeedPosts, createPost, toggleLikePost, Post, deletePost, getDiscoveryPosts } from "@/lib/posts"
 import { type User } from "@/lib/users"
 import { Skeleton } from "@/components/ui/skeleton"
 import { uploadImage } from "@/lib/storage"
 import { ClientFormattedDate } from "@/components/client-formatted-date"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 type FeedItem = Omit<Post, 'createdAt'> & { createdAt: string; author: User; isLiked: boolean; };
 
 const PostCardSkeleton = () => (
-    <Card>
-        <CardHeader className="p-4">
-            <div className="flex items-center gap-3">
-                <Skeleton className="h-10 w-10 rounded-full" />
-                <div className="space-y-1">
-                    <Skeleton className="h-4 w-24" />
-                    <Skeleton className="h-3 w-16" />
+    <div className="space-y-6">
+        <Card>
+            <CardHeader className="p-4">
+                <div className="flex items-center gap-3">
+                    <Skeleton className="h-10 w-10 rounded-full" />
+                    <div className="space-y-1">
+                        <Skeleton className="h-4 w-24" />
+                        <Skeleton className="h-3 w-16" />
+                    </div>
                 </div>
-            </div>
-        </CardHeader>
-        <CardContent className="p-4 pt-0 space-y-2">
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-3/4" />
-        </CardContent>
-        <CardFooter className="p-4 border-t">
-            <Skeleton className="h-8 w-full" />
-        </CardFooter>
-    </Card>
+            </CardHeader>
+            <CardContent className="p-4 pt-0 space-y-2">
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-3/4" />
+            </CardContent>
+            <CardFooter className="p-4 border-t">
+                <Skeleton className="h-8 w-full" />
+            </CardFooter>
+        </Card>
+        <Card>
+            <CardHeader className="p-4">
+                <div className="flex items-center gap-3">
+                    <Skeleton className="h-10 w-10 rounded-full" />
+                    <div className="space-y-1">
+                        <Skeleton className="h-4 w-24" />
+                        <Skeleton className="h-3 w-16" />
+                    </div>
+                </div>
+            </CardHeader>
+            <CardContent className="p-4 pt-0 space-y-2">
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-3/4" />
+            </CardContent>
+            <CardFooter className="p-4 border-t">
+                <Skeleton className="h-8 w-full" />
+            </CardFooter>
+        </Card>
+    </div>
 );
 
 export default function FeedPage() {
   const { user, loading: authLoading } = useAuth();
-  const [postContent, setPostContent] = useState('');
-  const [feedItems, setFeedItems] = useState<FeedItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
+  const [postContent, setPostContent] = useState('');
+  const [followingFeed, setFollowingFeed] = useState<FeedItem[]>([]);
+  const [discoveryFeed, setDiscoveryFeed] = useState<FeedItem[]>([]);
+  
+  const [isFollowingLoading, setIsFollowingLoading] = useState(true);
+  const [isDiscoveryLoading, setIsDiscoveryLoading] = useState(true);
+  
   const [imageToCrop, setImageToCrop] = useState<string | null>(null);
   const [croppedImageUrl, setCroppedImageUrl] = useState<string | null>(null);
   const [isCropperOpen, setIsCropperOpen] = useState(false);
@@ -60,29 +85,47 @@ export default function FeedPage() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [postToDelete, setPostToDelete] = useState<FeedItem | null>(null);
 
-  const fetchFeed = async () => {
+  const fetchFeeds = useCallback(async (refreshFollowing: boolean, refreshDiscovery: boolean) => {
     if (!user) return;
-    setIsLoading(true);
-    try {
-        const postsWithAuthors = await getFeedPosts(user.following);
-        setFeedItems(postsWithAuthors.map(post => ({
-            ...post,
-            isLiked: post.likedBy.includes(user.uid),
-        })));
-    } catch (error) {
-        console.error("Error fetching feed:", error);
-        toast({ title: "Failed to load feed", variant: "destructive" });
-    } finally {
-        setIsLoading(false);
+
+    if (refreshFollowing) {
+        setIsFollowingLoading(true);
+        try {
+            const posts = await getFeedPosts(user.following);
+            setFollowingFeed(posts.map(post => ({
+                ...post,
+                isLiked: post.likedBy.includes(user.uid),
+            })));
+        } catch (error) {
+            console.error("Error fetching following feed:", error);
+            toast({ title: "Failed to load your feed", variant: "destructive" });
+        } finally {
+            setIsFollowingLoading(false);
+        }
     }
-  };
+
+    if (refreshDiscovery) {
+        setIsDiscoveryLoading(true);
+        try {
+            const posts = await getDiscoveryPosts(user.uid, user.following);
+            setDiscoveryFeed(posts.map(post => ({
+                ...post,
+                isLiked: post.likedBy.includes(user.uid),
+            })));
+        } catch (error) {
+            console.error("Error fetching discovery feed:", error);
+            toast({ title: "Failed to load discovery feed", variant: "destructive" });
+        } finally {
+            setIsDiscoveryLoading(false);
+        }
+    }
+  }, [user, toast]);
 
   useEffect(() => {
     if (user) {
-        fetchFeed();
+        fetchFeeds(true, true);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
+  }, [user, fetchFeeds]);
 
   const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -122,7 +165,7 @@ export default function FeedPage() {
         setPostContent('');
         setCroppedImageUrl(null);
         toast({ title: "Update Posted!" });
-        await fetchFeed(); // Refresh feed after posting
+        await fetchFeeds(true, false); // Refresh following feed only
     } catch(error) {
         console.error("Error posting update:", error);
         toast({ title: "Failed to post update", variant: "destructive" });
@@ -131,24 +174,25 @@ export default function FeedPage() {
 
   const handleLike = async (postId: string) => {
     if (!user) return;
+
+    const updateFeed = (feed: FeedItem[]) => feed.map(item => {
+        if (item.id === postId) {
+            const isLiked = !item.isLiked;
+            const likes = isLiked ? item.likes + 1 : item.likes - 1;
+            return { ...item, isLiked, likes };
+        }
+        return item;
+    });
+
+    setFollowingFeed(updateFeed);
+    setDiscoveryFeed(updateFeed);
+
     try {
-        // Optimistic update
-        setFeedItems(prevItems =>
-            prevItems.map(item => {
-                if (item.id === postId) {
-                const isLiked = !item.isLiked;
-                const likes = isLiked ? item.likes + 1 : item.likes - 1;
-                return { ...item, isLiked, likes };
-                }
-                return item;
-            })
-        );
         await toggleLikePost(postId, user.uid);
     } catch (error) {
         console.error("Error liking post:", error);
         toast({ title: "Something went wrong", variant: "destructive" });
-        // Revert optimistic update on error
-        fetchFeed();
+        await fetchFeeds(true, true); // Revert on error
     }
   };
   
@@ -158,10 +202,10 @@ export default function FeedPage() {
   };
 
   const handleConfirmDelete = async () => {
-    if (!postToDelete) return;
+    if (!postToDelete || !user) return;
 
-    // Optimistic update
-    setFeedItems(prev => prev.filter(item => item.id !== postToDelete.id));
+    setFollowingFeed(prev => prev.filter(item => item.id !== postToDelete.id));
+    setDiscoveryFeed(prev => prev.filter(item => item.id !== postToDelete.id));
     
     try {
         await deletePost(postToDelete.id);
@@ -169,71 +213,80 @@ export default function FeedPage() {
     } catch (error) {
         console.error("Error deleting post:", error);
         toast({ title: "Failed to delete post", variant: "destructive" });
-        // Revert on error
-        fetchFeed();
+        await fetchFeeds(true, true); // Revert on error
     } finally {
         setIsDeleteDialogOpen(false);
         setPostToDelete(null);
     }
   };
 
-  const PostCard = ({ item, handleLike, openDeleteDialog }: { item: FeedItem, handleLike: (postId: string) => void, openDeleteDialog: (post: FeedItem) => void }) => {
+  const PostCard = ({ item }: { item: FeedItem }) => {
     const isOwner = user?.uid === item.author.uid;
 
     return (
         <Card key={item.id}>
             <CardHeader className="p-4">
-            <div className="flex items-center justify-between">
-                <Link href={`/u/${item.author.handle}`} className="flex items-center gap-3 hover:underline">
-                <Avatar>
-                    <AvatarImage src={item.author.avatarUrl} data-ai-hint="person portrait"/>
-                    <AvatarFallback>{item.author.name.charAt(0)}</AvatarFallback>
-                </Avatar>
-                <div>
-                    <p className="font-semibold">{item.author.name}</p>
-                    <p className="text-sm text-muted-foreground">@{item.author.handle} · <ClientFormattedDate date={item.createdAt} relative /></p>
+                <div className="flex items-center justify-between">
+                    <Link href={`/u/${item.author.handle}`} className="flex items-center gap-3 hover:underline">
+                        <Avatar>
+                            <AvatarImage src={item.author.avatarUrl} data-ai-hint="person portrait"/>
+                            <AvatarFallback>{item.author.name.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                            <p className="font-semibold">{item.author.name}</p>
+                            <p className="text-sm text-muted-foreground">@{item.author.handle} · <ClientFormattedDate date={item.createdAt} relative /></p>
+                        </div>
+                    </Link>
+                    {isOwner && (
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                    <MoreHorizontal className="h-5 w-5" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => openDeleteDialog(item)} className="text-destructive cursor-pointer">
+                                    <Trash2 className="mr-2 h-4 w-4" /> Delete Post
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    )}
                 </div>
-                </Link>
-                {isOwner && (
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                                <MoreHorizontal className="h-5 w-5" />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => openDeleteDialog(item)} className="text-destructive cursor-pointer">
-                                <Trash2 className="mr-2 h-4 w-4" /> Delete Post
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                )}
-            </div>
             </CardHeader>
             <CardContent className="p-4 pt-0">
-            <p className="whitespace-pre-wrap">{item.content}</p>
-            {item.imageUrl && (
-                <div className="mt-4 rounded-lg overflow-hidden border">
-                <Image src={item.imageUrl} alt="Post image" width={600} height={400} className="object-cover" data-ai-hint="office workspace"/>
-                </div>
-            )}
+                <p className="whitespace-pre-wrap">{item.content}</p>
+                {item.imageUrl && (
+                    <div className="mt-4 rounded-lg overflow-hidden border">
+                        <Image src={item.imageUrl} alt="Post image" width={600} height={400} className="object-cover" data-ai-hint="office workspace"/>
+                    </div>
+                )}
             </CardContent>
             <CardFooter className="flex justify-between p-4 border-t">
-            <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground hover:text-primary" onClick={() => handleLike(item.id)}>
-                <Heart className={cn("h-5 w-5", item.isLiked && "fill-red-500 text-red-500")} />
-                <span>{item.likes}</span>
-            </Button>
-            <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground">
-                <MessageCircle className="h-5 w-5" />
-                <span>{item.comments}</span>
-            </Button>
-            <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground">
-                <Share2 className="h-5 w-5" />
-                <span>Share</span>
-            </Button>
+                <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground hover:text-primary" onClick={() => handleLike(item.id)}>
+                    <Heart className={cn("h-5 w-5", item.isLiked && "fill-red-500 text-red-500")} />
+                    <span>{item.likes}</span>
+                </Button>
+                <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground">
+                    <MessageCircle className="h-5 w-5" />
+                    <span>{item.comments}</span>
+                </Button>
+                <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground">
+                    <Share2 className="h-5 w-5" />
+                    <span>Share</span>
+                </Button>
             </CardFooter>
         </Card>
     );
+  };
+  
+  const FeedList = ({ isLoading, items, emptyState }: { isLoading: boolean, items: FeedItem[], emptyState: React.ReactNode }) => {
+    if (isLoading) {
+        return <PostCardSkeleton />;
+    }
+    if (items.length > 0) {
+        return <div className="space-y-6">{items.map(item => <PostCard key={item.id} item={item} />)}</div>;
+    }
+    return <>{emptyState}</>;
   };
   
   if (authLoading) {
@@ -263,7 +316,7 @@ export default function FeedPage() {
         onOpenChange={setIsDeleteDialogOpen}
         onConfirm={handleConfirmDelete}
         itemName="post"
-        itemDescription="This will permanently delete the post from your feed. This action cannot be undone."
+        itemDescription="This will permanently delete the post. This action cannot be undone."
       />
       <div className="max-w-2xl mx-auto space-y-6">
         <h1 className="text-2xl sm:text-3xl font-bold font-headline">Status Feed</h1>
@@ -308,30 +361,49 @@ export default function FeedPage() {
               accept="image/png, image/jpeg"
               onChange={onFileChange}
             />
-            <Button onClick={handlePost} disabled={!postContent.trim() && !croppedImageUrl}>
+            <Button onClick={handlePost} disabled={(!postContent.trim() && !croppedImageUrl) || isFollowingLoading}>
               <Send className="mr-2 h-4 w-4"/>Post Update
             </Button>
           </CardFooter>
         </Card>
 
-        <div className="space-y-6 mt-6">
-            {isLoading ? (
-                <PostCardSkeleton />
-            ) : feedItems.length > 0 ? (
-                feedItems.map(item => (
-                    <PostCard key={item.id} item={item} handleLike={handleLike} openDeleteDialog={openDeleteDialog} />
-                ))
-            ) : (
-              <Card>
-                  <CardContent className="p-10 text-center text-muted-foreground flex flex-col items-center gap-4">
-                    <Users className="h-12 w-12" />
-                    <h3 className="font-semibold text-foreground">Your Feed is Empty</h3>
-                    <p>Follow other users to see their status updates here.</p>
-                    <Button asChild><Link href="/connections?tab=suggestions">Find People to Follow</Link></Button>
-                  </CardContent>
-              </Card>
-            )}
-        </div>
+        <Tabs defaultValue="following" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="following">Following</TabsTrigger>
+                <TabsTrigger value="discovery">Discovery</TabsTrigger>
+            </TabsList>
+            <TabsContent value="following" className="mt-6">
+                <FeedList 
+                    isLoading={isFollowingLoading} 
+                    items={followingFeed}
+                    emptyState={
+                        <Card>
+                            <CardContent className="p-10 text-center text-muted-foreground flex flex-col items-center gap-4">
+                                <Users className="h-12 w-12" />
+                                <h3 className="font-semibold text-foreground">Your Feed is Empty</h3>
+                                <p>Follow other users to see their status updates here.</p>
+                                <Button asChild><Link href="/connections?tab=suggestions">Find People to Follow</Link></Button>
+                            </CardContent>
+                        </Card>
+                    }
+                />
+            </TabsContent>
+            <TabsContent value="discovery" className="mt-6">
+                 <FeedList 
+                    isLoading={isDiscoveryLoading} 
+                    items={discoveryFeed}
+                    emptyState={
+                         <Card>
+                            <CardContent className="p-10 text-center text-muted-foreground flex flex-col items-center gap-4">
+                                <Compass className="h-12 w-12" />
+                                <h3 className="font-semibold text-foreground">Nothing to Discover</h3>
+                                <p>Check back later for new posts from the community.</p>
+                            </CardContent>
+                        </Card>
+                    }
+                />
+            </TabsContent>
+        </Tabs>
       </div>
     </>
   )
