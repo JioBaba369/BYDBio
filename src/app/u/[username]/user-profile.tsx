@@ -57,13 +57,17 @@ const contactFormSchema = z.object({
 type ContactFormValues = z.infer<typeof contactFormSchema>;
 
 // This component safely formats the date on the client-side to prevent hydration errors.
-function ClientFormattedDate({ date, formatStr }: { date: Date | string; formatStr: string }) {
+function ClientFormattedDate({ date, formatStr, relative }: { date: Date | string; formatStr: string; relative?: boolean }) {
   const [formattedDate, setFormattedDate] = useState('...');
   const dateObj = typeof date === 'string' ? parseISO(date) : date;
   
   useEffect(() => {
-    setFormattedDate(format(dateObj, formatStr));
-  }, [dateObj, formatStr]);
+    if (relative) {
+      setFormattedDate(formatDistanceToNow(dateObj, { addSuffix: true }));
+    } else {
+      setFormattedDate(format(dateObj, formatStr));
+    }
+  }, [dateObj, formatStr, relative]);
 
   return <>{formattedDate}</>;
 }
@@ -273,7 +277,7 @@ END:VCARD`;
                                   <MessageCircle className="h-4 w-4" />
                                   <span>{post.comments}</span>
                               </div>
-                              <span className="ml-auto text-xs">{formatDistanceToNow(parseISO(post.createdAt), { addSuffix: true })}</span>
+                              <span className="ml-auto text-xs"><ClientFormattedDate date={post.createdAt} formatStr="" relative /></span>
                           </CardFooter>
                           </Card>
                       ))}
