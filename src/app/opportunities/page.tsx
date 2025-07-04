@@ -3,7 +3,7 @@
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Briefcase, MapPin, PlusCircle, MoreHorizontal, Edit, Archive, Trash2, Eye, Users, Calendar, DollarSign, Clock, ExternalLink } from "lucide-react"
+import { Briefcase, MapPin, PlusCircle, MoreHorizontal, Edit, Archive, Trash2, Eye, Users, Calendar, DollarSign, Clock, ExternalLink, List, LayoutGrid } from "lucide-react"
 import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect } from "react";
@@ -18,6 +18,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ClientFormattedDate } from "@/components/client-formatted-date";
 import { formatCurrency } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 const JobPageSkeleton = () => (
     <div className="space-y-6">
@@ -58,6 +59,7 @@ export default function OpportunitiesPage() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
   const { toast } = useToast();
+  const [view, setView] = useState<'grid' | 'list'>('grid');
 
   useEffect(() => {
     setIsLoading(true);
@@ -119,17 +121,28 @@ export default function OpportunitiesPage() {
             <h1 className="text-2xl sm:text-3xl font-bold font-headline">Opportunities</h1>
             <p className="text-muted-foreground">Discover curated job opportunities to boost your career.</p>
           </div>
-          {user && (
-            <Button asChild>
-              <Link href="/opportunities/create">
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Post Opportunity
-              </Link>
-            </Button>
-          )}
+          <div className="flex items-center gap-2">
+            <div className="hidden sm:flex items-center gap-1 rounded-md bg-muted p-1">
+                <Button variant={view === 'list' ? 'secondary' : 'ghost'} size="icon" className="h-8 w-8" onClick={() => setView('list')}>
+                    <List className="h-4 w-4" />
+                </Button>
+                <Button variant={view === 'grid' ? 'secondary' : 'ghost'} size="icon" className="h-8 w-8" onClick={() => setView('grid')}>
+                    <LayoutGrid className="h-4 w-4" />
+                </Button>
+            </div>
+            {user && (
+              <Button asChild>
+                <Link href="/opportunities/create">
+                  <PlusCircle className="mr-2 h-4 w-4" />
+                  Post Opportunity
+                </Link>
+              </Button>
+            )}
+          </div>
         </div>
         
         {activeJobs.length > 0 ? (
+          view === 'grid' ? (
           <div className="grid gap-6 md:grid-cols-2">
             {activeJobs.map((job) => {
               const isOwner = user && job.authorId === user.uid;
@@ -212,6 +225,72 @@ export default function OpportunitiesPage() {
               </Card>
             )})}
           </div>
+          ) : (
+             <Card>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Opportunity</TableHead>
+                    <TableHead className="hidden md:table-cell">Type</TableHead>
+                    <TableHead className="hidden md:table-cell">Location</TableHead>
+                    <TableHead className="hidden lg:table-cell text-center">Stats</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {activeJobs.map((job) => {
+                    const isOwner = user && job.authorId === user.uid;
+                    return (
+                      <TableRow key={job.id}>
+                        <TableCell>
+                          <div className="space-y-1">
+                            <Link href={`/o/${job.id}`} className="font-semibold hover:underline">{job.title}</Link>
+                             <div className="text-xs text-muted-foreground">{job.company}</div>
+                          </div>
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell"><Badge variant="destructive">{job.type}</Badge></TableCell>
+                        <TableCell className="hidden md:table-cell">{job.location}</TableCell>
+                        <TableCell className="hidden lg:table-cell">
+                           <div className="flex flex-col items-center gap-1 text-xs text-muted-foreground">
+                            <div className="flex items-center gap-1"><Eye className="h-3 w-3" />{job.views?.toLocaleString() ?? 0}</div>
+                            <div className="flex items-center gap-1"><Users className="h-3 w-3" />{job.applicants?.toLocaleString() ?? 0}</div>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right">
+                           {isOwner ? (
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem asChild>
+                                  <Link href={`/opportunities/${job.id}/edit`} className="cursor-pointer">
+                                    <Edit className="mr-2 h-4 w-4"/>Edit
+                                  </Link>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleArchive(job.id, job.status)} className="cursor-pointer">
+                                  <Archive className="mr-2 h-4 w-4"/>Archive
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => openDeleteDialog(job.id)} className="text-destructive cursor-pointer">
+                                  <Trash2 className="mr-2 h-4 w-4"/>Delete
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          ) : (
+                            <Button asChild size="sm" variant="outline">
+                               <Link href={`/o/${job.id}`}>View Details</Link>
+                            </Button>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </Card>
+          )
         ) : (
           <Card className="text-center">
             <CardHeader>

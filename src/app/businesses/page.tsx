@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import Image from "next/image";
-import { PlusCircle, MoreHorizontal, Edit, Trash2, Archive, Globe, Mail, Phone, MapPin, Eye, MousePointerClick, ExternalLink, Building2 } from "lucide-react";
+import { PlusCircle, MoreHorizontal, Edit, Trash2, Archive, Globe, Mail, Phone, MapPin, Eye, MousePointerClick, ExternalLink, Building2, List, LayoutGrid } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -15,6 +15,7 @@ import { useAuth } from "@/components/auth-provider";
 import { type Business, getBusinessesByUser, deleteBusiness, updateBusiness, getAllBusinesses, type BusinessWithAuthor } from "@/lib/businesses";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 const BusinessPageSkeleton = () => (
     <div className="space-y-6">
@@ -69,6 +70,7 @@ export default function BusinessesPage() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedBusinessId, setSelectedBusinessId] = useState<string | null>(null);
   const { toast } = useToast();
+  const [view, setView] = useState<'grid' | 'list'>('grid');
 
   useEffect(() => {
     setIsLoading(true);
@@ -130,17 +132,28 @@ export default function BusinessesPage() {
             <h1 className="text-2xl sm:text-3xl font-bold font-headline">Business Pages</h1>
             <p className="text-muted-foreground">Discover businesses from across the community.</p>
           </div>
-          {user && (
-            <Button asChild>
-              <Link href="/businesses/create">
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Create Business Page
-              </Link>
-            </Button>
-          )}
+          <div className="flex items-center gap-2">
+            <div className="hidden sm:flex items-center gap-1 rounded-md bg-muted p-1">
+                <Button variant={view === 'list' ? 'secondary' : 'ghost'} size="icon" className="h-8 w-8" onClick={() => setView('list')}>
+                    <List className="h-4 w-4" />
+                </Button>
+                <Button variant={view === 'grid' ? 'secondary' : 'ghost'} size="icon" className="h-8 w-8" onClick={() => setView('grid')}>
+                    <LayoutGrid className="h-4 w-4" />
+                </Button>
+            </div>
+            {user && (
+              <Button asChild>
+                <Link href="/businesses/create">
+                  <PlusCircle className="mr-2 h-4 w-4" />
+                  Create Business Page
+                </Link>
+              </Button>
+            )}
+          </div>
         </div>
         
         {activeBusinesses.length > 0 ? (
+          view === 'grid' ? (
           <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
             {activeBusinesses.map((item) => {
               const isOwner = user && item.authorId === user.uid;
@@ -209,6 +222,84 @@ export default function BusinessesPage() {
               </Card>
             )})}
           </div>
+          ) : (
+             <Card>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Business</TableHead>
+                    <TableHead className="hidden md:table-cell">Contact</TableHead>
+                    <TableHead className="hidden lg:table-cell text-center">Stats</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {activeBusinesses.map((item) => {
+                    const isOwner = user && item.authorId === user.uid;
+                    return (
+                      <TableRow key={item.id}>
+                        <TableCell>
+                          <div className="flex items-center gap-4">
+                            {item.logoUrl && (
+                              <Image src={item.logoUrl} alt={item.name} width={40} height={40} className="rounded-full object-cover hidden sm:block aspect-square" data-ai-hint="logo" />
+                            )}
+                            <div className="space-y-1">
+                              <Link href={`/b/${item.id}`} className="font-semibold hover:underline">{item.name}</Link>
+                               <div className="text-xs text-muted-foreground flex items-center gap-2">
+                                  <Avatar className="h-4 w-4">
+                                      <AvatarImage src={item.author.avatarUrl} data-ai-hint="person portrait" />
+                                      <AvatarFallback>{item.author.name.charAt(0)}</AvatarFallback>
+                                  </Avatar>
+                                  by {item.author.name}
+                                </div>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
+                            {item.email && <div className="flex items-center gap-2 truncate"><Mail className="h-4 w-4 flex-shrink-0" /> <span className="truncate">{item.email}</span></div>}
+                            {item.website && <div className="flex items-center gap-2 truncate"><Globe className="h-4 w-4 flex-shrink-0" /> <span className="truncate">{item.website}</span></div>}
+                        </TableCell>
+                        <TableCell className="hidden lg:table-cell">
+                           <div className="flex flex-col items-center gap-1 text-xs text-muted-foreground">
+                            <div className="flex items-center gap-1"><Eye className="h-3 w-3" />{item.views?.toLocaleString() ?? 0}</div>
+                            <div className="flex items-center gap-1"><MousePointerClick className="h-3 w-3" />{item.clicks?.toLocaleString() ?? 0}</div>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right">
+                           {isOwner ? (
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem asChild>
+                                  <Link href={`/businesses/${item.id}/edit`} className="cursor-pointer">
+                                    <Edit className="mr-2 h-4 w-4"/>Edit
+                                  </Link>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleArchive(item.id, item.status)} className="cursor-pointer">
+                                  <Archive className="mr-2 h-4 w-4"/>Archive
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => openDeleteDialog(item.id)} className="text-destructive cursor-pointer">
+                                  <Trash2 className="mr-2 h-4 w-4"/>Delete
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          ) : (
+                            <Button asChild size="sm" variant="outline">
+                               <Link href={`/b/${item.id}`}>View Details</Link>
+                            </Button>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </Card>
+          )
         ) : (
           <Card className="text-center">
             <CardHeader>
