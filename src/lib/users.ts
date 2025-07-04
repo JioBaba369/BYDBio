@@ -195,15 +195,7 @@ export const allUsers: User[] = [
         { title: "Facebook", url: "https://facebook.com/janedoe.creative", icon: 'Facebook' },
         { title: "YouTube", url: "https://youtube.com/@janedoecreates", icon: 'Youtube' },
     ],
-    businessCard: {
-        title: "CEO",
-        company: "NoelTech.au",
-        phone: "+61400000000",
-        email: "jiobaba369@gmail.com",
-        website: "https://byd.bio",
-        linkedin: "https://linkedin.com/in/janedoe",
-        location: "",
-    },
+    businessCard: {},
     jobs: [
        { id: 'job1', title: 'UX/UI Designer', company: 'Creative Solutions', location: 'Remote', type: 'Full-time', postingDate: '2024-08-20T09:00:00Z', imageUrl: 'https://placehold.co/600x400.png', status: 'active', views: 750, applicants: 42 },
        { id: 'job2', title: 'Frontend Developer', company: 'Tech Innovators', location: 'New York, NY', type: 'Full-time', postingDate: '2024-07-15T09:00:00Z', imageUrl: 'https://placehold.co/600x400.png', status: 'archived', views: 2500, applicants: 120 },
