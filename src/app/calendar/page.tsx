@@ -121,7 +121,7 @@ export default function CalendarPage() {
                              return {
                                 id: item.id,
                                 type: 'Offer' as const,
-                                date: item.startDate as Date,
+                                date: item.date as Date,
                                 title: item.title,
                                 description: item.description,
                                 category: item.category,
@@ -136,7 +136,7 @@ export default function CalendarPage() {
                              return {
                                 id: item.id,
                                 type: 'Job' as const,
-                                date: item.postingDate as Date,
+                                date: item.date as Date,
                                 title: item.title,
                                 description: `${item.type} at ${item.company}`,
                                 company: item.company,
@@ -153,7 +153,7 @@ export default function CalendarPage() {
                              return {
                                 id: item.id,
                                 type: 'Listing' as const,
-                                date: item.publishDate as Date,
+                                date: item.date as Date,
                                 title: item.title,
                                 description: item.description,
                                 category: item.category,
