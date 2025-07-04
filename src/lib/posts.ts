@@ -19,6 +19,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { User } from './users';
+import { createNotification } from './notifications';
 
 export type Post = {
   id: string; // Document ID from Firestore
@@ -92,6 +93,7 @@ export const toggleLikePost = async (postId: string, userId: string) => {
             likedBy: arrayUnion(userId),
             likes: increment(1)
         });
+        await createNotification(postData.authorId, 'new_like', userId, postId);
     }
 
     return !isLiked; // Return the new like status

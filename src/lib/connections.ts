@@ -14,6 +14,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { User } from './users';
+import { createNotification } from './notifications';
 
 // Follow a user
 export const followUser = async (currentUserId: string, targetUserId: string) => {
@@ -30,6 +31,7 @@ export const followUser = async (currentUserId: string, targetUserId: string) =>
   });
 
   await batch.commit();
+  await createNotification(targetUserId, 'new_follower', currentUserId);
 };
 
 // Unfollow a user

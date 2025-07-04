@@ -3,18 +3,124 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Cog, CheckCheck, Bell } from "lucide-react";
+import { CheckCheck, Bell, UserPlus, Heart } from "lucide-react";
 import Link from "next/link";
+import { useAuth } from "@/components/auth-provider";
+import { useState, useEffect } from "react";
+import { getNotificationsForUser, markNotificationsAsRead, type NotificationWithActor } from "@/lib/notifications";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { formatDistanceToNow } from "date-fns";
+import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
+
+const NotificationSkeleton = () => (
+    <div className="flex items-center gap-4 p-4">
+        <Skeleton className="h-10 w-10 rounded-full" />
+        <div className="space-y-2 flex-1">
+            <Skeleton className="h-4 w-3/4" />
+            <Skeleton className="h-3 w-1/2" />
+        </div>
+    </div>
+);
+
+const NotificationItem = ({ notification }: { notification: NotificationWithActor }) => {
+  const { actor } = notification;
+
+  if (!actor) return null; // Don't render if the actor (user who performed action) is gone
+
+  let icon, message, link;
+
+  switch (notification.type) {
+    case 'new_follower':
+      icon = <UserPlus className="h-5 w-5 text-primary" />;
+      message = <p><span className="font-semibold">{actor.name}</span> started following you.</p>;
+      link = `/u/${actor.handle}`;
+      break;
+    case 'new_like':
+      icon = <Heart className="h-5 w-5 text-red-500" />;
+      message = <p><span className="font-semibold">{actor.name}</span> liked your post.</p>;
+      // A real app would link to the post: `/posts/${notification.entityId}`
+      // For now, we link to the user's feed, which is where posts are.
+      link = `/feed`;
+      break;
+    default:
+      return null;
+  }
+
+  return (
+    <Link href={link} className={cn(
+      "block p-4 border-b last:border-b-0 transition-colors",
+      !notification.read ? "bg-primary/5 hover:bg-primary/10" : "hover:bg-muted/50"
+    )}>
+      <div className="flex items-start gap-4">
+        <div className="relative">
+          <Avatar>
+            <AvatarImage src={actor.avatarUrl} alt={actor.name} data-ai-hint="person portrait"/>
+            <AvatarFallback>{actor.avatarFallback}</AvatarFallback>
+          </Avatar>
+          <div className="absolute -bottom-1 -right-1 bg-background rounded-full p-0.5">
+            {icon}
+          </div>
+        </div>
+        <div className="flex-1 text-sm">
+          {message}
+          <p className="text-xs text-muted-foreground mt-1">
+            {formatDistanceToNow(notification.createdAt.toDate(), { addSuffix: true })}
+          </p>
+        </div>
+      </div>
+    </Link>
+  );
+};
+
 
 export default function NotificationsPage() {
-    // In a real app, notifications would be fetched from a database.
-    // For this prototype, we'll show an empty state.
-    const notifications: any[] = [];
+    const { user, loading: authLoading } = useAuth();
+    const { toast } = useToast();
+    const [notifications, setNotifications] = useState<NotificationWithActor[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        if (user) {
+            setIsLoading(true);
+            getNotificationsForUser(user.uid)
+                .then(setNotifications)
+                .finally(() => setIsLoading(false));
+        }
+    }, [user]);
+
     const unreadCount = notifications.filter(n => !n.read).length;
 
-    const markAllAsRead = () => {
-        // This would be an API call in a real app.
+    const handleMarkAllAsRead = async () => {
+        if (!user || unreadCount === 0) return;
+
+        try {
+            await markNotificationsAsRead(user.uid);
+            // Optimistic UI update
+            setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+            toast({ title: "All notifications marked as read." });
+        } catch (error) {
+            console.error("Failed to mark notifications as read:", error);
+            toast({ title: "Error", description: "Could not mark notifications as read.", variant: "destructive" });
+        }
     };
+
+    if (authLoading) {
+      return (
+        <div className="space-y-6">
+            <Skeleton className="h-9 w-48" />
+            <Skeleton className="h-4 w-64 mt-1" />
+            <Card>
+                <CardContent className="p-0">
+                    <NotificationSkeleton />
+                    <NotificationSkeleton />
+                    <NotificationSkeleton />
+                </CardContent>
+            </Card>
+        </div>
+      );
+    }
 
     return (
         <div className="space-y-6">
@@ -22,35 +128,35 @@ export default function NotificationsPage() {
                 <div>
                     <h1 className="text-2xl sm:text-3xl font-bold font-headline">Notifications</h1>
                     <p className="text-muted-foreground">
-                        {unreadCount > 0 ? `You have ${unreadCount} unread messages.` : 'No new notifications.'}
+                        {unreadCount > 0 ? `You have ${unreadCount} unread message${unreadCount > 1 ? 's' : ''}.` : 'No new notifications.'}
                     </p>
                 </div>
-                <div className="flex items-center gap-2">
-                    <Button variant="outline" onClick={markAllAsRead} disabled={unreadCount === 0}>
-                        <CheckCheck className="mr-2 h-4 w-4" />
-                        Mark all as read
-                    </Button>
-                    <Button variant="ghost" size="icon" asChild>
-                        <Link href="/settings">
-                            <Cog className="h-5 w-5" />
-                        </Link>
-                    </Button>
-                </div>
+                <Button variant="outline" onClick={handleMarkAllAsRead} disabled={unreadCount === 0}>
+                    <CheckCheck className="mr-2 h-4 w-4" />
+                    Mark all as read
+                </Button>
             </div>
             <Card>
                 <CardContent className="p-0">
-                    {notifications.length > 0 ? (
+                    {isLoading ? (
+                        <>
+                           <NotificationSkeleton />
+                           <NotificationSkeleton />
+                           <NotificationSkeleton />
+                        </>
+                    ) : notifications.length > 0 ? (
                        <ul>
-                           {/* List notifications here */}
+                           {notifications.map(notification => (
+                             <li key={notification.id}>
+                               <NotificationItem notification={notification} />
+                             </li>
+                           ))}
                        </ul>
                     ) : (
                         <div className="p-10 text-center text-muted-foreground flex flex-col items-center gap-4">
                             <Bell className="h-12 w-12" />
                             <h3 className="text-lg font-semibold text-foreground">You're all caught up!</h3>
-                            <p>New notifications will appear here.</p>
-                            <p className="text-xs max-w-md">
-                                Note: A full notification system requires backend functionality (like Cloud Functions) to create notifications when events like new followers or post likes occur. This is not yet implemented.
-                            </p>
+                            <p>New notifications from followers and likes will appear here.</p>
                         </div>
                     )}
                 </CardContent>
