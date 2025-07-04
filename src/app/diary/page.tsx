@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/components/auth-provider';
 import { getDiaryEvents, saveDiaryNote } from '@/lib/events';
@@ -51,7 +51,6 @@ const DiarySkeleton = () => (
 );
 
 const EventCard = ({ event }: { event: EventWithNotes }) => {
-    // This is a sub-component to avoid duplicating card logic
     const { toast } = useToast();
     const { user } = useAuth();
     const [isSaving, setIsSaving] = useState(false);
@@ -120,48 +119,58 @@ const EventCard = ({ event }: { event: EventWithNotes }) => {
                     )}
                 </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-                 <div>
-                    <Label htmlFor={`notes-${event.id}`} className="flex items-center gap-2 mb-2"><PencilRuler className="h-4 w-4"/> My Notes / Reflections</Label>
-                    <Textarea
-                        id={`notes-${event.id}`}
-                        placeholder={isEventPast ? "What did you learn? How can you apply it?" : "Jot down your thoughts, questions, or key takeaways..."}
-                        value={notes}
-                        onChange={(e) => setNotes(e.target.value)}
-                        rows={4}
-                    />
-                </div>
-            </CardContent>
-            <CardFooter className="flex-col items-start gap-4">
-                <Button size="sm" onClick={handleSaveNote} disabled={isSaving}>
-                    {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                    {isSaving ? 'Saving...' : 'Save Note'}
-                </Button>
+            <CardContent className="pt-0 pb-4">
+                 <Accordion type="single" collapsible className="w-full">
+                    <AccordionItem value="notes" className="border-none">
+                        <AccordionTrigger className="p-0 hover:no-underline text-sm font-semibold flex justify-start gap-2">
+                            <PencilRuler className="h-4 w-4 text-primary" />
+                            Notes & Reflections
+                        </AccordionTrigger>
+                        <AccordionContent className="pt-4 space-y-4">
+                             <div>
+                                <Label htmlFor={`notes-${event.id}`} className="sr-only">My Notes / Reflections</Label>
+                                <Textarea
+                                    id={`notes-${event.id}`}
+                                    placeholder={isEventPast ? "What did you learn? How can you apply it?" : "Jot down your thoughts, questions, or key takeaways..."}
+                                    value={notes}
+                                    onChange={(e) => setNotes(e.target.value)}
+                                    rows={4}
+                                />
+                            </div>
+                            <div className="flex flex-col items-start gap-4">
+                                <Button size="sm" onClick={handleSaveNote} disabled={isSaving}>
+                                    {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                                    {isSaving ? 'Saving...' : 'Save Note'}
+                                </Button>
 
-                {isEventPast && (
-                    <>
-                    <Separator />
-                    <div className="space-y-2 w-full">
-                        <Button size="sm" variant="secondary" onClick={handleGenerateReflections} disabled={reflecting}>
-                            {reflecting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-                            {reflecting ? 'Generating...' : 'AI Reflection Prompts'}
-                        </Button>
-                        {reflections.length > 0 && (
-                            <Accordion type="single" collapsible className="w-full">
-                                <AccordionItem value="item-1">
-                                    <AccordionTrigger className="text-sm">View AI Prompts</AccordionTrigger>
-                                    <AccordionContent>
-                                        <ul className="list-disc pl-5 space-y-2 text-muted-foreground">
-                                            {reflections.map((prompt, i) => <li key={i}>{prompt}</li>)}
-                                        </ul>
-                                    </AccordionContent>
-                                </AccordionItem>
-                            </Accordion>
-                        )}
-                    </div>
-                    </>
-                )}
-            </CardFooter>
+                                {isEventPast && (
+                                    <>
+                                    <Separator />
+                                    <div className="space-y-2 w-full">
+                                        <Button size="sm" variant="secondary" onClick={handleGenerateReflections} disabled={reflecting}>
+                                            {reflecting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+                                            {reflecting ? 'Generating...' : 'AI Reflection Prompts'}
+                                        </Button>
+                                        {reflections.length > 0 && (
+                                            <Accordion type="single" collapsible className="w-full">
+                                                <AccordionItem value="item-1">
+                                                    <AccordionTrigger className="text-sm">View AI Prompts</AccordionTrigger>
+                                                    <AccordionContent>
+                                                        <ul className="list-disc pl-5 space-y-2 text-muted-foreground">
+                                                            {reflections.map((prompt, i) => <li key={i}>{prompt}</li>)}
+                                                        </ul>
+                                                    </AccordionContent>
+                                                </AccordionItem>
+                                            </Accordion>
+                                        )}
+                                    </div>
+                                    </>
+                                )}
+                            </div>
+                        </AccordionContent>
+                    </AccordionItem>
+                </Accordion>
+            </CardContent>
         </Card>
     );
 };
@@ -200,6 +209,12 @@ export default function DiaryPage() {
             .filter(item => format(new Date(item.startDate), 'yyyy-MM-dd') === day)
             .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
     }, [selectedDate, events]);
+    
+    const pastEvents = useMemo(() => {
+        return events
+            .filter(event => isPast(new Date(event.startDate)))
+            .sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
+    }, [events]);
 
 
     if (authLoading || isLoading) {
@@ -248,6 +263,23 @@ export default function DiaryPage() {
                         </Card>
                     )}
                 </div>
+            </div>
+
+            <Separator />
+            <div className="space-y-4">
+                <h2 className="text-2xl font-bold font-headline">Reflect on Past Events</h2>
+                <p className="text-muted-foreground">Look back on your experiences and capture your thoughts.</p>
+                {pastEvents.length > 0 ? (
+                    <div className="grid md:grid-cols-2 gap-6">
+                        {pastEvents.map(event => <EventCard key={event.id} event={event} />)}
+                    </div>
+                ) : (
+                    <Card className="border-dashed">
+                        <CardContent className="p-10 text-center text-muted-foreground">
+                            <p>You have no past events to reflect on yet.</p>
+                        </CardContent>
+                    </Card>
+                )}
             </div>
         </div>
     );
