@@ -1,10 +1,8 @@
 
 'use client';
 
-import { usePathname } from 'next/navigation';
 import { MainSidebar } from './main-sidebar';
 import { SidebarInset, SidebarTrigger } from './ui/sidebar';
-import { isAuthPath } from '@/lib/paths';
 import { useAuth } from './auth-provider';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from './ui/dropdown-menu';
 import { Button } from './ui/button';
@@ -14,6 +12,8 @@ import Link from 'next/link';
 import { signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
+import { usePathname } from 'next/navigation';
+import { isAuthPath } from '@/lib/paths';
 
 function Header() {
     const { user } = useAuth();
@@ -92,20 +92,19 @@ function Header() {
 }
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
-    const pathname = usePathname();
     const { user, loading } = useAuth();
-    
-    // Auth pages have their own layout and should not be wrapped by the app layout.
-    if (isAuthPath(pathname)) {
-        return <>{children}</>;
-    }
-    
+    const pathname = usePathname();
+
+    // The AuthLayout is now a fixed overlay, so we don't need to hide the main layout.
+    // However, we can still hide the Header on auth pages for a cleaner underlying structure.
+    const onAuthPage = isAuthPath(pathname);
+
     return (
         <>
             <MainSidebar />
             <SidebarInset className="flex flex-col flex-1">
-                {user && !loading && <Header />}
-                <main className="p-4 sm:p-6 lg:p-8 flex-1 overflow-y-auto">
+                {!onAuthPage && user && !loading && <Header />}
+                <main className="p-4 sm:p-6 lg:p-8 flex-1 overflow-y-auto relative">
                     {children}
                 </main>
             </SidebarInset>
