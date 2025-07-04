@@ -36,24 +36,29 @@ const DiarySkeleton = () => (
             <Skeleton className="h-9 w-48" />
             <Skeleton className="h-4 w-72 mt-2" />
         </div>
-        <div className="grid md:grid-cols-2 gap-8 items-start">
-            <Card className="w-full">
-                <CardContent className="p-2 sm:p-4 flex justify-center">
-                    <Skeleton className="h-80 w-full max-w-sm" />
-                </CardContent>
-            </Card>
-            <div className="space-y-4">
-                <Skeleton className="h-7 w-40" />
-                <Card className="border-dashed"><CardContent className="p-6"><Skeleton className="h-24 w-full" /></CardContent></Card>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+            <div className="lg:col-span-2 space-y-8">
+                <Card>
+                    <CardContent className="p-2 sm:p-4 flex justify-center">
+                        <Skeleton className="h-80 w-full max-w-sm" />
+                    </CardContent>
+                </Card>
+                <div className="space-y-4">
+                    <Skeleton className="h-7 w-40" />
+                    <Card className="border-dashed"><CardContent className="p-6"><Skeleton className="h-24 w-full" /></CardContent></Card>
+                </div>
+            </div>
+            <div className="lg:col-span-1 space-y-8">
+                 <Card>
+                    <CardHeader><Skeleton className="h-6 w-3/4" /></CardHeader>
+                    <CardContent className="space-y-4">
+                        <Skeleton className="h-4 w-full" />
+                        <Skeleton className="h-4 w-full" />
+                        <Skeleton className="h-4 w-full" />
+                    </CardContent>
+                </Card>
             </div>
         </div>
-        <Card>
-            <CardHeader><Skeleton className="h-6 w-3/4" /></CardHeader>
-            <CardContent className="space-y-4">
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-full" />
-            </CardContent>
-        </Card>
     </div>
 );
 
@@ -211,29 +216,31 @@ export default function DiaryPage() {
                 <p className="text-muted-foreground">Select a date to view your schedule and add reflections.</p>
             </div>
             
-            <div className="grid md:grid-cols-2 gap-8 items-start">
-                <Card className="md:col-span-1">
-                    <CardContent className="p-2 sm:p-4 flex justify-center">
-                        <DayPicker
-                            mode="single"
-                            selected={selectedDate}
-                            onSelect={setSelectedDate}
-                            month={month}
-                            onMonthChange={setMonth}
-                            modifiers={{ hasEvent: eventDays }}
-                            modifiersClassNames={{ hasEvent: 'day-with-event' }}
-                            className="w-full"
-                        />
-                    </CardContent>
-                </Card>
-                
-                <div className="md:col-span-1 space-y-4">
-                     <h2 className="text-xl font-bold font-headline">
-                        Schedule for {selectedDate ? format(selectedDate, 'PPP') : '...'}
-                    </h2>
-                    <div className="max-h-[500px] overflow-y-auto pr-2 space-y-4">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+                <div className="lg:col-span-2 space-y-8">
+                    <Card>
+                        <CardContent className="p-0 sm:p-2 flex justify-center">
+                            <DayPicker
+                                mode="single"
+                                selected={selectedDate}
+                                onSelect={setSelectedDate}
+                                month={month}
+                                onMonthChange={setMonth}
+                                modifiers={{ hasEvent: eventDays }}
+                                modifiersClassNames={{ hasEvent: 'day-with-event' }}
+                                className="w-full"
+                            />
+                        </CardContent>
+                    </Card>
+                    
+                    <div className="space-y-4">
+                        <h2 className="text-xl font-bold font-headline">
+                            Schedule for {selectedDate ? format(selectedDate, 'PPP') : '...'}
+                        </h2>
                         {selectedDayItems.length > 0 ? (
-                            selectedDayItems.map(event => <EventCard key={event.id} event={event} />)
+                            <div className="space-y-4">
+                                {selectedDayItems.map(event => <EventCard key={event.id} event={event} />)}
+                            </div>
                         ) : (
                             <Card className="border-dashed">
                                 <CardContent className="p-10 text-center text-muted-foreground flex flex-col items-center gap-4">
@@ -247,9 +254,11 @@ export default function DiaryPage() {
                         )}
                     </div>
                 </div>
+                
+                <div className="lg:col-span-1 space-y-8">
+                    <HolidayFeed />
+                </div>
             </div>
-            <Separator />
-            <HolidayFeed />
         </div>
     );
 }
