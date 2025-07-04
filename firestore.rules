@@ -18,94 +18,64 @@ service cloud.firestore {
     match /users/{userId} {
       allow read: if true;
       allow create: if isOwner(userId);
-      allow delete: if isOwner(userId); // Deletion handled by backend function for safety
-      allow update: if
-        // Rule 1: Allow owner to update their own profile fields.
-        (isOwner(userId) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'username', 'handle', 'bio', 'avatarUrl', 'avatarFallback', 'links', 'businessCard', 'notificationSettings', 'following', 'searchableKeywords']))
-        ||
-        // Rule 2: Allow any authenticated user to increment/decrement followerCount by 1.
-        (isUserAuthenticated() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['followerCount'])
-          && (request.resource.data.followerCount == resource.data.followerCount + 1 || request.resource.data.followerCount == resource.data.followerCount - 1));
+      // A user can update their own profile. Follow/unfollow actions are also permitted.
+      allow update: if isOwner(userId) || (isUserAuthenticated() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['followerCount']));
+      allow delete: if isOwner(userId);
     }
 
-    // POSTS (Status Updates)
+    // POSTS
     match /posts/{postId} {
       allow read: if true;
-      allow create: if isUserAuthenticated() && isOwner(request.resource.data.authorId);
-      allow delete: if isUserAuthenticated() && isOwner(resource.data.authorId);
+      allow create: if isOwner(request.resource.data.authorId);
+      allow delete: if isOwner(resource.data.authorId);
       // Author can update any field. Other users can only update 'likes' and 'likedBy'.
-      allow update: if (isUserAuthenticated() && isOwner(resource.data.authorId)) ||
+      allow update: if isOwner(resource.data.authorId) ||
                        (isUserAuthenticated() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes', 'likedBy']));
     }
 
     // EVENTS
     match /events/{eventId} {
       allow read: if true;
-      allow create: if isUserAuthenticated() && isOwner(request.resource.data.authorId);
-      allow delete: if isUserAuthenticated() && isOwner(resource.data.authorId);
+      allow create: if isOwner(request.resource.data.authorId);
+      allow delete: if isOwner(resource.data.authorId);
       // Author can update any field. Other users can only update 'rsvps'.
-      allow update: if (isUserAuthenticated() && isOwner(resource.data.authorId)) ||
+      allow update: if isOwner(resource.data.authorId) ||
                        (isUserAuthenticated() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['rsvps']));
     }
     
-    // LISTINGS
-    match /listings/{listingId} {
+    // GENERIC PUBLIC CONTENT
+    match /{collection}/{docId} where collection in ['listings', 'jobs', 'offers', 'businesses'] {
       allow read: if true;
-      allow create: if isUserAuthenticated() && isOwner(request.resource.data.authorId);
-      allow update, delete: if isUserAuthenticated() && isOwner(resource.data.authorId);
+      allow create: if isOwner(request.resource.data.authorId);
+      allow update, delete: if isOwner(resource.data.authorId);
     }
-
-    // BUSINESSES
-    match /businesses/{businessId} {
-      allow read: if true;
-      allow create: if isUserAuthenticated() && isOwner(request.resource.data.authorId);
-      allow update, delete: if isUserAuthenticated() && isOwner(resource.data.authorId);
-    }
-
-    // JOBS
-    match /jobs/{jobId} {
-      allow read: if true;
-      allow create: if isUserAuthenticated() && isOwner(request.resource.data.authorId);
-      allow update, delete: if isUserAuthenticated() && isOwner(resource.data.authorId);
-    }
-
-    // OFFERS
-    match /offers/{offerId} {
-      allow read: if true;
-      allow create: if isUserAuthenticated() && isOwner(request.resource.data.authorId);
-      allow update, delete: if isUserAuthenticated() && isOwner(resource.data.authorId);
+    
+    // MESSAGES
+    match /messages/{messageId} {
+      // Anyone can send a message via the contact form
+      allow create: if true; 
+      // Only the recipient can read or update their messages.
+      // This rule works for the query in the app because the query itself filters by recipientId.
+      allow read, update, delete: if isOwner(resource.data.recipientId);
     }
 
     // NOTIFICATIONS
     match /notifications/{notificationId} {
-      // Authenticated users can create notifications for others (e.g. on follow, like).
       allow create: if isUserAuthenticated();
-      // Only the recipient can read or update (e.g., mark as read) their notifications.
-      allow read, update, delete: if isUserAuthenticated() && isOwner(resource.data.userId);
+      // Only the recipient can manage their notifications.
+      allow read, update, delete: if isOwner(resource.data.userId);
     }
     
     // DIARY NOTES
     match /diaryNotes/{diaryNoteId} {
-        // User can only create/manage their own diary notes.
-        allow create: if isUserAuthenticated() && isOwner(request.resource.data.userId);
-        allow read, update, delete: if isUserAuthenticated() && isOwner(resource.data.userId);
+      // A user can only create and manage their own diary notes.
+      allow read, write: if isOwner(resource.data.userId);
     }
 
     // REMINDERS
     match /reminders/{reminderId} {
-        // User can only create/manage their own reminders.
-        allow create: if isUserAuthenticated() && isOwner(request.resource.data.userId);
-        allow read, update: if isUserAuthenticated() && isOwner(resource.data.userId);
-        allow delete: if false; // Should be handled by a backend process
-    }
-
-    // MESSAGES
-    match /messages/{messageId} {
-      // Anyone can send a message
-      allow create: if true;
-      // Only the recipient can read or update their messages.
-      allow read, update: if isUserAuthenticated() && isOwner(resource.data.recipientId);
-      allow delete: if false;
+      // A user can only create and manage their own reminders.
+      allow read, write: if isOwner(resource.data.userId);
     }
   }
 }
