@@ -98,18 +98,6 @@ export default function BusinessPageClient({ business, author }: BusinessPageCli
                         </div>
                     </CardContent>
                 </Card>
-
-                 <Card className="mt-8">
-                    <CardContent className="p-6 text-center">
-                        <Logo className="mx-auto text-foreground" />
-                        <p className="mt-2 text-sm text-muted-foreground">
-                        Want to create your own business page?
-                        </p>
-                        <Button asChild className="mt-4 font-bold">
-                            <Link href="/">Create Your Profile & Get Started</Link>
-                        </Button>
-                    </CardContent>
-                </Card>
             </div>
         </div>
     );

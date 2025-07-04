@@ -4,7 +4,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Save, Mail, Phone, Globe, MapPin, Linkedin, Building } from "lucide-react";
+import { Save, Mail, Phone, Globe, MapPin, Linkedin, Building, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { Logo } from "@/components/logo";
 import QRCode from "qrcode.react";
@@ -50,7 +50,15 @@ END:VCARD`;
   };
 
   return (
-    <div className="bg-muted min-h-screen flex flex-col items-center justify-center p-4 antialiased">
+    <div className="bg-muted min-h-screen flex flex-col items-center justify-center p-4 antialiased relative">
+        <div className="absolute top-4 left-4">
+            <Button asChild variant="ghost" size="sm">
+            <Link href={`/u/${user.username}`} className="inline-flex items-center gap-2 text-muted-foreground hover:text-primary">
+                <ArrowLeft className="h-4 w-4" />
+                Back to Profile
+            </Link>
+            </Button>
+        </div>
       <div className="w-full max-w-sm space-y-4">
         <Card className="shadow-xl rounded-2xl w-full border-2 border-primary/10">
           <div className="h-24 bg-primary rounded-t-xl" />

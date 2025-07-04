@@ -96,17 +96,6 @@ export default function OfferDetailClient({ offer, author }: OfferDetailClientPr
                                 </Button>
                             </CardContent>
                         </Card>
-                         <Card>
-                            <CardContent className="p-6 text-center">
-                                <Logo className="mx-auto text-foreground" />
-                                <p className="mt-2 text-sm text-muted-foreground">
-                                Create your own offers.
-                                </p>
-                                <Button asChild className="mt-4 font-bold">
-                                    <Link href="/">Create Your Profile & Get Started</Link>
-                                </Button>
-                            </CardContent>
-                        </Card>
                     </div>
                 </div>
             </div>

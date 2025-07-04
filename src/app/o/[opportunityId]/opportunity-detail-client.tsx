@@ -95,18 +95,6 @@ export default function OpportunityDetailClient({ job, author }: OpportunityDeta
                         </div>
                     </CardContent>
                 </Card>
-
-                 <Card className="mt-8">
-                    <CardContent className="p-6 text-center">
-                        <Logo className="mx-auto text-foreground" />
-                        <p className="mt-2 text-sm text-muted-foreground">
-                        Want to post your own opportunities?
-                        </p>
-                        <Button asChild className="mt-4 font-bold">
-                            <Link href="/">Create Your Profile & Get Started</Link>
-                        </Button>
-                    </CardContent>
-                </Card>
             </div>
         </div>
     );
