@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -7,7 +8,6 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Inbox } from 'lucide-react';
 import { ClientFormattedDate } from '@/components/client-formatted-date';
-import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import {
   Accordion,
@@ -93,26 +93,31 @@ export default function MessagesPage() {
                     {messages.length > 0 ? (
                          <Accordion type="multiple" className="w-full">
                             {messages.map((message) => (
-                                <AccordionItem key={message.id} value={message.id} className={cn(!message.read && "bg-primary/5")}>
+                                <AccordionItem key={message.id} value={message.id}>
                                     <AccordionTrigger 
                                         onClick={() => handleMarkAsRead(message.id, message.read)}
                                         className="p-4 text-left hover:no-underline"
                                     >
                                         <div className="flex items-center gap-4 w-full">
-                                            <Avatar className={cn("h-10 w-10", !message.read && "ring-2 ring-primary/50 ring-offset-2 ring-offset-background")}>
-                                                <AvatarFallback>{message.senderName?.charAt(0).toUpperCase() || 'S'}</AvatarFallback>
+                                            <Avatar className="h-10 w-10">
+                                                <AvatarFallback>{message.senderName?.charAt(0).toUpperCase() || 'A'}</AvatarFallback>
                                             </Avatar>
                                             <div className="flex-1">
                                                 <div className="flex justify-between items-baseline">
-                                                    <p className="font-semibold">{message.senderName}</p>
+                                                    <div className="flex items-center gap-2">
+                                                        <p className="font-semibold">{message.senderName || 'Anonymous'}</p>
+                                                        {!message.read && (
+                                                            <div className="h-2.5 w-2.5 rounded-full bg-primary" />
+                                                        )}
+                                                    </div>
                                                     <p className="text-xs text-muted-foreground"><ClientFormattedDate date={message.createdAt} relative/></p>
                                                 </div>
-                                                <p className="text-sm text-muted-foreground text-left">{message.senderEmail}</p>
+                                                <p className="text-sm text-muted-foreground text-left">{message.senderEmail || 'No email provided'}</p>
                                             </div>
                                         </div>
                                     </AccordionTrigger>
                                     <AccordionContent className="px-4 pb-4">
-                                        <div className="p-4 bg-background rounded-lg border ml-14">
+                                        <div className="p-4 bg-muted/50 rounded-lg border ml-14">
                                            <p className="whitespace-pre-wrap">{message.message}</p>
                                         </div>
                                     </AccordionContent>
