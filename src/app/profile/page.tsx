@@ -31,20 +31,20 @@ import { Label } from "@/components/ui/label";
 import { uploadImage } from "@/lib/storage";
 
 const publicProfileSchema = z.object({
-  name: z.string().min(1, "Name cannot be empty."),
-  username: z.string().min(3, "Username must be at least 3 characters long.").regex(/^[a-zA-Z0-9_]+$/, "Username can only contain letters, numbers, and underscores."),
+  name: z.string().min(1, "Name cannot be empty.").max(50, "Name cannot be longer than 50 characters."),
+  username: z.string().min(3, "Username must be at least 3 characters long.").max(30, "Username cannot be longer than 30 characters.").regex(/^[a-zA-Z0-9_]+$/, "Username can only contain letters, numbers, and underscores."),
   bio: z.string().max(160, "Bio must be 160 characters or less.").optional(),
 });
 type PublicProfileFormValues = z.infer<typeof publicProfileSchema>;
 
 const businessCardSchema = z.object({
-  title: z.string().min(1, "Title is required."),
-  company: z.string().min(1, "Company is required."),
-  phone: z.string().optional(),
+  title: z.string().min(1, "Title is required.").max(50, "Title cannot be longer than 50 characters."),
+  company: z.string().min(1, "Company is required.").max(50, "Company cannot be longer than 50 characters."),
+  phone: z.string().max(30, "Phone number cannot be longer than 30 characters.").optional(),
   email: z.string().email({ message: "Please enter a valid email." }).optional().or(z.literal('')),
   website: z.string().url({ message: "Please enter a valid URL." }).optional().or(z.literal('')),
   linkedin: z.string().url({ message: "Please enter a valid URL." }).optional().or(z.literal('')),
-  location: z.string().optional(),
+  location: z.string().max(100, "Location cannot be longer than 100 characters.").optional(),
 });
 type BusinessCardFormValues = z.infer<typeof businessCardSchema>;
 
@@ -55,7 +55,7 @@ const linksFormSchema = z.object({
       icon: z.enum(availableIconNames, {
         errorMap: () => ({ message: "Please select an icon." }),
       }),
-      title: z.string().min(1, "Title cannot be empty."),
+      title: z.string().min(1, "Title cannot be empty.").max(50, "Title must be 50 characters or less."),
       url: z.string().url("Please enter a valid URL."),
     })
   ),
