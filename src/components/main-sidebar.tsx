@@ -39,19 +39,13 @@ import Link from 'next/link';
 import { Input } from './ui/input';
 import { useAuth } from './auth-provider';
 import { Skeleton } from './ui/skeleton';
-import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Button } from './ui/button';
 
 export function MainSidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const [searchQuery, setSearchQuery] = React.useState('');
-  const { user, loading: authLoading } = useAuth();
-  const [isMounted, setIsMounted] = React.useState(false);
-
-  React.useEffect(() => {
-    setIsMounted(true);
-  }, []);
+  const { user, loading } = useAuth();
 
   const isActive = (path: string) => {
     // Exact match for dashboard and the main bio page
@@ -72,8 +66,6 @@ export function MainSidebar() {
       router.push(`/search?q=${searchQuery.trim()}`);
     }
   };
-
-  const loading = authLoading || !isMounted;
 
   if (loading) {
      return (
@@ -109,7 +101,35 @@ export function MainSidebar() {
     );
   }
   
-  if (!user) return null; // AuthProvider handles redirect
+  if (!user) {
+    return (
+      <Sidebar>
+        <SidebarHeader>
+          <Logo className="text-sidebar-foreground" />
+        </SidebarHeader>
+        <SidebarContent>
+            <SidebarGroup>
+              <form onSubmit={handleSearchSubmit}>
+                <div className="relative">
+                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search..."
+                    className="w-full pl-8"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                </div>
+              </form>
+            </SidebarGroup>
+        </SidebarContent>
+         <SidebarFooter>
+            <Button asChild className="w-full">
+                <Link href="/auth/sign-in">Sign In</Link>
+            </Button>
+        </SidebarFooter>
+      </Sidebar>
+    )
+  }
 
   return (
     <Sidebar>
