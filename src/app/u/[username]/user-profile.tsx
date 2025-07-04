@@ -12,7 +12,7 @@ import { type Business, getBusinessesByUser } from "@/lib/businesses";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Send, Briefcase, Calendar, Tag, MapPin, Heart, MessageCircle, DollarSign, Building2, Tags, ExternalLink, Globe } from "lucide-react";
+import { Send, Briefcase, Calendar, Tag, MapPin, Heart, MessageCircle, DollarSign, Building2, Tags, ExternalLink, Globe, UserCheck, UserPlus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
@@ -30,6 +30,10 @@ import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { useAuth } from "@/components/auth-provider";
+import { followUser, unfollowUser } from "@/lib/connections";
+import { useRouter } from "next/navigation";
+
 
 interface UserProfilePageProps {
   userProfileData: User;
@@ -62,9 +66,20 @@ function ClientFormattedDate({ date, formatStr }: { date: Date | string; formatS
 }
 
 export default function UserProfilePage({ userProfileData, content }: UserProfilePageProps) {
+  const { user: currentUser } = useAuth();
+  const router = useRouter();
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [activeTab, setActiveTab] = useState('posts');
   const [isLoading, setIsLoading] = useState(true);
+
+  // Client-side state for optimistic UI updates
+  const [isFollowing, setIsFollowing] = useState(currentUser?.following?.includes(userProfileData.uid) || false);
+  const [subscribers, setSubscribers] = useState(userProfileData.subscribers || 0);
+  const [isFollowLoading, setIsFollowLoading] = useState(false);
+  
+  useEffect(() => {
+    setIsFollowing(currentUser?.following?.includes(userProfileData.uid) || false);
+  }, [currentUser, userProfileData.uid]);
 
   useEffect(() => {
     // Fetch businesses associated with this user
@@ -109,7 +124,41 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
     }
   };
 
-  const { name, username, avatarUrl, avatarFallback, bio, links, subscribers, handle } = userProfileData;
+  const handleFollowToggle = async () => {
+    if (!currentUser) {
+        toast({ title: "Please sign in to follow users.", variant: "destructive" });
+        router.push('/auth/sign-in');
+        return;
+    }
+    if (currentUser.uid === userProfileData.uid) return;
+
+    setIsFollowLoading(true);
+    const currentlyFollowing = isFollowing;
+
+    // Optimistic update
+    setIsFollowing(!currentlyFollowing);
+    setSubscribers(prev => prev + (!currentlyFollowing ? 1 : -1));
+
+    try {
+        if (currentlyFollowing) {
+            await unfollowUser(currentUser.uid, userProfileData.uid);
+            toast({ title: `Unfollowed ${userProfileData.name}` });
+        } else {
+            await followUser(currentUser.uid, userProfileData.uid);
+            toast({ title: `You are now following ${userProfileData.name}` });
+        }
+    } catch (error) {
+        // Revert on error
+        setIsFollowing(currentlyFollowing);
+        setSubscribers(prev => prev + (currentlyFollowing ? 1 : -1));
+        toast({ title: "Something went wrong", variant: "destructive" });
+    } finally {
+        setIsFollowLoading(false);
+    }
+  };
+
+
+  const { name, username, avatarUrl, avatarFallback, bio, links, handle } = userProfileData;
   const { posts, listings, jobs, events, offers } = content;
   
   const hasContent = posts.length > 0 || businesses.length > 0 || listings.length > 0 || jobs.length > 0 || events.length > 0 || offers.length > 0;
@@ -129,7 +178,14 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
               <ShareButton />
             </div>
             <div className="mt-6 flex w-full items-center gap-4">
-              <Button className="flex-1 font-bold">Follow</Button>
+              <Button 
+                className="flex-1 font-bold" 
+                onClick={handleFollowToggle}
+                disabled={isFollowLoading || currentUser?.uid === userProfileData.uid}
+              >
+                {isFollowing ? <UserCheck className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
+                {isFollowing ? 'Following' : 'Follow'}
+              </Button>
               <div className="text-center p-2 rounded-md bg-muted/50 w-28">
                 <p className="font-bold text-lg text-foreground">{subscribers}</p>
                 <p className="text-xs text-muted-foreground tracking-wide">Subscribers</p>

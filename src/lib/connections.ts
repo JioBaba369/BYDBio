@@ -9,24 +9,44 @@ import {
   query,
   where,
   getDocs,
+  writeBatch,
+  increment,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { User } from './users';
 
 // Follow a user
 export const followUser = async (currentUserId: string, targetUserId: string) => {
+  const batch = writeBatch(db);
+  
   const currentUserRef = doc(db, 'users', currentUserId);
-  await updateDoc(currentUserRef, {
+  batch.update(currentUserRef, {
     following: arrayUnion(targetUserId)
   });
+
+  const targetUserRef = doc(db, 'users', targetUserId);
+  batch.update(targetUserRef, {
+      subscribers: increment(1)
+  });
+
+  await batch.commit();
 };
 
 // Unfollow a user
 export const unfollowUser = async (currentUserId: string, targetUserId: string) => {
+  const batch = writeBatch(db);
+
   const currentUserRef = doc(db, 'users', currentUserId);
-  await updateDoc(currentUserRef, {
+  batch.update(currentUserRef, {
     following: arrayRemove(targetUserId)
   });
+
+  const targetUserRef = doc(db, 'users', targetUserId);
+  batch.update(targetUserRef, {
+      subscribers: increment(-1)
+  });
+  
+  await batch.commit();
 };
 
 // Get list of users the current user is following
