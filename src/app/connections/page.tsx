@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UserPlus, UserCheck, UserMinus, QrCode } from "lucide-react";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import {
   AlertDialog,
@@ -21,69 +21,87 @@ import {
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import QrScanner from "@/components/qr-scanner";
-import { currentUser } from "@/lib/mock-data";
-import { allUsers as initialAllUsers } from "@/lib/users";
 import Link from "next/link";
 import { saveAs } from "file-saver";
+import { useAuth } from "@/components/auth-provider";
+import type { User } from "@/lib/users";
+import { followUser, unfollowUser, getFollowers, getFollowing, getSuggestedUsers } from "@/lib/connections";
+import { Skeleton } from "@/components/ui/skeleton";
 
-// Define a user type for clarity
-type User = (typeof initialAllUsers)[0] & { isFollowedByCurrentUser?: boolean };
+const ConnectionCardSkeleton = () => (
+    <Card>
+        <CardContent className="p-4">
+            <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                    <Skeleton className="h-10 w-10 rounded-full" />
+                    <div className="space-y-1">
+                        <Skeleton className="h-4 w-24" />
+                        <Skeleton className="h-3 w-16" />
+                    </div>
+                </div>
+                <Skeleton className="h-9 w-24 rounded-md" />
+            </div>
+        </CardContent>
+    </Card>
+);
 
 export default function ConnectionsPage() {
-    const [allUsers, setAllUsers] = useState<User[]>(initialAllUsers);
+    const { user, loading: authLoading } = useAuth();
+    const [followersList, setFollowersList] = useState<User[]>([]);
+    const [followingList, setFollowingList] = useState<User[]>([]);
+    const [suggestedList, setSuggestedList] = useState<User[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
     const [isScannerOpen, setIsScannerOpen] = useState(false);
     const [scannedVCardData, setScannedVCardData] = useState<string | null>(null);
     const router = useRouter();
     const { toast } = useToast();
 
-    // Memoize lists to avoid re-calculation on every render
-    const { followersList, followingList, suggestedList } = useMemo(() => {
-        const me = allUsers.find(u => u.id === currentUser.id)!;
-        const myFollowingIds = new Set(me.following);
-
-        // Users who are following the current user
-        const followers = allUsers
-            .filter(u => u.following.includes(currentUser.id) && u.id !== currentUser.id)
-            .map(u => ({
-                ...u,
-                isFollowedByCurrentUser: myFollowingIds.has(u.id)
-            }));
-
-        // Users the current user is following
-        const following = allUsers.filter(u => myFollowingIds.has(u.id));
-
-        // Users the current user is NOT following (and is not themselves)
-        const suggested = allUsers.filter(u => u.id !== currentUser.id && !myFollowingIds.has(u.id));
-
-        return { followersList: followers, followingList: following, suggestedList: suggested };
-    }, [allUsers]);
-    
-    // This is a mock function. In a real app, this would be an API call.
-    // It updates the client-side state, which will be lost on refresh.
-    const toggleFollow = (userIdToToggle: string) => {
-        setAllUsers(prevUsers => {
-            return prevUsers.map(user => {
-                if (user.id === currentUser.id) {
-                    const following = user.following.includes(userIdToToggle)
-                        ? user.following.filter(id => id !== userIdToToggle)
-                        : [...user.following, userIdToToggle];
-                    return { ...user, following };
+    useEffect(() => {
+        if (user) {
+            const fetchData = async () => {
+                setIsLoading(true);
+                try {
+                    const [followers, following, suggested] = await Promise.all([
+                        getFollowers(user.uid),
+                        getFollowing(user.uid),
+                        getSuggestedUsers(user.uid, user.following)
+                    ]);
+                    setFollowersList(followers);
+                    setFollowingList(following);
+                    setSuggestedList(suggested);
+                } catch (error) {
+                    console.error("Error fetching connections:", error);
+                    toast({ title: "Error fetching connections", variant: "destructive" });
+                } finally {
+                    setIsLoading(false);
                 }
-                return user;
-            });
-        });
-    };
+            };
+            fetchData();
+        }
+    }, [user, toast]);
 
-    const removeFollower = (followerIdToRemove: string) => {
-         setAllUsers(prevUsers => {
-            return prevUsers.map(user => {
-                if (user.id === followerIdToRemove) {
-                    const following = user.following.filter(id => id !== currentUser.id);
-                    return { ...user, following };
+    const handleToggleFollow = async (targetUserId: string, isCurrentlyFollowing: boolean) => {
+        if (!user) return;
+        try {
+            if (isCurrentlyFollowing) {
+                await unfollowUser(user.uid, targetUserId);
+                setFollowingList(prev => prev.filter(u => u.id !== targetUserId));
+                toast({ title: "Unfollowed" });
+            } else {
+                await followUser(user.uid, targetUserId);
+                const userToFollow = suggestedList.find(u => u.id === targetUserId) || followersList.find(u => u.id === targetUserId);
+                if (userToFollow) {
+                    setFollowingList(prev => [...prev, userToFollow]);
                 }
-                return user;
-            });
-        });
+                toast({ title: "Followed" });
+            }
+            // Manually update the suggested list to reflect the change
+            setSuggestedList(prev => prev.filter(u => u.id !== targetUserId));
+        } catch (error) {
+            console.error("Error following/unfollowing user:", error);
+            toast({ title: "Something went wrong", variant: "destructive" });
+        }
     };
 
     const handleSaveVCard = () => {
@@ -100,70 +118,44 @@ export default function ConnectionsPage() {
     };
 
     const handleQrScanSuccess = (decodedText: string) => {
-      // Close scanner immediately
       setIsScannerOpen(false);
-
-      // Case 1: Scanned a vCard
       if (decodedText.startsWith('BEGIN:VCARD')) {
         setScannedVCardData(decodedText);
         return;
       }
-
-      // Case 2: Scanned a profile URL
-      try {
-        const url = new URL(decodedText);
-        const pathParts = url.pathname.split('/');
-        
-        if (pathParts.length >= 3 && pathParts[1] === 'u') {
-          const username = pathParts[2];
-          const userToFollow = initialAllUsers.find(u => u.username === username);
-
-          if (!userToFollow) {
-            toast({
-              title: "User Not Found",
-              description: `The profile for "${username}" could not be found.`,
-              variant: "destructive",
-            });
-            return;
-          }
-
-          if (userToFollow.id === currentUser.id) {
-            toast({
-              title: "Cannot Follow Yourself",
-              description: "You can't connect with your own profile.",
-              variant: "destructive",
-            });
-            return;
-          }
-
-          const me = allUsers.find(u => u.id === currentUser.id)!;
-          if (me.following.includes(userToFollow.id)) {
-            toast({
-              title: "Already Following",
-              description: `You are already following ${userToFollow.name}.`,
-            });
-            return;
-          }
-          
-          toggleFollow(userToFollow.id);
-          toast({
-            title: "Connection Successful!",
-            description: `You are now following ${userToFollow.name}.`,
-          });
-          return;
-        }
-      } catch (error) {
-        // Not a valid URL, will fall through to the invalid code error
-      }
-      
-      // Case 3: Invalid QR code
       toast({
         title: "Invalid QR Code",
-        description: "Please scan a valid profile or contact QR code.",
+        description: "Please scan a valid contact QR code.",
         variant: "destructive",
       });
     };
 
+    if (authLoading || isLoading) {
+      return (
+         <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <div>
+                <Skeleton className="h-9 w-48" />
+                <Skeleton className="h-4 w-64 mt-2" />
+              </div>
+              <Skeleton className="h-10 w-40" />
+            </div>
+            <Tabs defaultValue="followers">
+                <TabsList className="grid w-full grid-cols-3">
+                    <TabsTrigger value="followers">Followers</TabsTrigger>
+                    <TabsTrigger value="following">Following</TabsTrigger>
+                    <TabsTrigger value="suggestions">Suggestions</TabsTrigger>
+                </TabsList>
+                <TabsContent value="followers" className="flex flex-col gap-4">
+                    <ConnectionCardSkeleton />
+                    <ConnectionCardSkeleton />
+                </TabsContent>
+            </Tabs>
+        </div>
+      );
+    }
+    
+    if (!user) return null; // Should be redirected by AuthProvider
 
   return (
     <>
@@ -214,63 +206,55 @@ export default function ConnectionsPage() {
           </TabsList>
           <TabsContent value="followers">
               <div className="flex flex-col gap-4">
-                  {followersList.map((user) => (
-                      <Card key={user.id}>
+                  {followersList.map((followerUser) => {
+                      const isFollowedByCurrentUser = followingList.some(f => f.id === followerUser.id);
+                      return (
+                      <Card key={followerUser.id}>
                           <CardContent className="p-4">
                               <div className="flex items-center justify-between gap-4">
-                                  <Link href={`/u/${user.handle}`} className="flex items-center gap-4 hover:underline">
+                                  <Link href={`/u/${followerUser.handle}`} className="flex items-center gap-4 hover:underline">
                                       <Avatar>
-                                          <AvatarImage src={user.avatarUrl} data-ai-hint="person portrait" />
-                                          <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                                          <AvatarImage src={followerUser.avatarUrl} data-ai-hint="person portrait" />
+                                          <AvatarFallback>{followerUser.name.charAt(0)}</AvatarFallback>
                                       </Avatar>
                                       <div>
-                                          <p className="font-semibold">{user.name}</p>
-                                          <p className="text-sm text-muted-foreground">@{user.handle}</p>
+                                          <p className="font-semibold">{followerUser.name}</p>
+                                          <p className="text-sm text-muted-foreground">@{followerUser.handle}</p>
                                       </div>
                                   </Link>
                                   <div className="flex items-center gap-2 flex-shrink-0">
-                                      <Button size="sm" variant={user.isFollowedByCurrentUser ? 'secondary' : 'default'} onClick={() => toggleFollow(user.id)}>
-                                          {user.isFollowedByCurrentUser ? <UserCheck className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
-                                          {user.isFollowedByCurrentUser ? 'Following' : 'Follow Back'}
-                                      </Button>
-                                      <Button size="sm" variant="outline" className="text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={() => removeFollower(user.id)}>
-                                          <UserMinus className="mr-2 h-4 w-4" />
-                                          Remove
+                                      <Button size="sm" variant={isFollowedByCurrentUser ? 'secondary' : 'default'} onClick={() => handleToggleFollow(followerUser.id, isFollowedByCurrentUser)}>
+                                          {isFollowedByCurrentUser ? <UserCheck className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
+                                          {isFollowedByCurrentUser ? 'Following' : 'Follow Back'}
                                       </Button>
                                   </div>
                               </div>
-                              {user.bio && (
-                                  <p className="text-sm text-muted-foreground mt-3 pt-3 border-t">{user.bio}</p>
-                              )}
                           </CardContent>
                       </Card>
-                  ))}
+                  )})}
               </div>
           </TabsContent>
           <TabsContent value="following">
              <div className="flex flex-col gap-4">
-                {followingList.map((user) => (
-                    <Card key={user.id}>
+                {followingList.map((followingUser) => (
+                    <Card key={followingUser.id}>
                         <CardContent className="p-4">
                             <div className="flex items-center justify-between gap-4">
-                                 <Link href={`/u/${user.handle}`} className="flex items-center gap-4 hover:underline">
+                                 <Link href={`/u/${followingUser.handle}`} className="flex items-center gap-4 hover:underline">
                                     <Avatar>
-                                        <AvatarImage src={user.avatarUrl} data-ai-hint="person portrait" />
-                                        <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                                        <AvatarImage src={followingUser.avatarUrl} data-ai-hint="person portrait" />
+                                        <AvatarFallback>{followingUser.name.charAt(0)}</AvatarFallback>
                                     </Avatar>
                                     <div>
-                                        <p className="font-semibold">{user.name}</p>
-                                        <p className="text-sm text-muted-foreground">@{user.handle}</p>
+                                        <p className="font-semibold">{followingUser.name}</p>
+                                        <p className="text-sm text-muted-foreground">@{followingUser.handle}</p>
                                     </div>
                                 </Link>
-                                <Button size="sm" variant="secondary" onClick={() => toggleFollow(user.id)}>
+                                <Button size="sm" variant="secondary" onClick={() => handleToggleFollow(followingUser.id, true)}>
                                     <UserCheck className="mr-2 h-4 w-4" />
                                     Unfollow
                                 </Button>
                             </div>
-                             {user.bio && (
-                                <p className="text-sm text-muted-foreground mt-3 pt-3 border-t">{user.bio}</p>
-                            )}
                         </CardContent>
                     </Card>
                 ))}
@@ -278,28 +262,25 @@ export default function ConnectionsPage() {
         </TabsContent>
         <TabsContent value="suggestions">
             <div className="grid md:grid-cols-2 gap-4">
-                {suggestedList.map((user) => (
-                    <Card key={user.id}>
+                {suggestedList.map((suggestedUser) => (
+                    <Card key={suggestedUser.id}>
                         <CardContent className="p-4">
                             <div className="flex items-center justify-between gap-4">
-                                <Link href={`/u/${user.handle}`} className="flex items-center gap-4 hover:underline flex-1 truncate">
+                                <Link href={`/u/${suggestedUser.handle}`} className="flex items-center gap-4 hover:underline flex-1 truncate">
                                     <Avatar>
-                                        <AvatarImage src={user.avatarUrl} data-ai-hint="person portrait" />
-                                        <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                                        <AvatarImage src={suggestedUser.avatarUrl} data-ai-hint="person portrait" />
+                                        <AvatarFallback>{suggestedUser.name.charAt(0)}</AvatarFallback>
                                     </Avatar>
                                     <div className="truncate">
-                                        <p className="font-semibold truncate">{user.name}</p>
-                                        <p className="text-sm text-muted-foreground truncate">@{user.handle}</p>
+                                        <p className="font-semibold truncate">{suggestedUser.name}</p>
+                                        <p className="text-sm text-muted-foreground truncate">@{suggestedUser.handle}</p>
                                     </div>
                                 </Link>
-                                <Button size="sm" variant="default" onClick={() => toggleFollow(user.id)} className="shrink-0">
+                                <Button size="sm" variant="default" onClick={() => handleToggleFollow(suggestedUser.id, false)} className="shrink-0">
                                     <UserPlus className="mr-2 h-4 w-4" />
                                     Follow
                                 </Button>
                             </div>
-                            {user.bio && (
-                                <p className="text-sm text-muted-foreground mt-3 pt-3 border-t">{user.bio}</p>
-                            )}
                         </CardContent>
                     </Card>
                 ))}

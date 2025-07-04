@@ -1,27 +1,50 @@
+
 'use client';
 
 import { OfferForm, OfferFormValues } from "@/components/forms/offer-form";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useAuth } from "@/components/auth-provider";
+import { createOffer } from "@/lib/offers";
+import { uploadImage } from "@/lib/storage";
 
 export default function CreateOfferPage() {
     const router = useRouter();
+    const { user } = useAuth();
     const { toast } = useToast();
     const [isSaving, setIsSaving] = useState(false);
     
-    // This is a mock function. In a real app, this would be an API call.
-    const onSubmit = (data: OfferFormValues) => {
+    const onSubmit = async (data: OfferFormValues) => {
+        if (!user) {
+            toast({ title: "Authentication Error", description: "You must be logged in to create an offer.", variant: "destructive" });
+            return;
+        }
         setIsSaving(true);
-        console.log("Creating new offer:", data);
-        setTimeout(() => {
+        try {
+            const dataToSave = { ...data, imageUrl: data.imageUrl || null };
+
+            if (data.imageUrl && data.imageUrl.startsWith('data:image')) {
+                const newImageUrl = await uploadImage(data.imageUrl, `offers/${user.uid}/${Date.now()}`);
+                dataToSave.imageUrl = newImageUrl;
+            }
+
+            await createOffer(user.uid, dataToSave);
             toast({
                 title: "Offer Created!",
                 description: "Your new offer has been created successfully.",
             });
-            setIsSaving(false);
             router.push('/offers');
-        }, 1000);
+        } catch (error) {
+            console.error("Error creating offer:", error);
+            toast({
+                title: "Error",
+                description: "Failed to create offer. Please try again.",
+                variant: "destructive",
+            });
+        } finally {
+            setIsSaving(false);
+        }
     }
 
     return (

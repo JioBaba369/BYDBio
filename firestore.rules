@@ -1,25 +1,31 @@
+
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Users can read their own profile, anyone can read a public profile
+  
+    // Users: 
+    // - Anyone can read public user profiles.
+    // - Only the authenticated user can create or update their own profile.
     match /users/{userId} {
       allow read: if true;
-      allow write: if request.auth.uid == userId;
+      allow create, update: if request.auth != null && request.auth.uid == userId;
     }
     
-    // Businesses can be read by anyone, but only written by the author.
-    match /businesses/{businessId} {
-        allow read: if true;
-        allow create: if request.auth.uid == request.resource.data.authorId;
-        allow update, delete: if request.auth.uid == resource.data.authorId;
+    // Businesses, Listings, Jobs, Events, Offers, Posts:
+    // - Anyone can read.
+    // - Only authenticated authors can write/update/delete their own content.
+    match /{contentCollection}/{docId} where contentCollection in ['businesses', 'listings', 'jobs', 'events', 'offers', 'posts'] {
+      allow read: if true;
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.authorId;
+      allow update, delete: if request.auth != null && request.auth.uid == resource.data.authorId;
     }
 
-    // Listings can be read by anyone, but only written by the author.
-    match /listings/{listingId} {
-        allow read: if true;
-        allow create: if request.auth.uid == request.resource.data.authorId;
-        allow update, delete: if request.auth.uid == resource.data.authorId;
+    // Diary Notes:
+    // - Only the owner can read or write their own diary notes.
+    match /diaryNotes/{noteId} {
+        allow read, write: if request.auth != null && request.auth.uid == resource.data.userId;
     }
+
   }
 }

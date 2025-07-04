@@ -5,16 +5,17 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button"
 import { Tag, Calendar, PlusCircle, MoreHorizontal, Edit, Archive, Trash2, DollarSign, Eye, Gift } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
-import { currentUser } from "@/lib/mock-data";
 import { format, parseISO } from "date-fns";
 import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import type { Offer } from "@/lib/users";
 import { useToast } from "@/hooks/use-toast";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
 import { Separator } from "@/components/ui/separator";
+import { useAuth } from "@/components/auth-provider";
+import { type Offer, getOffersByUser, deleteOffer, updateOffer } from "@/lib/offers";
+import { Skeleton } from "@/components/ui/skeleton";
 
 // This component safely formats the date on the client-side to prevent hydration errors.
 function ClientFormattedDate({ dateString }: { dateString: string }) {
@@ -28,25 +29,78 @@ function ClientFormattedDate({ dateString }: { dateString: string }) {
   return <>{formattedDate}</>;
 }
 
+const OfferPageSkeleton = () => (
+    <div className="space-y-6">
+        <div className="flex items-center justify-between">
+            <div>
+                <Skeleton className="h-9 w-64" />
+                <Skeleton className="h-4 w-80 mt-2" />
+            </div>
+            <Skeleton className="h-10 w-36" />
+        </div>
+        <div className="grid gap-6 md:grid-cols-2">
+            {[...Array(2)].map((_, i) => (
+                <Card key={i}>
+                    <Skeleton className="h-48 w-full rounded-t-lg" />
+                    <CardHeader>
+                        <Skeleton className="h-6 w-3/4" />
+                        <Skeleton className="h-4 w-1/2" />
+                    </CardHeader>
+                    <CardContent>
+                        <Skeleton className="h-5 w-24 mb-2" />
+                        <Skeleton className="h-5 w-48" />
+                    </CardContent>
+                    <CardFooter>
+                        <Skeleton className="h-10 w-full" />
+                    </CardFooter>
+                </Card>
+            ))}
+        </div>
+    </div>
+);
+
 export default function OffersPage() {
-  const [offers, setOffers] = useState<Offer[]>(currentUser.offers);
+  const { user, loading: authLoading } = useAuth();
+  const [offers, setOffers] = useState<Offer[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedOfferId, setSelectedOfferId] = useState<string | null>(null);
   const { toast } = useToast();
+  
+  useEffect(() => {
+    if (user?.uid) {
+      setIsLoading(true);
+      getOffersByUser(user.uid)
+        .then(setOffers)
+        .finally(() => setIsLoading(false));
+    }
+  }, [user]);
 
-  const handleArchive = (offerId: string) => {
-    setOffers(prev => prev.map(offer => 
-      offer.id === offerId ? { ...offer, status: offer.status === 'active' ? 'archived' : 'active' } : offer
-    ));
-    toast({ title: 'Offer status updated!' });
+  const handleArchive = async (offerId: string, currentStatus: 'active' | 'archived') => {
+    const newStatus = currentStatus === 'active' ? 'archived' : 'active';
+    try {
+      await updateOffer(offerId, { status: newStatus });
+      setOffers(prev => prev.map(offer => 
+        offer.id === offerId ? { ...offer, status: newStatus } : offer
+      ));
+      toast({ title: 'Offer status updated!' });
+    } catch (error) {
+      toast({ title: 'Error updating status', variant: 'destructive' });
+    }
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!selectedOfferId) return;
-    setOffers(prev => prev.filter(offer => offer.id !== selectedOfferId));
-    toast({ title: 'Offer deleted!' });
-    setIsDeleteDialogOpen(false);
-    setSelectedOfferId(null);
+    try {
+      await deleteOffer(selectedOfferId);
+      setOffers(prev => prev.filter(offer => offer.id !== selectedOfferId));
+      toast({ title: 'Offer deleted!' });
+    } catch (error) {
+      toast({ title: 'Error deleting offer', variant: 'destructive' });
+    } finally {
+      setIsDeleteDialogOpen(false);
+      setSelectedOfferId(null);
+    }
   };
   
   const openDeleteDialog = (offerId: string) => {
@@ -56,6 +110,10 @@ export default function OffersPage() {
   
   const activeOffers = offers.filter(o => o.status === 'active');
   const archivedOffers = offers.filter(o => o.status === 'archived');
+
+  if (authLoading || isLoading) {
+    return <OfferPageSkeleton />;
+  }
 
   return (
     <>
@@ -69,7 +127,7 @@ export default function OffersPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold font-headline">Offers</h1>
-            <p className="text-muted-foreground">Discover curated offers and deals.</p>
+            <p className="text-muted-foreground">Manage your special offers and deals.</p>
           </div>
           <Button asChild>
             <Link href="/offers/create">
@@ -101,7 +159,7 @@ export default function OffersPage() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem asChild><Link href={`/offers/${offer.id}/edit`} className="cursor-pointer"><Edit className="mr-2 h-4 w-4"/>Edit</Link></DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleArchive(offer.id)} className="cursor-pointer"><Archive className="mr-2 h-4 w-4"/>Archive</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleArchive(offer.id, offer.status)} className="cursor-pointer"><Archive className="mr-2 h-4 w-4"/>Archive</DropdownMenuItem>
                       <DropdownMenuItem onClick={() => openDeleteDialog(offer.id)} className="text-destructive cursor-pointer"><Trash2 className="mr-2 h-4 w-4"/>Delete</DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -110,7 +168,7 @@ export default function OffersPage() {
                   <Badge variant="secondary"><Tag className="mr-1 h-3 w-3" />{offer.category}</Badge>
                    <div className="flex items-center pt-2 text-sm text-muted-foreground">
                     <Calendar className="mr-2 h-4 w-4" /> 
-                    <span>Releases: <ClientFormattedDate dateString={offer.releaseDate} /></span>
+                    <span>Releases: <ClientFormattedDate dateString={offer.releaseDate.toString()} /></span>
                   </div>
                 </CardContent>
                 <Separator />
@@ -176,7 +234,7 @@ export default function OffersPage() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => handleArchive(offer.id)} className="cursor-pointer"><Archive className="mr-2 h-4 w-4"/>Unarchive</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleArchive(offer.id, offer.status)} className="cursor-pointer"><Archive className="mr-2 h-4 w-4"/>Unarchive</DropdownMenuItem>
                         <DropdownMenuItem onClick={() => openDeleteDialog(offer.id)} className="text-destructive cursor-pointer"><Trash2 className="mr-2 h-4 w-4"/>Delete</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -185,7 +243,7 @@ export default function OffersPage() {
                     <Badge variant="secondary"><Tag className="mr-1 h-3 w-3" />{offer.category}</Badge>
                      <div className="flex items-center pt-2 text-sm text-muted-foreground">
                       <Calendar className="mr-2 h-4 w-4" /> 
-                      <span>Releases: <ClientFormattedDate dateString={offer.releaseDate} /></span>
+                      <span>Releases: <ClientFormattedDate dateString={offer.releaseDate.toString()} /></span>
                     </div>
                   </CardContent>
                 </Card>

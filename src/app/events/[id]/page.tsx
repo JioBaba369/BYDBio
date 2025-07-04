@@ -1,23 +1,12 @@
 
 import type { Metadata } from 'next';
-import { allUsers, type User, type Event } from '@/lib/users';
+import { getEventAndAuthor } from '@/lib/events';
 import EventDetailClient from './event-detail-client';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 
-// Helper to find event and its author
-function findEventAndAuthor(eventId: string): { event: Event; author: User } | null {
-    for (const user of allUsers) {
-        const event = user.events.find(e => e.id === eventId);
-        if (event) {
-            return { event, author: user };
-        }
-    }
-    return null;
-}
-
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
-  const data = findEventAndAuthor(params.id);
+  const data = await getEventAndAuthor(params.id);
 
   if (!data) {
     return {
@@ -49,8 +38,8 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
 }
 
 
-export default function EventDetailPage({ params }: { params: { id: string } }) {
-    const data = findEventAndAuthor(params.id);
+export default async function EventDetailPage({ params }: { params: { id: string } }) {
+    const data = await getEventAndAuthor(params.id);
 
     if (!data) {
         return (

@@ -2,7 +2,12 @@
 'use client';
 
 import { useState, useEffect } from "react";
-import type { User, Post, Listing, Offer, Job, Event } from '@/lib/users';
+import type { User } from '@/lib/users';
+import type { Post } from '@/lib/posts';
+import type { Listing } from '@/lib/listings';
+import type { Offer } from '@/lib/offers';
+import type { Job } from '@/lib/jobs';
+import type { Event } from '@/lib/events';
 import { type Business, getBusinessesByUser } from "@/lib/businesses";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -17,7 +22,7 @@ import ShareButton from "@/components/share-button";
 import { linkIcons } from "@/lib/link-icons";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
-import { format, parseISO } from "date-fns";
+import { format, formatDistanceToNow, parseISO } from "date-fns";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -26,13 +31,15 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
-
-// Add isLiked to post type for this component's state
-type PostWithLike = Post & { isLiked: boolean };
-type UserProfileWithLikes = User & { posts: PostWithLike[] };
-
 interface UserProfilePageProps {
   userProfileData: User;
+  content: {
+    posts: Post[];
+    listings: Listing[];
+    jobs: Job[];
+    events: Event[];
+    offers: Offer[];
+  }
 }
 
 const contactFormSchema = z.object({
@@ -43,35 +50,27 @@ const contactFormSchema = z.object({
 type ContactFormValues = z.infer<typeof contactFormSchema>;
 
 // This component safely formats the date on the client-side to prevent hydration errors.
-function ClientFormattedDate({ dateString, formatStr }: { dateString: string; formatStr: string }) {
+function ClientFormattedDate({ date, formatStr }: { date: Date | string; formatStr: string }) {
   const [formattedDate, setFormattedDate] = useState('...');
-
+  const dateObj = typeof date === 'string' ? parseISO(date) : date;
+  
   useEffect(() => {
-    // This effect runs only on the client, after the initial render.
-    setFormattedDate(format(parseISO(dateString), formatStr));
-  }, [dateString, formatStr]);
+    setFormattedDate(format(dateObj, formatStr));
+  }, [dateObj, formatStr]);
 
   return <>{formattedDate}</>;
 }
 
-export default function UserProfilePage({ userProfileData }: UserProfilePageProps) {
-  const [userProfile, setUserProfile] = useState<UserProfileWithLikes | null>(
-    userProfileData
-      ? {
-          ...userProfileData,
-          posts: userProfileData.posts.map((p) => ({ ...p, isLiked: false })),
-        }
-      : null
-  );
-
+export default function UserProfilePage({ userProfileData, content }: UserProfilePageProps) {
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [activeTab, setActiveTab] = useState('posts');
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (userProfileData) {
-      // Fetch businesses associated with this user
-      getBusinessesByUser(userProfileData.uid).then(setBusinesses);
-    }
+    // Fetch businesses associated with this user
+    getBusinessesByUser(userProfileData.uid)
+      .then(setBusinesses)
+      .finally(() => setIsLoading(false));
 
     const hash = window.location.hash.replace('#', '');
     const validTabs = ['posts', 'businesses', 'listings', 'jobs', 'events', 'offers', 'contact'];
@@ -109,32 +108,10 @@ export default function UserProfilePage({ userProfileData }: UserProfilePageProp
       });
     }
   };
+
+  const { name, username, avatarUrl, avatarFallback, bio, links, subscribers, handle } = userProfileData;
+  const { posts, listings, jobs, events, offers } = content;
   
-  const handleLike = (postId: string) => {
-    if (!userProfile) return;
-
-    setUserProfile((prevProfile) => {
-      if (!prevProfile) return null;
-      return {
-        ...prevProfile,
-        posts: prevProfile.posts.map((post) => {
-          if (post.id === postId) {
-            const isLiked = !post.isLiked;
-            const likes = isLiked ? post.likes + 1 : post.likes - 1;
-            return { ...post, isLiked, likes };
-          }
-          return post;
-        }),
-      };
-    });
-  };
-
-  if (!userProfile) {
-    // This case should ideally be handled by the parent server component.
-    return <div>User not found.</div>
-  }
-
-  const { name, username, avatarUrl, avatarFallback, bio, links, subscribers, jobs, events, offers, listings, posts } = userProfile;
   const hasContent = posts.length > 0 || businesses.length > 0 || listings.length > 0 || jobs.length > 0 || events.length > 0 || offers.length > 0;
 
   return (
@@ -205,15 +182,15 @@ export default function UserProfilePage({ userProfileData }: UserProfilePageProp
                                 )}
                             </CardContent>
                             <CardFooter className="flex justify-start items-center gap-4 px-4 pb-4 pt-2 text-sm text-muted-foreground">
-                                <button onClick={() => handleLike(post.id)} className="flex items-center gap-1 hover:text-primary transition-colors">
-                                    <Heart className={cn("h-4 w-4", post.isLiked && "fill-red-500 text-red-500")} />
+                                <div className="flex items-center gap-1">
+                                    <Heart className="h-4 w-4" />
                                     <span>{post.likes}</span>
-                                </button>
+                                </div>
                                 <div className="flex items-center gap-1">
                                     <MessageCircle className="h-4 w-4" />
                                     <span>{post.comments}</span>
                                 </div>
-                                <span className="ml-auto text-xs">{post.timestamp}</span>
+                                <span className="ml-auto text-xs">{formatDistanceToNow(post.createdAt.toDate(), { addSuffix: true })}</span>
                             </CardFooter>
                             </Card>
                         ))}
@@ -253,7 +230,7 @@ export default function UserProfilePage({ userProfileData }: UserProfilePageProp
                         {listings.map((item) => (
                             <Card key={item.id} className="flex flex-col shadow-none border">
                                 <div className="overflow-hidden rounded-t-lg">
-                                <Image src={item.imageUrl} alt={item.title} width={600} height={400} className="w-full object-cover aspect-video" data-ai-hint="product design"/>
+                                <Image src={item.imageUrl || ''} alt={item.title} width={600} height={400} className="w-full object-cover aspect-video" data-ai-hint="product design"/>
                                 </div>
                                 <CardHeader>
                                 <CardTitle>{item.title}</CardTitle>
@@ -302,7 +279,7 @@ export default function UserProfilePage({ userProfileData }: UserProfilePageProp
                                 </CardHeader>
                                 <CardContent className="space-y-2">
                                     <div className="flex items-center text-sm text-muted-foreground">
-                                    <Calendar className="mr-2 h-4 w-4" /> <ClientFormattedDate dateString={event.date} formatStr="PPP" />
+                                    <Calendar className="mr-2 h-4 w-4" /> <ClientFormattedDate date={event.date as Date} formatStr="PPP" />
                                     </div>
                                     <div className="flex items-center text-sm text-muted-foreground">
                                     <MapPin className="mr-2 h-4 w-4" /> {event.location}
@@ -327,7 +304,7 @@ export default function UserProfilePage({ userProfileData }: UserProfilePageProp
                                   <Badge variant="secondary"><Tag className="mr-1 h-3 w-3" />{offer.category}</Badge>
                                   <div className="flex items-center pt-4 text-sm text-muted-foreground">
                                       <Calendar className="mr-2 h-4 w-4" /> 
-                                      <span>Releases: <ClientFormattedDate dateString={offer.releaseDate} formatStr="PPP" /></span>
+                                      <span>Releases: <ClientFormattedDate date={offer.releaseDate as Date} formatStr="PPP" /></span>
                                   </div>
                                 </CardContent>
                                 <CardFooter>

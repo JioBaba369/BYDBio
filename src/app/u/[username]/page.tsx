@@ -5,6 +5,11 @@ import UserProfilePage from './user-profile';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { getPostsByUser } from '@/lib/posts';
+import { getListingsByUser } from '@/lib/listings';
+import { getJobsByUser } from '@/lib/jobs';
+import { getEventsByUser } from '@/lib/events';
+import { getOffersByUser } from '@/lib/offers';
 
 export async function generateMetadata({ params }: { params: { username: string } }): Promise<Metadata> {
   const username = params.username;
@@ -68,5 +73,16 @@ export default async function PublicProfilePageWrapper({ params }: { params: { u
         )
     }
 
-    return <UserProfilePage userProfileData={userProfileData} />;
+    // Fetch all content related to the user in parallel
+    const [posts, listings, jobs, events, offers] = await Promise.all([
+        getPostsByUser(userProfileData.uid),
+        getListingsByUser(userProfileData.uid),
+        getJobsByUser(userProfileData.uid),
+        getEventsByUser(userProfileData.uid),
+        getOffersByUser(userProfileData.uid)
+    ]);
+    
+    const content = { posts, listings, jobs, events, offers };
+
+    return <UserProfilePage userProfileData={userProfileData} content={content} />;
 }

@@ -4,13 +4,10 @@
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Calendar, MapPin, PlusCircle, MoreHorizontal, Archive, Trash2, Edit, Eye, Users, CheckCircle2, LayoutGrid, List } from "lucide-react"
-import { currentUser } from "@/lib/mock-data";
-import { allUsers } from "@/lib/users";
 import { format, parseISO } from "date-fns";
 import Image from "next/image";
 import Link from "next/link";
-import { useState, useEffect, useMemo } from "react";
-import type { Event as EventType, User } from "@/lib/users";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
@@ -18,68 +15,123 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useAuth } from "@/components/auth-provider";
+import { type EventWithAuthor, getAllEvents, deleteEvent, updateEvent, toggleRsvp } from "@/lib/events";
+import { Skeleton } from "@/components/ui/skeleton";
 
-
-type EventWithAuthor = EventType & { author: Pick<User, 'id' | 'name' | 'handle' | 'avatarUrl'> };
 
 // This component safely formats the date on the client-side to prevent hydration errors.
-function ClientFormattedDate({ dateString, formatStr }: { dateString: string, formatStr?: string }) {
+function ClientFormattedDate({ date, formatStr }: { date: Date, formatStr?: string }) {
   const [formattedDate, setFormattedDate] = useState('...');
 
   useEffect(() => {
     // This effect runs only on the client, after the initial render.
-    setFormattedDate(format(parseISO(dateString), formatStr || "PPP p"));
-  }, [dateString, formatStr]);
+    setFormattedDate(format(date, formatStr || "PPP p"));
+  }, [date, formatStr]);
 
   return <>{formattedDate}</>;
 }
 
+const EventPageSkeleton = () => (
+    <div className="space-y-6">
+        <div className="flex items-center justify-between">
+            <div>
+                <Skeleton className="h-9 w-64" />
+                <Skeleton className="h-4 w-80 mt-2" />
+            </div>
+            <div className="flex items-center gap-2">
+                <Skeleton className="h-10 w-20 hidden sm:block" />
+                <Skeleton className="h-10 w-36" />
+            </div>
+        </div>
+        <div className="grid gap-6 md:grid-cols-2">
+            {[...Array(2)].map((_, i) => (
+                <Card key={i}>
+                    <Skeleton className="h-52 w-full rounded-t-lg" />
+                    <CardHeader>
+                        <Skeleton className="h-6 w-3/4 mb-2" />
+                        <Skeleton className="h-4 w-1/2" />
+                    </CardHeader>
+                    <CardContent>
+                        <Skeleton className="h-4 w-full" />
+                    </CardContent>
+                    <CardFooter className="flex-col gap-4 pt-4">
+                        <Skeleton className="h-4 w-full" />
+                        <Skeleton className="h-10 w-full" />
+                    </CardFooter>
+                </Card>
+            ))}
+        </div>
+    </div>
+)
 
 export default function EventsPage() {
+  const { user, loading: authLoading } = useAuth();
+  const [allEvents, setAllEvents] = useState<EventWithAuthor[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const { toast } = useToast();
   const [view, setView] = useState<'grid' | 'list'>('grid');
 
-  const [allEvents, setAllEvents] = useState<EventWithAuthor[]>(() => 
-      allUsers.flatMap(user => 
-          user.events.map(event => ({
-              ...event,
-              author: { id: user.id, name: user.name, handle: user.handle, avatarUrl: user.avatarUrl }
-          }))
-      ).sort((a,b) => parseISO(b.date).getTime() - parseISO(a.date).getTime())
-  );
+  useEffect(() => {
+    setIsLoading(true);
+    getAllEvents()
+        .then(setAllEvents)
+        .finally(() => setIsLoading(false));
+  }, []);
   
-  // Use state to track RSVP status for instant UI feedback
-  const [rsvpedEventIds, setRsvpedEventIds] = useState(new Set(currentUser.rsvpedEventIds || []));
-
-  const handleArchive = (eventId: string) => {
-    setAllEvents(prev => prev.map(event => 
-      event.id === eventId ? { ...event, status: event.status === 'active' ? 'archived' : 'active' } : event
-    ));
-    toast({ title: 'Event status updated!' });
+  const handleArchive = async (eventId: string, currentStatus: 'active' | 'archived') => {
+    const newStatus = currentStatus === 'active' ? 'archived' : 'active';
+    try {
+      await updateEvent(eventId, { status: newStatus });
+      setAllEvents(prev => prev.map(event => 
+        event.id === eventId ? { ...event, status: newStatus } : event
+      ));
+      toast({ title: 'Event status updated!' });
+    } catch (error) {
+      toast({ title: 'Error updating status', variant: 'destructive' });
+    }
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!selectedEventId) return;
-    setAllEvents(prev => prev.filter(event => event.id !== selectedEventId));
-    toast({ title: 'Event deleted!' });
-    setIsDeleteDialogOpen(false);
-    setSelectedEventId(null);
+    try {
+      await deleteEvent(selectedEventId);
+      setAllEvents(prev => prev.filter(event => event.id !== selectedEventId));
+      toast({ title: 'Event deleted!' });
+    } catch (error) {
+      toast({ title: 'Error deleting event', variant: 'destructive' });
+    } finally {
+      setIsDeleteDialogOpen(false);
+      setSelectedEventId(null);
+    }
   };
   
-  const handleRsvp = (eventId: string, eventTitle: string) => {
-    setRsvpedEventIds(prev => {
-        const newSet = new Set(prev);
-        if (newSet.has(eventId)) {
-            newSet.delete(eventId);
-            toast({ title: "You are no longer attending", description: `"${eventTitle}" has been removed from your diary.` });
-        } else {
-            newSet.add(eventId);
-            toast({ title: "You're going!", description: `"${eventTitle}" has been added to your diary.` });
-        }
-        return newSet;
-    });
+  const handleRsvp = async (eventId: string, eventTitle: string) => {
+    if (!user) {
+        toast({ title: "Please sign in to RSVP", variant: "destructive" });
+        return;
+    }
+    try {
+        const isNowRsvped = await toggleRsvp(eventId, user.uid);
+        setAllEvents(prev => prev.map(event => {
+            if (event.id === eventId) {
+                const newRsvps = isNowRsvped 
+                    ? [...event.rsvps, user.uid] 
+                    : event.rsvps.filter(uid => uid !== user.uid);
+                return { ...event, rsvps: newRsvps };
+            }
+            return event;
+        }));
+        toast({
+            title: isNowRsvped ? "You're going!" : "You are no longer attending",
+            description: `"${eventTitle}" status updated in your diary.`
+        });
+    } catch (error) {
+        console.error("RSVP error:", error);
+        toast({ title: "Failed to update RSVP", variant: "destructive" });
+    }
   }
   
   const openDeleteDialog = (eventId: string) => {
@@ -87,8 +139,12 @@ export default function EventsPage() {
     setIsDeleteDialogOpen(true);
   }
 
+  if (authLoading || isLoading) {
+      return <EventPageSkeleton />
+  }
+
   const activeEvents = allEvents.filter(e => e.status === 'active');
-  const archivedEvents = allEvents.filter(e => e.status === 'archived' && e.author.id === currentUser.id);
+  const archivedEvents = user ? allEvents.filter(e => e.status === 'archived' && e.author.id === user.uid) : [];
 
   return (
     <>
@@ -126,8 +182,8 @@ export default function EventsPage() {
           view === 'grid' ? (
             <div className="grid gap-6 md:grid-cols-2">
               {activeEvents.map((event) => {
-                const isOwner = event.author.id === currentUser.id;
-                const isRsvped = rsvpedEventIds.has(event.id);
+                const isOwner = user && event.author.id === user.uid;
+                const isRsvped = user && event.rsvps?.includes(user.uid);
 
                 return (
                 <Card key={event.id} className="flex flex-col">
@@ -140,7 +196,7 @@ export default function EventsPage() {
                     <div className="flex-1">
                       <CardTitle>{event.title}</CardTitle>
                       <CardDescription className="pt-2">
-                          <Link href={`/u/${event.author.handle}`} className="flex items-center gap-2 hover:underline">
+                          <Link href={`/u/${event.author.username}`} className="flex items-center gap-2 hover:underline">
                               <Avatar className="h-6 w-6">
                                   <AvatarImage src={event.author.avatarUrl} data-ai-hint="person portrait" />
                                   <AvatarFallback>{event.author.name.charAt(0)}</AvatarFallback>
@@ -158,7 +214,7 @@ export default function EventsPage() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                           <DropdownMenuItem asChild><Link href={`/events/${event.id}/edit`} className="cursor-pointer"><Edit className="mr-2 h-4 w-4"/>Edit</Link></DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleArchive(event.id)} className="cursor-pointer"><Archive className="mr-2 h-4 w-4"/>Archive</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleArchive(event.id, event.status)} className="cursor-pointer"><Archive className="mr-2 h-4 w-4"/>Archive</DropdownMenuItem>
                           <DropdownMenuItem onClick={() => openDeleteDialog(event.id)} className="text-destructive cursor-pointer"><Trash2 className="mr-2 h-4 w-4"/>Delete</DropdownMenuItem>
                           </DropdownMenuContent>
                       </DropdownMenu>
@@ -166,7 +222,7 @@ export default function EventsPage() {
                   </CardHeader>
                   <CardContent className="space-y-2 flex-grow">
                     <div className="flex items-center text-sm text-muted-foreground">
-                      <Calendar className="mr-2 h-4 w-4" /> <ClientFormattedDate dateString={event.date} />
+                      <Calendar className="mr-2 h-4 w-4" /> <ClientFormattedDate date={event.date as Date} />
                     </div>
                     <div className="flex items-center text-sm text-muted-foreground">
                       <MapPin className="mr-2 h-4 w-4" /> {event.location}
@@ -181,14 +237,14 @@ export default function EventsPage() {
                           </div>
                           <div className="flex items-center text-sm font-medium">
                               <Users className="mr-2 h-4 w-4 text-primary" />
-                              <span>{event.rsvps?.toLocaleString() ?? 0} RSVPs</span>
+                              <span>{event.rsvps?.length.toLocaleString() ?? 0} RSVPs</span>
                           </div>
                       </div>
                       <div className="w-full flex gap-2">
                         <Button asChild className="flex-1">
                             <Link href={`/events/${event.id}`}>Learn More</Link>
                         </Button>
-                        {!isOwner && (
+                        {!isOwner && user && (
                           <Button variant={isRsvped ? "secondary" : "default"} onClick={() => handleRsvp(event.id, event.title)}>
                               {isRsvped ? <CheckCircle2 className="mr-2 h-4 w-4"/> : <PlusCircle className="mr-2 h-4 w-4"/>}
                               {isRsvped ? 'Attending' : 'Add to Diary'}
@@ -213,8 +269,8 @@ export default function EventsPage() {
                 </TableHeader>
                 <TableBody>
                   {activeEvents.map((event) => {
-                    const isOwner = event.author.id === currentUser.id;
-                    const isRsvped = rsvpedEventIds.has(event.id);
+                    const isOwner = user && event.author.id === user.uid;
+                    const isRsvped = user && event.rsvps?.includes(user.uid);
 
                     return (
                       <TableRow key={event.id}>
@@ -236,14 +292,14 @@ export default function EventsPage() {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <div className="text-sm font-medium"><ClientFormattedDate dateString={event.date} formatStr="MMM d, yyyy" /></div>
-                          <div className="text-xs text-muted-foreground"><ClientFormattedDate dateString={event.date} formatStr="p" /></div>
+                          <div className="text-sm font-medium"><ClientFormattedDate date={event.date as Date} formatStr="MMM d, yyyy" /></div>
+                          <div className="text-xs text-muted-foreground"><ClientFormattedDate date={event.date as Date} formatStr="p" /></div>
                         </TableCell>
                         <TableCell className="hidden md:table-cell">{event.location}</TableCell>
                         <TableCell className="hidden lg:table-cell">
                            <div className="flex flex-col items-center gap-1 text-xs text-muted-foreground">
                             <div className="flex items-center gap-1"><Eye className="h-3 w-3" />{event.views?.toLocaleString() ?? 0}</div>
-                            <div className="flex items-center gap-1"><Users className="h-3 w-3" />{event.rsvps?.toLocaleString() ?? 0}</div>
+                            <div className="flex items-center gap-1"><Users className="h-3 w-3" />{event.rsvps?.length.toLocaleString() ?? 0}</div>
                           </div>
                         </TableCell>
                         <TableCell className="text-right">
@@ -256,11 +312,11 @@ export default function EventsPage() {
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
                               <DropdownMenuItem asChild><Link href={`/events/${event.id}/edit`} className="cursor-pointer"><Edit className="mr-2 h-4 w-4"/>Edit</Link></DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleArchive(event.id)} className="cursor-pointer"><Archive className="mr-2 h-4 w-4"/>Archive</DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleArchive(event.id, event.status)} className="cursor-pointer"><Archive className="mr-2 h-4 w-4"/>Archive</DropdownMenuItem>
                               <DropdownMenuItem onClick={() => openDeleteDialog(event.id)} className="text-destructive cursor-pointer"><Trash2 className="mr-2 h-4 w-4"/>Delete</DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
-                          ) : (
+                          ) : user && (
                             <Button size="sm" variant={isRsvped ? "secondary" : "default"} onClick={() => handleRsvp(event.id, event.title)}>
                                 {isRsvped ? <CheckCircle2 className="mr-2 h-4 w-4"/> : <PlusCircle className="mr-2 h-4 w-4"/>}
                                 {isRsvped ? 'Attending' : 'Attend'}
@@ -278,19 +334,11 @@ export default function EventsPage() {
           <Card className="text-center">
             <CardHeader>
                 <CardTitle>No Active Events</CardTitle>
-                <CardDescription>Create an event to engage with your audience.</CardDescription>
+                <CardDescription>Create an event to engage with your audience, or check back later for events from others.</CardDescription>
             </CardHeader>
             <CardContent className="flex justify-center items-center p-10">
                 <Calendar className="h-16 w-16 text-muted-foreground" />
             </CardContent>
-            <CardFooter>
-                <Button asChild className="w-full">
-                    <Link href="/events/create">
-                      <PlusCircle className="mr-2 h-4 w-4" />
-                      Create Your First Event
-                    </Link>
-                </Button>
-            </CardFooter>
           </Card>
         )}
         
@@ -315,14 +363,14 @@ export default function EventsPage() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => handleArchive(event.id)} className="cursor-pointer"><Archive className="mr-2 h-4 w-4"/>Unarchive</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleArchive(event.id, event.status)} className="cursor-pointer"><Archive className="mr-2 h-4 w-4"/>Unarchive</DropdownMenuItem>
                         <DropdownMenuItem onClick={() => openDeleteDialog(event.id)} className="text-destructive cursor-pointer"><Trash2 className="mr-2 h-4 w-4"/>Delete</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </CardHeader>
                    <CardContent className="space-y-2 flex-grow">
                     <div className="flex items-center text-sm text-muted-foreground">
-                      <Calendar className="mr-2 h-4 w-4" /> <ClientFormattedDate dateString={event.date} />
+                      <Calendar className="mr-2 h-4 w-4" /> <ClientFormattedDate date={event.date as Date} />
                     </div>
                     <div className="flex items-center text-sm text-muted-foreground">
                       <MapPin className="mr-2 h-4 w-4" /> {event.location}

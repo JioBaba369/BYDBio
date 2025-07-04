@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { BarChart, Briefcase, Calendar, DollarSign, File, LineChart, ListFilter, MessageSquare, PlusCircle, Tags } from "lucide-react"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
-import { Bar, CartesianGrid, XAxis, YAxis, Tooltip, Area, Legend, BarChart as BarChartComponent, AreaChart as AreaChartComponent } from "recharts"
+import { Bar, CartesianGrid, XAxis, YAxis, Tooltip, Legend, BarChart as BarChartComponent, AreaChart as AreaChartComponent } from "recharts"
 import Link from "next/link"
 import {
   DropdownMenu,
@@ -33,7 +33,9 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { useAuth } from "@/components/auth-provider"
 import { Skeleton } from "@/components/ui/skeleton"
-import { useMemo } from "react"
+import { useMemo, useState, useEffect } from "react"
+import { collection, query, where, getDocs } from "firebase/firestore"
+import { db } from "@/lib/firebase"
 
 const chartData = [
   { month: "January", desktop: 186, mobile: 80 },
@@ -64,25 +66,59 @@ const DashboardSkeleton = () => (
     </div>
 )
 
+interface ContentCounts {
+  jobs: number;
+  events: number;
+  offers: number;
+  listings: number;
+  posts: number;
+}
+
 export default function Dashboard() {
-  const { user, loading } = useAuth();
-  
+  const { user, loading: authLoading } = useAuth();
+  const [counts, setCounts] = useState<ContentCounts | null>(null);
+  const [isCountsLoading, setIsCountsLoading] = useState(true);
+
+  useEffect(() => {
+    if (user?.uid) {
+      const fetchCounts = async () => {
+        setIsCountsLoading(true);
+        try {
+          const collections = ['jobs', 'events', 'offers', 'listings', 'posts'];
+          const countPromises = collections.map(col => {
+            const collRef = collection(db, col);
+            const q = query(collRef, where("authorId", "==", user.uid));
+            return getDocs(q).then(snapshot => snapshot.size);
+          });
+          const [jobs, events, offers, listings, posts] = await Promise.all(countPromises);
+          setCounts({ jobs, events, offers, listings, posts });
+        } catch (error) {
+          console.error("Error fetching content counts:", error);
+          setCounts(null);
+        } finally {
+          setIsCountsLoading(false);
+        }
+      };
+      fetchCounts();
+    }
+  }, [user]);
+
   const { totalContent, barChartData, profileCompletion } = useMemo(() => {
     if (!user) {
       return { totalContent: 0, barChartData: [], profileCompletion: 0 };
     }
 
-    const total = (user.jobs?.length || 0) + 
-                  (user.events?.length || 0) + 
-                  (user.offers?.length || 0) + 
-                  (user.listings?.length || 0);
+    const total = (counts?.jobs || 0) + 
+                  (counts?.events || 0) + 
+                  (counts?.offers || 0) + 
+                  (counts?.listings || 0);
 
     const chart = [
-      { name: 'Jobs', value: user.jobs?.length || 0 },
-      { name: 'Events', value: user.events?.length || 0 },
-      { name: 'Offers', value: user.offers?.length || 0 },
-      { name: 'Listings', value: user.listings?.length || 0 },
-      { name: 'Posts', value: user.posts?.length || 0 },
+      { name: 'Jobs', value: counts?.jobs || 0 },
+      { name: 'Events', value: counts?.events || 0 },
+      { name: 'Offers', value: counts?.offers || 0 },
+      { name: 'Listings', value: counts?.listings || 0 },
+      { name: 'Posts', value: counts?.posts || 0 },
       { name: 'Links', value: user.links?.length || 0 },
     ];
     
@@ -90,15 +126,18 @@ export default function Dashboard() {
     if (user.bio) completion += 20;
     if (user.avatarUrl && !user.avatarUrl.includes('placehold.co')) completion += 20;
     if (user.links && user.links.length > 0) completion += 20;
-    const hasContent = (user.jobs && user.jobs.length > 0) || (user.events && user.events.length > 0) || (user.offers && user.offers.length > 0) || (user.listings && user.listings.length > 0) || (user.posts && user.posts.length > 0);
-    if (hasContent) completion += 20;
+    if (total > 0 || (counts?.posts || 0) > 0) completion += 20;
     if (user.businessCard && user.businessCard.title && user.businessCard.company) completion += 20;
 
     return { totalContent: total, barChartData: chart, profileCompletion: completion };
-  }, [user]);
+  }, [user, counts]);
   
-  if (loading || !user) {
+  if (authLoading || isCountsLoading) {
     return <DashboardSkeleton />;
+  }
+  
+  if (!user) {
+    return <DashboardSkeleton />; // Or a "Please log in" message
   }
   
   return (
@@ -186,7 +225,7 @@ export default function Dashboard() {
           <CardContent>
             <div className="text-2xl font-bold">{totalContent}</div>
             <p className="text-xs text-muted-foreground">
-              {user.jobs?.length || 0} Jobs, {user.events?.length || 0} Events
+              {counts?.jobs || 0} Jobs, {counts?.events || 0} Events
             </p>
           </CardContent>
         </Card>

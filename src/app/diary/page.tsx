@@ -4,8 +4,9 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { currentUser } from '@/lib/mock-data';
-import { allUsers, type Event, type User } from '@/lib/users';
+import { useAuth } from '@/components/auth-provider';
+import { type Event, getEventsForDiary, saveDiaryNote, getDiaryNote } from '@/lib/events';
+import type { User } from '@/lib/users';
 import { format, parseISO, isPast } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { Textarea } from '@/components/ui/textarea';
@@ -14,7 +15,7 @@ import { BookText, Calendar, MapPin, Save, User as UserIcon } from 'lucide-react
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-
+import { Skeleton } from '@/components/ui/skeleton';
 
 type EventWithNotes = Event & { 
   notes?: string; 
@@ -23,50 +24,61 @@ type EventWithNotes = Event & {
 };
 
 // This component safely formats the date on the client-side to prevent hydration errors.
-function ClientFormattedDate({ dateString, formatStr }: { dateString: string; formatStr: string }) {
+function ClientFormattedDate({ date, formatStr }: { date: Date; formatStr: string }) {
   const [formattedDate, setFormattedDate] = useState('...');
 
   useEffect(() => {
     // This effect runs only on the client, after the initial render.
-    setFormattedDate(format(parseISO(dateString), formatStr));
-  }, [dateString, formatStr]);
+    setFormattedDate(format(date, formatStr));
+  }, [date, formatStr]);
 
   return <>{formattedDate}</>;
 }
 
+const DiarySkeleton = () => (
+    <div className="space-y-6">
+        <div>
+            <Skeleton className="h-9 w-48" />
+            <Skeleton className="h-4 w-72 mt-2" />
+        </div>
+        <section className="space-y-4">
+            <Skeleton className="h-7 w-40" />
+            <div className="grid md:grid-cols-2 gap-6">
+                <Card>
+                    <CardHeader>
+                        <Skeleton className="h-6 w-3/4" />
+                        <Skeleton className="h-4 w-1/2 mt-2" />
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                        <Skeleton className="h-4 w-20" />
+                        <Skeleton className="h-20 w-full" />
+                        <Skeleton className="h-9 w-28" />
+                    </CardContent>
+                </Card>
+            </div>
+        </section>
+    </div>
+);
+
 
 export default function DiaryPage() {
-    const [events, setEvents] = useState<EventWithNotes[]>(() => {
-      // 1. Get user's own events
-      const ownEvents: EventWithNotes[] = currentUser.events.map(e => ({
-        ...e, 
-        notes: e.id === 'event1' ? 'Prepare a few questions for the Q&A session.' : '',
-        source: 'created'
-      }));
-
-      // 2. Get events user has RSVP'd to
-      const rsvpedEvents: EventWithNotes[] = [];
-      if (currentUser.rsvpedEventIds) {
-          for (const eventId of currentUser.rsvpedEventIds) {
-              for (const user of allUsers) {
-                  const event = user.events.find(e => e.id === eventId);
-                  if (event) {
-                      rsvpedEvents.push({
-                          ...event,
-                          source: 'rsvped',
-                          author: { name: user.name, username: user.username, avatarUrl: user.avatarUrl },
-                          notes: ''
-                      });
-                      break;
-                  }
-              }
-          }
-      }
-      
-      return [...ownEvents, ...rsvpedEvents];
-    });
-
+    const { user, loading: authLoading } = useAuth();
+    const [events, setEvents] = useState<EventWithNotes[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
     const { toast } = useToast();
+
+    useEffect(() => {
+        if (user) {
+            setIsLoading(true);
+            getEventsForDiary(user.uid)
+                .then(setEvents)
+                .catch(err => {
+                    console.error("Error fetching diary events:", err);
+                    toast({ title: "Failed to load diary", variant: "destructive" });
+                })
+                .finally(() => setIsLoading(false));
+        }
+    }, [user, toast]);
 
     const handleNoteChange = (eventId: string, note: string) => {
         setEvents(prevEvents => 
@@ -76,21 +88,33 @@ export default function DiaryPage() {
         );
     };
 
-    const handleSaveNote = (eventId: string) => {
+    const handleSaveNote = async (eventId: string) => {
+        if (!user) return;
         const event = events.find(e => e.id === eventId);
-        console.log(`Saving note for event ${eventId}:`, event?.notes);
-        toast({
-            title: "Note Saved!",
-            description: `Your notes for "${event?.title}" have been saved.`,
-        });
+        if (!event) return;
+
+        try {
+            await saveDiaryNote(user.uid, eventId, event.notes || '');
+            toast({
+                title: "Note Saved!",
+                description: `Your notes for "${event?.title}" have been saved.`,
+            });
+        } catch (error) {
+            console.error(`Saving note for event ${eventId}:`, error);
+            toast({ title: "Failed to save note", variant: "destructive" });
+        }
     };
 
     const { upcomingEvents, pastEvents } = useMemo(() => {
-        const sortedEvents = [...events].sort((a, b) => parseISO(a.date).getTime() - parseISO(b.date).getTime());
-        const upcoming = sortedEvents.filter(e => !isPast(parseISO(e.date)));
-        const past = sortedEvents.filter(e => isPast(parseISO(e.date))).reverse();
+        const sortedEvents = [...events].sort((a, b) => (a.date as Date).getTime() - (b.date as Date).getTime());
+        const upcoming = sortedEvents.filter(e => !isPast(e.date as Date));
+        const past = sortedEvents.filter(e => isPast(e.date as Date)).reverse();
         return { upcomingEvents: upcoming, pastEvents: past };
     }, [events]);
+
+    if (authLoading || isLoading) {
+        return <DiarySkeleton />;
+    }
 
     return (
         <div className="space-y-6">
@@ -114,7 +138,7 @@ export default function DiaryPage() {
                                     </div>
                                     <CardDescription className="space-y-1 text-sm text-muted-foreground pt-1">
                                         <div className="flex items-center">
-                                            <Calendar className="mr-2 h-4 w-4" /> <ClientFormattedDate dateString={event.date} formatStr="PPP 'at' p" />
+                                            <Calendar className="mr-2 h-4 w-4" /> <ClientFormattedDate date={event.date as Date} formatStr="PPP 'at' p" />
                                         </div>
                                         <div className="flex items-center">
                                             <MapPin className="mr-2 h-4 w-4" /> {event.location}
@@ -177,7 +201,7 @@ export default function DiaryPage() {
                                     </div>
                                      <CardDescription className="space-y-1 text-sm text-muted-foreground pt-1">
                                         <div className="flex items-center">
-                                            <Calendar className="mr-2 h-4 w-4" /> <ClientFormattedDate dateString={event.date} formatStr="PPP" />
+                                            <Calendar className="mr-2 h-4 w-4" /> <ClientFormattedDate date={event.date as Date} formatStr="PPP" />
                                         </div>
                                         <div className="flex items-center">
                                             <MapPin className="mr-2 h-4 w-4" /> {event.location}

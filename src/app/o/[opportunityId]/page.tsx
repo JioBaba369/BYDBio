@@ -1,22 +1,13 @@
+
 import type { Metadata } from 'next';
-import { allUsers, type User, type Job } from '@/lib/users';
+import { getJobAndAuthor } from '@/lib/jobs';
 import OpportunityDetailClient from './opportunity-detail-client';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-
-// Helper to find job and its author
-function findJobAndAuthor(jobId: string): { job: Job; author: User } | null {
-    for (const user of allUsers) {
-        const job = user.jobs.find(j => j.id === jobId);
-        if (job) {
-            return { job, author: user };
-        }
-    }
-    return null;
-}
+import type { Job, User } from '@/lib/jobs';
 
 export async function generateMetadata({ params }: { params: { opportunityId: string } }): Promise<Metadata> {
-  const data = findJobAndAuthor(params.opportunityId);
+  const data = await getJobAndAuthor(params.opportunityId);
 
   if (!data) {
     return {
@@ -48,8 +39,8 @@ export async function generateMetadata({ params }: { params: { opportunityId: st
 }
 
 
-export default function PublicOpportunityPage({ params }: { params: { opportunityId: string } }) {
-    const data = findJobAndAuthor(params.opportunityId);
+export default async function PublicOpportunityPage({ params }: { params: { opportunityId: string } }) {
+    const data = await getJobAndAuthor(params.opportunityId);
 
     if (!data) {
         return (

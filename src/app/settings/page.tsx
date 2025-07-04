@@ -9,7 +9,6 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { currentUser } from "@/lib/mock-data";
 import { useTheme } from "next-themes";
 import Link from "next/link";
 import { Monitor, Moon, Sun } from "lucide-react";
@@ -17,8 +16,42 @@ import { useState } from "react";
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { ChangePasswordDialog } from "@/components/change-password-dialog";
+import { useAuth } from "@/components/auth-provider";
+import { Skeleton } from "@/components/ui/skeleton";
+
+const SettingsPageSkeleton = () => (
+    <div className="space-y-6">
+        <Skeleton className="h-9 w-48" />
+        <div className="flex gap-2">
+            <Skeleton className="h-10 w-28" />
+            <Skeleton className="h-10 w-28" />
+            <Skeleton className="h-10 w-28" />
+        </div>
+        <Card>
+            <CardHeader>
+                <Skeleton className="h-7 w-48" />
+                <Skeleton className="h-4 w-full max-w-lg mt-1" />
+            </CardHeader>
+            <CardContent className="space-y-6">
+                <div className="space-y-2">
+                    <Skeleton className="h-4 w-16" />
+                    <Skeleton className="h-10 w-full" />
+                </div>
+                <div className="space-y-2">
+                    <Skeleton className="h-4 w-16" />
+                    <Skeleton className="h-10 w-full" />
+                </div>
+            </CardContent>
+            <CardFooter>
+                <Skeleton className="h-10 w-24" />
+            </CardFooter>
+        </Card>
+    </div>
+);
+
 
 export default function SettingsPage() {
+    const { user, loading } = useAuth();
     const { setTheme, theme } = useTheme();
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [isChangePasswordDialogOpen, setIsChangePasswordDialogOpen] = useState(false);
@@ -44,6 +77,14 @@ export default function SettingsPage() {
         });
         setIsChangePasswordDialogOpen(false);
     };
+
+    if (loading) {
+        return <SettingsPageSkeleton />;
+    }
+    
+    if (!user) {
+        return <SettingsPageSkeleton />; // Or redirect, though AuthProvider should handle this
+    }
 
     return (
         <>
@@ -84,15 +125,15 @@ export default function SettingsPage() {
                             <CardContent className="space-y-4">
                                 <div className="space-y-2">
                                     <Label htmlFor="name">Name</Label>
-                                    <Input id="name" defaultValue={currentUser.name} disabled />
+                                    <Input id="name" defaultValue={user.name} disabled />
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="email">Email</Label>
-                                    <Input id="email" type="email" defaultValue={currentUser.email} disabled />
+                                    <Input id="email" type="email" defaultValue={user.email || ''} disabled />
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="username">Username</Label>
-                                    <Input id="username" defaultValue={currentUser.username} disabled />
+                                    <Input id="username" defaultValue={user.username} disabled />
                                 </div>
                             </CardContent>
                             <CardFooter>

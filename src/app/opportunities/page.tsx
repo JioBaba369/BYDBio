@@ -4,36 +4,92 @@
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Briefcase, MapPin, PlusCircle, MoreHorizontal, Edit, Archive, Trash2, Eye, Users } from "lucide-react"
-import { currentUser } from "@/lib/mock-data";
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
-import type { Job } from "@/lib/users";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { useAuth } from "@/components/auth-provider";
+import { type Job, getJobsByUser, deleteJob, updateJob } from "@/lib/jobs";
+import { Skeleton } from "@/components/ui/skeleton";
+
+const JobPageSkeleton = () => (
+    <div className="space-y-6">
+        <div className="flex items-center justify-between">
+            <div>
+                <Skeleton className="h-9 w-64" />
+                <Skeleton className="h-4 w-80 mt-2" />
+            </div>
+            <Skeleton className="h-10 w-48" />
+        </div>
+        <div className="grid gap-6 md:grid-cols-2">
+            {[...Array(2)].map((_, i) => (
+                <Card key={i}>
+                    <Skeleton className="h-48 w-full rounded-t-lg" />
+                    <CardHeader>
+                        <Skeleton className="h-6 w-3/4" />
+                        <Skeleton className="h-4 w-1/2" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="space-y-2">
+                            <Skeleton className="h-4 w-full" />
+                            <Skeleton className="h-4 w-2/3" />
+                        </div>
+                    </CardContent>
+                    <CardFooter>
+                        <Skeleton className="h-10 w-full" />
+                    </CardFooter>
+                </Card>
+            ))}
+        </div>
+    </div>
+);
 
 export default function OpportunitiesPage() {
-  const [jobs, setJobs] = useState<Job[]>(currentUser.jobs);
+  const { user, loading: authLoading } = useAuth();
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const handleArchive = (jobId: string) => {
-    setJobs(prev => prev.map(job => 
-      job.id === jobId ? { ...job, status: job.status === 'active' ? 'archived' : 'active' } : job
-    ));
-    toast({ title: 'Opportunity status updated!' });
+  useEffect(() => {
+    if (user?.uid) {
+      setIsLoading(true);
+      getJobsByUser(user.uid)
+        .then(setJobs)
+        .finally(() => setIsLoading(false));
+    }
+  }, [user]);
+
+  const handleArchive = async (jobId: string, currentStatus: 'active' | 'archived') => {
+    const newStatus = currentStatus === 'active' ? 'archived' : 'active';
+    try {
+      await updateJob(jobId, { status: newStatus });
+      setJobs(prev => prev.map(job => 
+        job.id === jobId ? { ...job, status: newStatus } : job
+      ));
+      toast({ title: 'Opportunity status updated!' });
+    } catch (error) {
+      toast({ title: 'Error updating status', variant: 'destructive' });
+    }
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!selectedJobId) return;
-    setJobs(prev => prev.filter(job => job.id !== selectedJobId));
-    toast({ title: 'Opportunity deleted!' });
-    setIsDeleteDialogOpen(false);
-    setSelectedJobId(null);
+    try {
+      await deleteJob(selectedJobId);
+      setJobs(prev => prev.filter(job => job.id !== selectedJobId));
+      toast({ title: 'Opportunity deleted!' });
+    } catch (error) {
+      toast({ title: 'Error deleting opportunity', variant: 'destructive' });
+    } finally {
+      setIsDeleteDialogOpen(false);
+      setSelectedJobId(null);
+    }
   };
   
   const openDeleteDialog = (jobId: string) => {
@@ -44,6 +100,10 @@ export default function OpportunitiesPage() {
   const activeJobs = jobs.filter(j => j.status === 'active');
   const archivedJobs = jobs.filter(j => j.status === 'archived');
   
+  if (authLoading || isLoading) {
+    return <JobPageSkeleton />;
+  }
+
   return (
     <>
       <DeleteConfirmationDialog 
@@ -88,7 +148,7 @@ export default function OpportunitiesPage() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem asChild><Link href={`/opportunities/${job.id}/edit`} className="cursor-pointer"><Edit className="mr-2 h-4 w-4"/>Edit</Link></DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleArchive(job.id)} className="cursor-pointer"><Archive className="mr-2 h-4 w-4"/>Archive</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleArchive(job.id, job.status)} className="cursor-pointer"><Archive className="mr-2 h-4 w-4"/>Archive</DropdownMenuItem>
                       <DropdownMenuItem onClick={() => openDeleteDialog(job.id)} className="text-destructive cursor-pointer"><Trash2 className="mr-2 h-4 w-4"/>Delete</DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -164,7 +224,7 @@ export default function OpportunitiesPage() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => handleArchive(job.id)} className="cursor-pointer"><Archive className="mr-2 h-4 w-4"/>Unarchive</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleArchive(job.id, job.status)} className="cursor-pointer"><Archive className="mr-2 h-4 w-4"/>Unarchive</DropdownMenuItem>
                         <DropdownMenuItem onClick={() => openDeleteDialog(job.id)} className="text-destructive cursor-pointer"><Trash2 className="mr-2 h-4 w-4"/>Delete</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>

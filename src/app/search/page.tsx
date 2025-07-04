@@ -7,27 +7,29 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { UserPlus, UserCheck, Search as SearchIcon, Briefcase, MapPin, Tag, Calendar, Users, Tags, DollarSign } from "lucide-react";
 import { useState, useMemo, useEffect } from 'react';
-import { allUsers as initialUsers } from '@/lib/users';
-import { currentUser } from '@/lib/mock-data';
 import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import Image from "next/image";
 import { format, parseISO } from "date-fns";
-import type { User, Listing, Job, Event, Offer } from '@/lib/users';
+import type { User } from '@/lib/users';
+import { useAuth } from '@/components/auth-provider';
+import { searchUsers } from '@/lib/users';
+import { followUser, unfollowUser } from '@/lib/connections';
+import { useToast } from '@/hooks/use-toast';
+import { Skeleton } from '@/components/ui/skeleton';
+// Note: Full-text search across all content is not scalable on the client.
+// This is a simplified implementation for demonstration.
+// A production app should use a dedicated search service like Algolia or Typesense.
+import { getAllEvents } from '@/lib/events';
+import { getDocs, collection } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import type { Listing } from '@/lib/listings';
+import type { Job } from '@/lib/jobs';
+import type { Event, EventWithAuthor } from '@/lib/events';
+import type { Offer } from '@/lib/offers';
 
-// Augment item types with author info
-type ItemWithAuthor<T> = T & { author: Pick<User, 'id' | 'name' | 'handle' | 'avatarUrl' | 'avatarFallback'> };
-
-// We need to map the full user list to include whether the current user follows them
-const mapUsersWithFollowingState = (users: typeof initialUsers, me: typeof currentUser) => {
-    return users
-      .filter(u => u.id !== me.id) // Exclude current user from search results
-      .map(user => ({
-        ...user,
-        isFollowedByCurrentUser: me.following.includes(user.id),
-      }));
-}
+type ItemWithAuthor<T> = T & { author: Pick<User, 'id' | 'name' | 'username' | 'avatarUrl' | 'avatarFallback'> };
 
 function ClientFormattedDate({ dateString, formatStr }: { dateString: string; formatStr: string }) {
   const [formattedDate, setFormattedDate] = useState('...');
@@ -43,90 +45,85 @@ function ClientFormattedDate({ dateString, formatStr }: { dateString: string; fo
 export default function SearchPage() {
   const searchParams = useSearchParams();
   const query = searchParams.get('q');
-  
-  const [users, setUsers] = useState(mapUsersWithFollowingState(initialUsers, currentUser));
+  const { user, loading: authLoading } = useAuth();
+  const { toast } = useToast();
 
-  // This is a mock function. In a real app this would be an API call.
-  const toggleFollow = (userId: string) => {
-    setUsers(prevUsers =>
-      prevUsers.map(user =>
-        user.id === userId ? { ...user, isFollowedByCurrentUser: !user.isFollowedByCurrentUser } : user
-      )
-    );
-    // Also update the currentUser mock following list for consistency within the session
-    const me = currentUser;
-    if (me.following.includes(userId)) {
-        me.following = me.following.filter(id => id !== userId);
-    } else {
-        me.following.push(userId);
+  const [isLoading, setIsLoading] = useState(false);
+  const [results, setResults] = useState<{
+    users: User[];
+    listings: any[];
+    opportunities: any[];
+    events: any[];
+    offers: any[];
+  }>({ users: [], listings: [], opportunities: [], events: [], offers: [] });
+
+  useEffect(() => {
+    const performSearch = async () => {
+        if (!query) return;
+        setIsLoading(true);
+
+        try {
+            // User search is indexed and efficient
+            const userResults = await searchUsers(query);
+
+            // The following searches are NOT scalable and are for demonstration only.
+            // They fetch all documents and filter on the client.
+            const lowerCaseQuery = query.toLowerCase();
+
+            const listingsRef = collection(db, 'listings');
+            const jobsRef = collection(db, 'jobs');
+            const eventsRef = collection(db, 'events');
+            const offersRef = collection(db, 'offers');
+
+            const [listingsSnap, jobsSnap, eventsSnap, offersSnap] = await Promise.all([
+                getDocs(listingsRef),
+                getDocs(jobsRef),
+                getDocs(eventsRef),
+                getDocs(offersRef),
+            ]);
+
+            const listingsResults = listingsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })).filter(item => item.title.toLowerCase().includes(lowerCaseQuery));
+            const jobsResults = jobsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })).filter(item => item.title.toLowerCase().includes(lowerCaseQuery) || item.company.toLowerCase().includes(lowerCaseQuery));
+            const eventsResults = eventsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })).filter(item => item.title.toLowerCase().includes(lowerCaseQuery));
+            const offersResults = offersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })).filter(item => item.title.toLowerCase().includes(lowerCaseQuery));
+            
+            setResults({
+                users: userResults.filter(u => u.id !== user?.id), // Exclude self from results
+                listings: listingsResults,
+                opportunities: jobsResults,
+                events: eventsResults,
+                offers: offersResults
+            });
+
+        } catch (err) {
+            console.error("Search failed:", err);
+            toast({ title: "Search failed", description: "Could not perform search.", variant: "destructive" });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+    performSearch();
+  }, [query, user, toast]);
+
+  const handleToggleFollow = async (targetUserId: string, isCurrentlyFollowing: boolean) => {
+    if (!user) return;
+    try {
+      if (isCurrentlyFollowing) {
+        await unfollowUser(user.uid, targetUserId);
+        toast({ title: "Unfollowed" });
+      } else {
+        await followUser(user.uid, targetUserId);
+        toast({ title: "Followed" });
+      }
+      // Optimistically update the UI
+      setResults(prev => ({
+          ...prev,
+          users: prev.users.map(u => u.id === targetUserId ? { ...u, isFollowedByCurrentUser: !isCurrentlyFollowing } : u)
+      }));
+    } catch (error) {
+      toast({ title: "Something went wrong", variant: "destructive" });
     }
   };
-
-  const allContent = useMemo(() => {
-    const listings: ItemWithAuthor<Listing>[] = [];
-    const opportunities: ItemWithAuthor<Job>[] = [];
-    const events: ItemWithAuthor<Event>[] = [];
-    const offers: ItemWithAuthor<Offer>[] = [];
-
-    initialUsers.forEach(user => {
-      const author = { 
-        id: user.id, 
-        name: user.name, 
-        handle: user.handle, 
-        avatarUrl: user.avatarUrl,
-        avatarFallback: user.avatarFallback
-      };
-      user.listings.forEach(l => listings.push({ ...l, author }));
-      user.jobs.forEach(j => opportunities.push({ ...j, author }));
-      user.events.forEach(e => events.push({ ...e, author }));
-      user.offers.forEach(o => offers.push({ ...o, author }));
-    });
-    return { listings, opportunities, events, offers };
-  }, []);
-
-  const filteredContent = useMemo(() => {
-    if (!query) {
-      return {
-        users: [],
-        listings: [],
-        opportunities: [],
-        events: [],
-        offers: [],
-      };
-    }
-    const lowerCaseQuery = query.toLowerCase();
-
-    const filteredUsers = users.filter(user => 
-      user.name.toLowerCase().includes(lowerCaseQuery) ||
-      user.handle.toLowerCase().includes(lowerCaseQuery)
-    );
-
-    const filteredListings = allContent.listings.filter(item => 
-      item.title.toLowerCase().includes(lowerCaseQuery) ||
-      item.description.toLowerCase().includes(lowerCaseQuery) ||
-      item.category.toLowerCase().includes(lowerCaseQuery)
-    );
-
-    const filteredOpportunities = allContent.opportunities.filter(item => 
-      item.title.toLowerCase().includes(lowerCaseQuery) ||
-      item.company.toLowerCase().includes(lowerCaseQuery) ||
-      item.location.toLowerCase().includes(lowerCaseQuery)
-    );
-
-    const filteredEvents = allContent.events.filter(item => 
-      item.title.toLowerCase().includes(lowerCaseQuery) ||
-      item.location.toLowerCase().includes(lowerCaseQuery)
-    );
-
-    const filteredOffers = allContent.offers.filter(item => 
-      item.title.toLowerCase().includes(lowerCaseQuery) ||
-      item.description.toLowerCase().includes(lowerCaseQuery) ||
-      item.category.toLowerCase().includes(lowerCaseQuery)
-    );
-    
-    return { users: filteredUsers, listings: filteredListings, opportunities: filteredOpportunities, events: filteredEvents, offers: filteredOffers };
-
-  }, [query, users, allContent]);
 
 
   if (!query) {
@@ -150,6 +147,21 @@ export default function SearchPage() {
     )
   }
 
+  if (isLoading || authLoading) {
+    return (
+        <div className="space-y-6">
+            <Skeleton className="h-9 w-64" />
+            <Skeleton className="h-4 w-80" />
+            <div className="flex gap-2">
+                <Skeleton className="h-10 w-24" />
+                <Skeleton className="h-10 w-24" />
+                <Skeleton className="h-10 w-24" />
+            </div>
+            <Card><CardContent className="p-4"><Skeleton className="h-10 w-full" /></CardContent></Card>
+        </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -162,36 +174,38 @@ export default function SearchPage() {
 
       <Tabs defaultValue="users" className="w-full">
         <TabsList className="grid w-full grid-cols-2 sm:grid-cols-5">
-            <TabsTrigger value="users">Users ({filteredContent.users.length})</TabsTrigger>
-            <TabsTrigger value="listings">Listings ({filteredContent.listings.length})</TabsTrigger>
-            <TabsTrigger value="opportunities">Opportunities ({filteredContent.opportunities.length})</TabsTrigger>
-            <TabsTrigger value="events">Events ({filteredContent.events.length})</TabsTrigger>
-            <TabsTrigger value="offers">Offers ({filteredContent.offers.length})</TabsTrigger>
+            <TabsTrigger value="users">Users ({results.users.length})</TabsTrigger>
+            <TabsTrigger value="listings">Listings ({results.listings.length})</TabsTrigger>
+            <TabsTrigger value="opportunities">Opportunities ({results.opportunities.length})</TabsTrigger>
+            <TabsTrigger value="events">Events ({results.events.length})</TabsTrigger>
+            <TabsTrigger value="offers">Offers ({results.offers.length})</TabsTrigger>
         </TabsList>
         
         <TabsContent value="users">
-            {filteredContent.users.length > 0 ? (
+            {results.users.length > 0 ? (
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    {filteredContent.users.map(user => (
-                        <Card key={user.id} className="transition-all hover:shadow-md">
+                    {results.users.map(u => {
+                        const isFollowedByCurrentUser = user?.following.includes(u.id) || false;
+                        return (
+                        <Card key={u.id} className="transition-all hover:shadow-md">
                         <CardContent className="p-4 flex items-center justify-between gap-4">
-                            <Link href={`/u/${user.handle}`} className="flex items-center gap-4 hover:underline">
+                            <Link href={`/u/${u.username}`} className="flex items-center gap-4 hover:underline">
                             <Avatar>
-                                <AvatarImage src={user.avatarUrl} data-ai-hint="person portrait" />
-                                <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                                <AvatarImage src={u.avatarUrl} data-ai-hint="person portrait" />
+                                <AvatarFallback>{u.name.charAt(0)}</AvatarFallback>
                             </Avatar>
                             <div>
-                                <p className="font-semibold">{user.name}</p>
-                                <p className="text-sm text-muted-foreground">@{user.handle}</p>
+                                <p className="font-semibold">{u.name}</p>
+                                <p className="text-sm text-muted-foreground">@{u.handle}</p>
                             </div>
                             </Link>
-                            <Button size="sm" variant={user.isFollowedByCurrentUser ? 'secondary' : 'default'} onClick={() => toggleFollow(user.id)}>
-                            {user.isFollowedByCurrentUser ? <UserCheck className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
-                            {user.isFollowedByCurrentUser ? 'Following' : 'Follow'}
+                            <Button size="sm" variant={isFollowedByCurrentUser ? 'secondary' : 'default'} onClick={() => handleToggleFollow(u.id, isFollowedByCurrentUser)}>
+                            {isFollowedByCurrentUser ? <UserCheck className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
+                            {isFollowedByCurrentUser ? 'Following' : 'Follow'}
                             </Button>
                         </CardContent>
                         </Card>
-                    ))}
+                    )})}
                 </div>
             ) : (
                 <Card>
@@ -205,9 +219,9 @@ export default function SearchPage() {
         </TabsContent>
         
         <TabsContent value="listings">
-             {filteredContent.listings.length > 0 ? (
+             {results.listings.length > 0 ? (
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                    {filteredContent.listings.map((item) => (
+                    {results.listings.map((item) => (
                         <Card key={item.id} className="flex flex-col transition-all hover:shadow-md">
                             {item.imageUrl && (
                                 <div className="overflow-hidden rounded-t-lg">
@@ -220,20 +234,11 @@ export default function SearchPage() {
                             </CardHeader>
                             <CardContent className="flex-grow space-y-3">
                                 <Badge variant="secondary">{item.category}</Badge>
-                                 <div className="text-sm text-muted-foreground pt-3 border-t">
-                                     <Link href={`/u/${item.author.handle}`} className="flex items-center gap-2 hover:underline">
-                                        <Avatar className="h-6 w-6">
-                                            <AvatarImage src={item.author.avatarUrl} data-ai-hint="person portrait" />
-                                            <AvatarFallback>{item.author.name.charAt(0)}</AvatarFallback>
-                                        </Avatar>
-                                        <span>{item.author.name}</span>
-                                     </Link>
-                                </div>
                             </CardContent>
                             <CardFooter className="flex justify-between items-center">
                                 <p className="font-bold text-lg">{item.price}</p>
                                 <Button asChild>
-                                    <Link href={`/u/${item.author.handle}#listings`}>View</Link>
+                                    <Link href={`/l/${item.id}`}>View</Link>
                                 </Button>
                             </CardFooter>
                         </Card>
@@ -249,140 +254,6 @@ export default function SearchPage() {
                 </Card>
              )}
         </TabsContent>
-        
-        <TabsContent value="opportunities">
-             {filteredContent.opportunities.length > 0 ? (
-                <div className="grid gap-6 md:grid-cols-2">
-                    {filteredContent.opportunities.map((item) => (
-                        <Card key={item.id} className="flex flex-col transition-all hover:shadow-md">
-                            <CardHeader>
-                                <CardTitle>{item.title}</CardTitle>
-                                <CardDescription>{item.company}</CardDescription>
-                            </CardHeader>
-                            <CardContent className="space-y-2 flex-grow">
-                                <div className="flex items-center text-sm text-muted-foreground">
-                                    <MapPin className="mr-2 h-4 w-4" /> {item.location}
-                                </div>
-                                <div className="flex items-center text-sm text-muted-foreground">
-                                    <Briefcase className="mr-2 h-4 w-4" /> {item.type}
-                                </div>
-                                 <div className="text-sm text-muted-foreground pt-3 border-t">
-                                     <Link href={`/u/${item.author.handle}`} className="flex items-center gap-2 hover:underline">
-                                        <Avatar className="h-6 w-6">
-                                            <AvatarImage src={item.author.avatarUrl} data-ai-hint="person portrait" />
-                                            <AvatarFallback>{item.author.name.charAt(0)}</AvatarFallback>
-                                        </Avatar>
-                                        <span>Posted by {item.author.name}</span>
-                                     </Link>
-                                </div>
-                            </CardContent>
-                            <CardFooter>
-                               <Button asChild className="w-full">
-                                    <Link href={`/u/${item.author.handle}#jobs`}>View Details</Link>
-                                </Button>
-                            </CardFooter>
-                        </Card>
-                    ))}
-                </div>
-             ) : (
-                <Card>
-                    <CardContent className="p-10 text-center text-muted-foreground">
-                        <Briefcase className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                        <h3 className="text-lg font-semibold text-foreground">No Opportunities Found</h3>
-                        <p>We couldn't find any opportunities matching "{query}". Try a different search.</p>
-                    </CardContent>
-                </Card>
-             )}
-        </TabsContent>
-
-        <TabsContent value="events">
-             {filteredContent.events.length > 0 ? (
-                <div className="grid gap-6 md:grid-cols-2">
-                    {filteredContent.events.map((item) => (
-                        <Card key={item.id} className="flex flex-col transition-all hover:shadow-md">
-                            <CardHeader>
-                                <CardTitle>{item.title}</CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-2 flex-grow">
-                                <div className="flex items-center text-sm text-muted-foreground">
-                                <Calendar className="mr-2 h-4 w-4" /> <ClientFormattedDate dateString={item.date} formatStr="PPP p" />
-                                </div>
-                                <div className="flex items-center text-sm text-muted-foreground">
-                                <MapPin className="mr-2 h-4 w-4" /> {item.location}
-                                </div>
-                                 <div className="text-sm text-muted-foreground pt-3 border-t">
-                                     <Link href={`/u/${item.author.handle}`} className="flex items-center gap-2 hover:underline">
-                                        <Avatar className="h-6 w-6">
-                                            <AvatarImage src={item.author.avatarUrl} data-ai-hint="person portrait" />
-                                            <AvatarFallback>{item.author.name.charAt(0)}</AvatarFallback>
-                                        </Avatar>
-                                        <span>Hosted by {item.author.name}</span>
-                                     </Link>
-                                </div>
-                            </CardContent>
-                            <CardFooter>
-                                <Button asChild className="w-full">
-                                    <Link href={`/events/${item.id}`}>Learn More</Link>
-                                </Button>
-                            </CardFooter>
-                        </Card>
-                    ))}
-                </div>
-             ) : (
-                <Card>
-                    <CardContent className="p-10 text-center text-muted-foreground">
-                        <Calendar className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                        <h3 className="text-lg font-semibold text-foreground">No Events Found</h3>
-                        <p>We couldn't find any events matching "{query}". Try a different search.</p>
-                    </CardContent>
-                </Card>
-             )}
-        </TabsContent>
-
-        <TabsContent value="offers">
-             {filteredContent.offers.length > 0 ? (
-                <div className="grid gap-6 md:grid-cols-2">
-                    {filteredContent.offers.map((item) => (
-                         <Card key={item.id} className="flex flex-col transition-all hover:shadow-md">
-                            <CardHeader>
-                                <CardTitle>{item.title}</CardTitle>
-                                <CardDescription>{item.description}</CardDescription>
-                            </CardHeader>
-                            <CardContent className="space-y-3 flex-grow">
-                                <Badge variant="secondary"><Tag className="mr-1 h-3 w-3" />{item.category}</Badge>
-                                <div className="flex items-center pt-2 text-sm text-muted-foreground">
-                                    <Calendar className="mr-2 h-4 w-4" /> 
-                                    <span>Releases: <ClientFormattedDate dateString={item.releaseDate} formatStr="PPP" /></span>
-                                </div>
-                                 <div className="text-sm text-muted-foreground pt-3 border-t">
-                                     <Link href={`/u/${item.author.handle}`} className="flex items-center gap-2 hover:underline">
-                                        <Avatar className="h-6 w-6">
-                                            <AvatarImage src={item.author.avatarUrl} data-ai-hint="person portrait" />
-                                            <AvatarFallback>{item.author.name.charAt(0)}</AvatarFallback>
-                                        </Avatar>
-                                        <span>Offered by {item.author.name}</span>
-                                     </Link>
-                                </div>
-                            </CardContent>
-                            <CardFooter>
-                                <Button asChild className="w-full">
-                                    <Link href={`/u/${item.author.handle}#offers`}>Claim Offer</Link>
-                                </Button>
-                            </CardFooter>
-                        </Card>
-                    ))}
-                </div>
-             ) : (
-                 <Card>
-                    <CardContent className="p-10 text-center text-muted-foreground">
-                        <DollarSign className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                        <h3 className="text-lg font-semibold text-foreground">No Offers Found</h3>
-                        <p>We couldn't find any offers matching "{query}". Try a different search.</p>
-                    </CardContent>
-                </Card>
-             )}
-        </TabsContent>
-
       </Tabs>
     </div>
   );

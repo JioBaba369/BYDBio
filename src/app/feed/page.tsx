@@ -8,37 +8,43 @@ import { Textarea } from "@/components/ui/textarea"
 import { Heart, Image as ImageIcon, MessageCircle, MoreHorizontal, Share2, Send, X } from "lucide-react"
 import Image from "next/image"
 import HashtagSuggester from "@/components/ai/hashtag-suggester"
-import { useState, useMemo, useRef } from "react";
-import { currentUser } from "@/lib/mock-data";
-import { allUsers as initialUsers } from "@/lib/users";
-import { useToast } from "@/hooks/use-toast";
-import { cn } from "@/lib/utils";
-import Link from "next/link";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import ImageCropper from "@/components/image-cropper";
+import { useState, useMemo, useRef, useEffect } from "react";
+import { useAuth } from "@/components/auth-provider"
+import { useToast } from "@/hooks/use-toast"
+import { cn } from "@/lib/utils"
+import Link from "next/link"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import ImageCropper from "@/components/image-cropper"
+import { getFeedPosts, createPost, toggleLikePost, Post } from "@/lib/posts"
+import { type User, getUsersByIds } from "@/lib/users"
+import { formatDistanceToNow } from "date-fns"
+import { Skeleton } from "@/components/ui/skeleton"
+import { uploadImage } from "@/lib/storage"
 
-// Combine user data with their posts for the feed, adding a liked state
-const initialFeedItems = initialUsers.flatMap(user =>
-  user.posts.map(post => ({
-    ...post,
-    isLiked: false, // Initial state: no posts are liked by default
-    author: {
-      id: user.id,
-      name: user.name,
-      avatarUrl: user.avatarUrl,
-      handle: user.handle
-    }
-  }))
-).sort((a, b) => {
-    // A simple sort to make the feed less static. "2h ago" < "1d ago".
-    // This is a mock, a real app would sort by a real timestamp.
-    if (a.timestamp.includes('h ago') && b.timestamp.includes('d ago')) return -1;
-    if (a.timestamp.includes('d ago') && b.timestamp.includes('h ago')) return 1;
-    return 0;
-});
+type FeedItem = Post & { author: User; isLiked: boolean; };
 
+const PostCardSkeleton = () => (
+    <Card>
+        <CardHeader className="p-4">
+            <div className="flex items-center gap-3">
+                <Skeleton className="h-10 w-10 rounded-full" />
+                <div className="space-y-1">
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-3 w-16" />
+                </div>
+            </div>
+        </CardHeader>
+        <CardContent className="p-4 pt-0 space-y-2">
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-3/4" />
+        </CardContent>
+        <CardFooter className="p-4 border-t">
+            <Skeleton className="h-8 w-full" />
+        </CardFooter>
+    </Card>
+);
 
-const PostCard = ({ item, handleLike }: { item: typeof initialFeedItems[0], handleLike: (postId: string) => void }) => (
+const PostCard = ({ item, handleLike }: { item: FeedItem, handleLike: (postId: string) => void }) => (
     <Card key={item.id}>
         <CardHeader className="p-4">
         <div className="flex items-center justify-between">
@@ -49,7 +55,7 @@ const PostCard = ({ item, handleLike }: { item: typeof initialFeedItems[0], hand
             </Avatar>
             <div>
                 <p className="font-semibold">{item.author.name}</p>
-                <p className="text-sm text-muted-foreground">@{item.author.handle} · {item.timestamp}</p>
+                <p className="text-sm text-muted-foreground">@{item.author.handle} · {formatDistanceToNow(item.createdAt.toDate(), { addSuffix: true })}</p>
             </div>
             </Link>
             <Button variant="ghost" size="icon">
@@ -82,16 +88,41 @@ const PostCard = ({ item, handleLike }: { item: typeof initialFeedItems[0], hand
     </Card>
 );
 
-
 export default function FeedPage() {
+  const { user, loading: authLoading } = useAuth();
   const [postContent, setPostContent] = useState('');
-  const [feedItems, setFeedItems] = useState(initialFeedItems);
+  const [feedItems, setFeedItems] = useState<FeedItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
   const [imageToCrop, setImageToCrop] = useState<string | null>(null);
   const [croppedImageUrl, setCroppedImageUrl] = useState<string | null>(null);
   const [isCropperOpen, setIsCropperOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const fetchFeed = async () => {
+    if (!user) return;
+    setIsLoading(true);
+    try {
+        const postsWithAuthors = await getFeedPosts(user.following);
+        setFeedItems(postsWithAuthors.map(post => ({
+            ...post,
+            isLiked: post.likedBy.includes(user.uid),
+        })));
+    } catch (error) {
+        console.error("Error fetching feed:", error);
+        toast({ title: "Failed to load feed", variant: "destructive" });
+    } finally {
+        setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (user) {
+        fetchFeed();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -115,65 +146,67 @@ export default function FeedPage() {
     setCroppedImageUrl(null);
   }
 
-  const handlePost = () => {
+  const handlePost = async () => {
+    if (!user) return;
     if (!postContent.trim() && !croppedImageUrl) {
-      toast({
-        title: "Cannot post empty update",
-        variant: "destructive",
-      });
+      toast({ title: "Cannot post empty update", variant: "destructive" });
       return;
     }
 
-    const newPost = {
-      id: `post-new-${Date.now()}`,
-      content: postContent,
-      imageUrl: croppedImageUrl,
-      timestamp: "Just now",
-      likes: 0,
-      isLiked: false,
-      comments: 0,
-      author: {
-        id: currentUser.id,
-        name: currentUser.name,
-        avatarUrl: currentUser.avatarUrl,
-        handle: currentUser.handle
-      }
-    };
-
-    setFeedItems(prevItems => [newPost, ...prevItems]);
-    setPostContent('');
-    setCroppedImageUrl(null);
-
-    toast({
-      title: "Update Posted!",
-      description: "Your new status has been added to the feed.",
-    });
-  };
-
-  const handleLike = (postId: string) => {
-    setFeedItems(prevItems =>
-      prevItems.map(item => {
-        if (item.id === postId) {
-          const isLiked = !item.isLiked;
-          const likes = isLiked ? item.likes + 1 : item.likes - 1;
-          return { ...item, isLiked, likes };
+    try {
+        let imageUrlToPost: string | null = null;
+        if (croppedImageUrl) {
+            imageUrlToPost = await uploadImage(croppedImageUrl, `posts/${user.uid}/${Date.now()}`);
         }
-        return item;
-      })
-    );
+        await createPost(user.uid, { content: postContent, imageUrl: imageUrlToPost });
+        setPostContent('');
+        setCroppedImageUrl(null);
+        toast({ title: "Update Posted!" });
+        await fetchFeed(); // Refresh feed after posting
+    } catch(error) {
+        console.error("Error posting update:", error);
+        toast({ title: "Failed to post update", variant: "destructive" });
+    }
+  };
+
+  const handleLike = async (postId: string) => {
+    if (!user) return;
+    try {
+        // Optimistic update
+        setFeedItems(prevItems =>
+            prevItems.map(item => {
+                if (item.id === postId) {
+                const isLiked = !item.isLiked;
+                const likes = isLiked ? item.likes + 1 : item.likes - 1;
+                return { ...item, isLiked, likes };
+                }
+                return item;
+            })
+        );
+        await toggleLikePost(postId, user.uid);
+    } catch (error) {
+        console.error("Error liking post:", error);
+        toast({ title: "Something went wrong", variant: "destructive" });
+        // Revert optimistic update on error
+        fetchFeed();
+    }
   };
   
-  const followingFeedItems = useMemo(() => {
-    const followingIds = new Set(currentUser.following);
-    followingIds.add(currentUser.id); // Also show own posts
-    return feedItems.filter(item => followingIds.has(item.author.id));
-  }, [feedItems]);
-  
-  const forYouFeedItems = useMemo(() => {
-    const followingIds = new Set(currentUser.following);
-    // "For You" feed should not include the current user's posts or posts from users they follow.
-    return feedItems.filter(item => item.author.id !== currentUser.id && !followingIds.has(item.author.id));
-  }, [feedItems]);
+  // "For You" feed is not implemented with a real algorithm.
+  // We'll just show an empty state for now.
+  const forYouFeedItems: FeedItem[] = [];
+
+  if (authLoading) {
+      return (
+         <div className="max-w-2xl mx-auto space-y-6">
+            <Skeleton className="h-9 w-48" />
+            <Skeleton className="h-40 rounded-lg" />
+            <PostCardSkeleton />
+        </div>
+      );
+  }
+
+  if (!user) return null;
 
   return (
     <>
@@ -192,8 +225,8 @@ export default function FeedPage() {
           <CardContent className="p-4">
             <div className="flex gap-4">
               <Avatar>
-                <AvatarImage src={currentUser.avatarUrl} data-ai-hint="woman smiling"/>
-                <AvatarFallback>{currentUser.avatarFallback}</AvatarFallback>
+                <AvatarImage src={user.avatarUrl} data-ai-hint="woman smiling"/>
+                <AvatarFallback>{user.avatarFallback}</AvatarFallback>
               </Avatar>
               <div className="w-full space-y-2">
                 <Textarea
@@ -240,8 +273,10 @@ export default function FeedPage() {
               <TabsTrigger value="for-you">For You</TabsTrigger>
             </TabsList>
             <TabsContent value="following" className="space-y-6 mt-6">
-                {followingFeedItems.length > 0 ? (
-                    followingFeedItems.map(item => (
+                {isLoading ? (
+                    <PostCardSkeleton />
+                ) : feedItems.length > 0 ? (
+                    feedItems.map(item => (
                         <PostCard key={item.id} item={item} handleLike={handleLike} />
                     ))
                 ) : (

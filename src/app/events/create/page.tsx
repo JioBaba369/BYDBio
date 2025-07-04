@@ -1,27 +1,50 @@
+
 'use client';
 
 import { EventForm, EventFormValues } from "@/components/forms/event-form";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useAuth } from "@/components/auth-provider";
+import { createEvent } from "@/lib/events";
+import { uploadImage } from "@/lib/storage";
 
 export default function CreateEventPage() {
     const router = useRouter();
+    const { user } = useAuth();
     const { toast } = useToast();
     const [isSaving, setIsSaving] = useState(false);
     
-    // This is a mock function. In a real app, this would be an API call.
-    const onSubmit = (data: EventFormValues) => {
+    const onSubmit = async (data: EventFormValues) => {
+        if (!user) {
+            toast({ title: "Authentication Error", description: "You must be logged in to create an event.", variant: "destructive" });
+            return;
+        }
         setIsSaving(true);
-        console.log("Creating new event:", data);
-        setTimeout(() => {
+        try {
+            const dataToSave = { ...data, imageUrl: data.imageUrl || null };
+
+            if (data.imageUrl && data.imageUrl.startsWith('data:image')) {
+                const newImageUrl = await uploadImage(data.imageUrl, `events/${user.uid}/${Date.now()}`);
+                dataToSave.imageUrl = newImageUrl;
+            }
+
+            await createEvent(user.uid, dataToSave);
             toast({
                 title: "Event Created!",
                 description: "Your new event has been created successfully.",
             });
-            setIsSaving(false);
             router.push('/events');
-        }, 1000);
+        } catch (error) {
+            console.error("Error creating event:", error);
+            toast({
+                title: "Error",
+                description: "Failed to create event. Please try again.",
+                variant: "destructive",
+            });
+        } finally {
+            setIsSaving(false);
+        }
     }
 
     return (
