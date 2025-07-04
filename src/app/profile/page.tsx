@@ -84,7 +84,7 @@ const SortableLinkItem = ({ field, index, remove }: { field: { id: string }, ind
       <div {...listeners} className="mt-8 shrink-0 cursor-grab p-2 -ml-2">
         <GripVertical className="h-5 w-5 text-muted-foreground" />
       </div>
-      <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
+      <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
         <FormField
           control={control}
           name={`links.${index}.icon`}
@@ -431,7 +431,7 @@ END:VCARD`;
         <p className="text-muted-foreground">Manage your public presence and connections.</p>
       </div>
       <Tabs defaultValue="profile" className="w-full">
-        <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-2">
           <TabsTrigger value="profile"><User className="mr-2 h-4 w-4" />Profile & Card</TabsTrigger>
           <TabsTrigger value="links"><LinkIcon className="mr-2 h-4 w-4"/>Links</TabsTrigger>
         </TabsList>
