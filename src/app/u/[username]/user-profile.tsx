@@ -188,16 +188,16 @@ END:VCARD`;
                     </DialogContent>
                 </Dialog>
             </div>
-            <div className="mt-6 flex w-full items-center gap-4">
+            <div className="mt-6 flex w-full flex-col sm:flex-row items-center gap-4">
               <Button 
-                className="flex-1 font-bold" 
+                className="flex-1 font-bold w-full sm:w-auto" 
                 onClick={handleFollowToggle}
                 disabled={isFollowLoading || currentUser?.uid === userProfileData.uid}
               >
                 {isFollowing ? <UserCheck className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
                 {isFollowing ? 'Following' : 'Follow'}
               </Button>
-              <div className="text-center p-2 rounded-md bg-muted/50 w-28">
+              <div className="text-center p-2 rounded-md bg-muted/50 w-full sm:w-28">
                 <p className="font-bold text-lg text-foreground">{followerCount}</p>
                 <p className="text-xs text-muted-foreground tracking-wide">Followers</p>
               </div>

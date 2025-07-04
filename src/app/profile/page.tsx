@@ -443,7 +443,7 @@ END:VCARD`;
                   <CardDescription>This information appears on your public pages. Changes are shown in the live preview on the right.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                   <div className="grid md:grid-cols-3 gap-8">
+                   <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                        <div className="md:col-span-2 space-y-6">
                           <Form {...publicProfileForm}>
                             <form>
@@ -607,7 +607,7 @@ END:VCARD`;
                        </div>
                        <div className="md:col-span-1 space-y-4">
                            <h3 className="text-lg font-medium text-center">Live Preview</h3>
-                           <div className="sticky top-20">
+                           <div className="md:sticky top-20">
                              <div className="w-full max-w-[280px] bg-muted/30 p-6 rounded-xl shadow-lg border mx-auto">
                                 <div className="text-center">
                                 <Avatar className="h-20 w-20 mx-auto mb-2">
@@ -694,7 +694,7 @@ END:VCARD`;
 
                 <div className="md:col-span-1">
                   <h3 className="text-lg font-medium text-center mb-4">Live Preview</h3>
-                  <div className="sticky top-20">
+                  <div className="md:sticky top-20">
                     <div className="w-full max-w-[300px] bg-background p-4 rounded-2xl shadow-lg border mx-auto">
                       <div className="bg-muted/40 p-4 rounded-lg h-[500px] overflow-y-auto">
                         <div className="flex flex-col items-center text-center">

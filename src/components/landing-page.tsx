@@ -22,7 +22,7 @@ export function LandingPage() {
         {/* Hero Section */}
         <section className="text-center py-20 sm:py-32">
           <div className="container mx-auto px-4 sm:px-6">
-            <h1 className="text-4xl sm:text-6xl font-headline font-bold tracking-tighter">The One Link for Everything You Are</h1>
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-headline font-bold tracking-tighter">The One Link for Everything You Are</h1>
             <p className="mt-4 max-w-2xl mx-auto text-lg text-muted-foreground">
               Create a beautiful profile that showcases your work, content, and links—all in one place. Your professional hub for the creator economy.
             </p>
@@ -57,7 +57,7 @@ export function LandingPage() {
                 Everything you need to build your brand, share your content, and connect with your audience.
               </p>
             </div>
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
               <Card className="text-center p-6">
                 <UserRound className="h-10 w-10 mx-auto text-primary mb-4" />
                 <h3 className="text-xl font-semibold font-headline">Unified Profile</h3>

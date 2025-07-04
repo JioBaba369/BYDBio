@@ -116,7 +116,7 @@ export function OpportunityForm({ defaultValues, onSubmit, isSaving }: Opportuni
       />
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-            <div className="grid md:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <div className="md:col-span-2 space-y-6">
                     <Card>
                         <CardContent className="p-6 space-y-6">

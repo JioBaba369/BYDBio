@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -68,7 +69,7 @@ export default function OfferDetailClient({ offer, author }: OfferDetailClientPr
                         Back to {author.name}'s Profile
                     </Link>
                 </Button>
-                <div className="grid md:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                     <div className="md:col-span-2">
                         <Card>
                             {offer.imageUrl && (

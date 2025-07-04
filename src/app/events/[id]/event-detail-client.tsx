@@ -147,7 +147,7 @@ export default function EventDetailClient({ event, author }: EventDetailClientPr
                         Back to {author.name}'s Profile
                     </Link>
                 </Button>
-                <div className="grid md:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                     <div className="md:col-span-2">
                         <Card>
                             {event.imageUrl && (
@@ -181,7 +181,7 @@ export default function EventDetailClient({ event, author }: EventDetailClientPr
                                     </div>
                                 </div>
 
-                                <div className="grid md:grid-cols-3 gap-6 text-sm">
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-sm">
                                     <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
                                         <Calendar className="h-6 w-6 text-primary flex-shrink-0" />
                                         <div>
