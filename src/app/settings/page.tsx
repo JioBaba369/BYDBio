@@ -18,7 +18,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ChangePasswordDialog } from "@/components/change-password-dialog";
 import { useAuth } from "@/components/auth-provider";
 import { Skeleton } from "@/components/ui/skeleton";
-import { updateUser } from "@/lib/users";
+import { deleteUserAccount, updateUser } from "@/lib/users";
 
 const SettingsPageSkeleton = () => (
     <div className="space-y-6">
@@ -52,7 +52,7 @@ const SettingsPageSkeleton = () => (
 
 
 export default function SettingsPage() {
-    const { user, loading } = useAuth();
+    const { user, firebaseUser, loading } = useAuth();
     const { setTheme, theme } = useTheme();
     const { toast } = useToast();
     
@@ -84,16 +84,38 @@ export default function SettingsPage() {
     };
 
 
-    const handleDeleteAccount = () => {
-        // This is a mock action. In a real app, this would make an API call.
-        console.log("Account deletion initiated...");
-        toast({
-            title: "Account Deleted",
-            description: "Your account and all associated data have been permanently deleted.",
-            variant: "destructive",
-        });
-        setIsDeleteDialogOpen(false);
-        // In a real app, you would likely redirect the user to a logged-out state.
+    const handleDeleteAccount = async () => {
+       if (!firebaseUser) {
+            toast({ title: "Error", description: "You must be logged in to delete your account.", variant: "destructive" });
+            return;
+        }
+
+        try {
+            await deleteUserAccount(firebaseUser);
+            toast({
+                title: "Account Deleted",
+                description: "Your account and all associated data have been permanently deleted.",
+            });
+            // The AuthProvider will automatically handle redirecting the user on logout.
+            setIsDeleteDialogOpen(false);
+        } catch(error: any) {
+            console.error("Account deletion error:", error);
+            // Firebase often requires recent login for this action.
+            if (error.code === 'auth/requires-recent-login') {
+                 toast({
+                    title: "Re-authentication Required",
+                    description: "For your security, please sign out and sign back in before deleting your account.",
+                    variant: "destructive",
+                    duration: 10000,
+                });
+            } else {
+                 toast({
+                    title: "Deletion Failed",
+                    description: error.message || "An unexpected error occurred while deleting your account.",
+                    variant: "destructive",
+                });
+            }
+        }
     };
 
     const handleChangePassword = () => {
@@ -116,6 +138,8 @@ export default function SettingsPage() {
                 onOpenChange={setIsDeleteDialogOpen}
                 onConfirm={handleDeleteAccount}
                 itemName="account"
+                confirmationText={user.username}
+                confirmationLabel={`This action is permanent. To confirm, please type your username "${user.username}" below.`}
             />
             <ChangePasswordDialog
                 open={isChangePasswordDialogOpen}

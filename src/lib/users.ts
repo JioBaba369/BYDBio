@@ -1,7 +1,7 @@
 
 import { collection, query, where, getDocs, limit, doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import type { User as FirebaseUser } from "firebase/auth";
+import { deleteUser, type User as FirebaseUser } from "firebase/auth";
 import type { Timestamp } from "firebase/firestore";
 
 export type BusinessCard = {
@@ -225,3 +225,21 @@ export async function searchUsers(searchText: string): Promise<User[]> {
     
     return Array.from(usersMap.values());
 }
+
+
+/**
+ * Deletes a user's account from Firebase Authentication and their profile from Firestore.
+ * This is a destructive action. For a production app, related content should be cleaned up
+ * via a Cloud Function to ensure all associated data is removed.
+ * @param fbUser The Firebase User object to delete.
+ */
+export const deleteUserAccount = async (fbUser: FirebaseUser) => {
+    // 1. Delete user's profile document from Firestore
+    const userDocRef = doc(db, 'users', fbUser.uid);
+    await deleteDoc(userDocRef);
+
+    // 2. Delete user from Firebase Auth
+    // This is the last step. It requires recent sign-in, which will be handled by Firebase Auth SDK.
+    // The SDK will throw an error if re-authentication is needed, which should be caught by the calling component.
+    await deleteUser(fbUser);
+};
