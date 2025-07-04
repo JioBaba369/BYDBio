@@ -31,12 +31,18 @@
       ]
     },
     {
-      "collectionGroup": "posts",
+      "collectionGroup": "events",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "authorId", "order": "ASCENDING" },
-        { "fieldPath": "createdAt", "order": "DESCENDING" },
-        { "fieldPath": "__name__", "order": "DESCENDING" }
+        { "fieldPath": "rsvps", "arrayConfig": "CONTAINS" }
+      ]
+    },
+    {
+      "collectionGroup": "events",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "date", "order": "DESCENDING" }
       ]
     },
     {
@@ -48,13 +54,6 @@
     },
     {
       "collectionGroup": "jobs",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "title", "order": "ASCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "events",
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "title", "order": "ASCENDING" }
