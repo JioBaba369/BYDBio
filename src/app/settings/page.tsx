@@ -154,15 +154,15 @@ export default function SettingsPage() {
                             <CardContent className="space-y-4">
                                 <div className="space-y-2">
                                     <Label htmlFor="name">Name</Label>
-                                    <Input id="name" defaultValue={user.name} disabled />
+                                    <Input id="name" value={user.name} disabled readOnly />
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="email">Email</Label>
-                                    <Input id="email" type="email" defaultValue={user.email || ''} disabled />
+                                    <Input id="email" type="email" value={user.email || ''} disabled readOnly />
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="username">Username</Label>
-                                    <Input id="username" defaultValue={user.username} disabled />
+                                    <Input id="username" value={user.username} disabled readOnly />
                                 </div>
                             </CardContent>
                             <CardFooter>
