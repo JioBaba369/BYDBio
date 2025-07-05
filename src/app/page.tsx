@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
-import { Briefcase, Calendar, DollarSign, PenSquare, PlusCircle, Tags, Users, UserCheck, Package, Sparkles } from "lucide-react"
+import { Briefcase, Calendar, DollarSign, PenSquare, PlusCircle, Tags, Users, UserCheck, Package, Sparkles, Megaphone } from "lucide-react"
 import Link from "next/link"
 import {
   DropdownMenu,
@@ -44,6 +44,7 @@ interface ContentCounts {
   offers: number;
   listings: number;
   posts: number;
+  promoPages: number;
 }
 
 function Dashboard() {
@@ -61,14 +62,14 @@ function Dashboard() {
 
         // Fetch counts
         try {
-          const collections = ['jobs', 'events', 'offers', 'listings', 'posts'];
+          const collections = ['jobs', 'events', 'offers', 'listings', 'posts', 'promoPages'];
           const countPromises = collections.map(col => {
             const collRef = collection(db, col);
             const q = query(collRef, where("authorId", "==", user.uid));
             return getDocs(q).then(snapshot => snapshot.size);
           });
-          const [jobs, events, offers, listings, posts] = await Promise.all(countPromises);
-          setCounts({ jobs, events, offers, listings, posts });
+          const [jobs, events, offers, listings, posts, promoPages] = await Promise.all(countPromises);
+          setCounts({ jobs, events, offers, listings, posts, promoPages });
         } catch (error) {
           console.error("Error fetching content counts:", error);
           setCounts(null);
@@ -99,7 +100,8 @@ function Dashboard() {
     const total = (counts?.jobs || 0) + 
                   (counts?.events || 0) + 
                   (counts?.offers || 0) + 
-                  (counts?.listings || 0);
+                  (counts?.listings || 0) +
+                  (counts?.promoPages || 0);
     
     let completion = 0;
     if (user.bio) completion += 20;
@@ -125,7 +127,7 @@ function Dashboard() {
         case 'Job': return `/o/${item.id}`;
         case 'Event': return `/events/${item.id}`;
         case 'Offer': return `/offer/${item.id}`;
-        case 'Business': return `/b/${item.id}`;
+        case 'Promo Page': return `/p/${item.id}`;
         case 'Post': return `/feed`;
         default: return '/';
     }
@@ -153,6 +155,12 @@ function Dashboard() {
                 <Link href="/feed" className="cursor-pointer">
                     <PenSquare className="mr-2 h-4 w-4" />
                     <span>New Post</span>
+                </Link>
+                </DropdownMenuItem>
+                 <DropdownMenuItem asChild>
+                <Link href="/promo/create" className="cursor-pointer">
+                    <Megaphone className="mr-2 h-4 w-4" />
+                    <span>New Promo Page</span>
                 </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
@@ -220,7 +228,7 @@ function Dashboard() {
           <CardContent>
             <div className="text-2xl font-bold">{totalContent}</div>
             <p className="text-xs text-muted-foreground">
-              {counts?.jobs || 0} Jobs, {counts?.events || 0} Events
+              {totalContent} active content items
             </p>
           </CardContent>
         </Card>
