@@ -110,9 +110,9 @@ END:VCARD`;
       ...posts.map(item => ({ ...item, type: 'post', date: item.createdAt })),
       ...promoPages.map(item => ({ ...item, type: 'promoPage', date: item.createdAt })),
       ...listings.map(item => ({ ...item, type: 'listing', date: item.createdAt })),
-      ...jobs.map(item => ({ ...item, type: 'job', date: item.createdAt })),
-      ...events.map(item => ({ ...item, type: 'event', date: item.createdAt })),
-      ...offers.map(item => ({ ...item, type: 'offer', date: item.createdAt })),
+      ...jobs.map(item => ({ ...item, type: 'job', date: item.postingDate })),
+      ...events.map(item => ({ ...item, type: 'event', date: item.startDate })),
+      ...offers.map(item => ({ ...item, type: 'offer', date: item.startDate })),
     ];
     combined.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     return combined;
@@ -255,7 +255,7 @@ END:VCARD`;
                                             <Badge variant="destructive" className="mt-2">{item.type}</Badge>
                                         </Link>
                                      </CardContent>
-                                     <CardFooter className="text-xs text-muted-foreground px-4 pb-4 pt-2"><ClientFormattedDate date={item.createdAt} relative /></CardFooter>
+                                     <CardFooter className="text-xs text-muted-foreground px-4 pb-4 pt-2"><ClientFormattedDate date={item.postingDate} relative /></CardFooter>
                                 </Card>
                             );
                             case 'event': return (
@@ -269,7 +269,7 @@ END:VCARD`;
                                             <p className="text-sm text-muted-foreground flex items-center gap-1.5"><MapPin className="h-4 w-4"/> {item.location}</p>
                                         </Link>
                                      </CardContent>
-                                     <CardFooter className="text-xs text-muted-foreground px-4 pb-4 pt-2"><ClientFormattedDate date={item.createdAt} relative /></CardFooter>
+                                     <CardFooter className="text-xs text-muted-foreground px-4 pb-4 pt-2"><ClientFormattedDate date={item.startDate} relative /></CardFooter>
                                 </Card>
                             );
                             case 'offer': return (
@@ -282,7 +282,7 @@ END:VCARD`;
                                             <Badge variant="secondary" className="mt-2">{item.category}</Badge>
                                         </Link>
                                      </CardContent>
-                                     <CardFooter className="text-xs text-muted-foreground px-4 pb-4 pt-2"><ClientFormattedDate date={item.createdAt} relative /></CardFooter>
+                                     <CardFooter className="text-xs text-muted-foreground px-4 pb-4 pt-2"><ClientFormattedDate date={item.startDate} relative /></CardFooter>
                                 </Card>
                             );
                             default: return null;
