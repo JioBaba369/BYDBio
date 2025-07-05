@@ -140,6 +140,11 @@ export default function CalendarPage() {
 
   const handleDelete = async () => {
     if (!selectedItem || !user) return;
+
+    const previousItems = allItems;
+    // Optimistic UI update
+    setAllItems(prev => prev.filter(item => item.id !== selectedItem.id));
+
     try {
         switch (selectedItem.type) {
             case 'Event':
@@ -168,10 +173,11 @@ export default function CalendarPage() {
                 toast({ title: 'Promo Page deleted!' });
                 break;
         }
-        setAllItems(prev => prev.filter(item => item.id !== selectedItem.id));
     } catch (error) {
         console.error(`Error deleting ${selectedItem.type}:`, error);
         toast({ title: 'Error', description: `Failed to delete ${selectedItem.type}.`, variant: 'destructive' });
+        // Rollback on error
+        setAllItems(previousItems);
     } finally {
         setIsDeleteDialogOpen(false);
         setSelectedItem(null);
@@ -543,3 +549,5 @@ export default function CalendarPage() {
     </>
   );
 }
+
+    
