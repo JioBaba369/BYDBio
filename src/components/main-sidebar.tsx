@@ -34,6 +34,7 @@ import {
   UserCircle,
   Link2,
   Share2,
+  CalendarCheck,
 } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -216,6 +217,14 @@ export function MainSidebar() {
               <Link href="/calendar">
                 <Package />
                 <span>My Content</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild tooltip="Holiday Scheduler" isActive={isActive('/holiday-scheduler')}>
+              <Link href="/holiday-scheduler">
+                <CalendarCheck />
+                <span>Holiday Scheduler</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
