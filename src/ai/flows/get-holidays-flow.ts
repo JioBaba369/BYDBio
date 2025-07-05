@@ -50,11 +50,6 @@ const getPublicHolidaysTool = ai.defineTool(
 export async function getHolidays(
   input: GetHolidaysInput
 ): Promise<GetHolidaysOutput> {
-  if (!process.env.GOOGLE_API_KEY && !process.env.GEMINI_API_KEY) {
-    throw new Error(
-      "GOOGLE_API_KEY is not set. Please get a key from Google AI Studio and add it to your project's .env file to use AI features."
-    );
-  }
   return getHolidaysFlow(input);
 }
 

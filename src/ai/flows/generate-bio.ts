@@ -33,11 +33,6 @@ export type GenerateBioOutput = z.infer<typeof GenerateBioOutputSchema>;
 export async function generateBio(
   input: GenerateBioInput
 ): Promise<GenerateBioOutput> {
-  if (!process.env.GOOGLE_API_KEY && !process.env.GEMINI_API_KEY) {
-    throw new Error(
-      "GOOGLE_API_KEY is not set. Please get a key from Google AI Studio and add it to your project's .env file to use AI features."
-    );
-  }
   return generateBioFlow(input);
 }
 
