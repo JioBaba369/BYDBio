@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
-import { Heart, Image as ImageIcon, MessageCircle, MoreHorizontal, Share2, Send, X, Users, Trash2, Compass } from "lucide-react"
+import { Heart, Image as ImageIcon, MessageCircle, MoreHorizontal, Share2, Send, X, Users, Trash2, Compass, Loader2 } from "lucide-react"
 import Image from "next/image"
 import HashtagSuggester from "@/components/ai/hashtag-suggester"
 import { useState, useRef, useEffect, useCallback } from "react";
@@ -76,6 +76,7 @@ export default function FeedPage() {
   
   const [isFollowingLoading, setIsFollowingLoading] = useState(true);
   const [isDiscoveryLoading, setIsDiscoveryLoading] = useState(true);
+  const [isPosting, setIsPosting] = useState(false);
   
   const [imageToCrop, setImageToCrop] = useState<string | null>(null);
   const [croppedImageUrl, setCroppedImageUrl] = useState<string | null>(null);
@@ -150,12 +151,13 @@ export default function FeedPage() {
   }
 
   const handlePost = async () => {
-    if (!user) return;
+    if (!user || isPosting) return;
     if (!postContent.trim() && !croppedImageUrl) {
       toast({ title: "Cannot post empty update", variant: "destructive" });
       return;
     }
 
+    setIsPosting(true);
     try {
         let imageUrlToPost: string | null = null;
         if (croppedImageUrl) {
@@ -169,6 +171,8 @@ export default function FeedPage() {
     } catch(error) {
         console.error("Error posting update:", error);
         toast({ title: "Failed to post update", variant: "destructive" });
+    } finally {
+        setIsPosting(false);
     }
   };
 
@@ -361,8 +365,9 @@ export default function FeedPage() {
               accept="image/png, image/jpeg"
               onChange={onFileChange}
             />
-            <Button onClick={handlePost} disabled={(!postContent.trim() && !croppedImageUrl) || isFollowingLoading}>
-              <Send className="mr-2 h-4 w-4"/>Post Update
+            <Button onClick={handlePost} disabled={(!postContent.trim() && !croppedImageUrl) || isPosting}>
+              {isPosting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4"/>}
+              {isPosting ? "Posting..." : "Post Update"}
             </Button>
           </CardFooter>
         </Card>
