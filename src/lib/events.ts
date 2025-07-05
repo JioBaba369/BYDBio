@@ -51,10 +51,10 @@ export type EventWithAuthor = Event & { author: Pick<User, 'uid' | 'name' | 'use
 
 export type CalendarItem = {
   id: string;
-  type: 'Event' | 'Offer' | 'Job' | 'Listing';
+  type: 'Event' | 'Offer' | 'Job' | 'Listing' | 'Promo Page';
   date: string;
   title: string;
-  description: string;
+  description?: string;
   location?: string;
   category?: string;
   company?: string;
@@ -264,6 +264,7 @@ export const getCalendarItems = async (userId: string): Promise<CalendarItem[]> 
     const offersQuery = query(collection(db, 'offers'), where('authorId', '==', userId));
     const jobsQuery = query(collection(db, 'jobs'), where('authorId', '==', userId));
     const listingsQuery = query(collection(db, 'listings'), where('authorId', '==', userId));
+    const promoPagesQuery = query(collection(db, 'promoPages'), where('authorId', '==', userId));
     
     const [
         eventsSnapshot,
@@ -271,12 +272,14 @@ export const getCalendarItems = async (userId: string): Promise<CalendarItem[]> 
         offersSnapshot,
         jobsSnapshot,
         listingsSnapshot,
+        promoPagesSnapshot,
     ] = await Promise.all([
         getDocs(eventsQuery),
         getDocs(rsvpedEventsQuery),
         getDocs(offersQuery),
         getDocs(jobsQuery),
         getDocs(listingsQuery),
+        getDocs(promoPagesQuery),
     ]);
 
     const itemsMap = new Map<string, any>();
@@ -297,6 +300,7 @@ export const getCalendarItems = async (userId: string): Promise<CalendarItem[]> 
     offersSnapshot.forEach(doc => processDoc(doc, 'offer'));
     jobsSnapshot.forEach(doc => processDoc(doc, 'job'));
     listingsSnapshot.forEach(doc => processDoc(doc, 'listing'));
+    promoPagesSnapshot.forEach(doc => processDoc(doc, 'promoPage'));
 
 
     const allItems = Array.from(itemsMap.values());
@@ -307,7 +311,7 @@ export const getCalendarItems = async (userId: string): Promise<CalendarItem[]> 
             primaryDate = item.startDate;
         } else if (item.type === 'job') {
             primaryDate = item.postingDate;
-        } else if (item.type === 'listing') {
+        } else if (item.type === 'listing' || item.type === 'promoPage') {
             primaryDate = item.createdAt;
         }
 
@@ -372,6 +376,20 @@ export const getCalendarItems = async (userId: string): Promise<CalendarItem[]> 
                     price: item.price,
                     imageUrl: item.imageUrl,
                     editPath: `/listings/${item.id}/edit`,
+                    isExternal: false,
+                    status: item.status,
+                    views: item.views,
+                    clicks: item.clicks,
+                };
+            case 'promoPage':
+                 return {
+                    id: item.id,
+                    type: 'Promo Page' as const,
+                    date: primaryDate,
+                    title: item.name,
+                    description: item.description,
+                    imageUrl: item.imageUrl,
+                    editPath: `/promo/${item.id}/edit`,
                     isExternal: false,
                     status: item.status,
                     views: item.views,

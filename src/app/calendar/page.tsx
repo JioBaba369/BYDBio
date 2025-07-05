@@ -21,6 +21,7 @@ import { Label } from '@/components/ui/label';
 import { deleteListing } from '@/lib/listings';
 import { deleteJob } from '@/lib/jobs';
 import { deleteOffer } from '@/lib/offers';
+import { deletePromoPage } from '@/lib/promo-pages';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ClientFormattedDate } from '@/components/client-formatted-date';
@@ -65,7 +66,7 @@ export default function CalendarPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [locationFilter, setLocationFilter] = useState('');
   const [typeFilters, setTypeFilters] = useState<Set<string>>(
-    new Set(['Event', 'Offer', 'Job', 'Listing'])
+    new Set(['Event', 'Offer', 'Job', 'Listing', 'Promo Page'])
   );
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<CalendarItem | null>(null);
@@ -91,7 +92,7 @@ export default function CalendarPage() {
   }, [user, toast]);
 
 
-  const areFiltersActive = !!searchTerm || !!locationFilter || typeFilters.size < 4;
+  const areFiltersActive = !!searchTerm || !!locationFilter || typeFilters.size < 5;
 
   const filteredItems = useMemo(() => {
     return allItems.filter(item => {
@@ -101,7 +102,7 @@ export default function CalendarPage() {
 
       const searchMatch = searchTerm.length > 0 ?
         item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (item.description && item.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
         (item.company && item.company.toLowerCase().includes(searchTerm.toLowerCase())) ||
         (item.category && item.category.toLowerCase().includes(searchTerm.toLowerCase()))
         : true;
@@ -117,7 +118,7 @@ export default function CalendarPage() {
   const handleClearFilters = () => {
     setSearchTerm('');
     setLocationFilter('');
-    setTypeFilters(new Set(['Event', 'Offer', 'Job', 'Listing']));
+    setTypeFilters(new Set(['Event', 'Offer', 'Job', 'Listing', 'Promo Page']));
   }
   
   const handleTypeFilterChange = (type: string) => {
@@ -162,6 +163,10 @@ export default function CalendarPage() {
                 await deleteListing(selectedItem.id);
                 toast({ title: 'Listing deleted!' });
                 break;
+            case 'Promo Page':
+                await deletePromoPage(selectedItem.id);
+                toast({ title: 'Promo Page deleted!' });
+                break;
         }
         setAllItems(prev => prev.filter(item => item.id !== selectedItem.id));
     } catch (error) {
@@ -179,6 +184,7 @@ export default function CalendarPage() {
         case 'Offer': return 'secondary';
         case 'Job': return 'destructive';
         case 'Listing': return 'outline';
+        case 'Promo Page': return 'default';
         default: return 'default';
     }
   }
@@ -188,6 +194,7 @@ export default function CalendarPage() {
     { name: 'Offer', icon: Gift, variant: 'secondary' },
     { name: 'Job', icon: Briefcase, variant: 'destructive' },
     { name: 'Listing', icon: Tags, variant: 'outline' },
+    { name: 'Promo Page', icon: Megaphone, variant: 'default' },
   ];
   
   const getStatsIcon = (itemType: CalendarItem['type']) => {
@@ -196,6 +203,7 @@ export default function CalendarPage() {
         case 'Offer': return Gift;
         case 'Job': return Users;
         case 'Listing': return MousePointerClick;
+        case 'Promo Page': return MousePointerClick;
         default: return Eye;
     }
   }
@@ -206,6 +214,7 @@ export default function CalendarPage() {
         case 'Offer': return item.claims?.toLocaleString() ?? 0;
         case 'Job': return item.applicants?.toLocaleString() ?? 0;
         case 'Listing': return item.clicks?.toLocaleString() ?? 0;
+        case 'Promo Page': return item.clicks?.toLocaleString() ?? 0;
         default: return 0;
     }
   }
@@ -356,7 +365,7 @@ export default function CalendarPage() {
                                 onClick={() => handleTypeFilterChange(name)}
                                 className={cn(
                                     variant === 'outline' && typeFilters.has(name) && 'bg-accent text-accent-foreground border-accent-foreground/30',
-                                    'transition-all'
+                                    'transition-all capitalize'
                                 )}
                             >
                                 <Icon className="mr-2 h-4 w-4" /> {name}s
@@ -427,7 +436,7 @@ export default function CalendarPage() {
                               <CardHeader className="p-4 pb-2">
                                   <div className="flex justify-between items-start">
                                       <div>
-                                        <Badge variant={getBadgeVariant(item.type)}>{item.isExternal ? 'Attending' : item.type}</Badge>
+                                        <Badge variant={getBadgeVariant(item.type)} className="capitalize">{item.isExternal ? 'Attending' : item.type}</Badge>
                                         <CardTitle className="text-base mt-2">{item.title}</CardTitle>
                                       </div>
                                       <DropdownMenu>
@@ -491,7 +500,7 @@ export default function CalendarPage() {
                                 {filteredItems.map(item => (
                                     <TableRow key={item.id}>
                                         <TableCell className="font-medium">{item.title}</TableCell>
-                                        <TableCell><Badge variant={getBadgeVariant(item.type)}>{item.type}</Badge></TableCell>
+                                        <TableCell><Badge variant={getBadgeVariant(item.type)} className="capitalize">{item.type}</Badge></TableCell>
                                         <TableCell><ClientFormattedDate date={item.date} formatStr="PPP"/></TableCell>
                                         <TableCell><Badge variant={item.status === 'active' ? 'secondary' : 'outline'}>{item.status}</Badge></TableCell>
                                         <TableCell className="text-right">
