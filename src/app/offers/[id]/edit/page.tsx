@@ -43,13 +43,32 @@ export default function EditOfferPage() {
     const [offerToEdit, setOfferToEdit] = useState<Offer | null>(null);
 
     useEffect(() => {
-        if (offerId) {
-            setIsLoading(true);
-            getOffer(offerId)
-                .then(setOfferToEdit)
-                .finally(() => setIsLoading(false));
-        }
-    }, [offerId]);
+        if (!offerId || !user) return;
+
+        setIsLoading(true);
+        getOffer(offerId)
+            .then((offerData) => {
+                if (!offerData) {
+                    toast({ title: "Not Found", description: "This offer does not exist.", variant: "destructive" });
+                    router.push('/calendar');
+                    return;
+                }
+                if (offerData.authorId !== user.uid) {
+                    toast({ title: "Unauthorized", description: "You do not have permission to edit this item.", variant: "destructive" });
+                    router.push('/calendar');
+                    return;
+                }
+                setOfferToEdit(offerData);
+            })
+            .catch((err) => {
+                console.error("Error fetching offer for edit:", err);
+                toast({ title: "Error", description: "Could not load item for editing.", variant: "destructive" });
+                router.push('/calendar');
+            })
+            .finally(() => {
+                setIsLoading(false);
+            });
+    }, [offerId, user, router, toast]);
 
     const onSubmit = async (data: OfferFormValues) => {
         if (!user) {
@@ -83,12 +102,8 @@ export default function EditOfferPage() {
         }
     }
 
-    if (isLoading) {
+    if (isLoading || !offerToEdit) {
         return <EditOfferPageSkeleton />;
-    }
-
-    if (!offerToEdit) {
-        return <div>Offer not found.</div>
     }
 
     return (

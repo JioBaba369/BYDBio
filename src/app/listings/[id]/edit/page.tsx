@@ -42,13 +42,32 @@ export default function EditListingPage() {
     const [listingToEdit, setListingToEdit] = useState<Listing | null>(null);
 
     useEffect(() => {
-        if (listingId) {
-            setIsLoading(true);
-            getListing(listingId)
-                .then(setListingToEdit)
-                .finally(() => setIsLoading(false));
-        }
-    }, [listingId]);
+        if (!listingId || !user) return;
+
+        setIsLoading(true);
+        getListing(listingId)
+            .then((listingData) => {
+                if (!listingData) {
+                    toast({ title: "Not Found", description: "This listing does not exist.", variant: "destructive" });
+                    router.push('/calendar');
+                    return;
+                }
+                if (listingData.authorId !== user.uid) {
+                    toast({ title: "Unauthorized", description: "You do not have permission to edit this item.", variant: "destructive" });
+                    router.push('/calendar');
+                    return;
+                }
+                setListingToEdit(listingData);
+            })
+            .catch((err) => {
+                console.error("Error fetching listing for edit:", err);
+                toast({ title: "Error", description: "Could not load item for editing.", variant: "destructive" });
+                router.push('/calendar');
+            })
+            .finally(() => {
+                setIsLoading(false);
+            });
+    }, [listingId, user, router, toast]);
     
     const onSubmit = async (data: ListingFormValues) => {
         if (!user) {
@@ -81,12 +100,8 @@ export default function EditListingPage() {
         }
     }
 
-    if (isLoading) {
+    if (isLoading || !listingToEdit) {
         return <EditListingPageSkeleton />;
-    }
-
-    if (!listingToEdit) {
-        return <div>Listing not found.</div>
     }
 
     return (

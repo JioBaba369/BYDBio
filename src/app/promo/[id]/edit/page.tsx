@@ -44,13 +44,32 @@ export default function EditPromoPage() {
     const [promoPageToEdit, setPromoPageToEdit] = useState<PromoPage | null>(null);
 
     useEffect(() => {
-        if (promoPageId) {
-            setIsLoading(true);
-            getPromoPage(promoPageId)
-                .then(setPromoPageToEdit)
-                .finally(() => setIsLoading(false));
-        }
-    }, [promoPageId]);
+        if (!promoPageId || !user) return;
+
+        setIsLoading(true);
+        getPromoPage(promoPageId)
+            .then((promoPageData) => {
+                if (!promoPageData) {
+                    toast({ title: "Not Found", description: "This promo page does not exist.", variant: "destructive" });
+                    router.push('/calendar');
+                    return;
+                }
+                if (promoPageData.authorId !== user.uid) {
+                    toast({ title: "Unauthorized", description: "You do not have permission to edit this item.", variant: "destructive" });
+                    router.push('/calendar');
+                    return;
+                }
+                setPromoPageToEdit(promoPageData);
+            })
+            .catch((err) => {
+                console.error("Error fetching promo page for edit:", err);
+                toast({ title: "Error", description: "Could not load item for editing.", variant: "destructive" });
+                router.push('/calendar');
+            })
+            .finally(() => {
+                setIsLoading(false);
+            });
+    }, [promoPageId, user, router, toast]);
     
     const onSubmit = async (data: PromoPageFormValues) => {
         if (!user) {
@@ -88,12 +107,8 @@ export default function EditPromoPage() {
         }
     }
 
-    if (isLoading) {
+    if (isLoading || !promoPageToEdit) {
         return <EditPromoPageSkeleton />;
-    }
-
-    if (!promoPageToEdit) {
-        return <div>Promo page not found.</div>
     }
 
     return (

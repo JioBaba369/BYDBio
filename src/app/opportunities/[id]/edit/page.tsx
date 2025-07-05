@@ -43,13 +43,32 @@ export default function EditOpportunityPage() {
     const [jobToEdit, setJobToEdit] = useState<Job | null>(null);
 
     useEffect(() => {
-        if (opportunityId) {
-            setIsLoading(true);
-            getJob(opportunityId)
-                .then(setJobToEdit)
-                .finally(() => setIsLoading(false));
-        }
-    }, [opportunityId]);
+        if (!opportunityId || !user) return;
+
+        setIsLoading(true);
+        getJob(opportunityId)
+            .then((jobData) => {
+                if (!jobData) {
+                    toast({ title: "Not Found", description: "This opportunity does not exist.", variant: "destructive" });
+                    router.push('/calendar');
+                    return;
+                }
+                if (jobData.authorId !== user.uid) {
+                    toast({ title: "Unauthorized", description: "You do not have permission to edit this item.", variant: "destructive" });
+                    router.push('/calendar');
+                    return;
+                }
+                setJobToEdit(jobData);
+            })
+            .catch((err) => {
+                console.error("Error fetching opportunity for edit:", err);
+                toast({ title: "Error", description: "Could not load item for editing.", variant: "destructive" });
+                router.push('/calendar');
+            })
+            .finally(() => {
+                setIsLoading(false);
+            });
+    }, [opportunityId, user, router, toast]);
 
     const onSubmit = async (data: OpportunityFormValues) => {
         if (!user) {
@@ -83,12 +102,8 @@ export default function EditOpportunityPage() {
         }
     }
 
-    if (isLoading) {
+    if (isLoading || !jobToEdit) {
         return <EditJobPageSkeleton />;
-    }
-
-    if (!jobToEdit) {
-        return <div>Opportunity not found.</div>
     }
 
     return (

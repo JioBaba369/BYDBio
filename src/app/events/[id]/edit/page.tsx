@@ -43,13 +43,32 @@ export default function EditEventPage() {
     const [eventToEdit, setEventToEdit] = useState<Event | null>(null);
 
     useEffect(() => {
-        if (eventId) {
-            setIsLoading(true);
-            getEvent(eventId)
-                .then(setEventToEdit)
-                .finally(() => setIsLoading(false));
-        }
-    }, [eventId]);
+        if (!eventId || !user) return;
+
+        setIsLoading(true);
+        getEvent(eventId)
+            .then((eventData) => {
+                if (!eventData) {
+                    toast({ title: "Not Found", description: "This event does not exist.", variant: "destructive" });
+                    router.push('/calendar');
+                    return;
+                }
+                if (eventData.authorId !== user.uid) {
+                    toast({ title: "Unauthorized", description: "You do not have permission to edit this item.", variant: "destructive" });
+                    router.push('/calendar');
+                    return;
+                }
+                setEventToEdit(eventData);
+            })
+            .catch((err) => {
+                console.error("Error fetching event for edit:", err);
+                toast({ title: "Error", description: "Could not load item for editing.", variant: "destructive" });
+                router.push('/calendar');
+            })
+            .finally(() => {
+                setIsLoading(false);
+            });
+    }, [eventId, user, router, toast]);
     
     const onSubmit = async (data: EventFormValues) => {
         if (!user) {
@@ -83,12 +102,8 @@ export default function EditEventPage() {
         }
     }
 
-    if (isLoading) {
+    if (isLoading || !eventToEdit) {
         return <EditEventPageSkeleton />;
-    }
-
-    if (!eventToEdit) {
-        return <div>Event not found.</div>
     }
 
     return (
