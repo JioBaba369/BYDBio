@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Badge, badgeVariants } from '@/components/ui/badge';
 import { getCalendarItems, toggleRsvp, deleteEvent, type CalendarItem } from '@/lib/events';
 import { useAuth } from '@/components/auth-provider';
-import { Search, MapPin, Tag, Briefcase, DollarSign, X, Clock, MoreHorizontal, Edit, Trash2, PlusCircle, Tags, Calendar as CalendarIconLucide, Building2, List, LayoutGrid, Eye, MousePointerClick, Gift, Users } from 'lucide-react';
+import { Search, MapPin, Tag, Briefcase, DollarSign, X, Clock, MoreHorizontal, Edit, Trash2, PlusCircle, Tags, Calendar as CalendarIconLucide, Building2, List, LayoutGrid, Eye, MousePointerClick, Gift, Users, Megaphone } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { VariantProps } from 'class-variance-authority';
 import Image from 'next/image';
@@ -284,6 +284,12 @@ export default function CalendarPage() {
             <DropdownMenuContent align="end">
                 <DropdownMenuLabel>Create New Content</DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                 <DropdownMenuItem asChild>
+                <Link href="/promo/create" className="cursor-pointer">
+                    <Megaphone className="mr-2 h-4 w-4" />
+                    <span>New Promo Page</span>
+                </Link>
+                </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                 <Link href="/listings/create" className="cursor-pointer">
                     <Tags className="mr-2 h-4 w-4" />
@@ -522,5 +528,3 @@ export default function CalendarPage() {
     </>
   );
 }
-
-    

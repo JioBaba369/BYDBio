@@ -1,4 +1,3 @@
-
 rules_version = '2';
 
 service cloud.firestore {
@@ -56,8 +55,8 @@ service cloud.firestore {
       allow update, delete: if isUserAuthenticated() && isOwner(resource.data.authorId);
     }
 
-    // BUSINESSES
-    match /businesses/{businessId} {
+    // PROMO PAGES (formerly Businesses)
+    match /promoPages/{promoPageId} {
       allow read: if true;
       allow create: if isUserAuthenticated() && isOwner(request.resource.data.authorId);
       allow update, delete: if isUserAuthenticated() && isOwner(resource.data.authorId);
@@ -83,13 +82,6 @@ service cloud.firestore {
       allow create: if isUserAuthenticated();
       // Only the recipient can read or update (e.g., mark as read) their notifications.
       allow read, update, delete: if isUserAuthenticated() && isOwner(resource.data.userId);
-    }
-    
-    // DIARY NOTES
-    match /diaryNotes/{diaryNoteId} {
-        // User can only create/manage their own diary notes.
-        allow create: if isUserAuthenticated() && isOwner(request.resource.data.userId);
-        allow read, update, delete: if isUserAuthenticated() && isOwner(resource.data.userId);
     }
 
     // REMINDERS

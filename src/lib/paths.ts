@@ -10,7 +10,7 @@ const AUTH_PATHS = [
 // The app layout (sidebar, header) will be shown for logged-in users on these pages.
 const PUBLIC_CONTENT_PATHS = [
     '/u/',
-    '/b/',
+    '/p/', // promo pages
     '/l/',
     '/o/',
     '/offer/',
@@ -19,7 +19,7 @@ const PUBLIC_CONTENT_PATHS = [
     '/listings',
     '/opportunities',
     '/offers',
-    '/businesses'
+    '/promo'
 ];
 
 /**

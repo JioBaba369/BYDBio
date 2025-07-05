@@ -8,7 +8,7 @@ import type { Listing } from '@/lib/listings';
 import type { Offer } from '@/lib/offers';
 import type { Job } from '@/lib/jobs';
 import type { Event } from '@/lib/events';
-import { type Business } from "@/lib/businesses";
+import { type PromoPage } from "@/lib/promo-pages";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -38,7 +38,7 @@ interface UserProfilePageProps {
     jobs: (Omit<Job, 'postingDate' | 'createdAt' | 'startDate' | 'endDate'> & { postingDate: string, createdAt: string, startDate?: string | null, endDate?: string | null })[];
     events: (Omit<Event, 'startDate' | 'endDate' | 'createdAt'> & { startDate: string, endDate?: string | null, createdAt: string })[];
     offers: (Omit<Offer, 'startDate' | 'endDate' | 'createdAt'> & { startDate: string, endDate?: string | null, createdAt: string })[];
-    businesses: (Omit<Business, 'createdAt'> & { createdAt: string })[];
+    promoPages: (Omit<PromoPage, 'createdAt'> & { createdAt: string })[];
   }
 }
 
@@ -91,7 +91,7 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
 
 
   const { name, username, avatarUrl, avatarFallback, bio, links, businessCard } = userProfileData;
-  const { posts, listings, jobs, events, offers, businesses } = content;
+  const { posts, listings, jobs, events, offers, promoPages } = content;
 
   const vCardData = `BEGIN:VCARD
 VERSION:3.0
@@ -108,7 +108,7 @@ END:VCARD`;
   const allContent = useMemo(() => {
     const combined = [
       ...posts.map(item => ({ ...item, type: 'post', date: item.createdAt })),
-      ...businesses.map(item => ({ ...item, type: 'business', date: item.createdAt })),
+      ...promoPages.map(item => ({ ...item, type: 'promoPage', date: item.createdAt })),
       ...listings.map(item => ({ ...item, type: 'listing', date: item.createdAt })),
       ...jobs.map(item => ({ ...item, type: 'job', date: item.createdAt })),
       ...events.map(item => ({ ...item, type: 'event', date: item.createdAt })),
@@ -116,7 +116,7 @@ END:VCARD`;
     ];
     combined.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     return combined;
-  }, [posts, businesses, listings, jobs, events, offers]);
+  }, [posts, promoPages, listings, jobs, events, offers]);
   
   const hasContent = allContent.length > 0;
 
@@ -209,11 +209,11 @@ END:VCARD`;
                                     </CardFooter>
                                 </Card>
                             );
-                            case 'business': return (
+                            case 'promoPage': return (
                                 <Card key={item.id} className="shadow-none border">
-                                    <CardHeader><CardTitle className="text-base">Created a new business page</CardTitle></CardHeader>
+                                    <CardHeader><CardTitle className="text-base">Created a new promo page</CardTitle></CardHeader>
                                     <CardContent>
-                                        <Link href={`/b/${item.id}`} className="block hover:bg-muted/50 p-4 rounded-lg border -m-4">
+                                        <Link href={`/p/${item.id}`} className="block hover:bg-muted/50 p-4 rounded-lg border -m-4">
                                             <div className="flex gap-4">
                                                 {item.logoUrl && <Image src={item.logoUrl} alt={item.name} width={56} height={56} className="rounded-lg object-cover" data-ai-hint="logo"/>}
                                                 <div className="flex-1">

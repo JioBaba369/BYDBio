@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge, badgeVariants } from '@/components/ui/badge';
 import { getAllPublicContent, type PublicContentItem } from '@/lib/content';
-import { Search, MapPin, Tag, Briefcase, DollarSign, X, Clock, ExternalLink, Tags, Calendar as CalendarIconLucide, Building2, List, LayoutGrid, Eye, MousePointerClick, Gift, Users, Compass } from 'lucide-react';
+import { Search, MapPin, Tag, Briefcase, DollarSign, X, Clock, ExternalLink, Tags, Calendar as CalendarIconLucide, Building2, List, LayoutGrid, Eye, MousePointerClick, Gift, Users, Compass, Megaphone } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { VariantProps } from 'class-variance-authority';
 import Image from 'next/image';
@@ -55,7 +55,7 @@ const ExploreSkeleton = () => (
 export default function ExplorePage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [locationFilter, setLocationFilter] = useState('');
-  const [typeFilters, setTypeFilters] = useState<Set<string>>(new Set(['event', 'offer', 'job', 'listing', 'business']));
+  const [typeFilters, setTypeFilters] = useState<Set<string>>(new Set(['event', 'offer', 'job', 'listing', 'promoPage']));
   const { toast } = useToast();
   const [allItems, setAllItems] = useState<PublicContentItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -101,7 +101,7 @@ export default function ExplorePage() {
         case 'offer': return (item as any).claims ?? 0;
         case 'job': return (item as any).applicants ?? 0;
         case 'listing': return (item as any).clicks ?? 0;
-        case 'business': return (item as any).clicks ?? 0;
+        case 'promoPage': return (item as any).clicks ?? 0;
         default: return 0;
     }
   };
@@ -128,7 +128,7 @@ export default function ExplorePage() {
   const handleClearFilters = () => {
     setSearchTerm('');
     setLocationFilter('');
-    setTypeFilters(new Set(['event', 'offer', 'job', 'listing', 'business']));
+    setTypeFilters(new Set(['event', 'offer', 'job', 'listing', 'promoPage']));
   }
   
   const handleTypeFilterChange = (type: string) => {
@@ -145,7 +145,7 @@ export default function ExplorePage() {
         case 'offer': return 'secondary';
         case 'job': return 'destructive';
         case 'listing': return 'outline';
-        case 'business': return 'default';
+        case 'promoPage': return 'default';
         default: return 'default';
     }
   }
@@ -155,7 +155,7 @@ export default function ExplorePage() {
     { name: 'offer', label: 'Offers', icon: Gift, variant: 'secondary' },
     { name: 'job', label: 'Jobs', icon: Briefcase, variant: 'destructive' },
     { name: 'listing', label: 'Listings', icon: Tags, variant: 'outline' },
-    { name: 'business', label: 'Businesses', icon: Building2, variant: 'default' },
+    { name: 'promoPage', label: 'Promo Pages', icon: Megaphone, variant: 'default' },
   ];
 
   const getLink = (item: PublicContentItem) => {
@@ -164,7 +164,7 @@ export default function ExplorePage() {
           case 'offer': return `/offer/${item.id}`;
           case 'job': return `/o/${item.id}`;
           case 'listing': return `/l/${item.id}`;
-          case 'business': return `/b/${item.id}`;
+          case 'promoPage': return `/p/${item.id}`;
       }
   }
   
@@ -246,6 +246,7 @@ export default function ExplorePage() {
                           const title = (item as any).title || (item as any).name;
                           const description = (item as any).description;
                           const primaryStat = getPrimaryStat(item);
+                          const itemTypeLabel = item.type === 'promoPage' ? 'Promo Page' : item.type;
                           
                           return (
                             <Card key={`${item.type}-${item.id}`} className="shadow-sm flex flex-col">
@@ -255,7 +256,7 @@ export default function ExplorePage() {
                                     </Link>
                                 )}
                                 <CardHeader className="p-4 pb-2">
-                                    <Badge variant={getBadgeVariant(item.type)} className="w-fit capitalize">{item.type}</Badge>
+                                    <Badge variant={getBadgeVariant(item.type)} className="w-fit capitalize">{itemTypeLabel}</Badge>
                                     <CardTitle className="text-lg mt-1"><Link href={getLink(item)} className="hover:underline">{title}</Link></CardTitle>
                                     {'company' in item && item.company && <CardDescription>{item.company}</CardDescription>}
                                 </CardHeader>
@@ -309,13 +310,14 @@ export default function ExplorePage() {
                             <TableBody>
                                 {sortedItems.map(item => {
                                     const title = (item as any).title || (item as any).name;
+                                    const itemTypeLabel = item.type === 'promoPage' ? 'Promo Page' : item.type;
                                     return (
                                     <TableRow key={`${item.type}-${item.id}`}>
                                         <TableCell>
                                             <div className="font-medium">{title}</div>
                                             {'company' in item && <div className="text-xs text-muted-foreground">{item.company}</div>}
                                         </TableCell>
-                                        <TableCell><Badge variant={getBadgeVariant(item.type)} className="capitalize">{item.type}</Badge></TableCell>
+                                        <TableCell><Badge variant={getBadgeVariant(item.type)} className="capitalize">{itemTypeLabel}</Badge></TableCell>
                                         <TableCell className="hidden md:table-cell">
                                             <Link href={`/u/${item.author.username}`} className="flex items-center gap-2 hover:underline">
                                                 <Avatar className="h-6 w-6">

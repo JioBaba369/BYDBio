@@ -10,7 +10,7 @@ import { getListingsByUser } from '@/lib/listings';
 import { getJobsByUser } from '@/lib/jobs';
 import { getEventsByUser } from '@/lib/events';
 import { getOffersByUser } from '@/lib/offers';
-import { getBusinessesByUser } from '@/lib/businesses';
+import { getPromoPagesByUser } from '@/lib/promo-pages';
 import type { Timestamp } from 'firebase/firestore';
 
 export async function generateMetadata({ params }: { params: { username: string } }): Promise<Metadata> {
@@ -76,13 +76,13 @@ export default async function PublicProfilePageWrapper({ params }: { params: { u
     }
 
     // Fetch all content related to the user in parallel
-    const [posts, listings, jobs, events, offers, businesses] = await Promise.all([
+    const [posts, listings, jobs, events, offers, promoPages] = await Promise.all([
         getPostsByUser(userProfileData.uid),
         getListingsByUser(userProfileData.uid),
         getJobsByUser(userProfileData.uid),
         getEventsByUser(userProfileData.uid),
         getOffersByUser(userProfileData.uid),
-        getBusinessesByUser(userProfileData.uid)
+        getPromoPagesByUser(userProfileData.uid)
     ]);
     
     // Serialize date objects before passing to client component
@@ -92,7 +92,7 @@ export default async function PublicProfilePageWrapper({ params }: { params: { u
         jobs: jobs.map(j => ({ ...j, postingDate: (j.postingDate as Date).toISOString(), createdAt: (j.createdAt as Timestamp).toDate().toISOString(), startDate: j.startDate ? (j.startDate as Date).toISOString() : null, endDate: j.endDate ? (j.endDate as Date).toISOString() : null })),
         events: events.map(e => ({ ...e, startDate: (e.startDate as Date).toISOString(), endDate: e.endDate ? (e.endDate as Date).toISOString() : null, createdAt: (e.createdAt as Timestamp).toDate().toISOString() })),
         offers: offers.map(o => ({ ...o, startDate: (o.startDate as Date).toISOString(), endDate: o.endDate ? (o.endDate as Date).toISOString() : null, createdAt: (o.createdAt as Timestamp).toDate().toISOString() })),
-        businesses: businesses.map(b => ({ ...b, createdAt: (b.createdAt as Timestamp).toDate().toISOString() })),
+        promoPages: promoPages.map(p => ({ ...p, createdAt: (p.createdAt as Timestamp).toDate().toISOString() })),
     };
 
     return <UserProfilePage userProfileData={userProfileData} content={content} />;

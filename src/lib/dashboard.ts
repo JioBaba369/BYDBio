@@ -2,7 +2,7 @@
 'use server';
 import { collection, query, where, orderBy, limit, getDocs, Timestamp } from 'firebase/firestore';
 import { db } from './firebase';
-import type { Listing, Offer, Job, Event, Business } from './users';
+import type { Listing, Offer, Job, Event, PromoPage } from './users';
 import type { Post } from './posts';
 
 export type ActivityItem = (
@@ -10,7 +10,7 @@ export type ActivityItem = (
     | (Offer & { type: 'Offer' })
     | (Job & { type: 'Job' })
     | (Event & { type: 'Event' })
-    | (Business & { type: 'Business' })
+    | (PromoPage & { type: 'Promo Page' })
     | (Post & { type: 'Post' })
 ) & {
     id: string;
@@ -19,13 +19,13 @@ export type ActivityItem = (
 };
 
 export const getRecentActivity = async (userId: string): Promise<ActivityItem[]> => {
-    const collections = ['listings', 'jobs', 'events', 'offers', 'businesses', 'posts'];
+    const collections = ['listings', 'jobs', 'events', 'offers', 'promoPages', 'posts'];
     const typeMap: { [key: string]: string } = {
         'listings': 'Listing',
         'jobs': 'Job',
         'events': 'Event',
         'offers': 'Offer',
-        'businesses': 'Business',
+        'promoPages': 'Promo Page',
         'posts': 'Post',
     };
 
@@ -62,7 +62,7 @@ export const getRecentActivity = async (userId: string): Promise<ActivityItem[]>
             let title = 'Untitled';
             if (data.title) {
                 title = data.title;
-            } else if (data.name) { // For businesses
+            } else if (data.name) { // For promoPages
                 title = data.name;
             } else if (data.content) { // For posts
                 title = data.content.substring(0, 50) + (data.content.length > 50 ? '...' : '');

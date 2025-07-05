@@ -72,7 +72,7 @@
       ]
     },
     {
-      "collectionGroup": "businesses",
+      "collectionGroup": "promoPages",
       "queryScope": "COLLECTION",
       "fields": [
         {
@@ -128,7 +128,7 @@
       ]
     },
     {
-      "collectionGroup": "businesses",
+      "collectionGroup": "promoPages",
       "queryScope": "COLLECTION",
       "fields": [
         {

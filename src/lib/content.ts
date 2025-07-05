@@ -9,7 +9,7 @@ import {
   Timestamp,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { User, Listing, Offer, Job, Event, Business } from './users';
+import type { User, Listing, Offer, Job, Event, PromoPage } from './users';
 import { getUsersByIds } from './users';
 
 export type PublicContentItem = (
@@ -17,7 +17,7 @@ export type PublicContentItem = (
   | (Offer & { type: 'offer' })
   | (Job & { type: 'job' })
   | (Event & { type: 'event' })
-  | (Business & { type: 'business' })
+  | (PromoPage & { type: 'promoPage' })
 ) & { author: Pick<User, 'uid' | 'name' | 'username' | 'avatarUrl' | 'avatarFallback'>; date: string };
 
 
@@ -26,20 +26,20 @@ export const getAllPublicContent = async (): Promise<PublicContentItem[]> => {
     const jobsQuery = query(collection(db, 'jobs'), where('status', '==', 'active'));
     const eventsQuery = query(collection(db, 'events'), where('status', '==', 'active'));
     const offersQuery = query(collection(db, 'offers'), where('status', '==', 'active'));
-    const businessesQuery = query(collection(db, 'businesses'), where('status', '==', 'active'));
+    const promoPagesQuery = query(collection(db, 'promoPages'), where('status', '==', 'active'));
 
     const [
         listingsSnap,
         jobsSnap,
         eventsSnap,
         offersSnap,
-        businessesSnap,
+        promoPagesSnap,
     ] = await Promise.all([
         getDocs(listingsQuery),
         getDocs(jobsQuery),
         getDocs(eventsQuery),
         getDocs(offersQuery),
-        getDocs(businessesQuery),
+        getDocs(promoPagesQuery),
     ]);
 
     const allContent: any[] = [
@@ -47,7 +47,7 @@ export const getAllPublicContent = async (): Promise<PublicContentItem[]> => {
         ...jobsSnap.docs.map(doc => ({ ...doc.data(), id: doc.id, type: 'job' })),
         ...eventsSnap.docs.map(doc => ({ ...doc.data(), id: doc.id, type: 'event' })),
         ...offersSnap.docs.map(doc => ({ ...doc.data(), id: doc.id, type: 'offer' })),
-        ...businessesSnap.docs.map(doc => ({ ...doc.data(), id: doc.id, type: 'business' })),
+        ...promoPagesSnap.docs.map(doc => ({ ...doc.data(), id: doc.id, type: 'promoPage' })),
     ];
     
     // De-duplicate authors and fetch them

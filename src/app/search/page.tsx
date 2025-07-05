@@ -5,13 +5,13 @@ import { useSearchParams } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { UserPlus, UserCheck, Search as SearchIcon, Briefcase, MapPin, Tag, Calendar, Users, Tags, DollarSign, Gift, Eye, Building2, ExternalLink } from "lucide-react";
+import { UserPlus, UserCheck, Search as SearchIcon, Briefcase, MapPin, Tag, Calendar, Users, Tags, DollarSign, Gift, Eye, Building2, ExternalLink, Megaphone } from "lucide-react";
 import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import Image from "next/image";
-import type { User, Business } from '@/lib/users';
+import type { User, PromoPage } from '@/lib/users';
 import { useAuth } from '@/components/auth-provider';
 import { searchUsers, getUsersByIds } from '@/lib/users';
 import { followUser, unfollowUser } from '@/lib/connections';
@@ -31,7 +31,7 @@ type SearchResults = {
     opportunities: ItemWithAuthor<Job>[];
     events: ItemWithAuthor<Event>[];
     offers: ItemWithAuthor<Offer>[];
-    businesses: ItemWithAuthor<Business>[];
+    promoPages: ItemWithAuthor<PromoPage>[];
 }
 
 export default function SearchPage() {
@@ -41,7 +41,7 @@ export default function SearchPage() {
   const { toast } = useToast();
 
   const [isLoading, setIsLoading] = useState(false);
-  const [results, setResults] = useState<SearchResults>({ users: [], listings: [], opportunities: [], events: [], offers: [], businesses: [] });
+  const [results, setResults] = useState<SearchResults>({ users: [], listings: [], opportunities: [], events: [], offers: [], promoPages: [] });
 
   useEffect(() => {
     const performSearch = async () => {
@@ -55,17 +55,17 @@ export default function SearchPage() {
             const userResults = await searchUsers(queryParam);
             
             // Search content collections
-            const collectionsToSearch = ['listings', 'jobs', 'events', 'offers', 'businesses'];
+            const collectionsToSearch = ['listings', 'jobs', 'events', 'offers', 'promoPages'];
             const contentPromises = collectionsToSearch.map(col => getDocs(query(collection(db, col), where('searchableKeywords', 'array-contains', lowerCaseQuery))));
             
-            const [listingsSnap, jobsSnap, eventsSnap, offersSnap, businessesSnap] = await Promise.all(contentPromises);
+            const [listingsSnap, jobsSnap, eventsSnap, offersSnap, promoPagesSnap] = await Promise.all(contentPromises);
 
             const allContent: (any & { type: string })[] = [
                 ...listingsSnap.docs.map(doc => ({ ...doc.data(), id: doc.id, type: 'listing' })),
                 ...jobsSnap.docs.map(doc => ({ ...doc.data(), id: doc.id, type: 'job' })),
                 ...eventsSnap.docs.map(doc => ({ ...doc.data(), id: doc.id, type: 'event' })),
                 ...offersSnap.docs.map(doc => ({ ...doc.data(), id: doc.id, type: 'offer' })),
-                ...businessesSnap.docs.map(doc => ({ ...doc.data(), id: doc.id, type: 'business' })),
+                ...promoPagesSnap.docs.map(doc => ({ ...doc.data(), id: doc.id, type: 'promoPage' })),
             ];
 
             const authorIds = [...new Set(allContent.map(item => item.authorId))];
@@ -78,7 +78,7 @@ export default function SearchPage() {
                 opportunities: [],
                 events: [],
                 offers: [],
-                businesses: [],
+                promoPages: [],
             };
 
             allContent.forEach(item => {
@@ -89,7 +89,7 @@ export default function SearchPage() {
                         case 'job': newResults.opportunities.push({ ...item, author }); break;
                         case 'event': newResults.events.push({ ...item, author }); break;
                         case 'offer': newResults.offers.push({ ...item, author }); break;
-                        case 'business': newResults.businesses.push({ ...item, author }); break;
+                        case 'promoPage': newResults.promoPages.push({ ...item, author }); break;
                     }
                 }
             });
@@ -198,7 +198,7 @@ export default function SearchPage() {
       <Tabs defaultValue="users" className="w-full">
         <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-6">
             <TabsTrigger value="users">Users ({results.users.length})</TabsTrigger>
-            <TabsTrigger value="businesses">Businesses ({results.businesses.length})</TabsTrigger>
+            <TabsTrigger value="promoPages">Promo Pages ({results.promoPages.length})</TabsTrigger>
             <TabsTrigger value="listings">Listings ({results.listings.length})</TabsTrigger>
             <TabsTrigger value="opportunities">Jobs ({results.opportunities.length})</TabsTrigger>
             <TabsTrigger value="events">Events ({results.events.length})</TabsTrigger>
@@ -242,10 +242,10 @@ export default function SearchPage() {
             )}
         </TabsContent>
 
-        <TabsContent value="businesses" className="pt-4">
-             {results.businesses.length > 0 ? (
+        <TabsContent value="promoPages" className="pt-4">
+             {results.promoPages.length > 0 ? (
                 <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
-                  {results.businesses.map((item) => (
+                  {results.promoPages.map((item) => (
                     <Card key={item.id} className="flex flex-col">
                       {item.imageUrl &&
                         <div className="overflow-hidden rounded-t-lg">
@@ -270,7 +270,7 @@ export default function SearchPage() {
                       <Separator className="my-4" />
                       <CardFooter>
                           <Button asChild variant="outline" className="w-full">
-                              <Link href={`/b/${item.id}`}>
+                              <Link href={`/p/${item.id}`}>
                                   <ExternalLink className="mr-2 h-4 w-4" />
                                   View Details
                               </Link>
@@ -282,9 +282,9 @@ export default function SearchPage() {
              ) : (
                  <Card>
                     <CardContent className="p-10 text-center text-muted-foreground">
-                        <Building2 className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                        <h3 className="text-lg font-semibold text-foreground">No Businesses Found</h3>
-                        <p>We couldn't find any businesses matching "{queryParam}". Try a different search.</p>
+                        <Megaphone className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                        <h3 className="text-lg font-semibold text-foreground">No Promo Pages Found</h3>
+                        <p>We couldn't find any promo pages matching "{queryParam}". Try a different search.</p>
                     </CardContent>
                 </Card>
              )}

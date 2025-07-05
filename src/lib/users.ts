@@ -107,7 +107,7 @@ export type Event = {
   createdAt: Timestamp | string;
 };
 
-export type Business = {
+export type PromoPage = {
   id: string; // Document ID from Firestore
   authorId: string; // UID of the user who created it
   name: string;
