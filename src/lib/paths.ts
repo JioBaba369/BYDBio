@@ -1,21 +1,19 @@
 
-// The paths for authentication which should never have the app layout.
+// The paths for authentication which are public but have special layout considerations.
 const AUTH_PATHS = [
     '/auth/sign-in',
     '/auth/sign-up',
     '/auth/reset-password',
 ];
 
-// The paths that are public and do not require authentication.
-// The app layout (sidebar, header) will be shown for logged-in users on these pages.
-const PUBLIC_CONTENT_PATHS = [
-    '/u/',
-    '/p/', // promo pages
-    '/l/', // listings
-    '/o/', // opportunities
-    '/offer/',
-    '/events/', // Note the trailing slash to match all sub-paths
-    '/explore',
+// The base paths for sections that are strictly private and require authentication.
+const PROTECTED_ROUTE_BASES = [
+    '/profile',
+    '/settings',
+    '/calendar', // "My Content" hub
+    '/connections',
+    '/feed',
+    '/notifications',
 ];
 
 /**
@@ -28,12 +26,32 @@ export const isAuthPath = (path: string) => {
 };
 
 /**
- * Checks if a given path is public (auth or content).
- * The dashboard at '/' is a special case and is always protected.
+ * Checks if a given path is a public route that does not require authentication.
  * @param path The path to check.
  * @returns `true` if the path is public, `false` otherwise.
  */
 export const isPublicPath = (path: string) => {
-    if (path === '/') return true;
-    return isAuthPath(path) || PUBLIC_CONTENT_PATHS.some(p => path.startsWith(p));
+    // The dashboard is a special case: public for logged-out users (shows landing), private for logged-in.
+    // The AuthProvider handles the logged-in case, so we can treat it as public here.
+    if (path === '/') {
+        return true;
+    }
+    
+    // Auth pages are public.
+    if (isAuthPath(path)) {
+        return true;
+    }
+    
+    // Any route that is explicitly a protected "app" route is NOT public.
+    if (PROTECTED_ROUTE_BASES.some(base => path.startsWith(base))) {
+        return false;
+    }
+    
+    // Creation and editing pages are NOT public.
+    if (path.endsWith('/create') || path.endsWith('/edit')) {
+        return false;
+    }
+    
+    // All other paths (content pages, user profiles, etc.) are considered public.
+    return true;
 };
