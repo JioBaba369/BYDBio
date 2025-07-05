@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -40,6 +41,12 @@ export async function getPublicHolidays(
           throw new Error(`The country "${countryCode}" is not recognized by the holiday service. Please use a valid two-letter country code (e.g., US, GB, CA).`);
       }
       throw new Error(`Failed to fetch holidays: ${response.statusText}`);
+    }
+
+    // Handle the case where there are no holidays for a given year/country.
+    // The API returns a 204 No Content response in this case.
+    if (response.status === 204) {
+      return []; // Return an empty array, as there are no holidays.
     }
 
     const holidays: NagerDateHoliday[] = await response.json();
