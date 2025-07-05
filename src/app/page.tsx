@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
-import { Briefcase, Calendar, DollarSign, ListFilter, PenSquare, PlusCircle, Tags, Users, UserCheck } from "lucide-react"
+import { Briefcase, Calendar, DollarSign, PenSquare, PlusCircle, Tags, Users, UserCheck, Package, Sparkles } from "lucide-react"
 import Link from "next/link"
 import {
   DropdownMenu,
@@ -135,7 +135,10 @@ function Dashboard() {
   return (
     <div className="flex flex-col gap-8">
       <div className="flex items-center justify-between">
-        <h1 className="font-headline text-2xl sm:text-3xl font-bold">Dashboard</h1>
+        <div>
+          <h1 className="font-headline text-2xl sm:text-3xl font-bold">Welcome back, {user.name.split(' ')[0]}!</h1>
+          <p className="text-muted-foreground">Here's a snapshot of your professional hub.</p>
+        </div>
          <DropdownMenu>
             <DropdownMenuTrigger asChild>
                 <Button>
@@ -212,7 +215,7 @@ function Dashboard() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Active Content</CardTitle>
-            <ListFilter className="h-4 w-4 text-muted-foreground" />
+            <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{totalContent}</div>
@@ -224,6 +227,7 @@ function Dashboard() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Profile Completion</CardTitle>
+             <Sparkles className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold mb-2">{profileCompletion}%</div>

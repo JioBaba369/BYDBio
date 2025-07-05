@@ -3,7 +3,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Rocket, Zap, Megaphone } from "lucide-react";
+import { Rocket, Zap, Palette, Bug } from "lucide-react";
 
 type UpdateItem = {
   date: string;
@@ -11,12 +11,22 @@ type UpdateItem = {
   title: string;
   description: string;
   badge: {
-    text: 'New Feature' | 'Improvement' | 'Fix';
+    text: 'New Feature' | 'Improvement' | 'Aesthetic' | 'Fix';
     icon: React.ElementType;
   };
 };
 
 const updates: UpdateItem[] = [
+  {
+    date: 'July 27, 2024',
+    version: 'v1.5.0',
+    title: 'Major Aesthetic Overhaul',
+    description: 'Introducing a completely redesigned look and feel across the entire application. We\'ve implemented a new, sophisticated color palette and updated our typography to create a more modern, professional, and cohesive user experience.',
+    badge: {
+      text: 'Aesthetic',
+      icon: Palette,
+    },
+  },
   {
     date: 'July 26, 2024',
     version: 'v1.4.0',
@@ -37,7 +47,7 @@ const updates: UpdateItem[] = [
       icon: Zap,
     },
   },
-  {
+   {
     date: 'July 24, 2024',
     version: 'v1.3.0',
     title: 'Consistent Grid & List Views',
@@ -45,6 +55,16 @@ const updates: UpdateItem[] = [
     badge: {
       text: 'Improvement',
       icon: Zap,
+    },
+  },
+  {
+    date: 'July 23, 2024',
+    version: 'v1.2.1',
+    title: 'Security & Bug Fixes',
+    description: 'Conducted a comprehensive security audit, hardening Firestore rules and fixing several minor bugs to improve application stability and security.',
+    badge: {
+      text: 'Fix',
+      icon: Bug,
     },
   },
   {

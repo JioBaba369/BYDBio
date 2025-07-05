@@ -60,8 +60,8 @@ END:VCARD`;
             </Button>
         </div>
       <div className="w-full max-w-sm space-y-4">
-        <Card className="shadow-xl rounded-2xl w-full border-2 border-primary/10">
-          <div className="h-24 bg-primary rounded-t-xl" />
+        <Card className="shadow-xl rounded-2xl w-full border-2 border-primary/10 overflow-hidden">
+          <div className="h-24 bg-gradient-to-br from-primary via-blue-500 to-teal-400" />
           <CardContent className="p-6 pt-0">
             <div className="flex flex-col items-center text-center -mt-16">
               <Avatar className="h-28 w-28 border-4 border-background bg-background shadow-lg">
@@ -80,7 +80,7 @@ END:VCARD`;
               </div>
 
               <div className="flex gap-4 mt-6 w-full">
-                <Button onClick={handleSaveToContacts} className="w-full">
+                <Button onClick={handleSaveToContacts} className="w-full font-bold">
                     <Save className="mr-2 h-4 w-4" />
                     Save Contact
                 </Button>

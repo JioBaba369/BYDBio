@@ -18,23 +18,22 @@ import { Logo } from './logo';
 import {
   Briefcase,
   Calendar,
-  CreditCard,
   LayoutDashboard,
   Rss,
   Settings,
-  Share,
   User,
   Search,
   Users,
-  CalendarDays,
   Bell,
-  BookUser,
   BookText,
   Compass,
   Megaphone,
   Tags,
   Gift,
   Building2,
+  Package,
+  UserCircle,
+  Link2,
 } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -215,7 +214,7 @@ export function MainSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton asChild tooltip="My Content" isActive={isActive('/calendar')}>
               <Link href="/calendar">
-                <CalendarDays />
+                <Package />
                 <span>My Content</span>
               </Link>
             </SidebarMenuButton>
@@ -287,7 +286,7 @@ export function MainSidebar() {
            <SidebarMenuItem>
             <SidebarMenuButton asChild tooltip="Bio Page" isActive={isActive(`/u/${user.username}`)}>
               <Link href={`/u/${user.username}`}>
-                <Share />
+                <UserCircle />
                 <span>Bio Page</span>
               </Link>
             </SidebarMenuButton>
@@ -295,7 +294,7 @@ export function MainSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton asChild tooltip="Digital Business Card" isActive={isActive(`/u/${user.username}/card`)}>
               <Link href={`/u/${user.username}/card`}>
-                <CreditCard />
+                <Building2 />
                 <span>Digital Business Card</span>
               </Link>
             </SidebarMenuButton>
@@ -303,7 +302,7 @@ export function MainSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton asChild tooltip="Links Page" isActive={isActive(`/u/${user.username}/links`)}>
               <Link href={`/u/${user.username}/links`}>
-                <BookUser />
+                <Link2 />
                 <span>Links Page</span>
               </Link>
             </SidebarMenuButton>

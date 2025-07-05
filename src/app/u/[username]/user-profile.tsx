@@ -123,9 +123,10 @@ END:VCARD`;
   return (
     <div className="flex justify-center bg-dot py-8 px-4">
       <div className="w-full max-w-xl mx-auto space-y-8">
-        <Card className="bg-background/80 backdrop-blur-sm p-6 sm:p-8 shadow-2xl rounded-2xl border-primary/10">
-          <div className="flex flex-col items-center text-center">
-            <Avatar className="w-24 h-24 mb-4 border-4 border-primary/50">
+        <Card className="bg-card/80 backdrop-blur-sm p-6 sm:p-8 shadow-2xl rounded-2xl border-primary/10 relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-primary/5 via-blue-500/5 to-teal-400/5 opacity-50 z-0"></div>
+          <div className="relative z-10 flex flex-col items-center text-center">
+            <Avatar className="w-24 h-24 mb-4 border-4 border-background shadow-lg">
               <AvatarImage src={avatarUrl} alt={name} data-ai-hint="woman smiling" />
               <AvatarFallback>{avatarFallback}</AvatarFallback>
             </Avatar>
@@ -167,15 +168,15 @@ END:VCARD`;
             </div>
           </div>
 
-          <div className="mt-8 flex flex-col space-y-4">
+          <div className="relative z-10 mt-8 flex flex-col space-y-4">
             {links.map((link, index) => {
                 const Icon = linkIcons[link.icon as keyof typeof linkIcons];
                 return (
                   <a key={index} href={link.url} target="_blank" rel="noopener noreferrer" className="w-full group">
-                    <div className="w-full h-14 text-lg font-semibold flex items-center p-4 rounded-lg bg-secondary hover:scale-[1.02] transition-transform duration-200 ease-out">
+                    <div className="w-full h-14 text-lg font-semibold flex items-center p-4 rounded-lg bg-background/70 shadow-sm border hover:bg-background transition-all hover:scale-[1.02] hover:shadow-lg ease-out duration-200">
                       {Icon && <Icon className="h-5 w-5" />}
                       <span className="flex-1 text-center">{link.title}</span>
-                      <ExternalLink className="h-5 w-5 text-secondary-foreground/50 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <ExternalLink className="h-5 w-5 text-muted-foreground/50 opacity-0 group-hover:opacity-100 transition-opacity" />
                     </div>
                   </a>
                 )
@@ -184,7 +185,7 @@ END:VCARD`;
         </Card>
         
         {hasContent && (
-            <Card id="content" className="bg-background/80 backdrop-blur-sm shadow-2xl rounded-2xl border-primary/10">
+            <Card id="content" className="bg-card/80 backdrop-blur-sm shadow-2xl rounded-2xl border-primary/10">
                 <CardHeader>
                     <CardTitle>Content Feed</CardTitle>
                 </CardHeader>
@@ -291,7 +292,7 @@ END:VCARD`;
             </Card>
         )}
 
-        <Card className="bg-background/80 backdrop-blur-sm p-6 sm:p-8 shadow-2xl rounded-2xl border-primary/10 text-center">
+        <Card className="bg-card/80 backdrop-blur-sm p-6 sm:p-8 shadow-2xl rounded-2xl border-primary/10 text-center">
             <div className="flex flex-col items-center gap-2">
                 <a href={`/u/${username}/card`} className="text-sm text-primary hover:underline font-semibold">View Digital Business Card</a>
                 <a href={`/u/${username}/links`} className="text-sm text-primary hover:underline font-semibold">View Links Page</a>
