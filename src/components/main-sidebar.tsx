@@ -32,7 +32,6 @@ import {
   BookText,
   Compass,
   Megaphone,
-  Mail,
   Tags,
   Gift,
   Building2,
@@ -186,14 +185,6 @@ export function MainSidebar() {
               <Link href="/connections">
                 <Users />
                 <span>Connections</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-           <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Messages" isActive={isActive('/messages')}>
-              <Link href="/messages">
-                <Mail />
-                <span>Messages</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>

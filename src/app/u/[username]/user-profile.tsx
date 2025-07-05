@@ -21,12 +21,6 @@ import { Logo } from "@/components/logo";
 import ShareButton from "@/components/share-button";
 import { linkIcons } from "@/lib/link-icons";
 import Image from "next/image";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/components/auth-provider";
 import { followUser, unfollowUser } from "@/lib/connections";
 import { useRouter } from "next/navigation";
@@ -34,7 +28,6 @@ import QRCode from "qrcode.react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { ClientFormattedDate } from "@/components/client-formatted-date";
 import { formatCurrency } from "@/lib/utils";
-import { createMessage } from "@/lib/messages";
 
 
 interface UserProfilePageProps {
@@ -48,14 +41,6 @@ interface UserProfilePageProps {
     businesses: (Omit<Business, 'createdAt'> & { createdAt: string })[];
   }
 }
-
-const contactFormSchema = z.object({
-  name: z.string().min(1, "Name is required."),
-  email: z.string().email("Please enter a valid email address."),
-  message: z.string().min(10, "Message must be at least 10 characters long."),
-});
-type ContactFormValues = z.infer<typeof contactFormSchema>;
-
 
 export default function UserProfilePage({ userProfileData, content }: UserProfilePageProps) {
   const { user: currentUser } = useAuth();
@@ -71,30 +56,6 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
   
   const { toast } = useToast();
   
-  const contactForm = useForm<ContactFormValues>({
-    resolver: zodResolver(contactFormSchema),
-    defaultValues: { name: "", email: "", message: "" },
-  });
-
-  const handleContactSubmit = async (data: ContactFormValues) => {
-    try {
-      await createMessage(userProfileData.uid, {
-        senderName: data.name,
-        senderEmail: data.email,
-        message: data.message,
-      });
-
-      toast({
-        title: "Message Sent!",
-        description: `Thanks for reaching out to ${userProfileData.name}.`,
-      });
-      contactForm.reset();
-    } catch (error) {
-       console.error("Contact form submission error:", error);
-       toast({ title: "Error Sending Message", variant: "destructive" });
-    }
-  };
-
   const handleFollowToggle = async () => {
     if (!currentUser) {
         toast({ title: "Please sign in to follow users.", variant: "destructive" });
@@ -329,29 +290,6 @@ END:VCARD`;
                 </CardContent>
             </Card>
         )}
-
-        <Card id="contact" className="bg-background/80 backdrop-blur-sm p-6 sm:p-8 shadow-2xl rounded-2xl border-primary/10">
-          <div className="text-center">
-            <h2 className="text-xl font-bold font-headline mb-4">Contact Me</h2>
-            <Form {...contactForm}>
-              <form onSubmit={contactForm.handleSubmit(handleContactSubmit)} className="space-y-4 text-left">
-                  <FormField control={contactForm.control} name="name" render={({ field }) => (
-                    <FormItem><FormLabel className="text-muted-foreground">Name</FormLabel><FormControl><Input placeholder="Your Name" {...field} className="bg-background/80" /></FormControl><FormMessage /></FormItem>
-                  )} />
-                  <FormField control={contactForm.control} name="email" render={({ field }) => (
-                    <FormItem><FormLabel className="text-muted-foreground">Email</FormLabel><FormControl><Input type="email" placeholder="Your Email" {...field} className="bg-background/80" /></FormControl><FormMessage /></FormItem>
-                  )} />
-                  <FormField control={contactForm.control} name="message" render={({ field }) => (
-                    <FormItem><FormLabel className="text-muted-foreground">Message</FormLabel><FormControl><Textarea placeholder="Your message..." rows={4} {...field} className="bg-background/80" /></FormControl><FormMessage /></FormItem>
-                  )} />
-                  <Button type="submit" className="w-full font-bold" disabled={contactForm.formState.isSubmitting}>
-                      <Send className="mr-2 h-4 w-4" />
-                      {contactForm.formState.isSubmitting ? "Sending..." : "Send Message"}
-                  </Button>
-              </form>
-            </Form>
-          </div>
-        </Card>
 
         <Card className="bg-background/80 backdrop-blur-sm p-6 sm:p-8 shadow-2xl rounded-2xl border-primary/10 text-center">
             <div className="flex flex-col items-center gap-2">
