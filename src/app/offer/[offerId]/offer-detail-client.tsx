@@ -6,7 +6,7 @@ import type { Offer, User } from '@/lib/users';
 import Image from 'next/image';
 import { Card, CardContent, CardTitle, CardDescription, CardHeader, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Tag, Calendar, Gift, MessageSquare, Edit, UserPlus, UserCheck, Loader2 } from 'lucide-react';
+import { ArrowLeft, Tag, Calendar, Gift, Edit, UserPlus, UserCheck, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -139,12 +139,6 @@ export default function OfferDetailClient({ offer, author }: OfferDetailClientPr
                                 <Link href={`/u/${author.username}`} className="font-semibold hover:underline">{author.name}</Link>
                                 <p className="text-sm text-muted-foreground">@{author.handle}</p>
                                 <div className="mt-4 w-full space-y-2">
-                                    <Button asChild className="w-full">
-                                        <Link href={`/u/${author.username}#contact`}>
-                                            <MessageSquare className="mr-2 h-4 w-4" />
-                                            Contact
-                                        </Link>
-                                    </Button>
                                     {currentUser && !isOwner && (
                                         <Button 
                                             variant="outline"

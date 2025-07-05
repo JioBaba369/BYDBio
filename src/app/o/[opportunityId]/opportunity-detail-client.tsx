@@ -6,7 +6,7 @@ import type { Job, User } from '@/lib/users';
 import Image from 'next/image';
 import { Card, CardContent, CardTitle, CardDescription, CardHeader, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Building, Calendar, MapPin, Edit, DollarSign, Clock, ExternalLink, UserPlus, UserCheck, Loader2, MessageSquare } from 'lucide-react';
+import { ArrowLeft, Building, Calendar, MapPin, Edit, DollarSign, Clock, ExternalLink, UserPlus, UserCheck, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -148,21 +148,14 @@ export default function OpportunityDetailClient({ job, author }: OpportunityDeta
                                 )}
                             </CardContent>
                             <CardFooter>
-                                {!isOwner && job.applicationUrl ? (
+                                {!isOwner && job.applicationUrl && (
                                     <Button asChild size="lg" className="w-full">
                                         <a href={job.applicationUrl} target="_blank" rel="noopener noreferrer">
                                             <ExternalLink className="mr-2 h-4 w-4" />
                                             Apply Online
                                         </a>
                                     </Button>
-                                ) : !isOwner ? (
-                                    <Button asChild size="lg" className="w-full">
-                                        <Link href={`/u/${author.username}#contact`}>
-                                            <MessageSquare className="mr-2 h-4 w-4" />
-                                            Contact to Apply
-                                        </Link>
-                                    </Button>
-                                ) : null }
+                                )}
                             </CardFooter>
                         </Card>
                     </div>
@@ -181,12 +174,6 @@ export default function OpportunityDetailClient({ job, author }: OpportunityDeta
                                 <Link href={`/u/${author.username}`} className="font-semibold hover:underline">{author.name}</Link>
                                 <p className="text-sm text-muted-foreground">@{author.handle}</p>
                                 <div className="mt-4 w-full space-y-2">
-                                    <Button asChild className="w-full">
-                                        <Link href={`/u/${author.username}#contact`}>
-                                            <MessageSquare className="mr-2 h-4 w-4" />
-                                            Contact Poster
-                                        </Link>
-                                    </Button>
                                     {currentUser && !isOwner && (
                                         <Button 
                                             variant="outline"

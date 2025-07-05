@@ -6,7 +6,7 @@ import { type Business, type User } from '@/lib/users';
 import Image from 'next/image';
 import { Card, CardContent, CardTitle, CardDescription, CardHeader, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Mail, Phone, Globe, MapPin, ArrowLeft, Edit, UserPlus, UserCheck, Loader2, MessageSquare } from 'lucide-react';
+import { Mail, Phone, Globe, MapPin, ArrowLeft, Edit, UserPlus, UserCheck, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import ShareButton from '@/components/share-button';
 import { useAuth } from '@/components/auth-provider';
@@ -162,13 +162,7 @@ export default function BusinessPageClient({ business, author }: BusinessPageCli
                                 <Link href={`/u/${author.username}`} className="font-semibold hover:underline">{author.name}</Link>
                                 <p className="text-sm text-muted-foreground">@{author.handle}</p>
                             </CardContent>
-                            <CardFooter className="flex-col gap-2">
-                                <Button asChild className="w-full">
-                                    <Link href={`/u/${author.username}#contact`}>
-                                        <MessageSquare className="mr-2 h-4 w-4" />
-                                        Contact Owner
-                                    </Link>
-                                </Button>
+                            <CardFooter>
                                 {currentUser && !isOwner && (
                                     <Button 
                                         variant="outline"

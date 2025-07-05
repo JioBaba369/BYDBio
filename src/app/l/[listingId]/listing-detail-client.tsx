@@ -6,7 +6,7 @@ import type { Listing, User } from '@/lib/users';
 import Image from 'next/image';
 import { Card, CardContent, CardTitle, CardDescription, CardHeader, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Tag, DollarSign, MessageSquare, Calendar, Edit, ShoppingCart, UserPlus, UserCheck, Loader2 } from 'lucide-react';
+import { ArrowLeft, Tag, DollarSign, Calendar, Edit, UserPlus, UserCheck, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -122,12 +122,7 @@ export default function ListingDetailClient({ listing, author }: ListingDetailCl
                                 <p className="text-muted-foreground whitespace-pre-wrap">{listing.description}</p>
                             </CardContent>
                             <CardFooter>
-                                <Button asChild size="lg" className="w-full">
-                                    <Link href={`/u/${author.username}#contact`}>
-                                        <ShoppingCart className="mr-2 h-5 w-5" />
-                                        {listing.listingType === 'rental' ? 'Rent Now' : 'Buy Now'}
-                                    </Link>
-                                </Button>
+                                {/* Primary action button removed as contact is no longer available */}
                             </CardFooter>
                         </Card>
                     </div>
@@ -146,12 +141,6 @@ export default function ListingDetailClient({ listing, author }: ListingDetailCl
                                 <Link href={`/u/${author.username}`} className="font-semibold hover:underline">{author.name}</Link>
                                 <p className="text-sm text-muted-foreground">@{author.handle}</p>
                                 <div className="mt-4 w-full space-y-2">
-                                    <Button asChild className="w-full">
-                                        <Link href={`/u/${author.username}#contact`}>
-                                            <MessageSquare className="mr-2 h-4 w-4" />
-                                            Contact Seller
-                                        </Link>
-                                    </Button>
                                     {currentUser && !isOwner && (
                                         <Button 
                                             variant="outline"

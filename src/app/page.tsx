@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
-import { Briefcase, Calendar, DollarSign, ListFilter, MessageSquare, PlusCircle, Tags, Users, UserCheck } from "lucide-react"
+import { Briefcase, Calendar, DollarSign, ListFilter, PenSquare, PlusCircle, Tags, Users, UserCheck } from "lucide-react"
 import Link from "next/link"
 import {
   DropdownMenu,
@@ -148,7 +148,7 @@ function Dashboard() {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
                 <Link href="/feed" className="cursor-pointer">
-                    <MessageSquare className="mr-2 h-4 w-4" />
+                    <PenSquare className="mr-2 h-4 w-4" />
                     <span>New Post</span>
                 </Link>
                 </DropdownMenuItem>

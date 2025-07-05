@@ -6,7 +6,7 @@ import type { Event, User } from '@/lib/users';
 import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MapPin, Calendar, Clock, ArrowLeft, Users, Ticket, User as UserIcon, BellRing, CalendarPlus, Loader2, Edit, MessageSquare, UserPlus, UserCheck } from 'lucide-react';
+import { MapPin, Calendar, Clock, ArrowLeft, Users, Ticket, User as UserIcon, BellRing, CalendarPlus, Loader2, Edit, UserPlus, UserCheck } from 'lucide-react';
 import Link from 'next/link';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
@@ -321,12 +321,6 @@ export default function EventDetailClient({ event, author }: EventDetailClientPr
                                 <Link href={`/u/${author.username}`} className="font-semibold hover:underline">{author.name}</Link>
                                 <p className="text-sm text-muted-foreground">@{author.handle}</p>
                                 <div className="mt-4 w-full space-y-2">
-                                    <Button asChild className="w-full">
-                                        <Link href={`/u/${author.username}#contact`}>
-                                            <MessageSquare className="mr-2 h-4 w-4" />
-                                            Contact Host
-                                        </Link>
-                                    </Button>
                                     {currentUser && !isOwner && (
                                         <Button 
                                             variant="outline"

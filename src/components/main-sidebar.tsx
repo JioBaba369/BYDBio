@@ -20,7 +20,7 @@ import {
   Calendar,
   CreditCard,
   LayoutDashboard,
-  MessageSquare,
+  Rss,
   Settings,
   Share,
   User,
@@ -175,7 +175,7 @@ export function MainSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton asChild tooltip="Status Feed" isActive={isActive('/feed')}>
               <Link href="/feed">
-                <MessageSquare />
+                <Rss />
                 <span>Status Feed</span>
               </Link>
             </SidebarMenuButton>
