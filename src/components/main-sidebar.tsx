@@ -50,16 +50,9 @@ export function MainSidebar() {
   const { user, loading } = useAuth();
 
   const isActive = (path: string) => {
-    // Exact match for dashboard and the main bio page
-    if (path === '/' || (user && path === `/u/${user.username}`)) {
-      return pathname === path;
-    }
-     // Handle special case for /u/[username]/card and /u/[username]/links
-    if (user && path.includes(`/u/${user.username}/`)) {
-        return pathname === path;
-    }
-    // Prefix match for all other pages
-    return pathname.startsWith(path) && path !== '/';
+    // Use exact path matching for active state.
+    // The usePathname hook does not include query params, so this works for pages like /settings?tab=...
+    return pathname === path;
   };
 
   const handleSearchSubmit = (e: React.FormEvent) => {
