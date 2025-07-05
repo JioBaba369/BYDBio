@@ -16,7 +16,7 @@ export default function LinksClientPage({ user }: { user: User }) {
   const { name, username, handle, avatarUrl, avatarFallback, bio, links } = user;
 
   return (
-    <div className="bg-background min-h-screen antialiased">
+    <div className="bg-dot min-h-screen antialiased">
       <div className="container mx-auto max-w-md p-4 sm:p-8">
         <div className="absolute top-4 left-4">
             <Button asChild variant="ghost" size="sm">
@@ -45,12 +45,16 @@ export default function LinksClientPage({ user }: { user: User }) {
                 {links.map((link, index) => {
                     const Icon = linkIcons[link.icon as keyof typeof linkIcons];
                     return (
-                        <a key={index} href={link.url} target="_blank" rel="noopener noreferrer" className="w-full group">
-                            <div className="w-full h-16 text-lg font-semibold flex items-center p-4 rounded-lg bg-secondary hover:scale-[1.02] transition-transform duration-200 ease-out">
-                                {Icon && <Icon className="h-6 w-6 text-secondary-foreground/80" />}
-                                <span className="flex-1 text-center text-secondary-foreground">{link.title}</span>
-                                <ExternalLink className="h-5 w-5 text-secondary-foreground/50 opacity-0 group-hover:opacity-100 transition-opacity" />
-                            </div>
+                        <a 
+                            key={index} 
+                            href={link.url} 
+                            target="_blank" 
+                            rel="noopener noreferrer" 
+                            className="group flex h-16 w-full items-center gap-4 rounded-lg bg-primary px-4 text-lg font-semibold text-primary-foreground shadow-sm transition-transform duration-200 ease-out hover:scale-[1.02] hover:bg-primary/90"
+                        >
+                            {Icon && <Icon className="h-6 w-6 flex-shrink-0" />}
+                            <span className="flex-1 text-center truncate">{link.title}</span>
+                            <ExternalLink className="h-5 w-5 flex-shrink-0 opacity-0 transition-opacity group-hover:opacity-70" />
                         </a>
                     )
                 })}
