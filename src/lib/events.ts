@@ -319,6 +319,7 @@ export const getCalendarItems = async (userId: string): Promise<CalendarItem[]> 
 
         switch(item.type) {
             case 'event':
+                const isExternal = item.source === 'rsvped';
                 return {
                     id: item.id,
                     type: 'Event' as const,
@@ -327,8 +328,8 @@ export const getCalendarItems = async (userId: string): Promise<CalendarItem[]> 
                     description: `Event at ${item.location}`,
                     location: item.location,
                     imageUrl: item.imageUrl,
-                    editPath: `/events/${item.id}/edit`,
-                    isExternal: item.source === 'rsvped',
+                    editPath: isExternal ? `/events/${item.id}` : `/events/${item.id}/edit`,
+                    isExternal,
                     status: item.status,
                     views: item.views,
                     rsvps: item.rsvps,
