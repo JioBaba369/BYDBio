@@ -75,7 +75,7 @@ export default function EditPromoPage() {
                 title: "Promo Page Updated!",
                 description: "Your promo page has been updated successfully.",
             });
-            router.push('/promo');
+            router.push('/calendar');
         } catch (error) {
             console.error("Error updating promo page:", error);
             toast({
@@ -104,9 +104,9 @@ export default function EditPromoPage() {
                     <p className="text-muted-foreground">Modify the details of your promo page below.</p>
                 </div>
                 <Button asChild variant="outline">
-                    <Link href="/promo">
+                    <Link href="/calendar">
                         <ArrowLeft className="mr-2 h-4 w-4" />
-                        Back to Promo Pages
+                        Back to My Content
                     </Link>
                 </Button>
             </div>
