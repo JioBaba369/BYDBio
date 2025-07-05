@@ -11,15 +11,11 @@ const AUTH_PATHS = [
 const PUBLIC_CONTENT_PATHS = [
     '/u/',
     '/p/', // promo pages
-    '/l/',
-    '/o/',
+    '/l/', // listings
+    '/o/', // opportunities
     '/offer/',
-    '/events',
+    '/events/', // Note the trailing slash to match all sub-paths
     '/explore',
-    '/listings',
-    '/opportunities',
-    '/offers',
-    '/promo'
 ];
 
 /**
