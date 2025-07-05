@@ -93,6 +93,11 @@ export default function ConnectionsPage() {
         // Optimistic UI Update
         if (isCurrentlyFollowing) {
             setFollowingList(prev => prev.filter(u => u.uid !== targetUser.uid));
+            // Add the unfollowed user back to suggestions if they're not there already
+            setSuggestedList(prev => {
+                if (prev.find(p => p.uid === targetUser.uid)) return prev;
+                return [...prev, targetUser]
+            });
         } else {
             setFollowingList(prev => [...prev, targetUser]);
             // Also remove from suggestions if they were followed from there
