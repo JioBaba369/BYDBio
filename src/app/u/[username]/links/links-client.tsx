@@ -50,11 +50,11 @@ export default function LinksClientPage({ user }: { user: User }) {
                             href={link.url} 
                             target="_blank" 
                             rel="noopener noreferrer" 
-                            className="group flex h-16 w-full items-center gap-4 rounded-lg bg-primary px-4 text-lg font-semibold text-primary-foreground shadow-sm transition-transform duration-200 ease-out hover:scale-[1.02] hover:bg-primary/90"
+                            className="group flex h-16 w-full items-center gap-4 rounded-lg bg-background/70 p-4 text-base font-semibold text-foreground shadow-sm transition-all duration-200 ease-out hover:scale-[1.02] hover:bg-accent hover:text-accent-foreground backdrop-blur-sm border"
                         >
-                            {Icon && <Icon className="h-6 w-6 flex-shrink-0" />}
-                            <span className="flex-1 text-center truncate">{link.title}</span>
-                            <ExternalLink className="h-5 w-5 flex-shrink-0 opacity-0 transition-opacity group-hover:opacity-70" />
+                            {Icon && <Icon className="h-7 w-7 flex-shrink-0 text-primary" />}
+                            <span className="flex-1 text-left truncate">{link.title}</span>
+                            <ExternalLink className="h-5 w-5 flex-shrink-0 text-muted-foreground transition-transform group-hover:translate-x-1" />
                         </a>
                     )
                 })}
