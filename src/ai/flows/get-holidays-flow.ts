@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview An AI agent that fetches public holidays for a given country.
@@ -61,17 +62,13 @@ const prompt = ai.definePrompt({
   name: 'getHolidaysPrompt',
   input: {schema: GetHolidaysInputSchema},
   output: {schema: GetHolidaysOutputSchema},
-  
-  // The system prompt instructs the LLM on its role and how to use the tool.
-  system: `You are a helpful assistant that provides public holiday information.
-  Use the getPublicHolidays tool to find the holidays for the requested country and year.
-  If the user provides a country name, you must determine the correct two-letter ISO 3166-1 alpha-2 country code to use with the tool.
-  Format the tool output into the required JSON format.
-  `,
-  // List the tools the LLM can use.
+  system: `You are an AI assistant that provides public holiday information.
+Your task is to call the 'getPublicHolidays' tool to find the holidays for the requested country and year.
+- You MUST determine the correct two-letter ISO 3166-1 alpha-2 country code from the user's input to use with the tool.
+- After the tool returns data, you MUST format it into the required JSON output format.
+`,
   tools: [getPublicHolidaysTool],
-  // The prompt is now simpler as the logic is in the system prompt and tool.
-  prompt: `Please provide a list of all official public holidays for {{{country}}} for the year {{{year}}}.`
+  prompt: `Country: {{{country}}}\nYear: {{{year}}}`,
 });
 
 const getHolidaysFlow = ai.defineFlow(
