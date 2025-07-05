@@ -20,14 +20,14 @@ const NagerDateHolidaySchema = z.object({
   types: z.array(z.string()),
 });
 
-export type NagerDateHoliday = z.infer<typeof NagerDateHolidaySchema>;
+type NagerDateHoliday = z.infer<typeof NagerDateHolidaySchema>;
 
-export const HolidaySchema = z.object({
+const HolidaySchema = z.object({
   name: z.string().describe('The name of the public holiday.'),
   date: z.string().describe('The date of the holiday in YYYY-MM-DD format.'),
 });
 
-export type Holiday = z.infer<typeof HolidaySchema>;
+type Holiday = z.infer<typeof HolidaySchema>;
 
 export async function getPublicHolidays(
   year: number,
