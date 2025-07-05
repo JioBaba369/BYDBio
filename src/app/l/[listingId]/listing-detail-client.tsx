@@ -6,7 +6,7 @@ import type { Listing, User } from '@/lib/users';
 import Image from 'next/image';
 import { Card, CardContent, CardTitle, CardDescription, CardHeader, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Tag, DollarSign, Calendar, Edit, UserPlus, UserCheck, Loader2 } from 'lucide-react';
+import { ArrowLeft, Tag, DollarSign, Calendar, Edit, UserPlus, UserCheck, Loader2, User as UserIcon } from 'lucide-react';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -122,7 +122,12 @@ export default function ListingDetailClient({ listing, author }: ListingDetailCl
                                 <p className="text-muted-foreground whitespace-pre-wrap">{listing.description}</p>
                             </CardContent>
                             <CardFooter>
-                                {/* Primary action button removed as contact is no longer available */}
+                                <Button asChild size="lg" className="w-full">
+                                    <Link href={`/u/${author.username}`}>
+                                        <UserIcon className="mr-2 h-4 w-4" />
+                                        View Seller's Profile
+                                    </Link>
+                                </Button>
                             </CardFooter>
                         </Card>
                     </div>
