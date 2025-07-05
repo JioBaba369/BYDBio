@@ -241,14 +241,6 @@ export const getAllEvents = async (): Promise<EventWithAuthor[]> => {
     return events.sort((a,b) => new Date(b.startDate as string).getTime() - new Date(a.startDate as string).getTime());
 };
 
-// Diary notes
-export type DiaryNote = {
-  id: string;
-  userId: string;
-  eventId: string;
-  notes: string;
-}
-
 const serializeFirestoreTimestamps = (data: any): any => {
     if (!data) return data;
     const serializedData: { [key: string]: any } = {};
@@ -264,85 +256,6 @@ const serializeFirestoreTimestamps = (data: any): any => {
     }
     return serializedData;
 }
-
-
-export const getDiaryNote = async (userId: string, eventId: string): Promise<DiaryNote | null> => {
-    const noteRef = doc(db, 'diaryNotes', `${userId}_${eventId}`);
-    const noteDoc = await getDoc(noteRef);
-    if (noteDoc.exists()) {
-        return noteDoc.data() as DiaryNote;
-    }
-    return null;
-}
-
-export const saveDiaryNote = async (userId: string, eventId: string, notes: string) => {
-    const noteRef = doc(db, 'diaryNotes', `${userId}_${eventId}`);
-    await setDoc(noteRef, { userId, eventId, notes }, { merge: true });
-}
-
-/**
- * Fetches all events for a user's diary, including created and RSVP'd events, and their personal notes.
- * @param userId The UID of the user.
- * @returns A sorted array of events for the user's diary.
- */
-export const getDiaryEvents = async (userId: string): Promise<any[]> => {
-    const createdEventsQuery = query(collection(db, 'events'), where('authorId', '==', userId));
-    const rsvpedEventsQuery = query(collection(db, 'events'), where('rsvps', 'array-contains', userId));
-
-    const [createdSnapshot, rsvpedSnapshot] = await Promise.all([
-        getDocs(createdEventsQuery),
-        getDocs(rsvpedEventsQuery),
-    ]);
-    
-    const eventsMap = new Map<string, any>();
-    
-    const processEventDoc = (doc: any, source: 'created' | 'rsvped') => {
-        const key = doc.id;
-        if (source === 'rsvped' && eventsMap.has(key)) return;
-        
-        const data = doc.data();
-        const serializedData = serializeFirestoreTimestamps(data);
-        
-        eventsMap.set(key, { ...serializedData, id: doc.id, source });
-    }
-
-    createdSnapshot.forEach(doc => processEventDoc(doc, 'created'));
-    rsvpedSnapshot.forEach(doc => processEventDoc(doc, 'rsvped'));
-    
-    const events = Array.from(eventsMap.values());
-    if (events.length === 0) return [];
-    
-    const eventIds = events.map(event => event.id);
-    // Firestore 'in' queries are limited to 30 items. Chunk if necessary.
-    const notePromises = [];
-    for (let i = 0; i < eventIds.length; i += 30) {
-        const chunk = eventIds.slice(i, i + 30);
-        const notesQuery = query(collection(db, 'diaryNotes'), where('userId', '==', userId), where('eventId', 'in', chunk));
-        notePromises.push(getDocs(notesQuery));
-    }
-    const notesSnapshots = await Promise.all(notePromises);
-    const notesMap = new Map<string, string>();
-    notesSnapshots.forEach(snapshot => {
-        snapshot.forEach(doc => {
-            notesMap.set(doc.data().eventId, doc.data().notes);
-        });
-    });
-    
-    const authorIds = [...new Set(events.filter(e => e.source === 'rsvped').map(e => e.authorId))];
-    const authors = authorIds.length > 0 ? await getDocs(query(collection(db, 'users'), where('uid', 'in', authorIds.slice(0,30)))) : { docs: [] };
-    const authorMap = new Map(authors.docs.map(doc => [doc.id, doc.data() as User]));
-
-    return events.map(event => {
-        if (!event.startDate) {
-            console.warn(`Event ${event.id} in diary is missing a start date and will be skipped.`);
-            return null;
-        }
-        return {
-        ...event,
-        notes: notesMap.get(event.id) || '',
-        author: event.source === 'rsvped' ? authorMap.get(event.authorId) : undefined,
-    }}).filter((e): e is any => e !== null);
-};
 
 // This function fetches ALL content types for a user for the Content Calendar.
 export const getCalendarItems = async (userId: string): Promise<CalendarItem[]> => {

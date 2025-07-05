@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge, badgeVariants } from '@/components/ui/badge';
@@ -144,7 +144,7 @@ export default function CalendarPage() {
             case 'Event':
                 if (selectedItem.isExternal) {
                     await toggleRsvp(selectedItem.id, user.uid);
-                    toast({ title: 'Removed from diary', description: `You are no longer attending "${selectedItem.title}".`});
+                    toast({ title: 'Removed from calendar', description: `You are no longer attending "${selectedItem.title}".`});
                 } else {
                     await deleteEvent(selectedItem.id);
                     toast({ title: 'Event deleted!' });

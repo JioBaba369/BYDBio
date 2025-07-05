@@ -25,7 +25,6 @@ import {
   Search,
   Users,
   Bell,
-  BookText,
   Compass,
   Megaphone,
   Tags,
@@ -216,14 +215,6 @@ export function MainSidebar() {
               <Link href="/calendar">
                 <Package />
                 <span>My Content</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Diary" isActive={isActive('/diary')}>
-              <Link href="/diary">
-                <BookText />
-                <span>Diary</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
