@@ -34,7 +34,7 @@ export default function CreateOfferPage() {
                 title: "Offer Created!",
                 description: "Your new offer has been created successfully.",
             });
-            router.push('/offers');
+            router.push('/calendar');
         } catch (error) {
             console.error("Error creating offer:", error);
             toast({

@@ -34,7 +34,7 @@ export default function CreateEventPage() {
                 title: "Event Created!",
                 description: "Your new event has been created successfully.",
             });
-            router.push('/events');
+            router.push('/calendar');
         } catch (error) {
             console.error("Error creating event:", error);
             toast({

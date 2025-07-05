@@ -38,7 +38,7 @@ export default function CreatePromoPage() {
                 title: "Promo Page Created!",
                 description: "Your new promo page has been created successfully.",
             });
-            router.push('/promo');
+            router.push('/calendar');
         } catch (error) {
             console.error("Error creating promo page:", error);
             toast({

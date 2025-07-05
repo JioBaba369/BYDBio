@@ -33,7 +33,7 @@ export default function CreateListingPage() {
                 title: "Listing Created!",
                 description: "Your new listing has been created successfully.",
             });
-            router.push('/listings');
+            router.push('/calendar');
         } catch (error) {
             console.error("Error creating listing:", error);
             toast({

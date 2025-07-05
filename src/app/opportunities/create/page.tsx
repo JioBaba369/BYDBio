@@ -34,7 +34,7 @@ export default function CreateOpportunityPage() {
                 title: "Opportunity Created!",
                 description: "Your new opportunity has been created successfully.",
             });
-            router.push('/opportunities');
+            router.push('/calendar');
         } catch (error) {
             console.error("Error creating opportunity:", error);
             toast({
