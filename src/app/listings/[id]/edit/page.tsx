@@ -68,7 +68,7 @@ export default function EditListingPage() {
                 title: "Listing Updated!",
                 description: "Your listing has been updated successfully.",
             });
-            router.push('/listings');
+            router.push('/explore');
         } catch (error) {
             console.error("Error updating listing:", error);
             toast({
@@ -97,9 +97,9 @@ export default function EditListingPage() {
                     <p className="text-muted-foreground">Modify the details of your listing below.</p>
                 </div>
                  <Button asChild variant="outline">
-                    <Link href="/listings">
+                    <Link href="/explore">
                         <ArrowLeft className="mr-2 h-4 w-4" />
-                        Back to Listings
+                        Back to Explore
                     </Link>
                 </Button>
             </div>

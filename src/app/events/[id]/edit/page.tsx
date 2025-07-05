@@ -70,7 +70,7 @@ export default function EditEventPage() {
                 title: "Event Updated!",
                 description: "Your event has been updated successfully.",
             });
-            router.push('/events');
+            router.push('/explore');
         } catch (error) {
             console.error("Error updating event:", error);
             toast({
@@ -99,9 +99,9 @@ export default function EditEventPage() {
                     <p className="text-muted-foreground">Modify the details of your event below.</p>
                 </div>
                  <Button asChild variant="outline">
-                    <Link href="/events">
+                    <Link href="/explore">
                         <ArrowLeft className="mr-2 h-4 w-4" />
-                        Back to Events
+                        Back to Explore
                     </Link>
                 </Button>
             </div>

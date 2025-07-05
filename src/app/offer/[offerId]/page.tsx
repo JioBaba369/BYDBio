@@ -48,7 +48,7 @@ export default async function PublicOfferPage({ params }: { params: { offerId: s
                 <h1 className="text-4xl font-bold">Offer Not Found</h1>
                 <p className="text-muted-foreground mt-2">The offer page you're looking for doesn't exist.</p>
                 <Button asChild className="mt-6">
-                    <Link href="/offers">Back to Offers</Link>
+                    <Link href="/explore">Back to Explore</Link>
                 </Button>
             </div>
         )

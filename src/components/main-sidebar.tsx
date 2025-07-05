@@ -224,54 +224,6 @@ export function MainSidebar() {
           </SidebarMenuItem>
           
           <SidebarMenuItem>
-            <SidebarGroupLabel>Discover</SidebarGroupLabel>
-          </SidebarMenuItem>
-           <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Listings" isActive={isActive('/listings')}>
-              <Link href="/listings">
-                <Tags />
-                <span>Listings</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Opportunities" isActive={isActive('/opportunities')}>
-              <Link href="/opportunities">
-                <Briefcase />
-                <span>Opportunities</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Offers" isActive={isActive('/offers')}>
-              <Link href="/offers">
-                <Gift />
-                <span>Offers</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Events" isActive={isActive('/events')}>
-              <Link href="/events">
-                <Calendar />
-                <span>Events</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Businesses" isActive={isActive('/businesses')}>
-              <Link href="/businesses">
-                <Building2 />
-                <span>Businesses</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          
-          <SidebarMenuItem>
-            <SidebarSeparator className="my-1" />
-          </SidebarMenuItem>
-          
-          <SidebarMenuItem>
             <SidebarGroupLabel>My Public Profile</SidebarGroupLabel>
           </SidebarMenuItem>
            <SidebarMenuItem>

@@ -48,7 +48,7 @@ export default async function PublicListingPage({ params }: { params: { listingI
                 <h1 className="text-4xl font-bold">Listing Not Found</h1>
                 <p className="text-muted-foreground mt-2">The listing page you're looking for doesn't exist.</p>
                 <Button asChild className="mt-6">
-                    <Link href="/listings">Back to Listings</Link>
+                    <Link href="/explore">Back to Explore</Link>
                 </Button>
             </div>
         )

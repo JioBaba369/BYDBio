@@ -70,7 +70,7 @@ export default function EditOfferPage() {
                 title: "Offer Updated!",
                 description: "Your offer has been updated successfully.",
             });
-            router.push('/offers');
+            router.push('/explore');
         } catch (error) {
             console.error("Error updating offer:", error);
             toast({
@@ -99,9 +99,9 @@ export default function EditOfferPage() {
                     <p className="text-muted-foreground">Modify the details of your offer below.</p>
                 </div>
                  <Button asChild variant="outline">
-                    <Link href="/offers">
+                    <Link href="/explore">
                         <ArrowLeft className="mr-2 h-4 w-4" />
-                        Back to Offers
+                        Back to Explore
                     </Link>
                 </Button>
             </div>

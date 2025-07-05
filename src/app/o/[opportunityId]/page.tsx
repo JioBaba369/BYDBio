@@ -50,7 +50,7 @@ export default async function PublicOpportunityPage({ params }: { params: { oppo
                 <h1 className="text-4xl font-bold">Opportunity Not Found</h1>
                 <p className="text-muted-foreground mt-2">The job opportunity you're looking for doesn't exist.</p>
                 <Button asChild className="mt-6">
-                    <Link href="/opportunities">Back to Opportunities</Link>
+                    <Link href="/explore">Back to Explore</Link>
                 </Button>
             </div>
         )

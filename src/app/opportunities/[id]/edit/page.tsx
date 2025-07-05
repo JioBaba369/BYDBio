@@ -70,7 +70,7 @@ export default function EditOpportunityPage() {
                 title: "Opportunity Updated!",
                 description: "The opportunity has been updated successfully.",
             });
-            router.push('/opportunities');
+            router.push('/explore');
         } catch (error) {
             console.error("Error updating opportunity:", error);
             toast({
@@ -99,9 +99,9 @@ export default function EditOpportunityPage() {
                     <p className="text-muted-foreground">Modify the details of the job opportunity below.</p>
                 </div>
                  <Button asChild variant="outline">
-                    <Link href="/opportunities">
+                    <Link href="/explore">
                         <ArrowLeft className="mr-2 h-4 w-4" />
-                        Back to Opportunities
+                        Back to Explore
                     </Link>
                 </Button>
             </div>

@@ -48,7 +48,7 @@ export default async function EventDetailPage({ params }: { params: { id: string
                 <h1 className="text-4xl font-bold">Event Not Found</h1>
                 <p className="text-muted-foreground mt-2">The event page you're looking for doesn't exist.</p>
                 <Button asChild className="mt-6">
-                    <Link href="/events">Back to Events</Link>
+                    <Link href="/explore">Back to Explore</Link>
                 </Button>
             </div>
         )
