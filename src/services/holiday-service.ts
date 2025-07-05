@@ -6,28 +6,23 @@
  * - getPublicHolidays - Fetches public holidays for a given year and country.
  */
 
-import { z } from 'zod';
+// These are now local types and are not exported.
+type NagerDateHoliday = {
+  date: string;
+  localName: string;
+  name: string;
+  countryCode: string;
+  fixed: boolean;
+  global: boolean;
+  counties: string[] | null;
+  launchYear: number | null;
+  types: string[];
+};
 
-const NagerDateHolidaySchema = z.object({
-  date: z.string(),
-  localName: z.string(),
-  name: z.string(),
-  countryCode: z.string(),
-  fixed: z.boolean(),
-  global: z.boolean(),
-  counties: z.array(z.string()).nullable(),
-  launchYear: z.number().nullable(),
-  types: z.array(z.string()),
-});
-
-type NagerDateHoliday = z.infer<typeof NagerDateHolidaySchema>;
-
-const HolidaySchema = z.object({
-  name: z.string().describe('The name of the public holiday.'),
-  date: z.string().describe('The date of the holiday in YYYY-MM-DD format.'),
-});
-
-type Holiday = z.infer<typeof HolidaySchema>;
+type Holiday = {
+  name: string;
+  date: string;
+};
 
 export async function getPublicHolidays(
   year: number,
@@ -39,6 +34,11 @@ export async function getPublicHolidays(
     );
 
     if (!response.ok) {
+      // The API returns a 404 for invalid country codes.
+      // We can provide a more helpful error message.
+      if (response.status === 404) {
+          throw new Error(`The country "${countryCode}" is not recognized by the holiday service. Please use a valid two-letter country code (e.g., US, GB, CA).`);
+      }
       throw new Error(`Failed to fetch holidays: ${response.statusText}`);
     }
 
@@ -50,6 +50,11 @@ export async function getPublicHolidays(
     }));
   } catch (error) {
     console.error('Error fetching public holidays:', error);
-    throw new Error('Could not retrieve holiday information.');
+    // Re-throw the error to be handled by the caller (the Genkit flow)
+    if (error instanceof Error) {
+        throw error;
+    }
+    // Fallback error
+    throw new Error('An unknown error occurred while fetching holiday information.');
   }
 }
