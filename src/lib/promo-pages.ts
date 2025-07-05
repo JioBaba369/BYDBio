@@ -11,6 +11,7 @@ import {
   deleteDoc,
   serverTimestamp,
   type Timestamp,
+  orderBy,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { User, PromoPage } from './users';
@@ -30,7 +31,7 @@ export const getPromoPage = async (id: string): Promise<PromoPage | null> => {
 // Function to fetch all promo pages for a specific user
 export const getPromoPagesByUser = async (userId: string): Promise<PromoPage[]> => {
   const promoPagesRef = collection(db, 'promoPages');
-  const q = query(promoPagesRef, where('authorId', '==', userId));
+  const q = query(promoPagesRef, where('authorId', '==', userId), orderBy('createdAt', 'desc'));
   const querySnapshot = await getDocs(q);
   return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as PromoPage));
 };
