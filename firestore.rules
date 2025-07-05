@@ -1,42 +1,73 @@
+
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-  
-    function isAuthenticated() {
+
+    // --- HELPER FUNCTIONS ---
+    function isUserAuthenticated() {
       return request.auth != null;
     }
 
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    // --- COLLECTION RULES ---
+
+    // USER PROFILES
     match /users/{userId} {
       allow read: if true;
-      allow create: if isAuthenticated() && request.auth.uid == userId;
-      // An owner can update their own profile.
-      // Any authenticated user can update *only* the followerCount, which is necessary for the follow/unfollow logic.
-      // For a production app, this should ideally be handled by a Cloud Function for better security.
-      allow update: if (isAuthenticated() && request.auth.uid == userId) || 
-                       (isAuthenticated() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['followerCount']));
-      allow delete: if isAuthenticated() && request.auth.uid == userId;
+      allow create: if isUserAuthenticated() && isOwner(userId);
+      allow delete: if false; // Deletion handled by backend function for safety.
+
+      // Allow owner to update their own profile fields.
+      // Also allow any authenticated user to increment/decrement followerCount by 1.
+      allow update: if (isOwner(userId) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'username', 'handle', 'bio', 'avatarUrl', 'avatarFallback', 'links', 'businessCard', 'notificationSettings', 'following', 'searchableKeywords']))
+                   || (isUserAuthenticated() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['followerCount']) && (request.resource.data.followerCount == resource.data.followerCount + 1 || request.resource.data.followerCount == resource.data.followerCount - 1));
     }
-    
-    // Generic Content Rules
-    match /{collection}/{docId} where collection in ['posts', 'listings', 'jobs', 'events', 'offers', 'promoPages'] {
+
+    // POSTS (Status Updates)
+    match /posts/{postId} {
       allow read: if true;
-      allow create: if isAuthenticated() && request.auth.uid == request.resource.data.authorId;
-      // Allow owner to update, and allow any authenticated user to update interaction counts/arrays.
-      allow update: if isAuthenticated() && (
-        (request.auth.uid == resource.data.authorId) ||
-        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['views', 'clicks', 'rsvps', 'likedBy', 'likes', 'claims', 'applicants']))
-      );
-      allow delete: if isAuthenticated() && request.auth.uid == resource.data.authorId;
+      allow create: if isUserAuthenticated() && isOwner(request.resource.data.authorId);
+      allow delete: if isUserAuthenticated() && isOwner(resource.data.authorId);
+      // Author can update any field. Other users can only update 'likes' and 'likedBy'.
+      allow update: if (isUserAuthenticated() && isOwner(resource.data.authorId)) ||
+                       (isUserAuthenticated() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes', 'likedBy']));
     }
 
+    // EVENTS
+    match /events/{eventId} {
+      allow read: if true;
+      allow create: if isUserAuthenticated() && isOwner(request.resource.data.authorId);
+      allow delete: if isUserAuthenticated() && isOwner(resource.data.authorId);
+      // Author can update any field. Other users can only update 'rsvps'.
+      allow update: if (isUserAuthenticated() && isOwner(resource.data.authorId)) ||
+                       (isUserAuthenticated() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['rsvps']));
+    }
+
+    // Standard Content Collections (Listings, Jobs, Offers, Promo Pages)
+    match /{collection}/{docId} where collection in ['listings', 'jobs', 'offers', 'promoPages'] {
+        allow read: if true;
+        allow create: if isUserAuthenticated() && isOwner(request.resource.data.authorId);
+        // Only the owner can update or delete these types of content.
+        allow update, delete: if isUserAuthenticated() && isOwner(resource.data.authorId);
+    }
+
+    // NOTIFICATIONS
     match /notifications/{notificationId} {
-      allow read, update, delete: if isAuthenticated() && request.auth.uid == resource.data.userId;
-      allow create: if isAuthenticated();
+      // Authenticated users can create notifications for others.
+      allow create: if isUserAuthenticated();
+      // Only the recipient can read, update (e.g., mark as read), or delete their notifications.
+      allow read, update, delete: if isUserAuthenticated() && isOwner(resource.data.userId);
     }
 
+    // REMINDERS
     match /reminders/{reminderId} {
-      allow read, write: if isAuthenticated() && request.auth.uid == reminderId.split('_')[0];
+        // User can only create or manage their own reminders.
+        allow write: if isUserAuthenticated() && isOwner(request.resource.data.userId);
+        allow read: if isUserAuthenticated() && isOwner(resource.data.userId);
     }
   }
 }
