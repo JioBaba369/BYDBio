@@ -33,6 +33,7 @@ import {
   Package,
   UserCircle,
   Link2,
+  Share2,
 } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -259,6 +260,14 @@ export function MainSidebar() {
                 <Link href="/whats-new">
                     <Megaphone />
                     <span>What's New</span>
+                </Link>
+                </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="URL Tree" isActive={isActive('/url-tree')}>
+                <Link href="/url-tree">
+                    <Share2 />
+                    <span>URL Tree</span>
                 </Link>
                 </SidebarMenuButton>
             </SidebarMenuItem>
