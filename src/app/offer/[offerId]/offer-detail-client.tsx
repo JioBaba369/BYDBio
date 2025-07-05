@@ -116,12 +116,6 @@ export default function OfferDetailClient({ offer, author }: OfferDetailClientPr
                                 <h3 className="font-semibold text-lg mb-2">About this offer</h3>
                                 <p className="text-muted-foreground whitespace-pre-wrap">{offer.description}</p>
                             </CardContent>
-                             <CardFooter>
-                                <Button size="lg" className="w-full">
-                                    <Gift className="mr-2 h-5 w-5" />
-                                    Claim Offer
-                                </Button>
-                            </CardFooter>
                         </Card>
                     </div>
                     <div className="md:col-span-1 space-y-6">

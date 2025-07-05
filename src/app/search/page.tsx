@@ -109,6 +109,7 @@ export default function SearchPage() {
   const handleToggleFollow = async (targetUser: User) => {
     if (!user) return;
     const isCurrentlyFollowing = targetUser.isFollowedByCurrentUser ?? user.following.includes(targetUser.uid);
+    const previousResults = results;
 
     // Optimistic update
     setResults(prev => ({
@@ -133,17 +134,7 @@ export default function SearchPage() {
       }
     } catch (error) {
         // Revert on error
-        setResults(prev => ({
-            ...prev,
-            users: prev.users.map(u => 
-                u.uid === targetUser.uid 
-                ? { 
-                    ...u, 
-                    isFollowedByCurrentUser: isCurrentlyFollowing,
-                    followerCount: u.followerCount || 0
-                  } 
-                : u)
-        }));
+        setResults(previousResults);
         toast({ title: "Something went wrong", variant: "destructive" });
     }
   };
