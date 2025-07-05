@@ -125,6 +125,38 @@ export type PromoPage = {
   searchableKeywords: string[];
 };
 
+const generateUniqueUsername = async (baseUsername: string): Promise<string> => {
+    let username = baseUsername;
+    let isUnique = false;
+    let attempts = 0;
+
+    if (username.length < 3) {
+        username = `user${username}`;
+    }
+
+    while (!isUnique && attempts < 10) { // Limit attempts to prevent infinite loops
+        const usersRef = collection(db, "users");
+        const q = query(usersRef, where("username", "==", username), limit(1));
+        const querySnapshot = await getDocs(q);
+
+        if (querySnapshot.empty) {
+            isUnique = true;
+        } else {
+            // Append 3 random digits
+            const randomSuffix = Math.floor(100 + Math.random() * 900).toString();
+            username = `${baseUsername.slice(0, 20)}${randomSuffix}`; // Slice to prevent overly long usernames
+            attempts++;
+        }
+    }
+    
+    if (!isUnique) {
+        // Fallback to a highly unique username if all attempts fail
+        return `user${Date.now().toString().slice(-6)}`;
+    }
+    return username;
+}
+
+
 /**
  * Creates a user profile in Firestore if one doesn't already exist.
  * This prevents overwriting data on subsequent logins.
@@ -136,9 +168,9 @@ export const createUserProfileIfNotExists = async (user: FirebaseUser, additiona
     const userDoc = await getDoc(userDocRef);
 
     if (!userDoc.exists()) {
-        const username = user.email?.split('@')[0].replace(/[^a-zA-Z0-9]/g, '') || `user${user.uid.substring(0,5)}`;
+        const baseUsername = user.email?.split('@')[0].replace(/[^a-zA-Z0-9]/g, '').toLowerCase() || `user`;
+        const username = await generateUniqueUsername(baseUsername);
         const name = additionalData?.name || user.displayName || "New User";
-        // In a real app, you might want to check if this username is unique and handle collisions.
 
         const searchableKeywords = [...new Set([
             ...name.toLowerCase().split(' ').filter(Boolean),
