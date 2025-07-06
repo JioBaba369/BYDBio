@@ -1,9 +1,11 @@
-
 import { initializeApp, getApps, getApp, type FirebaseApp } from "firebase/app";
 import { getAuth, connectAuthEmulator, signOut } from "firebase/auth";
 import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
 import { getStorage, connectStorageEmulator } from "firebase/storage";
 
+// Define the Firebase configuration using environment variables.
+// Ensure these variables are correctly set in your .env.local file for development,
+// and in your deployment environment for production.
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -38,6 +40,21 @@ const globalWithFirebase = globalThis as typeof globalThis & {
  */
 function getFirebaseSingleton(): FirebaseGlobal {
   if (!globalWithFirebase[FIREBASE_GLOBAL_KEY]) {
+    // --- DEBUGGING: Check for missing Firebase config variables ---
+    const missingConfig = Object.entries(firebaseConfig).filter(([key, value]) => !value);
+    if (missingConfig.length > 0) {
+      console.error(
+        "Firebase Configuration Error: The following environment variables are missing or undefined:",
+        missingConfig.map(([key]) => `NEXT_PUBLIC_FIREBASE_${key.toUpperCase()}`).join(', ')
+      );
+      console.error("Please ensure your .env.local file (or deployment environment) is correctly configured.");
+      // You might want to throw an error here to prevent the app from starting with bad config
+      // throw new Error("Firebase configuration incomplete.");
+    } else {
+      console.log("Firebase Config loaded successfully:", firebaseConfig.projectId);
+    }
+    // --- END DEBUGGING ---
+
     // If the instance doesn't exist on the global object, create it.
     globalWithFirebase[FIREBASE_GLOBAL_KEY] = {
       app: getApps().length > 0 ? getApp() : initializeApp(firebaseConfig),
@@ -58,8 +75,9 @@ const storage = getStorage(app);
 
 // In development, connect to emulators only once.
 if (process.env.NODE_ENV === 'development' && !emulatorsConnected) {
-    console.log("Connecting to Firebase Emulators for the first time...");
+    console.log("Attempting to connect to Firebase Emulators...");
     try {
+        // Ensure the emulator addresses match what you're running
         connectAuthEmulator(auth, "http://127.0.0.1:9099", { disableRegeneration: true });
         connectFirestoreEmulator(db, "127.0.0.1", 8080);
         connectStorageEmulator(storage, "127.0.0.1", 9199);
@@ -71,7 +89,8 @@ if (process.env.NODE_ENV === 'development' && !emulatorsConnected) {
 
         console.log("Successfully connected to Firebase Emulators.");
     } catch (error) {
-        console.error("Error connecting to Firebase emulators: ", error);
+        console.error("Error connecting to Firebase emulators. Please ensure they are running via 'firebase emulators:start'.", error);
+        // You might want to add a user-facing message or fallback behavior here
     }
 }
 
