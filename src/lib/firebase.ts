@@ -13,9 +13,6 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-// A flag to ensure we only connect to the emulators once.
-let emulatorsConnected = false;
-
 // Initialize Firebase App (Singleton Pattern for Next.js)
 const app: FirebaseApp = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
@@ -23,17 +20,19 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const storage = getStorage(app);
 
-// In development, connect to the emulators. This needs to be guarded
-// to prevent re-initialization during hot-reloads.
-if (process.env.NODE_ENV === 'development' && !emulatorsConnected) {
+// A more robust way to guard against re-initialization in Next.js hot-reload environments.
+// We attach a flag to the global object, which persists across reloads.
+declare global {
+  var __EMULATORS_CONNECTED: boolean | undefined;
+}
+
+if (process.env.NODE_ENV === 'development' && !global.__EMULATORS_CONNECTED) {
   try {
-    console.log("Connecting to Firebase Emulators on Auth(9099), Firestore(8081), Storage(9198)...");
     connectAuthEmulator(auth, "http://127.0.0.1:9099", { disableRegeneration: true });
     connectFirestoreEmulator(db, "127.0.0.1", 8081);
     connectStorageEmulator(storage, "127.0.0.1", 9198);
-    console.log("Successfully connected to Firebase Emulators.");
-    // Set the flag to true after the first successful connection.
-    emulatorsConnected = true;
+    console.log("Connected to Firebase Emulators.");
+    global.__EMULATORS_CONNECTED = true;
   } catch (error) {
     console.error("Error connecting to Firebase emulators:", error);
   }
