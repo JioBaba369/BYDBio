@@ -8,11 +8,7 @@ import type { User } from '@/lib/users';
 import type { Job } from '@/lib/jobs';
 import type { Timestamp } from 'firebase/firestore';
 
-type PageProps = {
-  params: { opportunityId: string };
-};
-
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+export async function generateMetadata({ params }: { params: { opportunityId: string } }): Promise<Metadata> {
   const data = await getJobAndAuthor(params.opportunityId);
 
   if (!data) {
@@ -45,7 +41,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 
-export default async function PublicJobPage({ params }: PageProps) {
+export default async function PublicJobPage({ params }: { params: { opportunityId: string } }) {
     const data = await getJobAndAuthor(params.opportunityId);
 
     if (!data) {

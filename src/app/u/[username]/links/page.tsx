@@ -4,11 +4,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import LinksClientPage from "./links-client";
 
-type PageProps = {
-  params: { username: string };
-};
-
-export default async function LinksPage({ params }: PageProps) {
+export default async function LinksPage({ params }: { params: { username: string } }) {
   const username = params.username;
   const user = await getUserByUsername(username);
 

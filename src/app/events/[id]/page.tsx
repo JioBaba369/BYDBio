@@ -6,11 +6,7 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import type { Timestamp } from 'firebase/firestore';
 
-type PageProps = {
-  params: { id: string };
-};
-
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
   const data = await getEventAndAuthor(params.id);
 
   if (!data) {
@@ -43,7 +39,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 
-export default async function EventDetailPage({ params }: PageProps) {
+export default async function EventDetailPage({ params }: { params: { id: string } }) {
     const data = await getEventAndAuthor(params.id);
 
     if (!data) {
