@@ -14,6 +14,7 @@ const PROTECTED_ROUTE_BASES = [
     '/connections',
     '/feed',
     '/notifications',
+    '/holiday-scheduler',
 ];
 
 /**
