@@ -55,13 +55,36 @@ export function PostCard({ item, onLike, onDelete, onRepost, onQuote }: PostCard
     const isOwner = user?.uid === item.author.uid;
     const isRepost = !!item.repostedPost;
 
-    const handleShare = () => {
-        const profileUrl = `${window.location.origin}/u/${item.author.username}`;
-        navigator.clipboard.writeText(profileUrl);
-        toast({
-            title: "Link Copied!",
-            description: "A link to this user's profile has been copied to your clipboard.",
-        });
+    const handleShare = async () => {
+        // Since posts don't have their own pages, we link to the author's profile.
+        const shareUrl = `${window.location.origin}/u/${item.author.username}`;
+        
+        // Determine the most relevant content for the share text
+        const postContent = item.repostedPost?.content || item.quotedPost?.content || item.content || '';
+        const shareTitle = `Post by ${item.author.name}`;
+        const shareText = postContent.substring(0, 100) + (postContent.length > 100 ? '...' : '');
+
+        if (navigator.share) {
+            try {
+                await navigator.share({
+                    title: shareTitle,
+                    text: shareText,
+                    url: shareUrl,
+                });
+                toast({ title: "Post shared!" });
+            } catch (error) {
+                // This error is thrown if the user cancels the share.
+                // We can safely ignore it.
+                console.log('Share was cancelled or failed', error);
+            }
+        } else {
+            // Fallback for browsers that don't support the Web Share API
+            navigator.clipboard.writeText(shareUrl);
+            toast({
+                title: "Link Copied!",
+                description: "A link to this user's profile has been copied to your clipboard.",
+            });
+        }
     };
 
     return (
