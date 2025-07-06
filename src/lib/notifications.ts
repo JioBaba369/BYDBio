@@ -57,6 +57,9 @@ export const createNotification = async (
   if (type === 'new_like' && userData.notificationSettings?.newLikes === false) {
       return; // User has disabled new like notifications
   }
+  if (type === 'event_rsvp' && userData.notificationSettings?.eventRsvps === false) {
+      return; // User has disabled event rsvp notifications
+  }
   
   const notificationsRef = collection(db, 'notifications');
   

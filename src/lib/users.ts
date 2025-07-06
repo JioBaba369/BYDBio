@@ -23,6 +23,7 @@ export type UserLink = {
 export type NotificationSettings = {
     newFollowers: boolean;
     newLikes: boolean;
+    eventRsvps: boolean;
     offersAndUpdates: boolean;
 };
 
@@ -110,6 +111,7 @@ export const createUserProfileIfNotExists = async (user: FirebaseUser, additiona
             notificationSettings: {
                 newFollowers: true,
                 newLikes: true,
+                eventRsvps: true,
                 offersAndUpdates: true,
             },
             searchableKeywords: searchableKeywords,

@@ -252,6 +252,20 @@ export default function SettingsPage() {
                                 <Separator />
                                 <div className="flex items-center justify-between">
                                     <div>
+                                        <Label htmlFor="event-rsvps" className="font-normal">Event RSVPs</Label>
+                                        <p className="text-sm text-muted-foreground">
+                                            Notify me when someone RSVPs to an event I created.
+                                        </p>
+                                    </div>
+                                    <Switch
+                                        id="event-rsvps"
+                                        checked={user.notificationSettings?.eventRsvps ?? true}
+                                        onCheckedChange={(checked) => handleNotificationSettingChange('eventRsvps', checked)}
+                                    />
+                                </div>
+                                <Separator />
+                                <div className="flex items-center justify-between">
+                                    <div>
                                         <Label htmlFor="offers-updates" className="font-normal">Offers & Updates</Label>
                                         <p className="text-sm text-muted-foreground">
                                             Receive emails about new features and special offers.
