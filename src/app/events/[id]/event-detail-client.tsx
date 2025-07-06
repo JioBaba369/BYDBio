@@ -7,7 +7,7 @@ import type { Event } from '@/lib/events';
 import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MapPin, Calendar, Clock, ArrowLeft, Users, Ticket, User as UserIcon, BellRing, CalendarPlus, Loader2, Edit, UserPlus, UserCheck } from 'lucide-react';
+import { MapPin, Calendar, Clock, ArrowLeft, Users, Ticket, User as UserIcon, CalendarPlus, Loader2, Edit, UserPlus, UserCheck } from 'lucide-react';
 import Link from 'next/link';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
@@ -19,7 +19,6 @@ import { useToast } from '@/hooks/use-toast';
 import { ClientFormattedDate } from '@/components/client-formatted-date';
 import { parseISO } from 'date-fns';
 import { useAuth } from '@/components/auth-provider';
-import { setEventReminder } from '@/lib/reminders';
 import { followUser, unfollowUser } from '@/lib/connections';
 
 
@@ -32,7 +31,6 @@ export default function EventDetailClient({ event, author }: EventDetailClientPr
     const { user: currentUser } = useAuth();
     const { toast } = useToast();
     const attendeeCount = event.rsvps?.length || 0;
-    const [isReminderLoading, setIsReminderLoading] = useState(false);
     const isOwner = currentUser && currentUser.uid === author.uid;
     
     const [isFollowing, setIsFollowing] = useState(currentUser?.following?.includes(author.uid) || false);
@@ -67,37 +65,6 @@ export default function EventDetailClient({ event, author }: EventDetailClientPr
             setIsFollowLoading(false);
         }
     };
-
-
-    const handleSetReminder = async () => {
-        if (!currentUser) {
-            toast({
-                title: "Please sign in",
-                description: "You need to be logged in to set a reminder.",
-                variant: "destructive",
-            });
-            return;
-        }
-
-        setIsReminderLoading(true);
-        try {
-            const eventDate = parseISO(event.startDate as string);
-            await setEventReminder(currentUser.uid, event.id, event.title, eventDate);
-            toast({
-                title: "Reminder Set!",
-                description: `We'll remind you about "${event.title}" an hour before it starts.`,
-            });
-        } catch (error) {
-            console.error("Error setting reminder:", error);
-            toast({
-                title: "Error",
-                description: "Could not set reminder. Please try again.",
-                variant: "destructive",
-            });
-        } finally {
-            setIsReminderLoading(false);
-        }
-    }
 
     const handleAddToCalendar = () => {
         const date = parseISO(event.startDate as string);
@@ -281,19 +248,6 @@ export default function EventDetailClient({ event, author }: EventDetailClientPr
                                     <Button variant="outline" onClick={handleAddToCalendar}>
                                         <CalendarPlus className="mr-2 h-4 w-4"/>
                                         Add to Calendar
-                                    </Button>
-                                    <Button variant="outline" onClick={handleSetReminder} disabled={isReminderLoading}>
-                                        {isReminderLoading ? (
-                                            <>
-                                                <Loader2 className="mr-2 h-4 w-4 animate-spin"/>
-                                                Setting...
-                                            </>
-                                        ) : (
-                                            <>
-                                                <BellRing className="mr-2 h-4 w-4"/>
-                                                Set Reminder
-                                            </>
-                                        )}
                                     </Button>
                                     {!isOwner && (
                                         <Button asChild size="lg">
