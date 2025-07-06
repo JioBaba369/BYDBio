@@ -8,8 +8,8 @@ import type { User } from '@/lib/users';
 import type { Job } from '@/lib/jobs';
 import type { Timestamp } from 'firebase/firestore';
 
-export async function generateMetadata({ params }: { params: { jobId: string } }): Promise<Metadata> {
-  const data = await getJobAndAuthor(params.jobId);
+export async function generateMetadata({ params }: { params: { opportunityId: string } }): Promise<Metadata> {
+  const data = await getJobAndAuthor(params.opportunityId);
 
   if (!data) {
     return {
@@ -41,8 +41,8 @@ export async function generateMetadata({ params }: { params: { jobId: string } }
 }
 
 
-export default async function PublicJobPage({ params }: { params: { jobId: string } }) {
-    const data = await getJobAndAuthor(params.jobId);
+export default async function PublicJobPage({ params }: { params: { opportunityId: string } }) {
+    const data = await getJobAndAuthor(params.opportunityId);
 
     if (!data) {
         return (
