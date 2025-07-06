@@ -1,4 +1,3 @@
-
 import { initializeApp, getApps, getApp, type FirebaseApp } from "firebase/app";
 import { getAuth, connectAuthEmulator } from "firebase/auth";
 import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
@@ -28,13 +27,13 @@ declare global {
 
 if (process.env.NODE_ENV === 'development' && !global.__EMULATORS_CONNECTED) {
   try {
+    // Ensure these ports match your firebase.json and what your emulators are actually running on.
     connectAuthEmulator(auth, "http://127.0.0.1:9099", { disableRegeneration: true });
     connectFirestoreEmulator(db, "127.0.0.1", 8081);
     connectStorageEmulator(storage, "127.0.0.1", 9198);
-    console.log("Connected to Firebase Emulators.");
     global.__EMULATORS_CONNECTED = true;
   } catch (error) {
-    console.error("Error connecting to Firebase emulators:", error);
+    console.error("ERROR: Failed to connect to Firebase Emulators. Please ensure they are running via 'firebase emulators:start' and that the ports in firebase.json match this code.", error);
   }
 }
 
