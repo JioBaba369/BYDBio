@@ -4,8 +4,11 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import BusinessCardClient from "./business-card-client";
 
+type PageProps = {
+  params: { username: string };
+};
 
-export default async function BusinessCardPage({ params }: { params: { username: string } }) {
+export default async function BusinessCardPage({ params }: PageProps) {
   const username = params.username;
   const user = await getUserByUsername(username);
 

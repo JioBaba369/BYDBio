@@ -6,7 +6,11 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import type { Timestamp } from 'firebase/firestore';
 
-export async function generateMetadata({ params }: { params: { promoId: string } }): Promise<Metadata> {
+type PageProps = {
+  params: { promoId: string };
+};
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const data = await getPromoPageAndAuthor(params.promoId);
 
   if (!data) {
@@ -46,7 +50,7 @@ export async function generateMetadata({ params }: { params: { promoId: string }
 }
 
 
-export default async function PublicPromoPage({ params }: { params: { promoId: string } }) {
+export default async function PublicPromoPage({ params }: PageProps) {
     const data = await getPromoPageAndAuthor(params.promoId);
 
     if (!data) {

@@ -13,7 +13,11 @@ import { getOffersByUser } from '@/lib/offers';
 import { getPromoPagesByUser } from '@/lib/promo-pages';
 import type { Timestamp } from 'firebase/firestore';
 
-export async function generateMetadata({ params }: { params: { username: string } }): Promise<Metadata> {
+type PageProps = {
+  params: { username: string };
+};
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const username = params.username;
   const user = await getUserByUsername(username);
 
@@ -55,7 +59,7 @@ export async function generateMetadata({ params }: { params: { username: string 
   };
 }
 
-export default async function PublicProfilePageWrapper({ params }: { params: { username: string } }) {
+export default async function PublicProfilePageWrapper({ params }: PageProps) {
     const username = params.username;
     const userProfileData = await getUserByUsername(username);
 
