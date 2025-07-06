@@ -1,4 +1,3 @@
-
 'use client'
 
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -20,7 +19,7 @@ import { format } from "date-fns"
 import { Calendar } from "../ui/calendar"
 import { Textarea } from "../ui/textarea"
 
-const jobFormSchema = z.object({
+const opportunityFormSchema = z.object({
   title: z.string().min(2, "Title must be at least 2 characters.").max(100, "Title must not be longer than 100 characters."),
   company: z.string().min(2, "Company name is required."),
   description: z.string().min(10, "A detailed description is required.").max(5000, "Description is too long."),
@@ -43,22 +42,22 @@ const jobFormSchema = z.object({
     path: ["endDate"],
 });
 
-export type JobFormValues = z.infer<typeof jobFormSchema>
+export type OpportunityFormValues = z.infer<typeof opportunityFormSchema>
 
-interface JobFormProps {
-  defaultValues?: Partial<JobFormValues>
-  onSubmit: (values: JobFormValues) => void;
+interface OpportunityFormProps {
+  defaultValues?: Partial<OpportunityFormValues>
+  onSubmit: (values: OpportunityFormValues) => void;
   isSaving: boolean;
 }
 
-export function JobForm({ defaultValues, onSubmit, isSaving }: JobFormProps) {
+export function OpportunityForm({ defaultValues, onSubmit, isSaving }: OpportunityFormProps) {
   const [imageToCrop, setImageToCrop] = useState<string | null>(null);
   const [isCropperOpen, setIsCropperOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   
-  const form = useForm<JobFormValues>({
-    resolver: zodResolver(jobFormSchema),
+  const form = useForm<OpportunityFormValues>({
+    resolver: zodResolver(opportunityFormSchema),
     defaultValues: {
       title: "",
       company: "",

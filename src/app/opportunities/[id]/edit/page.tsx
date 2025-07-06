@@ -1,7 +1,7 @@
 
 'use client';
 
-import { JobForm, JobFormValues } from "@/components/forms/opportunity-form";
+import { OpportunityForm, OpportunityFormValues } from "@/components/forms/opportunity-form";
 import { useToast } from "@/hooks/use-toast";
 import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
@@ -70,14 +70,14 @@ export default function EditJobPage() {
             });
     }, [jobId, user, router, toast]);
 
-    const onSubmit = async (data: JobFormValues) => {
+    const onSubmit = async (data: OpportunityFormValues) => {
         if (!user) {
             toast({ title: "Authentication Error", description: "You must be logged in.", variant: "destructive" });
             return;
         }
         setIsSaving(true);
         try {
-            const dataToSave: Partial<JobFormValues> = { ...data };
+            const dataToSave: Partial<OpportunityFormValues> = { ...data };
 
             if (data.imageUrl && data.imageUrl.startsWith('data:image')) {
                 const newImageUrl = await uploadImage(data.imageUrl, `jobs/${user.uid}/${jobId}/image`);
@@ -120,7 +120,7 @@ export default function EditJobPage() {
                     </Link>
                 </Button>
             </div>
-            <JobForm defaultValues={jobToEdit} onSubmit={onSubmit} isSaving={isSaving} />
+            <OpportunityForm defaultValues={jobToEdit} onSubmit={onSubmit} isSaving={isSaving} />
         </div>
     )
 }

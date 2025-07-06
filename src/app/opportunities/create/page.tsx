@@ -1,7 +1,7 @@
 
 'use client';
 
-import { JobForm, JobFormValues } from "@/components/forms/opportunity-form";
+import { OpportunityForm, OpportunityFormValues } from "@/components/forms/opportunity-form";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -15,7 +15,7 @@ export default function CreateJobPage() {
     const { toast } = useToast();
     const [isSaving, setIsSaving] = useState(false);
     
-    const onSubmit = async (data: JobFormValues) => {
+    const onSubmit = async (data: OpportunityFormValues) => {
         if (!user) {
             toast({ title: "Authentication Error", description: "You must be logged in to create a job.", variant: "destructive" });
             return;
@@ -53,7 +53,7 @@ export default function CreateJobPage() {
                 <h1 className="text-2xl sm:text-3xl font-bold font-headline">Create New Job</h1>
                 <p className="text-muted-foreground">Fill out the form below to post a new job.</p>
             </div>
-            <JobForm onSubmit={onSubmit} isSaving={isSaving} />
+            <OpportunityForm onSubmit={onSubmit} isSaving={isSaving} />
         </div>
     )
 }
