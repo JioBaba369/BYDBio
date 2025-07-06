@@ -1,7 +1,7 @@
 
 'use client';
 
-import { OpportunityForm, OpportunityFormValues } from "@/components/forms/opportunity-form";
+import { JobForm, JobFormValues } from "@/components/forms/opportunity-form";
 import { useToast } from "@/hooks/use-toast";
 import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
@@ -32,24 +32,24 @@ const EditJobPageSkeleton = () => (
 );
 
 
-export default function EditOpportunityPage() {
+export default function EditJobPage() {
     const router = useRouter();
     const params = useParams();
     const { user } = useAuth();
-    const opportunityId = params.id as string;
+    const jobId = params.id as string;
     const { toast } = useToast();
     const [isSaving, setIsSaving] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [jobToEdit, setJobToEdit] = useState<Job | null>(null);
 
     useEffect(() => {
-        if (!opportunityId || !user) return;
+        if (!jobId || !user) return;
 
         setIsLoading(true);
-        getJob(opportunityId)
+        getJob(jobId)
             .then((jobData) => {
                 if (!jobData) {
-                    toast({ title: "Not Found", description: "This opportunity does not exist.", variant: "destructive" });
+                    toast({ title: "Not Found", description: "This job does not exist.", variant: "destructive" });
                     router.push('/calendar');
                     return;
                 }
@@ -61,40 +61,40 @@ export default function EditOpportunityPage() {
                 setJobToEdit(jobData);
             })
             .catch((err) => {
-                console.error("Error fetching opportunity for edit:", err);
+                console.error("Error fetching job for edit:", err);
                 toast({ title: "Error", description: "Could not load item for editing.", variant: "destructive" });
                 router.push('/calendar');
             })
             .finally(() => {
                 setIsLoading(false);
             });
-    }, [opportunityId, user, router, toast]);
+    }, [jobId, user, router, toast]);
 
-    const onSubmit = async (data: OpportunityFormValues) => {
+    const onSubmit = async (data: JobFormValues) => {
         if (!user) {
             toast({ title: "Authentication Error", description: "You must be logged in.", variant: "destructive" });
             return;
         }
         setIsSaving(true);
         try {
-            const dataToSave: Partial<OpportunityFormValues> = { ...data };
+            const dataToSave: Partial<JobFormValues> = { ...data };
 
             if (data.imageUrl && data.imageUrl.startsWith('data:image')) {
-                const newImageUrl = await uploadImage(data.imageUrl, `jobs/${user.uid}/${opportunityId}/image`);
+                const newImageUrl = await uploadImage(data.imageUrl, `jobs/${user.uid}/${jobId}/image`);
                 dataToSave.imageUrl = newImageUrl;
             }
 
-            await updateJob(opportunityId, dataToSave);
+            await updateJob(jobId, dataToSave);
             toast({
-                title: "Opportunity Updated!",
-                description: "The opportunity has been updated successfully.",
+                title: "Job Updated!",
+                description: "The job has been updated successfully.",
             });
             router.push('/calendar');
         } catch (error) {
-            console.error("Error updating opportunity:", error);
+            console.error("Error updating job:", error);
             toast({
                 title: "Error",
-                description: "Failed to update opportunity. Please try again.",
+                description: "Failed to update job. Please try again.",
                 variant: "destructive",
             });
         } finally {
@@ -110,8 +110,8 @@ export default function EditOpportunityPage() {
         <div className="space-y-6">
             <div className="flex items-start justify-between">
                 <div>
-                    <h1 className="text-2xl sm:text-3xl font-bold font-headline">Edit Opportunity</h1>
-                    <p className="text-muted-foreground">Modify the details of the job opportunity below.</p>
+                    <h1 className="text-2xl sm:text-3xl font-bold font-headline">Edit Job</h1>
+                    <p className="text-muted-foreground">Modify the details of the job below.</p>
                 </div>
                  <Button asChild variant="outline">
                     <Link href="/calendar">
@@ -120,7 +120,7 @@ export default function EditOpportunityPage() {
                     </Link>
                 </Button>
             </div>
-            <OpportunityForm defaultValues={jobToEdit} onSubmit={onSubmit} isSaving={isSaving} />
+            <JobForm defaultValues={jobToEdit} onSubmit={onSubmit} isSaving={isSaving} />
         </div>
     )
 }

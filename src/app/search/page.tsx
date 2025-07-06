@@ -28,7 +28,7 @@ type ItemWithAuthor<T> = T & { author: User };
 type SearchResults = {
     users: User[];
     listings: ItemWithAuthor<Listing>[];
-    opportunities: ItemWithAuthor<Job>[];
+    jobs: ItemWithAuthor<Job>[];
     events: ItemWithAuthor<Event>[];
     offers: ItemWithAuthor<Offer>[];
     promoPages: ItemWithAuthor<PromoPage>[];
@@ -41,7 +41,7 @@ export default function SearchPage() {
   const { toast } = useToast();
 
   const [isLoading, setIsLoading] = useState(false);
-  const [results, setResults] = useState<SearchResults>({ users: [], listings: [], opportunities: [], events: [], offers: [], promoPages: [] });
+  const [results, setResults] = useState<SearchResults>({ users: [], listings: [], jobs: [], events: [], offers: [], promoPages: [] });
 
   useEffect(() => {
     const performSearch = async () => {
@@ -75,7 +75,7 @@ export default function SearchPage() {
             const newResults: SearchResults = {
                 users: userResults.filter(u => u.uid !== user?.uid),
                 listings: [],
-                opportunities: [],
+                jobs: [],
                 events: [],
                 offers: [],
                 promoPages: [],
@@ -86,7 +86,7 @@ export default function SearchPage() {
                 if (author) {
                     switch (item.type) {
                         case 'listing': newResults.listings.push({ ...item, author }); break;
-                        case 'job': newResults.opportunities.push({ ...item, author }); break;
+                        case 'job': newResults.jobs.push({ ...item, author }); break;
                         case 'event': newResults.events.push({ ...item, author }); break;
                         case 'offer': newResults.offers.push({ ...item, author }); break;
                         case 'promoPage': newResults.promoPages.push({ ...item, author }); break;
@@ -148,7 +148,7 @@ export default function SearchPage() {
                     <SearchIcon className="h-8 w-8" />
                     Search
                 </h1>
-                <p className="text-muted-foreground">Search for users, listings, opportunities, and more.</p>
+                <p className="text-muted-foreground">Search for users, listings, jobs, and more.</p>
             </div>
              <Card className="text-center">
               <CardContent className="p-10 text-muted-foreground">
@@ -191,7 +191,7 @@ export default function SearchPage() {
             <TabsTrigger value="users">Users ({results.users.length})</TabsTrigger>
             <TabsTrigger value="promoPages">Promo Pages ({results.promoPages.length})</TabsTrigger>
             <TabsTrigger value="listings">Listings ({results.listings.length})</TabsTrigger>
-            <TabsTrigger value="opportunities">Jobs ({results.opportunities.length})</TabsTrigger>
+            <TabsTrigger value="jobs">Jobs ({results.jobs.length})</TabsTrigger>
             <TabsTrigger value="events">Events ({results.events.length})</TabsTrigger>
             <TabsTrigger value="offers">Offers ({results.offers.length})</TabsTrigger>
         </TabsList>
@@ -328,10 +328,10 @@ export default function SearchPage() {
              )}
         </TabsContent>
 
-        <TabsContent value="opportunities" className="pt-4">
-            {results.opportunities.length > 0 ? (
+        <TabsContent value="jobs" className="pt-4">
+            {results.jobs.length > 0 ? (
                 <div className="grid gap-6 md:grid-cols-2">
-                    {results.opportunities.map((job) => (
+                    {results.jobs.map((job) => (
                         <Card key={job.id} className="flex flex-col transition-all hover:shadow-md">
                             <CardHeader>
                                 <CardTitle>{job.title}</CardTitle>
@@ -366,7 +366,7 @@ export default function SearchPage() {
                 <Card>
                     <CardContent className="p-10 text-center text-muted-foreground">
                         <Briefcase className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                        <h3 className="text-lg font-semibold text-foreground">No Opportunities Found</h3>
+                        <h3 className="text-lg font-semibold text-foreground">No Jobs Found</h3>
                         <p>We couldn't find any jobs matching "{queryParam}". Try a different search.</p>
                     </CardContent>
                 </Card>

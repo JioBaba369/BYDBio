@@ -1,20 +1,20 @@
 
 import type { Metadata } from 'next';
 import { getJobAndAuthor } from '@/lib/jobs';
-import OpportunityDetailClient from './opportunity-detail-client';
+import JobDetailClient from './opportunity-detail-client';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import type { User } from '@/lib/users';
 import type { Job } from '@/lib/jobs';
 import type { Timestamp } from 'firebase/firestore';
 
-export async function generateMetadata({ params }: { params: { opportunityId: string } }): Promise<Metadata> {
-  const data = await getJobAndAuthor(params.opportunityId);
+export async function generateMetadata({ params }: { params: { jobId: string } }): Promise<Metadata> {
+  const data = await getJobAndAuthor(params.jobId);
 
   if (!data) {
     return {
-      title: 'Opportunity Not Found | BYD.Bio',
-      description: "The opportunity you're looking for doesn't exist.",
+      title: 'Job Not Found | BYD.Bio',
+      description: "The job you're looking for doesn't exist.",
     };
   }
 
@@ -41,14 +41,14 @@ export async function generateMetadata({ params }: { params: { opportunityId: st
 }
 
 
-export default async function PublicOpportunityPage({ params }: { params: { opportunityId: string } }) {
-    const data = await getJobAndAuthor(params.opportunityId);
+export default async function PublicJobPage({ params }: { params: { jobId: string } }) {
+    const data = await getJobAndAuthor(params.jobId);
 
     if (!data) {
         return (
             <div className="flex flex-col items-center justify-center min-h-screen text-center p-4">
-                <h1 className="text-4xl font-bold">Opportunity Not Found</h1>
-                <p className="text-muted-foreground mt-2">The job opportunity you're looking for doesn't exist.</p>
+                <h1 className="text-4xl font-bold">Job Not Found</h1>
+                <p className="text-muted-foreground mt-2">The job you're looking for doesn't exist.</p>
                 <Button asChild className="mt-6">
                     <Link href="/explore">Back to Explore</Link>
                 </Button>
@@ -65,5 +65,5 @@ export default async function PublicOpportunityPage({ params }: { params: { oppo
         createdAt: (data.job.createdAt as Timestamp).toDate().toISOString(),
     };
 
-    return <OpportunityDetailClient job={serializableJob} author={data.author} />;
+    return <JobDetailClient job={serializableJob} author={data.author} />;
 }

@@ -1,7 +1,7 @@
 
 'use client';
 
-import { OpportunityForm, OpportunityFormValues } from "@/components/forms/opportunity-form";
+import { JobForm, JobFormValues } from "@/components/forms/opportunity-form";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -9,15 +9,15 @@ import { useAuth } from "@/components/auth-provider";
 import { createJob } from "@/lib/jobs";
 import { uploadImage } from "@/lib/storage";
 
-export default function CreateOpportunityPage() {
+export default function CreateJobPage() {
     const router = useRouter();
     const { user } = useAuth();
     const { toast } = useToast();
     const [isSaving, setIsSaving] = useState(false);
     
-    const onSubmit = async (data: OpportunityFormValues) => {
+    const onSubmit = async (data: JobFormValues) => {
         if (!user) {
-            toast({ title: "Authentication Error", description: "You must be logged in to create an opportunity.", variant: "destructive" });
+            toast({ title: "Authentication Error", description: "You must be logged in to create a job.", variant: "destructive" });
             return;
         }
         setIsSaving(true);
@@ -31,15 +31,15 @@ export default function CreateOpportunityPage() {
 
             await createJob(user.uid, dataToSave);
             toast({
-                title: "Opportunity Created!",
-                description: "Your new opportunity has been created successfully.",
+                title: "Job Created!",
+                description: "Your new job has been created successfully.",
             });
             router.push('/calendar');
         } catch (error) {
-            console.error("Error creating opportunity:", error);
+            console.error("Error creating job:", error);
             toast({
                 title: "Error",
-                description: "Failed to create opportunity. Please try again.",
+                description: "Failed to create job. Please try again.",
                 variant: "destructive",
             });
         } finally {
@@ -50,10 +50,10 @@ export default function CreateOpportunityPage() {
     return (
         <div className="space-y-6">
             <div>
-                <h1 className="text-2xl sm:text-3xl font-bold font-headline">Create New Opportunity</h1>
-                <p className="text-muted-foreground">Fill out the form below to post a new job opportunity. Use the placeholder text as a guide for what to include.</p>
+                <h1 className="text-2xl sm:text-3xl font-bold font-headline">Create New Job</h1>
+                <p className="text-muted-foreground">Fill out the form below to post a new job.</p>
             </div>
-            <OpportunityForm onSubmit={onSubmit} isSaving={isSaving} />
+            <JobForm onSubmit={onSubmit} isSaving={isSaving} />
         </div>
     )
 }

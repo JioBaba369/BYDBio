@@ -49,7 +49,7 @@ const JobPageSkeleton = () => (
     </div>
 );
 
-export default function OpportunitiesPage() {
+export default function JobsPage() {
   const { user, loading: authLoading } = useAuth();
   const [jobs, setJobs] = useState<JobWithAuthor[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -70,8 +70,8 @@ export default function OpportunitiesPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold font-headline">Opportunities</h1>
-          <p className="text-muted-foreground">Discover curated job opportunities to boost your career.</p>
+          <h1 className="text-2xl sm:text-3xl font-bold font-headline">Jobs</h1>
+          <p className="text-muted-foreground">Discover curated jobs to boost your career.</p>
         </div>
         <div className="flex items-center gap-2">
           <div className="hidden sm:flex items-center gap-1 rounded-md bg-muted p-1">
@@ -86,7 +86,7 @@ export default function OpportunitiesPage() {
             <Button asChild>
               <Link href="/opportunities/create">
                 <PlusCircle className="mr-2 h-4 w-4" />
-                Post Opportunity
+                Post Job
               </Link>
             </Button>
           )}
@@ -164,7 +164,7 @@ export default function OpportunitiesPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Opportunity</TableHead>
+                  <TableHead>Job</TableHead>
                   <TableHead className="hidden md:table-cell">Type</TableHead>
                   <TableHead className="hidden md:table-cell">Location</TableHead>
                   <TableHead className="hidden lg:table-cell text-center">Stats</TableHead>
@@ -202,8 +202,8 @@ export default function OpportunitiesPage() {
       ) : (
         <Card className="text-center">
           <CardHeader>
-              <CardTitle>No Opportunities Yet</CardTitle>
-              <CardDescription>No one has posted an opportunity yet. Be the first!</CardDescription>
+              <CardTitle>No Jobs Yet</CardTitle>
+              <CardDescription>No one has posted a job yet. Be the first!</CardDescription>
           </CardHeader>
           <CardContent className="flex justify-center items-center p-10">
               <Briefcase className="h-16 w-16 text-muted-foreground" />
@@ -213,7 +213,7 @@ export default function OpportunitiesPage() {
                 <Button asChild className="w-full">
                     <Link href="/opportunities/create">
                       <PlusCircle className="mr-2 h-4 w-4" />
-                      Post Your First Opportunity
+                      Post Your First Job
                     </Link>
                 </Button>
             </CardFooter>

@@ -18,12 +18,12 @@ import { useToast } from '@/hooks/use-toast';
 import { followUser, unfollowUser } from '@/lib/connections';
 
 
-interface OpportunityDetailClientProps {
+interface JobDetailClientProps {
     job: Job;
     author: User;
 }
 
-export default function OpportunityDetailClient({ job, author }: OpportunityDetailClientProps) {
+export default function JobDetailClient({ job, author }: JobDetailClientProps) {
     const { user: currentUser } = useAuth();
     const { toast } = useToast();
     const isOwner = currentUser && currentUser.uid === author.uid;
