@@ -13,19 +13,15 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
+// A flag to ensure we only connect to the emulators once.
+let emulatorsConnected = false;
+
 // Initialize Firebase App (Singleton Pattern for Next.js)
 const app: FirebaseApp = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
 const auth = getAuth(app);
 const db = getFirestore(app);
 const storage = getStorage(app);
-
-// A flag to ensure we only connect to the emulators once.
-let emulatorsConnected = false;
-
-console.log("Firebase Config being used:", firebaseConfig);
-console.log("NODE_ENV:", process.env.NODE_ENV);
-console.log("Are emulators expected to connect?", process.env.NODE_ENV === 'development' && !emulatorsConnected);
 
 // In development, connect to the emulators. This needs to be guarded
 // to prevent re-initialization during hot-reloads.
