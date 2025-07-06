@@ -105,7 +105,8 @@ service cloud.firestore {
     // NOTIFICATIONS
     // Authenticated users can create notifications. Only the recipient can manage their notifications.
     match /notifications/{notificationId} {
-      allow create: if isUserAuthenticated();
+      allow create: if (isUserAuthenticated() && request.resource.data.actorId == request.auth.uid) || // Case 1: An authenticated user is the actor
+                       (request.auth == null && request.resource.data.type == 'contact_form_submission' && request.resource.data.actorId == null); // Case 2: A guest sends a contact message
       allow read, update, delete: if isOwner(resource.data.userId);
     }
     
@@ -115,6 +116,14 @@ service cloud.firestore {
         allow create: if isOwner(request.resource.data.userId);
         allow read, update: if isOwner(resource.data.userId);
         allow delete: if false; // Should be handled by a backend process
+    }
+    
+    // MESSAGES
+    // Anyone can send a message. Only the recipient can read/update. Deletion restricted.
+    match /messages/{messageId} {
+      allow create: if true; // Anyone (even unauthenticated users) can send a message.
+      allow read, update: if isOwner(resource.data.recipientId);
+      allow delete: if false; // Deletion is restricted to maintain history.
     }
     
     // DIARY NOTES (Personal, private notes)
