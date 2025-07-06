@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -61,14 +60,6 @@ END:VCARD`;
   return (
     <div className="bg-dot min-h-screen py-8 px-4 antialiased">
       <div className="w-full max-w-sm mx-auto space-y-4">
-        <div>
-            <Button asChild variant="ghost" size="sm">
-            <Link href={`/u/${user.username}`} className="inline-flex items-center gap-2 text-muted-foreground hover:text-primary">
-                <ArrowLeft className="h-4 w-4" />
-                Back to {user.name}'s Profile
-            </Link>
-            </Button>
-        </div>
         <Card className="shadow-xl rounded-2xl w-full border-2 border-primary/10 overflow-hidden">
           <div className="h-24 bg-gradient-to-br from-primary via-blue-500 to-teal-400" />
           <CardContent className="p-6 pt-0">
