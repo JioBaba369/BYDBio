@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import type { User } from '@/lib/users';
-import type { Post } from '@/lib/posts';
+import type { PostWithAuthor } from '@/lib/posts';
 import type { Listing } from '@/lib/listings';
 import type { Offer } from '@/lib/offers';
 import type { Job } from '@/lib/jobs';
@@ -28,12 +28,15 @@ import QRCode from "qrcode.react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { ClientFormattedDate } from "@/components/client-formatted-date";
 import { formatCurrency } from "@/lib/utils";
+import { PostCard } from "@/components/post-card";
+import { toggleLikePost, deletePost, repostPost } from '@/lib/posts';
+import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
 
 
 interface UserProfilePageProps {
   userProfileData: User;
   content: {
-    posts: (Omit<Post, 'createdAt'> & { createdAt: string })[];
+    posts: PostWithAuthor[];
     listings: (Omit<Listing, 'createdAt' | 'startDate' | 'endDate'> & { createdAt: string, startDate?: string | null, endDate?: string | null })[];
     jobs: (Omit<Job, 'postingDate' | 'createdAt' | 'startDate' | 'endDate'> & { postingDate: string, createdAt: string, startDate?: string | null, endDate?: string | null })[];
     events: (Omit<Event, 'startDate' | 'endDate' | 'createdAt'> & { startDate: string, endDate?: string | null, createdAt: string })[];
@@ -50,11 +53,19 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
   const [followerCount, setFollowerCount] = useState(userProfileData.followerCount || 0);
   const [isFollowLoading, setIsFollowLoading] = useState(false);
   
+  const [localPosts, setLocalPosts] = useState(content.posts.map(p => ({
+    ...p,
+    isLiked: currentUser ? p.likedBy.includes(currentUser.uid) : false,
+  })));
+  
+  const { toast } = useToast();
+  
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [postToDelete, setPostToDelete] = useState<PostWithAuthor | null>(null);
+
   useEffect(() => {
     setIsFollowing(currentUser?.following?.includes(userProfileData.uid) || false);
   }, [currentUser, userProfileData.uid]);
-  
-  const { toast } = useToast();
   
   const handleFollowToggle = async () => {
     if (!currentUser) {
@@ -89,9 +100,87 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
     }
   };
 
+  const handleLike = async (postId: string) => {
+    if (!currentUser) {
+        toast({ title: "Please sign in to like posts.", variant: "destructive" });
+        return;
+    }
+    // Optimistic update
+    setLocalPosts(prev => prev.map(p => {
+        if (p.id === postId) {
+            return {
+                ...p,
+                isLiked: !p.isLiked,
+                likes: p.likes + (p.isLiked ? -1 : 1),
+            }
+        }
+        return p;
+    }));
+    // API call
+    try {
+        await toggleLikePost(postId, currentUser.uid);
+    } catch (error) {
+        toast({ title: "Something went wrong", variant: "destructive" });
+        // Revert on error
+         setLocalPosts(content.posts.map(p => ({
+            ...p,
+            isLiked: currentUser ? p.likedBy.includes(currentUser.uid) : false
+        })));
+    }
+  };
+
+  const openDeleteDialog = (post: PostWithAuthor) => {
+    if (currentUser?.uid !== post.author.uid) return;
+    setPostToDelete(post);
+    setIsDeleteDialogOpen(true);
+  };
+  
+  const handleConfirmDelete = async () => {
+    if (!postToDelete) return;
+
+    const originalPosts = [...localPosts];
+    // Optimistic delete
+    setLocalPosts(prev => prev.filter(p => p.id !== postToDelete.id));
+
+    try {
+      await deletePost(postToDelete.id);
+      toast({ title: "Post deleted" });
+    } catch (error) {
+      toast({ title: "Failed to delete post", variant: "destructive" });
+      setLocalPosts(originalPosts); // Revert on failure
+    } finally {
+      setIsDeleteDialogOpen(false);
+      setPostToDelete(null);
+    }
+  };
+
+  const handleRepost = async (postId: string) => {
+    if (!currentUser) {
+        toast({ title: "Please sign in to repost." });
+        return;
+    }
+    try {
+        await repostPost(postId, currentUser.uid);
+        toast({ title: "Reposted!", description: "It will appear on your feed." });
+        setLocalPosts(prev => prev.map(p => {
+            if (p.id === postId) {
+                return { ...p, repostCount: (p.repostCount || 0) + 1 };
+            }
+            return p;
+        }))
+    } catch (error: any) {
+        toast({ title: "Failed to repost", description: error.message, variant: 'destructive' });
+    }
+  }
+
+  const handleQuote = () => {
+    router.push('/feed');
+    toast({ title: "Start a quote", description: "Quoting is available from your main feed." });
+  };
+
 
   const { name, username, avatarUrl, avatarFallback, bio, links, businessCard } = userProfileData;
-  const { posts, listings, jobs, events, offers, promoPages } = content;
+  const { listings, jobs, events, offers, promoPages } = content;
 
   const vCardData = `BEGIN:VCARD
 VERSION:3.0
@@ -107,7 +196,7 @@ END:VCARD`;
   
   const allContent = useMemo(() => {
     const combined = [
-      ...posts.map(item => ({ ...item, type: 'post', date: item.createdAt })),
+      ...localPosts.map(item => ({ ...item, type: 'post', date: item.createdAt })),
       ...promoPages.map(item => ({ ...item, type: 'promoPage', date: item.createdAt })),
       ...listings.map(item => ({ ...item, type: 'listing', date: item.createdAt })),
       ...jobs.map(item => ({ ...item, type: 'job', date: item.postingDate })),
@@ -116,11 +205,18 @@ END:VCARD`;
     ];
     combined.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     return combined;
-  }, [posts, promoPages, listings, jobs, events, offers]);
+  }, [localPosts, promoPages, listings, jobs, events, offers]);
   
   const hasContent = allContent.length > 0;
 
   return (
+    <>
+    <DeleteConfirmationDialog 
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        onConfirm={handleConfirmDelete}
+        itemName="post"
+    />
     <div className="flex justify-center bg-dot py-8 px-4">
       <div className="w-full max-w-xl mx-auto space-y-8">
         <Card className="bg-card/80 backdrop-blur-sm p-6 sm:p-8 shadow-2xl rounded-2xl border-primary/10 relative overflow-hidden">
@@ -202,23 +298,19 @@ END:VCARD`;
                     {allContent.map(item => {
                         const uniqueKey = `${item.type}-${item.id}`;
                         switch(item.type) {
-                            case 'post': return (
-                                <Card key={uniqueKey} className="shadow-none border">
-                                    <CardContent className="p-4">
-                                        <p className="whitespace-pre-wrap text-sm">{item.content}</p>
-                                        {item.imageUrl && (
-                                        <div className="mt-4 rounded-lg overflow-hidden border">
-                                            <Image src={item.imageUrl} alt="Post image" width={600} height={400} className="object-cover" data-ai-hint="office workspace"/>
-                                        </div>
-                                        )}
-                                    </CardContent>
-                                    <CardFooter className="flex justify-start items-center gap-4 px-4 pb-4 pt-2 text-sm text-muted-foreground">
-                                        <div className="flex items-center gap-1"><Heart className="h-4 w-4" /><span>{item.likes}</span></div>
-                                        <div className="flex items-center gap-1"><MessageCircle className="h-4 w-4" /><span>{item.comments}</span></div>
-                                        <ClientFormattedDate date={item.createdAt} relative className="ml-auto text-xs" />
-                                    </CardFooter>
-                                </Card>
-                            );
+                            case 'post': {
+                                const postItem = item as (PostWithAuthor & { isLiked: boolean });
+                                return (
+                                    <PostCard
+                                        key={uniqueKey}
+                                        item={postItem}
+                                        onLike={handleLike}
+                                        onDelete={openDeleteDialog}
+                                        onRepost={handleRepost}
+                                        onQuote={handleQuote}
+                                    />
+                                );
+                            }
                             case 'promoPage': return (
                                 <Card key={uniqueKey} className="shadow-none border">
                                     <CardHeader><CardTitle className="text-base">Created a new promo page</CardTitle></CardHeader>
@@ -316,5 +408,6 @@ END:VCARD`;
         </Card>
       </div>
     </div>
+    </>
   );
 }
