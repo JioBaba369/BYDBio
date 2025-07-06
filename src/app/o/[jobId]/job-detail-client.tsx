@@ -3,11 +3,11 @@
 
 import { useState, useEffect } from 'react';
 import type { User } from '@/lib/users';
-import type { Listing } from '@/lib/listings';
+import type { Job } from '@/lib/jobs';
 import Image from 'next/image';
 import { Card, CardContent, CardTitle, CardDescription, CardHeader, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Tag, DollarSign, Calendar, Edit, UserPlus, UserCheck, Loader2, User as UserIcon } from 'lucide-react';
+import { ArrowLeft, Building, Calendar, MapPin, Edit, DollarSign, Clock, ExternalLink, UserPlus, UserCheck, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -19,12 +19,12 @@ import { useToast } from '@/hooks/use-toast';
 import { followUser, unfollowUser } from '@/lib/connections';
 
 
-interface ListingDetailClientProps {
-    listing: Listing;
+interface JobDetailClientProps {
+    job: Job;
     author: User;
 }
 
-export default function ListingDetailClient({ listing, author }: ListingDetailClientProps) {
+export default function JobDetailClient({ job, author }: JobDetailClientProps) {
     const { user: currentUser } = useAuth();
     const { toast } = useToast();
     const isOwner = currentUser && currentUser.uid === author.uid;
@@ -35,7 +35,7 @@ export default function ListingDetailClient({ listing, author }: ListingDetailCl
     useEffect(() => {
         setIsFollowing(currentUser?.following?.includes(author.uid) || false);
     }, [currentUser, author.uid]);
-    
+
     const handleFollowToggle = async () => {
         if (!currentUser) {
             toast({ title: "Please sign in to follow users.", variant: "destructive" });
@@ -62,11 +62,10 @@ export default function ListingDetailClient({ listing, author }: ListingDetailCl
         }
     };
 
-
     return (
         <div className="bg-dot min-h-screen py-8 px-4">
             <div className="max-w-4xl mx-auto space-y-6">
-                <Button asChild variant="ghost" className="pl-0">
+                 <Button asChild variant="ghost" className="pl-0">
                     <Link href={`/u/${author.username}`} className="inline-flex items-center gap-2 text-primary hover:underline">
                         <ArrowLeft className="h-4 w-4" />
                         Back to {author.name}'s Profile
@@ -75,67 +74,96 @@ export default function ListingDetailClient({ listing, author }: ListingDetailCl
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                     <div className="md:col-span-2">
                         <Card>
-                            {listing.imageUrl && (
+                            {job.imageUrl && (
                                 <div className="overflow-hidden rounded-t-lg h-52 sm:h-64 bg-muted">
                                     <Image
-                                        src={listing.imageUrl}
-                                        alt={listing.title}
-                                        width={800}
-                                        height={500}
+                                        src={job.imageUrl}
+                                        alt={job.title}
+                                        width={1200}
+                                        height={400}
                                         className="w-full h-full object-cover"
-                                        data-ai-hint="product design"
+                                        data-ai-hint="office workspace"
                                     />
                                 </div>
                             )}
-                            <CardHeader>
-                                <div className="flex justify-between items-start gap-4">
-                                    <div>
-                                        <CardTitle className="text-3xl font-bold font-headline">{listing.title}</CardTitle>
-                                        <div className="flex items-center gap-4 pt-2">
-                                            <Badge variant="secondary"><Tag className="mr-1 h-3 w-3" />{listing.category}</Badge>
-                                            <p className="font-bold text-2xl text-primary flex items-center"><DollarSign className="mr-1 h-6 w-6" />{formatCurrency(listing.price)}</p>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        {isOwner && (
-                                            <Button asChild variant="outline">
-                                                <Link href={`/listings/${listing.id}/edit`}>
-                                                    <Edit className="mr-2 h-4 w-4"/>
-                                                    Edit
-                                                </Link>
-                                            </Button>
-                                        )}
-                                        <ShareButton variant="outline" />
-                                    </div>
+                            <CardHeader className="flex flex-col sm:flex-row justify-between sm:items-start gap-4">
+                                <div>
+                                    <Badge variant="destructive" className="mb-2">{job.type}</Badge>
+                                    <CardTitle className="text-3xl font-bold font-headline">{job.title}</CardTitle>
+                                    <CardDescription className="text-lg pt-1 flex items-center gap-2">
+                                        <Building className="h-5 w-5" />
+                                        {job.company}
+                                    </CardDescription>
+                                </div>
+                                <div className="flex items-center gap-2 w-full sm:w-auto shrink-0">
+                                    {isOwner && (
+                                        <Button asChild variant="outline">
+                                            <Link href={`/opportunities/${job.id}/edit`}>
+                                                <Edit className="mr-2 h-4 w-4"/>
+                                                Edit
+                                            </Link>
+                                        </Button>
+                                    )}
+                                    <ShareButton variant="outline" />
                                 </div>
                             </CardHeader>
                             <CardContent>
-                                {(listing.startDate || listing.endDate) && (
-                                    <div className="flex items-center pt-2 text-sm text-muted-foreground">
-                                        <Calendar className="mr-2 h-4 w-4" /> 
-                                        <span>
-                                            {listing.startDate && <ClientFormattedDate date={listing.startDate as string} formatStr="PPP" />}
-                                            {listing.endDate && <> - <ClientFormattedDate date={listing.endDate as string} formatStr="PPP" /></>}
-                                        </span>
+                                <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+                                    <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg">
+                                        <MapPin className="h-5 w-5 text-primary flex-shrink-0" />
+                                        <div>
+                                            <p className="font-semibold">Location</p>
+                                            <p className="text-muted-foreground">{job.location}</p>
+                                        </div>
+                                    </div>
+                                    {job.remuneration && (
+                                        <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg">
+                                            <DollarSign className="h-5 w-5 text-primary flex-shrink-0" />
+                                            <div>
+                                                <p className="font-semibold">Salary</p>
+                                                <p className="text-muted-foreground">{formatCurrency(job.remuneration)}</p>
+                                            </div>
+                                        </div>
+                                    )}
+                                    {job.closingDate && (
+                                        <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg">
+                                            <Clock className="h-5 w-5 text-primary flex-shrink-0" />
+                                            <div>
+                                                <p className="font-semibold">Apply by</p>
+                                                <p className="text-muted-foreground"><ClientFormattedDate date={job.closingDate as string} formatStr="PPP" /></p>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="mt-8">
+                                    <h3 className="font-semibold text-lg mb-2">Job Description</h3>
+                                    <p className="text-muted-foreground whitespace-pre-wrap">{job.description}</p>
+                                </div>
+
+                                {job.contactInfo && (
+                                    <div className="mt-8">
+                                        <h3 className="font-semibold text-lg mb-2">How to Apply</h3>
+                                        <p className="text-muted-foreground whitespace-pre-wrap">{job.contactInfo}</p>
                                     </div>
                                 )}
-                                <h3 className="font-semibold text-lg mb-2 mt-4">Description</h3>
-                                <p className="text-muted-foreground whitespace-pre-wrap">{listing.description}</p>
                             </CardContent>
                             <CardFooter>
-                                <Button asChild size="lg" className="w-full">
-                                    <Link href={`/u/${author.username}`}>
-                                        <UserIcon className="mr-2 h-4 w-4" />
-                                        View Seller's Profile
-                                    </Link>
-                                </Button>
+                                {!isOwner && job.applicationUrl && (
+                                    <Button asChild size="lg" className="w-full">
+                                        <a href={job.applicationUrl} target="_blank" rel="noopener noreferrer">
+                                            <ExternalLink className="mr-2 h-4 w-4" />
+                                            Apply Online
+                                        </a>
+                                    </Button>
+                                )}
                             </CardFooter>
                         </Card>
                     </div>
                     <div className="md:col-span-1 space-y-6">
                         <Card>
                             <CardHeader>
-                                <CardTitle className="text-lg">About the Seller</CardTitle>
+                                <CardTitle className="text-lg">About the Poster</CardTitle>
                             </CardHeader>
                             <CardContent className="flex flex-col items-center text-center">
                                 <Link href={`/u/${author.username}`} className="block">

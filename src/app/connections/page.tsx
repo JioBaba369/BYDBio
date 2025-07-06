@@ -248,14 +248,14 @@ export default function ConnectionsPage() {
                         <Card key={followerUser.uid}>
                             <CardContent className="p-4">
                                 <div className="flex items-center justify-between gap-4">
-                                    <Link href={`/u/${followerUser.handle}`} className="flex items-center gap-4 hover:underline">
+                                    <Link href={`/u/${followerUser.username}`} className="flex items-center gap-4 hover:underline">
                                         <Avatar>
                                             <AvatarImage src={followerUser.avatarUrl} data-ai-hint="person portrait" />
                                             <AvatarFallback>{followerUser.name.charAt(0)}</AvatarFallback>
                                         </Avatar>
                                         <div>
                                             <p className="font-semibold">{followerUser.name}</p>
-                                            <p className="text-sm text-muted-foreground">@{followerUser.handle}</p>
+                                            <p className="text-sm text-muted-foreground">@{followerUser.username}</p>
                                         </div>
                                     </Link>
                                     <div className="flex items-center gap-2 flex-shrink-0">
@@ -288,14 +288,14 @@ export default function ConnectionsPage() {
                             <Card key={followingUser.uid}>
                                 <CardContent className="p-4">
                                     <div className="flex items-center justify-between gap-4">
-                                        <Link href={`/u/${followingUser.handle}`} className="flex items-center gap-4 hover:underline">
+                                        <Link href={`/u/${followingUser.username}`} className="flex items-center gap-4 hover:underline">
                                             <Avatar>
                                                 <AvatarImage src={followingUser.avatarUrl} data-ai-hint="person portrait" />
                                                 <AvatarFallback>{followingUser.name.charAt(0)}</AvatarFallback>
                                             </Avatar>
                                             <div>
                                                 <p className="font-semibold">{followingUser.name}</p>
-                                                <p className="text-sm text-muted-foreground">@{followingUser.handle}</p>
+                                                <p className="text-sm text-muted-foreground">@{followingUser.username}</p>
                                             </div>
                                         </Link>
                                         <Button size="sm" variant="secondary" onClick={() => handleToggleFollow(followingUser, true)} disabled={isProcessing}>
@@ -329,13 +329,13 @@ export default function ConnectionsPage() {
                         return (
                             <Card key={suggestedUser.uid}>
                                 <CardContent className="p-6 flex flex-col items-center text-center gap-2">
-                                    <Link href={`/u/${suggestedUser.handle}`} className="hover:underline">
+                                    <Link href={`/u/${suggestedUser.username}`} className="hover:underline">
                                         <Avatar className="h-20 w-20 mb-2">
                                             <AvatarImage src={suggestedUser.avatarUrl} data-ai-hint="person portrait" />
                                             <AvatarFallback>{suggestedUser.name.charAt(0)}</AvatarFallback>
                                         </Avatar>
                                         <p className="font-semibold">{suggestedUser.name}</p>
-                                        <p className="text-sm text-muted-foreground">@{suggestedUser.handle}</p>
+                                        <p className="text-sm text-muted-foreground">@{suggestedUser.username}</p>
                                     </Link>
                                     <p className="text-sm text-muted-foreground text-center line-clamp-2 h-10 mt-2">
                                         {suggestedUser.bio}

@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { ClientFormattedDate } from "@/components/client-formatted-date";
 import { useRouter } from "next/navigation";
+import type { Timestamp } from "firebase/firestore";
 
 const NotificationSkeleton = () => (
     <div className="flex items-center gap-4 p-4">
@@ -36,7 +37,7 @@ const NotificationItem = ({ notification, onRead }: { notification: Notification
     case 'new_follower':
       icon = <UserPlus className="h-5 w-5 text-primary" />;
       message = <p><span className="font-semibold">{actor.name}</span> started following you.</p>;
-      link = `/u/${actor.handle}`;
+      link = `/u/${actor.username}`;
       break;
     case 'new_like':
       icon = <Heart className="h-5 w-5 text-red-500" />;

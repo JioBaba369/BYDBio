@@ -3,11 +3,6 @@ import { collection, query, where, getDocs, limit, doc, getDoc, setDoc, updateDo
 import { db } from "@/lib/firebase";
 import { deleteUser, type User as FirebaseUser } from "firebase/auth";
 import type { Timestamp } from "firebase/firestore";
-import type { Listing } from './listings';
-import type { Offer } from './offers';
-import type { Job } from './jobs';
-import type { Event } from './events';
-import type { PromoPage } from './promo-pages';
 
 export type BusinessCard = {
   title: string;
@@ -34,7 +29,6 @@ export type NotificationSettings = {
 export type User = {
   uid: string; // Firebase Auth UID and Document ID
   name: string;
-  handle: string;
   username: string;
   email: string | null;
   avatarUrl: string;
@@ -106,7 +100,6 @@ export const createUserProfileIfNotExists = async (user: FirebaseUser, additiona
             email: user.email,
             name: name,
             username: username,
-            handle: username,
             avatarUrl: user.photoURL || `https://placehold.co/200x200.png`,
             avatarFallback: name.charAt(0).toUpperCase(),
             bio: "",

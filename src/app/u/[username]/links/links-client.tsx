@@ -13,7 +13,7 @@ import type { User } from "@/lib/users";
 
 
 export default function LinksClientPage({ user }: { user: User }) {
-  const { name, username, handle, avatarUrl, avatarFallback, bio, links } = user;
+  const { name, username, avatarUrl, avatarFallback, bio, links } = user;
 
   return (
     <div className="bg-dot min-h-screen antialiased">
@@ -36,7 +36,7 @@ export default function LinksClientPage({ user }: { user: User }) {
                 <h1 className="font-headline text-3xl font-bold">{name}</h1>
                 <ShareButton size="icon" variant="ghost" className="h-8 w-8 text-muted-foreground" />
             </div>
-            <p className="text-muted-foreground">@{handle}</p>
+            <p className="text-muted-foreground">@{username}</p>
             <p className="text-foreground/90 mt-4 max-w-prose">{bio}</p>
         </div>
         

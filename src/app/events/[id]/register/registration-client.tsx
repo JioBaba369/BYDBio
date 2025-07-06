@@ -2,7 +2,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import type { Event, User } from '@/lib/users';
+import type { User } from '@/lib/users';
+import type { Event } from '@/lib/events';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, CheckCircle2, Ticket } from 'lucide-react';

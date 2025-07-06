@@ -2,7 +2,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import type { Event, User } from '@/lib/users';
+import type { User } from '@/lib/users';
+import type { Event } from '@/lib/events';
 import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -253,7 +254,7 @@ export default function EventDetailClient({ event, author }: EventDetailClientPr
                                                 {event.attendees.map(attendee => (
                                                     <Tooltip key={attendee.id}>
                                                         <TooltipTrigger>
-                                                            <Link href={`/u/${author.username}`}>
+                                                            <Link href={`/u/${attendee.username}`}>
                                                                 <Avatar>
                                                                     <AvatarImage src={attendee.avatarUrl} alt={attendee.name} data-ai-hint="person portrait"/>
                                                                     <AvatarFallback>{attendee.name.charAt(0)}</AvatarFallback>
@@ -319,7 +320,7 @@ export default function EventDetailClient({ event, author }: EventDetailClientPr
                                   </Avatar>
                                 </Link>
                                 <Link href={`/u/${author.username}`} className="font-semibold hover:underline">{author.name}</Link>
-                                <p className="text-sm text-muted-foreground">@{author.handle}</p>
+                                <p className="text-sm text-muted-foreground">@{author.username}</p>
                                 <div className="mt-4 w-full space-y-2">
                                     {currentUser && !isOwner && (
                                         <Button 

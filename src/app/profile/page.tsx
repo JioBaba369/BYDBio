@@ -309,7 +309,6 @@ export default function ProfilePage() {
         await updateUser(firebaseUser.uid, {
             name: publicData.name,
             username: publicData.username,
-            handle: publicData.username,
             bio: publicData.bio,
             businessCard: cardData,
         });
@@ -703,7 +702,7 @@ END:VCARD`;
                                 <AvatarFallback>{user.avatarFallback}</AvatarFallback>
                             </Avatar>
                             <h1 className="font-headline text-xl font-bold">{user.name}</h1>
-                            <p className="text-muted-foreground text-sm">@{user.handle}</p>
+                            <p className="text-muted-foreground text-sm">@{user.username}</p>
                         </div>
                         <div className="flex flex-col gap-3 mt-6">
                             {watchedLinks && watchedLinks.length > 0 ? (

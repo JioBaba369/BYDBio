@@ -11,7 +11,7 @@ import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import Image from "next/image";
-import type { User, PromoPage } from '@/lib/users';
+import type { User } from '@/lib/users';
 import { useAuth } from '@/components/auth-provider';
 import { searchUsers, getUsersByIds } from '@/lib/users';
 import { followUser, unfollowUser } from '@/lib/connections';
@@ -19,7 +19,11 @@ import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getDocs, collection, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { Listing, Offer, Job, Event } from '@/lib/users';
+import type { Listing } from '@/lib/listings';
+import type { Offer } from '@/lib/offers';
+import type { Job } from '@/lib/jobs';
+import type { Event } from '@/lib/events';
+import type { PromoPage } from '@/lib/promo-pages';
 import { ClientFormattedDate } from '@/components/client-formatted-date';
 import { formatCurrency } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
@@ -211,7 +215,7 @@ export default function SearchPage() {
                             </Avatar>
                             <div>
                                 <p className="font-semibold">{u.name}</p>
-                                <p className="text-sm text-muted-foreground">@{u.handle}</p>
+                                <p className="text-sm text-muted-foreground">@{u.username}</p>
                             </div>
                             </Link>
                             <Button size="sm" variant={isFollowedByCurrentUser ? 'secondary' : 'default'} onClick={() => handleToggleFollow(u)}>
