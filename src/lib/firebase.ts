@@ -13,10 +13,12 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-// --- Use a global variable to ensure a single Firebase instance in development ---
-// This prevents issues with Next.js Hot Module Replacement (HMR).
+// --- Firebase Initialization with Singleton Pattern for Next.js ---
+// This pattern prevents the Firebase app from being initialized multiple times during
+// Next.js's hot-reloading in development, which can cause connection errors.
+// A global variable is used to store the Firebase instance and track emulator connection status.
 
-// Define a type for our custom global variable to avoid TypeScript errors.
+// A custom global type to store the Firebase instance.
 type FirebaseGlobal = {
   app: FirebaseApp;
   emulatorsConnected: boolean;
@@ -32,7 +34,7 @@ const globalWithFirebase = globalThis as typeof globalThis & {
 
 /**
  * Initializes and retrieves the Firebase app instance, ensuring it's a singleton.
- * In development, it also tracks if emulators have been connected.
+ * This function is the core of the pattern to prevent re-initialization.
  */
 function getFirebaseSingleton(): FirebaseGlobal {
   if (!globalWithFirebase[FIREBASE_GLOBAL_KEY]) {
@@ -41,17 +43,20 @@ function getFirebaseSingleton(): FirebaseGlobal {
       app: getApps().length > 0 ? getApp() : initializeApp(firebaseConfig),
       emulatorsConnected: false,
     };
+    console.log("Firebase Singleton Initialized.");
   }
   return globalWithFirebase[FIREBASE_GLOBAL_KEY]!;
 }
 
+// Get the singleton instance of the Firebase app and its state.
 const { app, emulatorsConnected } = getFirebaseSingleton();
 
+// Initialize Firebase services.
 const auth = getAuth(app);
 const db = getFirestore(app);
 const storage = getStorage(app);
 
-// In development mode, connect to the emulators, but only if they haven't been connected before.
+// In development, connect to emulators only once.
 if (process.env.NODE_ENV === 'development' && !emulatorsConnected) {
     console.log("Connecting to Firebase Emulators for the first time...");
     try {
