@@ -1,4 +1,3 @@
-
 import { initializeApp, getApps, getApp, type FirebaseApp } from "firebase/app";
 import { getAuth, connectAuthEmulator } from "firebase/auth";
 import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
@@ -16,23 +15,24 @@ const firebaseConfig = {
 // Initialize Firebase App (Singleton Pattern for Next.js)
 const app: FirebaseApp = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
-// Initialize Firebase Services
 const auth = getAuth(app);
 const db = getFirestore(app);
 const storage = getStorage(app);
 
 // In development, connect to the emulators.
 if (process.env.NODE_ENV === 'development') {
-    // Note: The connect...Emulator functions have internal guards to prevent reconnecting.
-    // We are using different ports to avoid conflicts with other services on your machine.
-    console.log("Attempting to connect to Firebase Emulators on new ports...");
-    try {
-        connectAuthEmulator(auth, "http://127.0.0.1:9099");
-        connectFirestoreEmulator(db, "127.0.0.1", 8081); // New port
-        connectStorageEmulator(storage, "127.0.0.1", 9198); // New port
-        console.log("Successfully configured to use Firebase Emulators.");
-    } catch (error) {
-        console.error("Error connecting to emulators:", error);
+    // Check if emulators are already connected to prevent errors on hot-reloads
+    // @ts-ignore - _isInitialized is not in the type definition but it's a reliable way to check
+    if (!auth.emulatorConfig) {
+        try {
+            console.log("Connecting to Firebase Emulators...");
+            connectAuthEmulator(auth, "http://127.0.0.1:9099", { disableRegeneration: true });
+            connectFirestoreEmulator(db, "127.0.0.1", 8081);
+            connectStorageEmulator(storage, "127.0.0.1", 9198);
+            console.log("Successfully connected to Firebase Emulators.");
+        } catch (error) {
+            console.error("Error connecting to emulators:", error);
+        }
     }
 }
 

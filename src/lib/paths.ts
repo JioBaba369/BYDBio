@@ -49,7 +49,7 @@ export const isPublicPath = (path: string) => {
     }
     
     // Creation and editing pages are NOT public.
-    if (path.endsWith('/create') || path.endsWith('/edit')) {
+    if (path.endsWith('/create') || path.includes('/edit')) {
         return false;
     }
     

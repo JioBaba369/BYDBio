@@ -45,9 +45,8 @@ export function MainSidebar() {
   const { user, loading } = useAuth();
 
   const isActive = (path: string) => {
-    // Use exact path matching for active state.
-    // The usePathname hook does not include query params, so this works for pages like /settings?tab=...
-    return path === pathname;
+    if (path === '/') return pathname === '/';
+    return pathname.startsWith(path);
   };
 
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -92,33 +91,7 @@ export function MainSidebar() {
   }
   
   if (!user) {
-    return (
-      <Sidebar>
-        <SidebarHeader>
-          <Logo className="text-sidebar-foreground" />
-        </SidebarHeader>
-        <SidebarContent>
-            <SidebarGroup>
-              <form onSubmit={handleSearchSubmit}>
-                <div className="relative">
-                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search..."
-                    className="w-full pl-8 bg-white text-black placeholder:text-gray-500 border-gray-200 focus-visible:ring-black"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                  />
-                </div>
-              </form>
-            </SidebarGroup>
-        </SidebarContent>
-         <SidebarFooter>
-            <Button asChild className="w-full">
-                <Link href="/auth/sign-in">Sign In</Link>
-            </Button>
-        </SidebarFooter>
-      </Sidebar>
-    )
+    return null;
   }
 
   return (

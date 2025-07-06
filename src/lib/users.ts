@@ -139,6 +139,9 @@ export const updateUser = async (uid: string, data: Partial<User>) => {
                 ...newName.toLowerCase().split(' ').filter(Boolean),
                 newUsername.toLowerCase()
             ])];
+            if(data.name) {
+                dataToUpdate.avatarFallback = data.name.charAt(0).toUpperCase();
+            }
         }
     }
     await updateDoc(userDocRef, dataToUpdate);
