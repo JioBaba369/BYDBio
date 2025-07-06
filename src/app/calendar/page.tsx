@@ -30,6 +30,7 @@ import { DayPicker } from 'react-day-picker';
 import 'react-day-picker/dist/style.css';
 import { format } from 'date-fns';
 import { KillChainTracker } from '@/components/kill-chain-tracker';
+import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
 const ContentHubSkeleton = () => (
     <div className="space-y-6 animate-pulse">
@@ -247,9 +248,18 @@ export default function CalendarPage() {
     <Card className="shadow-sm">
         <CardHeader className="p-3">
             <div className="flex justify-between items-start">
-                <div>
+                <div className="flex-1 min-w-0">
                     <Badge variant={getBadgeVariant(item.type)}>{item.type}</Badge>
-                    <CardTitle className="text-base mt-1">{item.title}</CardTitle>
+                     <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <CardTitle className="text-base mt-1 truncate" title={item.title}>{item.title}</CardTitle>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>{item.title}</p>
+                            </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
                 </div>
                  <DropdownMenu>
                     <DropdownMenuTrigger asChild>
