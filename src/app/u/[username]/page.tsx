@@ -5,7 +5,7 @@ import UserProfilePage from './user-profile';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { getPostsByUser } from '@/lib/posts';
+import { getPostsByUser, populatePostAuthors } from '@/lib/posts';
 import { getListingsByUser } from '@/lib/listings';
 import { getJobsByUser } from '@/lib/jobs';
 import { getEventsByUser } from '@/lib/events';
@@ -76,7 +76,7 @@ export default async function PublicProfilePageWrapper({ params }: { params: { u
     }
 
     // Fetch all content related to the user in parallel
-    const [posts, listings, jobs, events, offers, promoPages] = await Promise.all([
+    const [rawPosts, listings, jobs, events, offers, promoPages] = await Promise.all([
         getPostsByUser(userProfileData.uid),
         getListingsByUser(userProfileData.uid),
         getJobsByUser(userProfileData.uid),
@@ -85,9 +85,12 @@ export default async function PublicProfilePageWrapper({ params }: { params: { u
         getPromoPagesByUser(userProfileData.uid)
     ]);
     
+    // Now populate the posts with author info
+    const posts = await populatePostAuthors(rawPosts);
+    
     // Serialize date objects before passing to client component
     const content = {
-        posts: posts.map(p => ({ ...p, createdAt: p.createdAt.toDate().toISOString() })),
+        posts: posts,
         listings: listings.map(l => ({ ...l, createdAt: (l.createdAt as Timestamp).toDate().toISOString(), startDate: l.startDate ? (l.startDate as Date).toISOString() : null, endDate: l.endDate ? (l.endDate as Date).toISOString() : null })),
         jobs: jobs.map(j => ({ ...j, postingDate: (j.postingDate as Date).toISOString(), createdAt: (j.createdAt as Timestamp).toDate().toISOString(), startDate: j.startDate ? (j.startDate as Date).toISOString() : null, endDate: j.endDate ? (j.endDate as Date).toISOString() : null })),
         events: events.map(e => ({ ...e, startDate: (e.startDate as Date).toISOString(), endDate: e.endDate ? (e.endDate as Date).toISOString() : null, createdAt: (e.createdAt as Timestamp).toDate().toISOString() })),

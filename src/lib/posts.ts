@@ -181,7 +181,7 @@ export const repostPost = async (originalPostId: string, reposterId: string) => 
     await batch.commit();
 };
 
-const populatePostAuthors = async (posts: Post[]): Promise<PostWithAuthor[]> => {
+export const populatePostAuthors = async (posts: Post[]): Promise<PostWithAuthor[]> => {
     if (posts.length === 0) return [];
 
     const authorIds = new Set<string>();

@@ -52,7 +52,7 @@ const EmbeddedPostView = ({ post }: { post: EmbeddedPostInfoWithAuthor }) => (
 export function PostCard({ item, onLike, onDelete, onRepost, onQuote }: PostCardProps) {
     const { user } = useAuth();
     const { toast } = useToast();
-    const isOwner = user?.uid === item.author.id;
+    const isOwner = user?.uid === item.author.uid;
     const isRepost = !!item.repostedPost;
 
     const handleShare = () => {
