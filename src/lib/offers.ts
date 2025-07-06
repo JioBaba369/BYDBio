@@ -11,6 +11,7 @@ import {
   deleteDoc,
   serverTimestamp,
   type Timestamp,
+  orderBy,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { User } from './users';
@@ -140,7 +141,7 @@ export const getOfferAndAuthor = async (offerId: string): Promise<{ offer: Offer
 // Function to get all active offers from all users
 export const getAllOffers = async (): Promise<OfferWithAuthor[]> => {
     const offersRef = collection(db, 'offers');
-    const q = query(offersRef, where('status', '==', 'active'));
+    const q = query(offersRef, where('status', '==', 'active'), orderBy('startDate', 'desc'));
     const querySnapshot = await getDocs(q);
 
     const offers: OfferWithAuthor[] = [];
@@ -176,5 +177,5 @@ export const getAllOffers = async (): Promise<OfferWithAuthor[]> => {
         }
     }
 
-    return offers.sort((a,b) => new Date(b.startDate as string).getTime() - new Date(a.startDate as string).getTime());
+    return offers;
 };

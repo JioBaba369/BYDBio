@@ -11,6 +11,7 @@ import {
   deleteDoc,
   serverTimestamp,
   type Timestamp,
+  orderBy,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { User } from './users';
@@ -162,7 +163,7 @@ export const getJobAndAuthor = async (jobId: string): Promise<{ job: Job; author
 // Function to get all active jobs from all users
 export const getAllJobs = async (): Promise<JobWithAuthor[]> => {
     const jobsRef = collection(db, 'jobs');
-    const q = query(jobsRef, where('status', '==', 'active'));
+    const q = query(jobsRef, where('status', '==', 'active'), orderBy('postingDate', 'desc'));
     const querySnapshot = await getDocs(q);
 
     const jobs: JobWithAuthor[] = [];
@@ -200,5 +201,5 @@ export const getAllJobs = async (): Promise<JobWithAuthor[]> => {
         }
     }
 
-    return jobs.sort((a,b) => new Date(b.postingDate as string).getTime() - new Date(a.postingDate as string).getTime());
+    return jobs;
 };

@@ -11,6 +11,7 @@ import {
   deleteDoc,
   serverTimestamp,
   type Timestamp,
+  orderBy,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { User } from './users';
@@ -136,7 +137,7 @@ export const getListingAndAuthor = async (listingId: string): Promise<{ listing:
 // Function to get all active listings from all users
 export const getAllListings = async (): Promise<ListingWithAuthor[]> => {
     const listingsRef = collection(db, 'listings');
-    const q = query(listingsRef, where('status', '==', 'active'));
+    const q = query(listingsRef, where('status', '==', 'active'), orderBy('createdAt', 'desc'));
     const querySnapshot = await getDocs(q);
 
     const listings: ListingWithAuthor[] = [];
@@ -167,5 +168,5 @@ export const getAllListings = async (): Promise<ListingWithAuthor[]> => {
         }
     }
 
-    return listings.sort((a,b) => new Date(b.createdAt as string).getTime() - new Date(a.createdAt as string).getTime());
+    return listings;
 };

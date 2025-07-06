@@ -202,7 +202,7 @@ export const getEventAndAuthor = async (eventId: string): Promise<{ event: Event
 // Function to get all events from all users (for the public events page)
 export const getAllEvents = async (): Promise<EventWithAuthor[]> => {
     const eventsRef = collection(db, 'events');
-    const q = query(eventsRef, where('status', '==', 'active'));
+    const q = query(eventsRef, where('status', '==', 'active'), orderBy('startDate', 'desc'));
     const querySnapshot = await getDocs(q);
 
     const events: EventWithAuthor[] = [];
@@ -238,7 +238,7 @@ export const getAllEvents = async (): Promise<EventWithAuthor[]> => {
         }
     }
 
-    return events.sort((a,b) => new Date(b.startDate as string).getTime() - new Date(a.startDate as string).getTime());
+    return events;
 };
 
 const serializeFirestoreTimestamps = (data: any): any => {

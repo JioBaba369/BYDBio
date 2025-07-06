@@ -125,7 +125,7 @@ export const getPromoPageAndAuthor = async (promoPageId: string): Promise<{ prom
 // Function to get all active promo pages from all users
 export const getAllPromoPages = async (): Promise<PromoPageWithAuthor[]> => {
     const promoPagesRef = collection(db, 'promoPages');
-    const q = query(promoPagesRef, where('status', '==', 'active'));
+    const q = query(promoPagesRef, where('status', '==', 'active'), orderBy('createdAt', 'desc'));
     const querySnapshot = await getDocs(q);
 
     const promoPages: PromoPageWithAuthor[] = [];
@@ -154,5 +154,5 @@ export const getAllPromoPages = async (): Promise<PromoPageWithAuthor[]> => {
         }
     }
 
-    return promoPages.sort((a,b) => new Date(b.createdAt as string).getTime() - new Date(a.createdAt as string).getTime());
+    return promoPages;
 };
