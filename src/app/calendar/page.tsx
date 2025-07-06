@@ -29,6 +29,7 @@ import { formatCurrency } from '@/lib/utils';
 import { DayPicker } from 'react-day-picker';
 import 'react-day-picker/dist/style.css';
 import { format } from 'date-fns';
+import { KillChainTracker } from '@/components/kill-chain-tracker';
 
 const ContentHubSkeleton = () => (
     <div className="space-y-6 animate-pulse">
@@ -203,25 +204,25 @@ export default function CalendarPage() {
     { name: 'Promo Page', icon: Megaphone, variant: 'default' },
   ];
   
-  const getStatsIcon = (itemType: CalendarItem['type']) => {
-    switch (itemType) {
-        case 'Event': return Users;
-        case 'Offer': return Gift;
-        case 'Job': return Users;
-        case 'Listing': return MousePointerClick;
-        case 'Promo Page': return MousePointerClick;
-        default: return Eye;
+  const getStatsValue = (item: CalendarItem): number => {
+     switch (item.type) {
+        case 'Event': return item.rsvps?.length ?? 0;
+        case 'Offer': return item.claims ?? 0;
+        case 'Job': return item.applicants ?? 0;
+        case 'Listing': return item.clicks ?? 0;
+        case 'Promo Page': return item.clicks ?? 0;
+        default: return 0;
     }
   }
   
-  const getStatsValue = (item: CalendarItem) => {
-     switch (item.type) {
-        case 'Event': return item.rsvps?.length.toLocaleString() ?? 0;
-        case 'Offer': return item.claims?.toLocaleString() ?? 0;
-        case 'Job': return item.applicants?.toLocaleString() ?? 0;
-        case 'Listing': return item.clicks?.toLocaleString() ?? 0;
-        case 'Promo Page': return item.clicks?.toLocaleString() ?? 0;
-        default: return 0;
+  const getInteractionLabel = (itemType: CalendarItem['type']): string => {
+    switch (itemType) {
+        case 'Event': return 'RSVPs';
+        case 'Offer': return 'Claims';
+        case 'Job': return 'Applicants';
+        case 'Listing': return 'Clicks';
+        case 'Promo Page': return 'Clicks';
+        default: return 'Interactions';
     }
   }
   
@@ -437,7 +438,6 @@ export default function CalendarPage() {
                   view === 'grid' ? (
                   <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                       {filteredItems.map((item) => {
-                         const StatsIcon = getStatsIcon(item.type);
                          return (
                           <Card key={item.id} className="shadow-sm flex flex-col">
                               {item.imageUrl && (
@@ -480,17 +480,12 @@ export default function CalendarPage() {
                                   {item.company && <div className="flex items-center gap-2"><Briefcase className="h-4 w-4" /><span>{item.company}</span></div>}
                                   {item.price && <div className="flex items-center gap-2"><DollarSign className="h-4 w-4" /><span className="font-semibold">{formatCurrency(item.price)}</span></div>}
                               </CardContent>
-                              <CardFooter className="border-t pt-4 px-4 pb-4">
-                                <div className="flex justify-between w-full text-sm">
-                                    <div className="flex items-center gap-2">
-                                        <Eye className="h-4 w-4 text-primary" />
-                                        <span>{item.views?.toLocaleString() ?? 0} views</span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <StatsIcon className="h-4 w-4 text-primary" />
-                                        <span>{getStatsValue(item)}</span>
-                                    </div>
-                                </div>
+                              <CardFooter className="border-t pt-3 px-4 pb-3">
+                                <KillChainTracker 
+                                    views={item.views ?? 0}
+                                    interactions={getStatsValue(item)}
+                                    interactionLabel={getInteractionLabel(item.type)}
+                                />
                               </CardFooter>
                           </Card>
                          )
