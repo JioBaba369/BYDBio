@@ -62,6 +62,14 @@ const linksFormSchema = z.object({
 });
 type LinksFormValues = z.infer<typeof linksFormSchema>;
 
+const escapeVCard = (str: string | undefined | null): string => {
+  if (!str) return '';
+  return str
+    .replace(/\\/g, '\\\\')
+    .replace(/,/g, '\\,')
+    .replace(/;/g, '\\;')
+    .replace(/\n/g, '\\n');
+};
 
 const SortableLinkItem = ({ field, index, remove }: { field: { id: string }, index: number, remove: (index: number) => void }) => {
   const { control, setValue } = useFormContext<LinksFormValues>();
@@ -397,14 +405,14 @@ export default function ProfilePage() {
     if (!user) return;
     const vCardData = `BEGIN:VCARD
 VERSION:3.0
-FN:${watchedPublicProfile.name || user.name}
-ORG:${watchedBusinessCard.company || ''}
-TITLE:${watchedBusinessCard.title || ''}
+FN:${escapeVCard(watchedPublicProfile.name || user.name)}
+ORG:${escapeVCard(watchedBusinessCard.company)}
+TITLE:${escapeVCard(watchedBusinessCard.title)}
 TEL;TYPE=WORK,VOICE:${watchedBusinessCard.phone || ''}
 EMAIL:${watchedBusinessCard.email || ''}
 URL:${watchedBusinessCard.website || ''}
 X-SOCIALPROFILE;type=linkedin:${watchedBusinessCard.linkedin || ''}
-ADR;TYPE=WORK:;;${watchedBusinessCard.location || ''}
+ADR;TYPE=WORK:;;${escapeVCard(watchedBusinessCard.location)}
 END:VCARD`;
     setQrCodeUrl(vCardData);
   }, [watchedBusinessCard, watchedPublicProfile, user]);

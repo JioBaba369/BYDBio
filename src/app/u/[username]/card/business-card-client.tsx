@@ -13,6 +13,15 @@ import type { User } from "@/lib/users";
 import { saveAs } from "file-saver";
 import { useToast } from "@/hooks/use-toast";
 
+const escapeVCard = (str: string | undefined | null): string => {
+  if (!str) return '';
+  return str
+    .replace(/\\/g, '\\\\')
+    .replace(/,/g, '\\,')
+    .replace(/;/g, '\\;')
+    .replace(/\n/g, '\\n');
+};
+
 export default function BusinessCardClient({ user }: { user: User }) {
   const { toast } = useToast();
   
@@ -29,14 +38,14 @@ export default function BusinessCardClient({ user }: { user: User }) {
 
   const vCardData = `BEGIN:VCARD
 VERSION:3.0
-FN:${name}
-ORG:${company}
-TITLE:${title}
-TEL;TYPE=WORK,VOICE:${phone}
-EMAIL:${email}
-URL:${website}
-X-SOCIALPROFILE;type=linkedin:${linkedin}
-ADR;TYPE=WORK:;;${location}
+FN:${escapeVCard(name)}
+ORG:${escapeVCard(company)}
+TITLE:${escapeVCard(title)}
+TEL;TYPE=WORK,VOICE:${phone || ''}
+EMAIL:${email || ''}
+URL:${website || ''}
+X-SOCIALPROFILE;type=linkedin:${linkedin || ''}
+ADR;TYPE=WORK:;;${escapeVCard(location)}
 END:VCARD`;
 
   const handleSaveToContacts = () => {
