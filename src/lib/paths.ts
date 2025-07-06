@@ -14,6 +14,7 @@ const PROTECTED_ROUTE_BASES = [
     '/connections',
     '/feed',
     '/notifications',
+    '/inbox',
     '/holiday-scheduler',
 ];
 
@@ -48,8 +49,8 @@ export const isPublicPath = (path: string) => {
         return false;
     }
     
-    // Creation and editing pages are NOT public.
-    if (path.endsWith('/create') || path.includes('/edit')) {
+    // Creation and editing pages are NOT public. This check is more specific to avoid false positives.
+    if (path.endsWith('/create') || path.endsWith('/edit')) {
         return false;
     }
     
