@@ -177,7 +177,7 @@ export const toggleRsvp = async (eventId: string, userId: string) => {
     } else {
         await updateDoc(eventRef, { rsvps: arrayUnion(userId) });
         // Send a notification to the event creator
-        await createNotification(eventData.authorId, 'event_rsvp', userId, eventId, eventData.title);
+        await createNotification(eventData.authorId, 'event_rsvp', userId, { entityId: eventId, entityTitle: eventData.title });
     }
     return !isRsvped;
 };

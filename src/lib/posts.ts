@@ -129,7 +129,7 @@ export const toggleLikePost = async (postId: string, userId: string) => {
         const contentForNotification = postData.repostedPost?.content || postData.content;
         const contentSnippet = contentForNotification.substring(0, 40) + (contentForNotification.length > 40 ? '...' : '');
 
-        await createNotification(postData.authorId, 'new_like', userId, postId, contentSnippet);
+        await createNotification(postData.authorId, 'new_like', userId, { entityId: postId, entityTitle: contentSnippet });
     }
 
     return !isLiked; // Return the new like status

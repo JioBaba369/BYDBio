@@ -17,17 +17,21 @@ import {
 import { db } from '@/lib/firebase';
 import { getUsersByIds, type User } from './users';
 
-export type NotificationType = 'new_follower' | 'new_like' | 'event_rsvp';
+export type NotificationType = 'new_follower' | 'new_like' | 'event_rsvp' | 'contact_form_submission';
 
 export type Notification = {
   id: string; // Document ID
   userId: string; // The user receiving the notification
-  actorId: string; // The user who performed the action
+  actorId?: string; // The user who performed the action. Optional for system/guest messages.
   type: NotificationType;
   entityId?: string; // e.g., postId, eventId
   entityTitle?: string; // A title or snippet for context
   read: boolean;
   createdAt: Timestamp;
+  // Fields for contact form messages
+  senderName?: string;
+  senderEmail?: string;
+  messageBody?: string;
 };
 
 export type NotificationWithActor = Notification & { actor: User | null };
@@ -36,9 +40,14 @@ export type NotificationWithActor = Notification & { actor: User | null };
 export const createNotification = async (
   userId: string,
   type: NotificationType,
-  actorId: string,
-  entityId?: string,
-  entityTitle?: string
+  actorId?: string,
+  notificationData: {
+    entityId?: string;
+    entityTitle?: string;
+    messageBody?: string;
+    senderName?: string;
+    senderEmail?: string;
+  } = {}
 ) => {
   // Don't notify users about their own actions
   if (userId === actorId) {
@@ -63,23 +72,14 @@ export const createNotification = async (
   
   const notificationsRef = collection(db, 'notifications');
   
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const notificationData: any = {
+  await addDoc(notificationsRef, {
     userId,
     type,
-    actorId,
+    actorId: actorId || null,
     read: false,
     createdAt: serverTimestamp(),
-  };
-
-  if (entityId) {
-    notificationData.entityId = entityId;
-  }
-  if (entityTitle) {
-    notificationData.entityTitle = entityTitle;
-  }
-
-  await addDoc(notificationsRef, notificationData);
+    ...notificationData,
+  });
 };
 
 // Get notifications for a user
@@ -99,13 +99,15 @@ export const getNotificationsForUser = async (userId: string): Promise<Notificat
 
   const notifications = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Notification));
 
-  const actorIds = [...new Set(notifications.map(n => n.actorId))];
-  const actors = await getUsersByIds(actorIds);
+  const actorIds = notifications.map(n => n.actorId).filter((id): id is string => !!id);
+  const uniqueActorIds = [...new Set(actorIds)];
+
+  const actors = await getUsersByIds(uniqueActorIds);
   const actorMap = new Map(actors.map(actor => [actor.uid, actor]));
 
   return notifications.map(notification => ({
     ...notification,
-    actor: actorMap.get(notification.actorId) || null,
+    actor: notification.actorId ? (actorMap.get(notification.actorId) || null) : null,
   }));
 };
 

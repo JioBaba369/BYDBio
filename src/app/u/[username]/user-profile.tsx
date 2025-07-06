@@ -31,6 +31,7 @@ import { formatCurrency } from "@/lib/utils";
 import { PostCard } from "@/components/post-card";
 import { toggleLikePost, deletePost, repostPost } from '@/lib/posts';
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
+import { ContactUserForm } from "@/components/contact-user-form";
 
 
 interface UserProfilePageProps {
@@ -181,6 +182,7 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
 
   const { name, username, avatarUrl, avatarFallback, bio, links, businessCard } = userProfileData;
   const { listings, jobs, events, offers, promoPages } = content;
+  const isOwner = currentUser?.uid === userProfileData.uid;
 
   const vCardData = `BEGIN:VCARD
 VERSION:3.0
@@ -249,7 +251,7 @@ END:VCARD`;
                 </Dialog>
             </div>
             <div className="mt-6 flex w-full flex-col sm:flex-row items-center gap-4">
-              {currentUser?.uid === userProfileData.uid ? (
+              {isOwner ? (
                   <Button asChild className="flex-1 font-bold w-full sm:w-auto">
                       <Link href="/profile">
                           <Edit className="mr-2 h-4 w-4" />
@@ -390,6 +392,18 @@ END:VCARD`;
                             default: return null;
                         }
                     })}
+                </CardContent>
+            </Card>
+        )}
+
+        {!isOwner && (
+            <Card className="bg-card/80 backdrop-blur-sm shadow-2xl rounded-2xl border-primary/10">
+                <CardHeader>
+                    <CardTitle>Contact {name.split(' ')[0]}</CardTitle>
+                    <CardDescription>Send a message directly to {name}.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <ContactUserForm recipientUsername={username} />
                 </CardContent>
             </Card>
         )}

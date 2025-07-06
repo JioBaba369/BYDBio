@@ -3,7 +3,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { CheckCheck, Bell, UserPlus, Heart, Calendar } from "lucide-react";
+import { CheckCheck, Bell, UserPlus, Heart, Calendar, Mail } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/components/auth-provider";
 import { useState, useEffect } from "react";
@@ -29,9 +29,51 @@ const NotificationSkeleton = () => (
 const NotificationItem = ({ notification, onRead }: { notification: NotificationWithActor, onRead: (id: string) => void }) => {
   const { actor } = notification;
 
-  if (!actor) return null; // Don't render if the actor (user who performed action) is gone
-
   let icon, message, link;
+
+  if (notification.type === 'contact_form_submission') {
+    icon = <Mail className="h-5 w-5 text-blue-500" />;
+    const sender = notification.senderName || 'Anonymous';
+    message = (
+      <>
+        <p><span className="font-semibold">{sender}</span> sent you a message from your profile page.</p>
+        {notification.messageBody && (
+          <blockquote className="mt-2 pl-3 border-l-2 text-sm text-muted-foreground italic">
+            "{notification.messageBody}"
+          </blockquote>
+        )}
+      </>
+    );
+    link = `/notifications`; // Stay on page
+    
+    return (
+        <Link href={link} onClick={() => onRead(notification.id)} className={cn(
+          "block p-4 border-b last:border-b-0 transition-colors",
+          !notification.read ? "bg-primary/5 hover:bg-primary/10" : "hover:bg-muted/50"
+        )}>
+            <div className="flex items-start gap-4">
+                <div className="relative">
+                    <Avatar>
+                        {/* No image for guests */}
+                        <AvatarFallback>{sender.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <div className="absolute -bottom-1 -right-1 bg-background rounded-full p-0.5">
+                        {icon}
+                    </div>
+                </div>
+                <div className="flex-1 text-sm">
+                    {message}
+                    <p className="text-xs text-muted-foreground mt-1">
+                        <ClientFormattedDate date={(notification.createdAt as unknown as Timestamp).toDate()} relative />
+                    </p>
+                </div>
+            </div>
+        </Link>
+    );
+  }
+
+  // Original logic for logged-in user actions
+  if (!actor) return null; // Don't render if the actor (user who performed action) is gone
 
   switch (notification.type) {
     case 'new_follower':
