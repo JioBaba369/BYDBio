@@ -13,8 +13,7 @@ import {z} from 'genkit';
 import { getPublicHolidays } from '@/services/holiday-service';
 
 const GetHolidaysInputSchema = z.object({
-  country: z.string().describe('The country for which to fetch holidays, e.g., "Australia", "United States", "GB".'),
-  year: z.number().describe('The year for which to fetch holidays, e.g., 2024.'),
+  query: z.string().describe('A natural language query about public holidays, e.g., "holidays in Spain this year".'),
 });
 export type GetHolidaysInput = z.infer<typeof GetHolidaysInputSchema>;
 
@@ -58,12 +57,13 @@ const prompt = ai.definePrompt({
   input: {schema: GetHolidaysInputSchema},
   output: {schema: GetHolidaysOutputSchema},
   system: `You are an AI assistant that provides public holiday information.
-Your task is to call the 'getPublicHolidays' tool to find the holidays for the requested country and year.
-- You MUST determine the correct two-letter ISO 3166-1 alpha-2 country code from the user's input to use with the tool.
+Your task is to call the 'getPublicHolidays' tool to find the holidays based on the user's request.
+- You MUST determine the correct two-letter ISO 3166-1 alpha-2 country code from the user's query to use with the tool.
+- You MUST determine the correct year from the user's query. If the user does not specify a year, assume the current year is ${new Date().getFullYear()}.
 - After the tool returns data, you MUST format it into the required JSON output format.
 `,
   tools: [getPublicHolidaysTool],
-  prompt: `Country: {{{country}}}\nYear: {{{year}}}`,
+  prompt: `{{{query}}}`,
 });
 
 const getHolidaysFlow = ai.defineFlow(

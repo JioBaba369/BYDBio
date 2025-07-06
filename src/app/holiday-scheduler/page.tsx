@@ -5,23 +5,29 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
 import { getHolidays, type GetHolidaysOutput } from '@/ai/flows/get-holidays-flow';
 import { Skeleton } from '@/components/ui/skeleton';
-import { CalendarDays } from 'lucide-react';
+import { CalendarDays, Sparkles } from 'lucide-react';
+import { ClientFormattedDate } from '@/components/client-formatted-date';
 
 const HolidaySchedulerSkeleton = () => (
-    <div className="space-y-4">
-        <Skeleton className="h-10 w-full" />
-        <Skeleton className="h-48 w-full" />
+    <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+        {[...Array(4)].map((_, i) => (
+            <Card key={i}>
+                <CardHeader className="p-4">
+                    <Skeleton className="h-6 w-3/4 mx-auto" />
+                </CardHeader>
+                <CardContent className="p-4 pt-0">
+                    <Skeleton className="h-4 w-1/2 mx-auto" />
+                </CardContent>
+            </Card>
+        ))}
     </div>
 );
 
 export default function PublicHolidaysPage() {
-    const [country, setCountry] = useState('US');
-    const [year, setYear] = useState(new Date().getFullYear().toString());
+    const [query, setQuery] = useState('Next public holiday in the United States');
     const [holidays, setHolidays] = useState<GetHolidaysOutput['holidays']>([]);
     const [isLoading, setIsLoading] = useState(false);
     const { toast } = useToast();
@@ -29,25 +35,19 @@ export default function PublicHolidaysPage() {
     const handleFetchHolidays = async (e: React.FormEvent) => {
         e.preventDefault();
         
-        if (!country || !year) {
-            toast({ title: "Please enter a country and year.", variant: "destructive" });
-            return;
-        }
-        
-        const yearNum = parseInt(year, 10);
-        if (isNaN(yearNum)) {
-             toast({ title: "Invalid Year", description: "Please enter a valid year.", variant: "destructive" });
+        if (!query) {
+            toast({ title: "Please enter a query.", variant: "destructive" });
             return;
         }
 
         setIsLoading(true);
         setHolidays([]);
         try {
-            const result = await getHolidays({ country, year: yearNum });
-            if (result && result.holidays) {
+            const result = await getHolidays({ query });
+            if (result && result.holidays && result.holidays.length > 0) {
                 setHolidays(result.holidays);
             } else {
-                toast({ title: "No holidays found", description: "Could not find any holidays for the selected country and year.", variant: "destructive" });
+                toast({ title: "No holidays found", description: "Could not find any holidays for your query.", variant: "destructive" });
             }
         } catch (error: any) {
             console.error("Error fetching holidays:", error);
@@ -62,72 +62,68 @@ export default function PublicHolidaysPage() {
             <div>
                 <h1 className="text-2xl sm:text-3xl font-bold font-headline flex items-center gap-2">
                     <CalendarDays className="h-8 w-8 text-primary" />
-                    Public Holidays
+                    AI Holiday Finder
                 </h1>
                 <p className="text-muted-foreground">
-                    Find public holidays for any country and year using our AI-powered helper.
+                    Ask our AI assistant about public holidays in any country.
                 </p>
             </div>
             
             <Card>
                 <CardHeader>
-                    <CardTitle>Find Public Holidays</CardTitle>
-                    <CardDescription>Enter a country name or 2-letter code (e.g., "United States", "GB") and a year.</CardDescription>
+                    <CardTitle className="flex items-center gap-2">
+                        <Sparkles className="h-5 w-5 text-primary" />
+                        Ask the AI
+                    </CardTitle>
+                    <CardDescription>
+                        Use natural language to ask for holidays. For example: "Public holidays in Canada for 2025" or "Next holiday in Australia".
+                    </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <form onSubmit={handleFetchHolidays} className="grid sm:grid-cols-3 gap-4 items-end">
-                         <div className="space-y-2">
-                            <Label htmlFor="country">Country</Label>
-                            <Input
-                                id="country"
-                                value={country}
-                                onChange={(e) => setCountry(e.target.value)}
-                                placeholder="e.g., US, Canada"
-                            />
-                        </div>
-                         <div className="space-y-2">
-                            <Label htmlFor="year">Year</Label>
-                            <Input
-                                id="year"
-                                type="number"
-                                value={year}
-                                onChange={(e) => setYear(e.target.value)}
-                                placeholder="e.g., 2024"
-                            />
-                        </div>
-                        <Button type="submit" disabled={isLoading} className="w-full sm:w-auto">
+                    <form onSubmit={handleFetchHolidays} className="flex gap-2">
+                        <Input
+                            id="query"
+                            value={query}
+                            onChange={(e) => setQuery(e.target.value)}
+                            placeholder="e.g., Holidays in the UK this year"
+                            className="flex-1"
+                        />
+                        <Button type="submit" disabled={isLoading}>
                             {isLoading ? 'Finding...' : 'Find Holidays'}
                         </Button>
                     </form>
                 </CardContent>
             </Card>
 
-            {(isLoading || holidays.length > 0) && (
+            {isLoading && (
                 <Card>
                     <CardHeader>
                         <CardTitle>Results</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        {isLoading ? (
-                            <HolidaySchedulerSkeleton />
-                        ) : (
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>Date</TableHead>
-                                        <TableHead>Holiday Name</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {holidays.map((holiday, index) => (
-                                        <TableRow key={index}>
-                                            <TableCell>{holiday.date}</TableCell>
-                                            <TableCell>{holiday.name}</TableCell>
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
-                        )}
+                        <HolidaySchedulerSkeleton />
+                    </CardContent>
+                </Card>
+            )}
+
+            {!isLoading && holidays.length > 0 && (
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Results</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                         <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+                            {holidays.map((holiday, index) => (
+                                <Card key={index} className="text-center bg-muted/30">
+                                    <CardHeader className="p-4">
+                                        <CardTitle className="text-base">{holiday.name}</CardTitle>
+                                    </CardHeader>
+                                    <CardContent className="p-4 pt-0">
+                                        <p className="font-semibold text-primary"><ClientFormattedDate date={holiday.date} formatStr="PPP" /></p>
+                                    </CardContent>
+                                </Card>
+                            ))}
+                        </div>
                     </CardContent>
                 </Card>
             )}
