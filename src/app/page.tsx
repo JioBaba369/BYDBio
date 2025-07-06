@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
-import { Briefcase, Calendar, DollarSign, PenSquare, PlusCircle, Tags, Users, UserCheck, Package, Sparkles, Megaphone } from "lucide-react"
+import { Briefcase, Calendar, DollarSign, PenSquare, PlusCircle, Tags, Users, UserCheck, Package, Sparkles, Megaphone, Rss } from "lucide-react"
 import Link from "next/link"
 import {
   DropdownMenu,
@@ -101,13 +101,14 @@ function Dashboard() {
                   (counts?.events || 0) + 
                   (counts?.offers || 0) + 
                   (counts?.listings || 0) +
+                  (counts?.posts || 0) +
                   (counts?.promoPages || 0);
     
     let completion = 0;
     if (user.bio) completion += 20;
     if (user.avatarUrl && !user.avatarUrl.includes('placehold.co')) completion += 20;
     if (user.links && user.links.length > 0) completion += 20;
-    if (total > 0 || (counts?.posts || 0) > 0) completion += 20;
+    if (total > 0) completion += 20;
     if (user.businessCard && user.businessCard.title && user.businessCard.company) completion += 20;
 
     return { totalContent: total, profileCompletion: completion };
@@ -153,7 +154,7 @@ function Dashboard() {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
                 <Link href="/feed" className="cursor-pointer">
-                    <PenSquare className="mr-2 h-4 w-4" />
+                    <Rss className="mr-2 h-4 w-4" />
                     <span>New Post</span>
                 </Link>
                 </DropdownMenuItem>
@@ -228,7 +229,7 @@ function Dashboard() {
           <CardContent>
             <div className="text-2xl font-bold">{totalContent}</div>
             <p className="text-xs text-muted-foreground">
-              {totalContent} active content items
+              Total active content items
             </p>
           </CardContent>
         </Card>
