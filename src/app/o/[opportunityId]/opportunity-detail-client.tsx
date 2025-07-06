@@ -2,7 +2,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import type { Job, User } from '@/lib/users';
+import type { User } from '@/lib/users';
+import type { Job } from '@/lib/jobs';
 import Image from 'next/image';
 import { Card, CardContent, CardTitle, CardDescription, CardHeader, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -172,7 +173,7 @@ export default function JobDetailClient({ job, author }: JobDetailClientProps) {
                                   </Avatar>
                                 </Link>
                                 <Link href={`/u/${author.username}`} className="font-semibold hover:underline">{author.name}</Link>
-                                <p className="text-sm text-muted-foreground">@{author.handle}</p>
+                                <p className="text-sm text-muted-foreground">@{author.username}</p>
                                 <div className="mt-4 w-full space-y-2">
                                     {currentUser && !isOwner && (
                                         <Button 

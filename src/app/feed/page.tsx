@@ -231,14 +231,14 @@ export default function FeedPage() {
         <Card key={item.id}>
             <CardHeader className="p-4">
                 <div className="flex items-center justify-between">
-                    <Link href={`/u/${item.author.handle}`} className="flex items-center gap-3 hover:underline">
+                    <Link href={`/u/${item.author.username}`} className="flex items-center gap-3 hover:underline">
                         <Avatar>
                             <AvatarImage src={item.author.avatarUrl} data-ai-hint="person portrait"/>
                             <AvatarFallback>{item.author.name.charAt(0)}</AvatarFallback>
                         </Avatar>
                         <div>
                             <p className="font-semibold">{item.author.name}</p>
-                            <p className="text-sm text-muted-foreground">@{item.author.handle} · <ClientFormattedDate date={item.createdAt} relative /></p>
+                            <p className="text-sm text-muted-foreground">@{item.author.username} · <ClientFormattedDate date={item.createdAt} relative /></p>
                         </div>
                     </Link>
                     {isOwner && (
