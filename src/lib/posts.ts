@@ -16,6 +16,7 @@ import {
   arrayUnion,
   arrayRemove,
   increment,
+  writeBatch,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { User } from './users';
@@ -34,6 +35,10 @@ export type QuotedPostInfo = {
   }
 }
 
+// A reposted post uses the same structure as a quoted post for its embedded data.
+export type RepostedPostInfo = QuotedPostInfo;
+
+
 export type Post = {
   id: string; // Document ID from Firestore
   authorId: string; // UID of the user who created it
@@ -45,6 +50,7 @@ export type Post = {
   createdAt: Timestamp;
   repostCount?: number;
   quotedPost?: QuotedPostInfo;
+  repostedPost?: RepostedPostInfo;
 };
 
 export type PostWithAuthor = Omit<Post, 'createdAt'> & { author: User; createdAt: string; };
@@ -118,12 +124,63 @@ export const toggleLikePost = async (postId: string, userId: string) => {
     return !isLiked; // Return the new like status
 }
 
-// Function to repost a post (currently just increments count)
-export const repostPost = async (postId: string) => {
-    const postRef = doc(db, 'posts', postId);
-    await updateDoc(postRef, {
+// A repost is a new post that links to an original post.
+export const repostPost = async (originalPostId: string, reposterId: string) => {
+    const postRef = doc(db, 'posts', originalPostId);
+    const postDoc = await getDoc(postRef);
+
+    if (!postDoc.exists()) {
+        throw new Error("Cannot repost a post that does not exist.");
+    }
+
+    const originalPostData = postDoc.data() as Post;
+    // Prevent reposting a repost
+    if (originalPostData.repostedPost) {
+        throw new Error("Cannot repost a post that is already a repost.");
+    }
+    
+    const originalAuthorRef = doc(db, 'users', originalPostData.authorId);
+    const originalAuthorDoc = await getDoc(originalAuthorRef);
+
+    if (!originalAuthorDoc.exists()) {
+        throw new Error("Original author not found.");
+    }
+    const originalAuthorData = originalAuthorDoc.data() as User;
+    
+    const repostedPostData: RepostedPostInfo = {
+        id: originalPostId,
+        content: originalPostData.content,
+        imageUrl: originalPostData.imageUrl,
+        author: {
+            uid: originalPostData.authorId,
+            name: originalAuthorData.name,
+            username: originalAuthorData.username,
+            avatarUrl: originalAuthorData.avatarUrl
+        }
+    };
+
+    const batch = writeBatch(db);
+
+    // 1. Increment repost count on the original post
+    batch.update(postRef, {
         repostCount: increment(1)
     });
+
+    // 2. Create the new post document for the reposter
+    const newPostRef = doc(collection(db, 'posts')); // auto-generate ID
+    batch.set(newPostRef, {
+        authorId: reposterId,
+        content: '', // Reposts have no original content of their own
+        imageUrl: null,
+        repostedPost: repostedPostData, // Embed the original post data
+        createdAt: serverTimestamp(),
+        likes: 0,
+        likedBy: [],
+        comments: 0,
+        repostCount: 0,
+    });
+    
+    await batch.commit();
 };
 
 // Function to fetch posts for the user's feed

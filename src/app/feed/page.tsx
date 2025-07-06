@@ -236,23 +236,13 @@ export default function FeedPage() {
   
   const handleRepost = async (postId: string) => {
     if (!user) return;
-
-    // Optimistic UI update
-    const updateFeed = (feed: FeedItem[]) => feed.map(item =>
-        item.id === postId
-            ? { ...item, repostCount: (item.repostCount || 0) + 1 }
-            : item
-    );
-    setFollowingFeed(updateFeed);
-    setDiscoveryFeed(updateFeed);
-
     try {
-        await repostPost(postId);
-        toast({ title: "Reposted!" });
+      await repostPost(postId, user.uid);
+      toast({ title: "Reposted!" });
+      await fetchFeeds(true, true); // Refresh both feeds to show the new repost
     } catch (error) {
-        console.error("Error reposting:", error);
-        toast({ title: "Failed to repost", variant: "destructive" });
-        await fetchFeeds(true, true); // Revert on error
+      console.error("Error reposting:", error);
+      toast({ title: "Failed to repost", variant: "destructive" });
     }
   };
   
