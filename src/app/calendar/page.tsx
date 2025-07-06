@@ -363,20 +363,26 @@ export default function CalendarPage() {
                 <div className="space-y-2">
                     <Label className="text-sm font-medium">Filter by type</Label>
                     <div className="flex flex-wrap gap-2">
-                        {contentTypes.map(({ name, icon: Icon, variant }) => (
-                            <Button
-                                key={name}
-                                variant={typeFilters.has(name) ? variant : 'outline'}
-                                size="sm"
-                                onClick={() => handleTypeFilterChange(name)}
-                                className={cn(
-                                    variant === 'outline' && typeFilters.has(name) && 'bg-accent text-accent-foreground border-accent-foreground/30',
-                                    'transition-all capitalize'
-                                )}
-                            >
-                                <Icon className="mr-2 h-4 w-4" /> {name}s
-                            </Button>
-                        ))}
+                        {contentTypes.map(({ name, icon: Icon, variant }) => {
+                            const isSelected = typeFilters.has(name);
+                            return (
+                                <Badge
+                                    key={name}
+                                    variant={isSelected ? variant : 'outline'}
+                                    onClick={() => handleTypeFilterChange(name)}
+                                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleTypeFilterChange(name); }}
+                                    className={cn(
+                                        'cursor-pointer transition-all py-1.5 px-3 text-sm capitalize',
+                                        !isSelected && 'hover:bg-accent/50',
+                                        variant === 'outline' && isSelected && 'bg-foreground text-background border-transparent hover:bg-foreground/90',
+                                    )}
+                                    role="button"
+                                    tabIndex={0}
+                                >
+                                    <Icon className="mr-2 h-4 w-4" /> {name}s
+                                </Badge>
+                            )
+                        })}
                     </div>
                 </div>
             </CardContent>
