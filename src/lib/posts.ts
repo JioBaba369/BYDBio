@@ -20,6 +20,7 @@ import {
 import { db } from '@/lib/firebase';
 import type { User } from './users';
 import { createNotification } from './notifications';
+import { getUsersByIds } from './users';
 
 export type Post = {
   id: string; // Document ID from Firestore
@@ -109,34 +110,30 @@ export const getFeedPosts = async (followingIds: string[]): Promise<(Omit<Post, 
     const postsRef = collection(db, 'posts');
     const q = query(postsRef, where('authorId', 'in', followingIds), orderBy('createdAt', 'desc'), limit(50));
     const querySnapshot = await getDocs(q);
-
-    const posts: (Omit<Post, 'createdAt'> & { author: User; createdAt: string; })[] = [];
-    const authorCache: { [key: string]: User } = {};
-
-    for (const postDoc of querySnapshot.docs) {
-        const postData = postDoc.data() as Omit<Post, 'id' | 'createdAt'>;
-        const postCreatedAt = (postDoc.data().createdAt as Timestamp);
-        
-        let author = authorCache[postData.authorId];
-        if (!author) {
-            const userDoc = await getDoc(doc(db, 'users', postData.authorId));
-            if (userDoc.exists()) {
-                author = userDoc.data() as User;
-                authorCache[postData.authorId] = author;
-            }
-        }
-
-        if (author) {
-            posts.push({ 
-                id: postDoc.id,
-                 ...postData, 
-                 author: author,
-                 createdAt: postCreatedAt.toDate().toISOString(),
-            });
-        }
+    
+    if (querySnapshot.empty) {
+        return [];
     }
 
-    return posts;
+    const postsData = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...(doc.data() as Omit<Post, 'id'>)
+    }));
+
+    const authorIds = [...new Set(postsData.map(post => post.authorId))];
+    const authors = await getUsersByIds(authorIds);
+    const authorMap = new Map(authors.map(author => [author.uid, author]));
+
+    return postsData.map(post => {
+        const author = authorMap.get(post.authorId);
+        if (!author) return null;
+        
+        return {
+            ...post,
+            author,
+            createdAt: (post.createdAt as Timestamp).toDate().toISOString(),
+        }
+    }).filter((post): post is (Omit<Post, 'createdAt'> & { author: User; createdAt: string; }) => post !== null);
 };
 
 /**
@@ -147,41 +144,35 @@ export const getFeedPosts = async (followingIds: string[]): Promise<(Omit<Post, 
  */
 export const getDiscoveryPosts = async (userId: string, followingIds: string[]): Promise<(Omit<Post, 'createdAt'> & { author: User; createdAt: string })[]> => {
     const postsRef = collection(db, 'posts');
-    // Fetch a broad set of recent posts to increase chances of finding discovery content.
     const q = query(postsRef, orderBy('createdAt', 'desc'), limit(100));
     const querySnapshot = await getDocs(q);
 
-    // Filter out posts from the current user and people they already follow
     const discoveryDocs = querySnapshot.docs.filter(doc => {
         const authorId = doc.data().authorId;
         return authorId !== userId && !followingIds.includes(authorId);
-    }).slice(0, 25); // Limit the final discovery feed size
+    }).slice(0, 25);
 
-    const posts: (Omit<Post, 'createdAt'> & { author: User; createdAt: string; })[] = [];
-    const authorCache: { [key: string]: User } = {};
-
-    for (const postDoc of discoveryDocs) {
-        const postData = postDoc.data() as Omit<Post, 'id' | 'createdAt'>;
-        const postCreatedAt = (postDoc.data().createdAt as Timestamp);
-        
-        let author = authorCache[postData.authorId];
-        if (!author) {
-            const userDoc = await getDoc(doc(db, 'users', postData.authorId));
-            if (userDoc.exists()) {
-                author = userDoc.data() as User;
-                authorCache[postData.authorId] = author;
-            }
-        }
-
-        if (author) {
-            posts.push({ 
-                id: postDoc.id,
-                 ...postData, 
-                 author: author,
-                 createdAt: postCreatedAt.toDate().toISOString(),
-            });
-        }
+    if (discoveryDocs.length === 0) {
+        return [];
     }
 
-    return posts;
+    const postsData = discoveryDocs.map(doc => ({
+        id: doc.id,
+        ...(doc.data() as Omit<Post, 'id'>)
+    }));
+
+    const authorIds = [...new Set(postsData.map(post => post.authorId))];
+    const authors = await getUsersByIds(authorIds);
+    const authorMap = new Map(authors.map(author => [author.uid, author]));
+
+    return postsData.map(post => {
+        const author = authorMap.get(post.authorId);
+        if (!author) return null;
+
+        return {
+            ...post,
+            author,
+            createdAt: (post.createdAt as Timestamp).toDate().toISOString(),
+        }
+    }).filter((post): post is (Omit<Post, 'createdAt'> & { author: User; createdAt: string; }) => post !== null);
 };
