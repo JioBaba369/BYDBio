@@ -22,6 +22,18 @@ import type { User } from './users';
 import { createNotification } from './notifications';
 import { getUsersByIds } from './users';
 
+export type QuotedPostInfo = {
+  id: string;
+  content: string;
+  imageUrl: string | null;
+  author: {
+      uid: string;
+      name: string;
+      username: string;
+      avatarUrl: string;
+  }
+}
+
 export type Post = {
   id: string; // Document ID from Firestore
   authorId: string; // UID of the user who created it
@@ -32,6 +44,7 @@ export type Post = {
   comments: number;
   createdAt: Timestamp;
   repostCount?: number;
+  quotedPost?: QuotedPostInfo;
 };
 
 export type PostWithAuthor = Omit<Post, 'createdAt'> & { author: User; createdAt: string; };
@@ -55,7 +68,7 @@ export const getPostsByUser = async (userId: string): Promise<Post[]> => {
 };
 
 // Function to create a new post
-export const createPost = async (userId: string, data: Pick<Post, 'content' | 'imageUrl'>) => {
+export const createPost = async (userId: string, data: Pick<Post, 'content' | 'imageUrl'> & { quotedPost?: QuotedPostInfo }) => {
   const postsRef = collection(db, 'posts');
   await addDoc(postsRef, {
     ...data,

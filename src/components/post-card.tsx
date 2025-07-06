@@ -1,7 +1,7 @@
 
 'use client';
 
-import type { PostWithAuthor } from '@/lib/posts';
+import type { PostWithAuthor, QuotedPostInfo } from '@/lib/posts';
 import { useAuth } from '@/components/auth-provider';
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import Link from "next/link";
@@ -23,6 +23,27 @@ interface PostCardProps {
     onRepost: (postId: string) => void;
     onQuote: (post: FeedItem) => void;
 }
+
+const QuotedPostPreview = ({ post }: { post: QuotedPostInfo }) => (
+    <div className="mt-2 p-3 border rounded-lg hover:bg-muted/50 transition-colors">
+      <Link href={`/u/${post.author.username}`}>
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <Avatar className="h-5 w-5">
+            <AvatarImage src={post.author.avatarUrl} />
+            <AvatarFallback>{post.author.name.charAt(0)}</AvatarFallback>
+        </Avatar>
+        <span className="font-semibold text-foreground">{post.author.name}</span>
+        <span>@{post.author.username}</span>
+        </div>
+        <p className="mt-2 text-sm whitespace-pre-wrap">{post.content}</p>
+        {post.imageUrl && (
+        <div className="mt-2 rounded-md overflow-hidden border">
+            <Image src={post.imageUrl} alt="Quoted post image" width={500} height={281} className="object-cover w-full" />
+        </div>
+        )}
+      </Link>
+    </div>
+  );
 
 export function PostCard({ item, onLike, onDelete, onRepost, onQuote }: PostCardProps) {
     const { user } = useAuth();
@@ -70,6 +91,7 @@ export function PostCard({ item, onLike, onDelete, onRepost, onQuote }: PostCard
             </CardHeader>
             <CardContent className="p-4 pt-0">
                 <p className="whitespace-pre-wrap">{item.content}</p>
+                 {item.quotedPost && <QuotedPostPreview post={item.quotedPost} />}
                 {item.imageUrl && (
                     <div className="mt-4 rounded-lg overflow-hidden border">
                         <Image src={item.imageUrl} alt="Post image" width={600} height={400} className="object-cover" data-ai-hint="office workspace"/>
@@ -85,7 +107,7 @@ export function PostCard({ item, onLike, onDelete, onRepost, onQuote }: PostCard
                     <Repeat className="h-5 w-5" />
                     <span>{item.repostCount || 0}</span>
                 </Button>
-                 <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground hover:text-blue-500" onClick={() => onQuote(item)} disabled>
+                 <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground hover:text-blue-500" onClick={() => onQuote(item)}>
                     <QuoteIcon className="h-5 w-5" />
                     <span>Quote</span>
                 </Button>

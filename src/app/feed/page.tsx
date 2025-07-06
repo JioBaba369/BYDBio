@@ -12,12 +12,13 @@ import { useAuth } from "@/components/auth-provider"
 import { useToast } from "@/hooks/use-toast"
 import Link from "next/link"
 import ImageCropper from "@/components/image-cropper"
-import { getFeedPosts, createPost, toggleLikePost, deletePost, getDiscoveryPosts, type PostWithAuthor, repostPost } from "@/lib/posts"
+import { getFeedPosts, createPost, toggleLikePost, deletePost, getDiscoveryPosts, type PostWithAuthor, repostPost, type QuotedPostInfo } from "@/lib/posts"
 import { Skeleton } from "@/components/ui/skeleton"
 import { uploadImage } from "@/lib/storage"
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { PostCard } from "@/components/post-card";
+import Image from "next/image";
 
 type FeedItem = PostWithAuthor & { isLiked: boolean; };
 
@@ -62,6 +63,24 @@ const PostCardSkeleton = () => (
     </div>
 );
 
+const QuotedPostPreview = ({ post, onRemove }: { post: FeedItem, onRemove: () => void }) => (
+    <div className="mt-2 p-3 border rounded-lg relative">
+        <Button variant="ghost" size="icon" className="absolute top-1 right-1 h-6 w-6" onClick={onRemove}>
+            <X className="h-4 w-4" />
+        </Button>
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Avatar className="h-5 w-5">
+                <AvatarImage src={post.author.avatarUrl} />
+                <AvatarFallback>{post.author.name.charAt(0)}</AvatarFallback>
+            </Avatar>
+            <span className="font-semibold">{post.author.name}</span>
+            <span>@{post.author.username}</span>
+        </div>
+        <p className="mt-2 text-sm whitespace-pre-wrap line-clamp-3">{post.content}</p>
+    </div>
+);
+
+
 export default function FeedPage() {
   const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
@@ -81,6 +100,7 @@ export default function FeedPage() {
   
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [postToDelete, setPostToDelete] = useState<FeedItem | null>(null);
+  const [postToQuote, setPostToQuote] = useState<FeedItem | null>(null);
 
   const fetchFeeds = useCallback(async (refreshFollowing: boolean, refreshDiscovery: boolean) => {
     if (!user) return;
@@ -148,7 +168,7 @@ export default function FeedPage() {
 
   const handlePost = async () => {
     if (!user || isPosting) return;
-    if (!postContent.trim() && !croppedImageUrl) {
+    if (!postContent.trim() && !croppedImageUrl && !postToQuote) {
       toast({ title: "Cannot post empty update", variant: "destructive" });
       return;
     }
@@ -159,9 +179,27 @@ export default function FeedPage() {
         if (croppedImageUrl) {
             imageUrlToPost = await uploadImage(croppedImageUrl, `posts/${user.uid}/${Date.now()}`);
         }
-        await createPost(user.uid, { content: postContent, imageUrl: imageUrlToPost });
+
+        let quotedPostData: QuotedPostInfo | undefined = undefined;
+        if (postToQuote) {
+            quotedPostData = {
+                id: postToQuote.id,
+                content: postToQuote.content,
+                imageUrl: postToQuote.imageUrl,
+                author: {
+                    uid: postToQuote.author.uid,
+                    name: postToQuote.author.name,
+                    username: postToQuote.author.username,
+                    avatarUrl: postToQuote.author.avatarUrl,
+                }
+            };
+        }
+
+        await createPost(user.uid, { content: postContent, imageUrl: imageUrlToPost, quotedPost: quotedPostData });
+        
         setPostContent('');
         setCroppedImageUrl(null);
+        setPostToQuote(null);
         toast({ title: "Update Posted!" });
         await fetchFeeds(true, false); // Refresh following feed only
     } catch(error) {
@@ -219,10 +257,10 @@ export default function FeedPage() {
   };
   
   const handleQuote = (post: FeedItem) => {
-    toast({
-        title: "Coming Soon!",
-        description: "Quoting posts is a feature we're working on.",
-    });
+    setPostToQuote(post);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    const textarea = document.getElementById('new-post');
+    if (textarea) textarea.focus();
   };
 
   const openDeleteDialog = (post: FeedItem) => {
@@ -306,6 +344,7 @@ export default function FeedPage() {
                   value={postContent}
                   onChange={(e) => setPostContent(e.target.value)}
                 />
+                 {postToQuote && <QuotedPostPreview post={postToQuote} onRemove={() => setPostToQuote(null)} />}
                  {croppedImageUrl && (
                   <div className="relative">
                     <Image src={croppedImageUrl} alt="Preview" width={500} height={281} className="rounded-lg border object-cover w-full" />
@@ -331,7 +370,7 @@ export default function FeedPage() {
               accept="image/png, image/jpeg"
               onChange={onFileChange}
             />
-            <Button onClick={handlePost} disabled={(!postContent.trim() && !croppedImageUrl) || isPosting}>
+            <Button onClick={handlePost} disabled={(!postContent.trim() && !croppedImageUrl && !postToQuote) || isPosting}>
               {isPosting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4"/>}
               {isPosting ? "Posting..." : "Post Update"}
             </Button>
