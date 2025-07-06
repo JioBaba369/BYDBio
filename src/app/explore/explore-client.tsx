@@ -36,7 +36,7 @@ export default function ExploreClient({ initialItems }: { initialItems: PublicCo
         return false;
       }
       const searchMatch = searchTerm.length > 0
-        ? ((item as any).title?.toLowerCase() || (item as any).name?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+        ? ((item as any).title?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
           (item.description?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
           ('company' in item && item.company?.toLowerCase().includes(searchTerm.toLowerCase())) ||
           ('category' in item && item.category?.toLowerCase().includes(searchTerm.toLowerCase()))
@@ -207,7 +207,7 @@ export default function ExploreClient({ initialItems }: { initialItems: PublicCo
                   view === 'grid' ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                       {sortedItems.map((item) => {
-                          const title = (item as any).title || (item as any).name;
+                          const title = (item as any).title;
                           const primaryStat = getPrimaryStat(item);
                           const itemTypeLabel = item.type === 'promoPage' ? 'Promo Page' : item.type;
                           
@@ -300,7 +300,7 @@ export default function ExploreClient({ initialItems }: { initialItems: PublicCo
                             </TableHeader>
                             <TableBody>
                                 {sortedItems.map(item => {
-                                    const title = (item as any).title || (item as any).name;
+                                    const title = (item as any).title;
                                     const itemTypeLabel = item.type === 'promoPage' ? 'Promo Page' : item.type;
                                     return (
                                     <TableRow key={`${item.type}-${item.id}`}>

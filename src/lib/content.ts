@@ -22,7 +22,7 @@ export type PublicContentItem = (
   | (Job & { type: 'job' })
   | (Event & { type: 'event' })
   | (PromoPage & { type: 'promoPage' })
-) & { author: Pick<User, 'uid' | 'name' | 'username' | 'avatarUrl' | 'avatarFallback'>; date: string };
+) & { author: Pick<User, 'uid' | 'name' | 'username' | 'avatarUrl' | 'avatarFallback'>; date: string; title: string; };
 
 
 export const getAllPublicContent = async (): Promise<PublicContentItem[]> => {
@@ -79,12 +79,17 @@ export const getAllPublicContent = async (): Promise<PublicContentItem[]> => {
             return null;
         }
 
-        const serializedItem = { ...item };
+        const serializedItem: any = { ...item };
         // Manually serialize all potential date fields in the item
         for (const key in serializedItem) {
             if (serializedItem[key] instanceof Timestamp) {
                 serializedItem[key] = serializedItem[key].toDate().toISOString();
             }
+        }
+        
+        // Normalize the title property
+        if (serializedItem.type === 'promoPage' && serializedItem.name) {
+            serializedItem.title = serializedItem.name;
         }
 
         return {
@@ -98,7 +103,7 @@ export const getAllPublicContent = async (): Promise<PublicContentItem[]> => {
             },
             date: (primaryDate as Timestamp).toDate().toISOString()
         };
-    }).filter((item): item is PublicContentItem => item !== null);
+    }).filter((item): item is PublicContentItem => item !== null && !!item.title);
 
     // Sort by date descending
     contentWithAuthors.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
