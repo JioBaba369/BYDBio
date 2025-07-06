@@ -1,3 +1,4 @@
+
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth, connectAuthEmulator, signOut } from "firebase/auth";
 import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
@@ -21,9 +22,10 @@ const storage = getStorage(app);
 // In development mode, connect to the emulators
 if (process.env.NODE_ENV === 'development') {
     try {
-        connectAuthEmulator(auth, "http://localhost:9099", { disableRegeneration: true });
-        connectFirestoreEmulator(db, "localhost", 8080);
-        connectStorageEmulator(storage, "localhost", 9199);
+        // Use 127.0.0.1 instead of localhost to avoid potential resolution issues
+        connectAuthEmulator(auth, "http://127.0.0.1:9099", { disableRegeneration: true });
+        connectFirestoreEmulator(db, "127.0.0.1", 8080);
+        connectStorageEmulator(storage, "127.0.0.1", 9199);
     } catch (error) {
         console.error("Error connecting to Firebase emulators: ", error);
     }
