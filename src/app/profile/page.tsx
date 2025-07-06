@@ -88,77 +88,79 @@ const SortableLinkItem = ({ field, index, remove }: { field: { id: string }, ind
   };
 
   return (
-    <Card ref={setNodeRef} style={style} {...attributes} className="flex items-center gap-2 p-4 touch-none bg-muted/30">
-        <div {...listeners} className="cursor-grab p-2">
+    <Card ref={setNodeRef} style={style} {...attributes} className="flex items-start gap-2 p-4 touch-none bg-muted/30">
+        <div {...listeners} className="cursor-grab p-2 pt-3">
             <GripVertical className="h-5 w-5 text-muted-foreground" />
         </div>
         <div className="flex-1 space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <FormField
+                    control={control}
+                    name={`links.${index}.icon`}
+                    render={({ field }) => (
+                        <FormItem className="sm:col-span-1">
+                        <FormLabel>Icon</FormLabel>
+                        <Select
+                            onValueChange={(value) => {
+                                field.onChange(value);
+                                const data = linkIconData[value as keyof typeof linkIconData];
+                                if (data) {
+                                    setValue(`links.${index}.title`, data.title, { shouldDirty: true });
+                                    setValue(`links.${index}.url`, data.urlPrefix, { shouldDirty: true });
+                                }
+                            }}
+                            defaultValue={field.value}
+                        >
+                            <FormControl>
+                            <SelectTrigger className={cn(!field.value && "text-muted-foreground")}>
+                                <SelectValue placeholder="Select icon" />
+                            </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                            {availableIconNames.map((iconName) => {
+                                const data = linkIconData[iconName];
+                                const LoopIcon = data.icon;
+                                return (
+                                <SelectItem key={iconName} value={iconName}>
+                                    <div className="flex items-center gap-2">
+                                    <LoopIcon className="h-4 w-4" />
+                                    <span>{data.title}</span>
+                                    </div>
+                                </SelectItem>
+                                );
+                            })}
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                <FormField
+                    control={control}
+                    name={`links.${index}.title`}
+                    render={({ field }) => (
+                        <FormItem className="sm:col-span-2">
+                        <FormLabel>Link Title</FormLabel>
+                        <FormControl>
+                            <Input {...field} placeholder="My Awesome Portfolio" />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+            </div>
             <FormField
-            control={control}
-            name={`links.${index}.icon`}
-            render={({ field }) => (
-                <FormItem>
-                <FormLabel>Icon</FormLabel>
-                <Select
-                    onValueChange={(value) => {
-                    field.onChange(value);
-                    const data = linkIconData[value as keyof typeof linkIconData];
-                    if (data) {
-                        setValue(`links.${index}.title`, data.title, { shouldDirty: true });
-                        setValue(`links.${index}.url`, data.urlPrefix, { shouldDirty: true });
-                    }
-                    }}
-                    defaultValue={field.value}
-                >
+                control={control}
+                name={`links.${index}.url`}
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>URL</FormLabel>
                     <FormControl>
-                    <SelectTrigger className={cn(!field.value && "text-muted-foreground")}>
-                        <SelectValue placeholder="Select icon" />
-                    </SelectTrigger>
+                        <Input {...field} placeholder="https://example.com" />
                     </FormControl>
-                    <SelectContent>
-                    {availableIconNames.map((iconName) => {
-                        const data = linkIconData[iconName];
-                        const LoopIcon = data.icon;
-                        return (
-                        <SelectItem key={iconName} value={iconName}>
-                            <div className="flex items-center gap-2">
-                            <LoopIcon className="h-4 w-4" />
-                            <span>{data.title}</span>
-                            </div>
-                        </SelectItem>
-                        );
-                    })}
-                    </SelectContent>
-                </Select>
-                <FormMessage />
-                </FormItem>
-            )}
-            />
-            <FormField
-            control={control}
-            name={`links.${index}.title`}
-            render={({ field }) => (
-                <FormItem>
-                <FormLabel>Link Title</FormLabel>
-                <FormControl>
-                    <Input {...field} placeholder="My Awesome Portfolio" />
-                </FormControl>
-                <FormMessage />
-                </FormItem>
-            )}
-            />
-            <FormField
-            control={control}
-            name={`links.${index}.url`}
-            render={({ field }) => (
-                <FormItem>
-                <FormLabel>URL</FormLabel>
-                <FormControl>
-                    <Input {...field} placeholder="https://example.com" />
-                </FormControl>
-                <FormMessage />
-                </FormItem>
-            )}
+                    <FormMessage />
+                    </FormItem>
+                )}
             />
         </div>
         <Button
