@@ -13,6 +13,9 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
+// This flag ensures we only connect to the emulators once, preventing issues with HMR.
+let emulatorsConnected = false;
+
 // Initialize Firebase
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -20,12 +23,14 @@ const db = getFirestore(app);
 const storage = getStorage(app);
 
 // In development mode, connect to the emulators
-if (process.env.NODE_ENV === 'development') {
+if (process.env.NODE_ENV === 'development' && !emulatorsConnected) {
     try {
         // Use 127.0.0.1 instead of localhost to avoid potential resolution issues
         connectAuthEmulator(auth, "http://127.0.0.1:9099", { disableRegeneration: true });
         connectFirestoreEmulator(db, "127.0.0.1", 8080);
         connectStorageEmulator(storage, "127.0.0.1", 9199);
+        console.log("Successfully connected to Firebase Emulators.");
+        emulatorsConnected = true;
     } catch (error) {
         console.error("Error connecting to Firebase emulators: ", error);
     }
