@@ -8,7 +8,7 @@ import type { Listing } from '@/lib/listings';
 import type { Offer } from '@/lib/offers';
 import type { Job } from '@/lib/jobs';
 import type { Event } from '@/lib/events';
-import { type PromoPage } from "@/lib/promo-pages";
+import type { PromoPage } from "@/lib/promo-pages";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -246,7 +246,7 @@ END:VCARD`;
                             );
                             case 'job': return (
                                 <Card key={item.id} className="shadow-none border">
-                                    <CardHeader><CardTitle className="text-base">Posted a new opportunity</CardTitle></CardHeader>
+                                    <CardHeader><CardTitle className="text-base">Posted a new job</CardTitle></CardHeader>
                                      <CardContent>
                                         <Link href={`/o/${item.id}`} className="block hover:bg-muted/50 p-4 rounded-lg border -m-4">
                                             <p className="font-semibold">{item.title}</p>

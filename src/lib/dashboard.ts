@@ -2,7 +2,11 @@
 'use server';
 import { collection, query, where, orderBy, limit, getDocs, Timestamp } from 'firebase/firestore';
 import { db } from './firebase';
-import type { Listing, Offer, Job, Event, PromoPage } from './users';
+import type { Listing } from './listings';
+import type { Offer } from './offers';
+import type { Job } from './jobs';
+import type { Event } from './events';
+import type { PromoPage } from './promo-pages';
 import type { Post } from './posts';
 
 export type ActivityItem = (

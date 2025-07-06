@@ -3,6 +3,11 @@ import { collection, query, where, getDocs, limit, doc, getDoc, setDoc, updateDo
 import { db } from "@/lib/firebase";
 import { deleteUser, type User as FirebaseUser } from "firebase/auth";
 import type { Timestamp } from "firebase/firestore";
+import type { Listing } from './listings';
+import type { Offer } from './offers';
+import type { Job } from './jobs';
+import type { Event } from './events';
+import type { PromoPage } from './promo-pages';
 
 export type BusinessCard = {
   title: string;
@@ -42,87 +47,6 @@ export type User = {
   notificationSettings: NotificationSettings;
   searchableKeywords: string[];
   isFollowedByCurrentUser?: boolean; // Client-side state
-};
-
-// These types are now defined here to be imported by other services
-export type Listing = {
-  id: string;
-  authorId: string;
-  title: string;
-  description: string;
-  price: string;
-  imageUrl: string | null;
-  category: string;
-  listingType?: 'sale' | 'rental';
-  status: 'active' | 'archived';
-  startDate?: Timestamp | Date | string | null;
-  endDate?: Timestamp | Date | string | null;
-  createdAt: Timestamp | string;
-};
-
-export type Offer = {
-  id: string;
-  authorId: string;
-  title: string;
-  description: string;
-  category: string;
-  startDate: Timestamp | Date | string;
-  endDate?: Timestamp | Date | string | null;
-  imageUrl: string | null;
-  status: 'active' | 'archived';
-  createdAt: Timestamp | string;
-};
-
-export type Job = {
-  id: string;
-  authorId: string;
-  title: string;
-  company: string;
-  description: string;
-  location: string;
-  type: 'Full-time' | 'Part-time' | 'Contract' | 'Internship';
-  remuneration?: string;
-  postingDate: Timestamp | Date | string;
-  closingDate?: Timestamp | Date | string | null;
-  startDate?: Timestamp | Date | string | null;
-  endDate?: Timestamp | Date | string | null;
-  imageUrl: string | null;
-  status: 'active' | 'archived';
-  createdAt: Timestamp | string;
-  applicationUrl?: string;
-  contactInfo?: string;
-};
-
-export type Event = {
-  id: string;
-  authorId: string;
-  title: string;
-  description: string;
-  startDate: Timestamp | Date | string;
-  endDate?: Timestamp | Date | string | null;
-  location: string;
-  imageUrl: string | null;
-  status: 'active' | 'archived';
-  rsvps: string[];
-  createdAt: Timestamp | string;
-};
-
-export type PromoPage = {
-  id: string; // Document ID from Firestore
-  authorId: string; // UID of the user who created it
-  name: string;
-  description: string;
-  email: string;
-  phone?: string;
-  website?: string;
-  address?: string;
-  imageUrl?: string | null;
-  logoUrl?: string | null;
-  status: 'active' | 'archived';
-  views?: number;
-  clicks?: number;
-  createdAt: Timestamp | string;
-  searchableKeywords: string[];
 };
 
 const generateUniqueUsername = async (baseUsername: string): Promise<string> => {

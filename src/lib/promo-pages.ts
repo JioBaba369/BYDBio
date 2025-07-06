@@ -14,7 +14,25 @@ import {
   orderBy,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { User, PromoPage } from './users';
+import type { User } from './users';
+
+export type PromoPage = {
+  id: string; // Document ID from Firestore
+  authorId: string; // UID of the user who created it
+  name: string;
+  description: string;
+  email: string;
+  phone?: string;
+  website?: string;
+  address?: string;
+  imageUrl?: string | null;
+  logoUrl?: string | null;
+  status: 'active' | 'archived';
+  views?: number;
+  clicks?: number;
+  createdAt: Timestamp | string;
+  searchableKeywords: string[];
+};
 
 export type PromoPageWithAuthor = PromoPage & { author: Pick<User, 'uid' | 'name' | 'username' | 'avatarUrl'> };
 

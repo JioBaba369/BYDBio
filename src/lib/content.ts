@@ -9,8 +9,12 @@ import {
   Timestamp,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { User, Listing, Offer, Job, Event, PromoPage } from './users';
-import { getUsersByIds } from './users';
+import { getUsersByIds, type User } from './users';
+import type { Listing } from './listings';
+import type { Offer } from './offers';
+import type { Job } from './jobs';
+import type { Event } from './events';
+import type { PromoPage } from './promo-pages';
 
 export type PublicContentItem = (
   | (Listing & { type: 'listing' })
