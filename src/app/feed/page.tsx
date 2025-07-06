@@ -12,7 +12,7 @@ import { useAuth } from "@/components/auth-provider"
 import { useToast } from "@/hooks/use-toast"
 import Link from "next/link"
 import ImageCropper from "@/components/image-cropper"
-import { getFeedPosts, createPost, toggleLikePost, deletePost, getDiscoveryPosts, type PostWithAuthor } from "@/lib/posts"
+import { getFeedPosts, createPost, toggleLikePost, deletePost, getDiscoveryPosts, type PostWithAuthor, repostPost } from "@/lib/posts"
 import { Skeleton } from "@/components/ui/skeleton"
 import { uploadImage } from "@/lib/storage"
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog"
@@ -196,6 +196,35 @@ export default function FeedPage() {
     }
   };
   
+  const handleRepost = async (postId: string) => {
+    if (!user) return;
+
+    // Optimistic UI update
+    const updateFeed = (feed: FeedItem[]) => feed.map(item =>
+        item.id === postId
+            ? { ...item, repostCount: (item.repostCount || 0) + 1 }
+            : item
+    );
+    setFollowingFeed(updateFeed);
+    setDiscoveryFeed(updateFeed);
+
+    try {
+        await repostPost(postId);
+        toast({ title: "Reposted!" });
+    } catch (error) {
+        console.error("Error reposting:", error);
+        toast({ title: "Failed to repost", variant: "destructive" });
+        await fetchFeeds(true, true); // Revert on error
+    }
+  };
+  
+  const handleQuote = (post: FeedItem) => {
+    toast({
+        title: "Coming Soon!",
+        description: "Quoting posts is a feature we're working on.",
+    });
+  };
+
   const openDeleteDialog = (post: FeedItem) => {
     setPostToDelete(post);
     setIsDeleteDialogOpen(true);
@@ -225,7 +254,7 @@ export default function FeedPage() {
         return <PostCardSkeleton />;
     }
     if (items.length > 0) {
-        return <div className="space-y-6">{items.map(item => <PostCard key={item.id} item={item} onLike={handleLike} onDelete={openDeleteDialog} />)}</div>;
+        return <div className="space-y-6">{items.map(item => <PostCard key={item.id} item={item} onLike={handleLike} onDelete={openDeleteDialog} onRepost={handleRepost} onQuote={handleQuote} />)}</div>;
     }
     return <>{emptyState}</>;
   };

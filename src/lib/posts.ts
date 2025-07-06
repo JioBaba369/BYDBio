@@ -31,6 +31,7 @@ export type Post = {
   likedBy: string[]; // Array of user IDs who liked the post
   comments: number;
   createdAt: Timestamp;
+  repostCount?: number;
 };
 
 export type PostWithAuthor = Omit<Post, 'createdAt'> & { author: User; createdAt: string; };
@@ -63,6 +64,7 @@ export const createPost = async (userId: string, data: Pick<Post, 'content' | 'i
     likes: 0,
     likedBy: [],
     comments: 0,
+    repostCount: 0,
   });
 };
 
@@ -102,6 +104,14 @@ export const toggleLikePost = async (postId: string, userId: string) => {
 
     return !isLiked; // Return the new like status
 }
+
+// Function to repost a post (currently just increments count)
+export const repostPost = async (postId: string) => {
+    const postRef = doc(db, 'posts', postId);
+    await updateDoc(postRef, {
+        repostCount: increment(1)
+    });
+};
 
 // Function to fetch posts for the user's feed
 export const getFeedPosts = async (followingIds: string[]): Promise<PostWithAuthor[]> => {

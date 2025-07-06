@@ -9,7 +9,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { ClientFormattedDate } from "@/components/client-formatted-date";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, Trash2, Heart, Share2 } from "lucide-react";
+import { MoreHorizontal, Trash2, Heart, Share2, Repeat, Quote as QuoteIcon } from "lucide-react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { useToast } from '@/hooks/use-toast';
@@ -20,9 +20,11 @@ interface PostCardProps {
     item: FeedItem;
     onLike: (postId: string) => void;
     onDelete: (post: FeedItem) => void;
+    onRepost: (postId: string) => void;
+    onQuote: (post: FeedItem) => void;
 }
 
-export function PostCard({ item, onLike, onDelete }: PostCardProps) {
+export function PostCard({ item, onLike, onDelete, onRepost, onQuote }: PostCardProps) {
     const { user } = useAuth();
     const { toast } = useToast();
     const isOwner = user?.uid === item.author.uid;
@@ -79,7 +81,15 @@ export function PostCard({ item, onLike, onDelete }: PostCardProps) {
                     <Heart className={cn("h-5 w-5", item.isLiked && "fill-red-500 text-red-500")} />
                     <span>{item.likes}</span>
                 </Button>
-                <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground" onClick={handleShare}>
+                <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground hover:text-green-500" onClick={() => onRepost(item.id)}>
+                    <Repeat className="h-5 w-5" />
+                    <span>{item.repostCount || 0}</span>
+                </Button>
+                 <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground hover:text-blue-500" onClick={() => onQuote(item)} disabled>
+                    <QuoteIcon className="h-5 w-5" />
+                    <span>Quote</span>
+                </Button>
+                <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground ml-auto" onClick={handleShare}>
                     <Share2 className="h-5 w-5" />
                     <span>Share</span>
                 </Button>
