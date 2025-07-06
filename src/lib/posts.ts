@@ -33,6 +33,8 @@ export type Post = {
   createdAt: Timestamp;
 };
 
+export type PostWithAuthor = Omit<Post, 'createdAt'> & { author: User; createdAt: string; };
+
 // Function to fetch a single post by its ID
 export const getPost = async (id: string): Promise<Post | null> => {
   const postDocRef = doc(db, 'posts', id);
@@ -102,7 +104,7 @@ export const toggleLikePost = async (postId: string, userId: string) => {
 }
 
 // Function to fetch posts for the user's feed
-export const getFeedPosts = async (followingIds: string[]): Promise<(Omit<Post, 'createdAt'> & { author: User; createdAt: string })[]> => {
+export const getFeedPosts = async (followingIds: string[]): Promise<PostWithAuthor[]> => {
     if (followingIds.length === 0) {
         return [];
     }
@@ -133,7 +135,7 @@ export const getFeedPosts = async (followingIds: string[]): Promise<(Omit<Post, 
             author,
             createdAt: (post.createdAt as Timestamp).toDate().toISOString(),
         }
-    }).filter((post): post is (Omit<Post, 'createdAt'> & { author: User; createdAt: string; }) => post !== null);
+    }).filter((post): post is PostWithAuthor => post !== null);
 };
 
 /**
@@ -142,7 +144,7 @@ export const getFeedPosts = async (followingIds: string[]): Promise<(Omit<Post, 
  * @param followingIds An array of UIDs that the current user follows.
  * @returns A promise that resolves to an array of posts for the discovery feed.
  */
-export const getDiscoveryPosts = async (userId: string, followingIds: string[]): Promise<(Omit<Post, 'createdAt'> & { author: User; createdAt: string })[]> => {
+export const getDiscoveryPosts = async (userId: string, followingIds: string[]): Promise<PostWithAuthor[]> => {
     const postsRef = collection(db, 'posts');
     const q = query(postsRef, orderBy('createdAt', 'desc'), limit(100));
     const querySnapshot = await getDocs(q);
@@ -174,5 +176,5 @@ export const getDiscoveryPosts = async (userId: string, followingIds: string[]):
             author,
             createdAt: (post.createdAt as Timestamp).toDate().toISOString(),
         }
-    }).filter((post): post is (Omit<Post, 'createdAt'> & { author: User; createdAt: string; }) => post !== null);
+    }).filter((post): post is PostWithAuthor => post !== null);
 };

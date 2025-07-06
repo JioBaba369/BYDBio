@@ -5,25 +5,21 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
-import { Heart, Image as ImageIcon, MessageCircle, MoreHorizontal, Share2, Send, X, Users, Trash2, Compass, Loader2 } from "lucide-react"
-import Image from "next/image"
+import { Image as ImageIcon, Send, X, Users, Compass, Loader2 } from "lucide-react"
 import HashtagSuggester from "@/components/ai/hashtag-suggester"
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useAuth } from "@/components/auth-provider"
 import { useToast } from "@/hooks/use-toast"
-import { cn } from "@/lib/utils"
 import Link from "next/link"
 import ImageCropper from "@/components/image-cropper"
-import { getFeedPosts, createPost, toggleLikePost, Post, deletePost, getDiscoveryPosts } from "@/lib/posts"
-import { type User } from "@/lib/users"
+import { getFeedPosts, createPost, toggleLikePost, deletePost, getDiscoveryPosts, type PostWithAuthor } from "@/lib/posts"
 import { Skeleton } from "@/components/ui/skeleton"
 import { uploadImage } from "@/lib/storage"
-import { ClientFormattedDate } from "@/components/client-formatted-date"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { PostCard } from "@/components/post-card";
 
-type FeedItem = Omit<Post, 'createdAt'> & { createdAt: string; author: User; isLiked: boolean; };
+type FeedItem = PostWithAuthor & { isLiked: boolean; };
 
 const PostCardSkeleton = () => (
     <div className="space-y-6">
@@ -223,72 +219,13 @@ export default function FeedPage() {
         setPostToDelete(null);
     }
   };
-
-  const PostCard = ({ item }: { item: FeedItem }) => {
-    const isOwner = user?.uid === item.author.uid;
-
-    return (
-        <Card key={item.id}>
-            <CardHeader className="p-4">
-                <div className="flex items-center justify-between">
-                    <Link href={`/u/${item.author.username}`} className="flex items-center gap-3 hover:underline">
-                        <Avatar>
-                            <AvatarImage src={item.author.avatarUrl} data-ai-hint="person portrait"/>
-                            <AvatarFallback>{item.author.name.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                        <div>
-                            <p className="font-semibold">{item.author.name}</p>
-                            <p className="text-sm text-muted-foreground">@{item.author.username} · <ClientFormattedDate date={item.createdAt} relative /></p>
-                        </div>
-                    </Link>
-                    {isOwner && (
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-8 w-8">
-                                    <MoreHorizontal className="h-5 w-5" />
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => openDeleteDialog(item)} className="text-destructive cursor-pointer">
-                                    <Trash2 className="mr-2 h-4 w-4" /> Delete Post
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    )}
-                </div>
-            </CardHeader>
-            <CardContent className="p-4 pt-0">
-                <p className="whitespace-pre-wrap">{item.content}</p>
-                {item.imageUrl && (
-                    <div className="mt-4 rounded-lg overflow-hidden border">
-                        <Image src={item.imageUrl} alt="Post image" width={600} height={400} className="object-cover" data-ai-hint="office workspace"/>
-                    </div>
-                )}
-            </CardContent>
-            <CardFooter className="flex justify-between p-4 border-t">
-                <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground hover:text-primary" onClick={() => handleLike(item.id)}>
-                    <Heart className={cn("h-5 w-5", item.isLiked && "fill-red-500 text-red-500")} />
-                    <span>{item.likes}</span>
-                </Button>
-                <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground">
-                    <MessageCircle className="h-5 w-5" />
-                    <span>{item.comments}</span>
-                </Button>
-                <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground">
-                    <Share2 className="h-5 w-5" />
-                    <span>Share</span>
-                </Button>
-            </CardFooter>
-        </Card>
-    );
-  };
   
   const FeedList = ({ isLoading, items, emptyState }: { isLoading: boolean, items: FeedItem[], emptyState: React.ReactNode }) => {
     if (isLoading) {
         return <PostCardSkeleton />;
     }
     if (items.length > 0) {
-        return <div className="space-y-6">{items.map(item => <PostCard key={item.id} item={item} />)}</div>;
+        return <div className="space-y-6">{items.map(item => <PostCard key={item.id} item={item} onLike={handleLike} onDelete={openDeleteDialog} />)}</div>;
     }
     return <>{emptyState}</>;
   };
