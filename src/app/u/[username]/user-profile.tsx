@@ -12,7 +12,7 @@ import type { PromoPage } from "@/lib/promo-pages";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Briefcase, Calendar, Tag, MapPin, Heart, MessageCircle, DollarSign, Building2, Tags, ExternalLink, Globe, UserCheck, UserPlus, QrCode } from "lucide-react";
+import { Briefcase, Calendar, Tag, MapPin, Heart, MessageCircle, DollarSign, Building2, Tags, ExternalLink, Globe, UserCheck, UserPlus, QrCode, Edit } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
@@ -153,14 +153,23 @@ END:VCARD`;
                 </Dialog>
             </div>
             <div className="mt-6 flex w-full flex-col sm:flex-row items-center gap-4">
-              <Button 
-                className="flex-1 font-bold w-full sm:w-auto" 
-                onClick={handleFollowToggle}
-                disabled={isFollowLoading || currentUser?.uid === userProfileData.uid}
-              >
-                {isFollowing ? <UserCheck className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
-                {isFollowing ? 'Following' : 'Follow'}
-              </Button>
+              {currentUser?.uid === userProfileData.uid ? (
+                  <Button asChild className="flex-1 font-bold w-full sm:w-auto">
+                      <Link href="/profile">
+                          <Edit className="mr-2 h-4 w-4" />
+                          Edit Profile
+                      </Link>
+                  </Button>
+              ) : (
+                  <Button 
+                      className="flex-1 font-bold w-full sm:w-auto" 
+                      onClick={handleFollowToggle}
+                      disabled={isFollowLoading}
+                  >
+                      {isFollowing ? <UserCheck className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
+                      {isFollowing ? 'Following' : 'Follow'}
+                  </Button>
+              )}
               <div className="text-center p-2 rounded-md bg-muted/50 w-full sm:w-28">
                 <p className="font-bold text-lg text-foreground">{followerCount}</p>
                 <p className="text-xs text-muted-foreground tracking-wide">Followers</p>
@@ -191,9 +200,10 @@ END:VCARD`;
                 </CardHeader>
                 <CardContent className="space-y-4">
                     {allContent.map(item => {
+                        const uniqueKey = `${item.type}-${item.id}`;
                         switch(item.type) {
                             case 'post': return (
-                                <Card key={item.id} className="shadow-none border">
+                                <Card key={uniqueKey} className="shadow-none border">
                                     <CardContent className="p-4">
                                         <p className="whitespace-pre-wrap text-sm">{item.content}</p>
                                         {item.imageUrl && (
@@ -210,7 +220,7 @@ END:VCARD`;
                                 </Card>
                             );
                             case 'promoPage': return (
-                                <Card key={item.id} className="shadow-none border">
+                                <Card key={uniqueKey} className="shadow-none border">
                                     <CardHeader><CardTitle className="text-base">Created a new promo page</CardTitle></CardHeader>
                                     <CardContent>
                                         <Link href={`/p/${item.id}`} className="block hover:bg-muted/50 p-4 rounded-lg border -m-4">
@@ -227,7 +237,7 @@ END:VCARD`;
                                 </Card>
                             );
                             case 'listing': return (
-                                <Card key={item.id} className="shadow-none border">
+                                <Card key={uniqueKey} className="shadow-none border">
                                      <CardHeader><CardTitle className="text-base">Added a new listing</CardTitle></CardHeader>
                                      <CardContent>
                                          <Link href={`/l/${item.id}`} className="block hover:bg-muted/50 p-4 rounded-lg border -m-4">
@@ -245,7 +255,7 @@ END:VCARD`;
                                 </Card>
                             );
                             case 'job': return (
-                                <Card key={item.id} className="shadow-none border">
+                                <Card key={uniqueKey} className="shadow-none border">
                                     <CardHeader><CardTitle className="text-base">Posted a new job</CardTitle></CardHeader>
                                      <CardContent>
                                         <Link href={`/o/${item.id}`} className="block hover:bg-muted/50 p-4 rounded-lg border -m-4">
@@ -259,7 +269,7 @@ END:VCARD`;
                                 </Card>
                             );
                             case 'event': return (
-                                <Card key={item.id} className="shadow-none border">
+                                <Card key={uniqueKey} className="shadow-none border">
                                     <CardHeader><CardTitle className="text-base">Created a new event</CardTitle></CardHeader>
                                      <CardContent>
                                         <Link href={`/events/${item.id}`} className="block hover:bg-muted/50 p-4 rounded-lg border -m-4">
@@ -273,7 +283,7 @@ END:VCARD`;
                                 </Card>
                             );
                             case 'offer': return (
-                                 <Card key={item.id} className="shadow-none border">
+                                 <Card key={uniqueKey} className="shadow-none border">
                                     <CardHeader><CardTitle className="text-base">Posted a new offer</CardTitle></CardHeader>
                                      <CardContent>
                                         <Link href={`/offer/${item.id}`} className="block hover:bg-muted/50 p-4 rounded-lg border -m-4">

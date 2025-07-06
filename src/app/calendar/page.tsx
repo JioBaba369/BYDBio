@@ -76,9 +76,16 @@ export default function CalendarPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [view, setView] = useState<'grid' | 'list' | 'calendar'>('grid');
   
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
-  const [month, setMonth] = useState<Date>(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>();
+  const [month, setMonth] = useState<Date>();
 
+  useEffect(() => {
+    // Initialize date states on the client to avoid hydration errors
+    const today = new Date();
+    setSelectedDate(today);
+    setMonth(today);
+  }, []);
+  
   useEffect(() => {
     if (user) {
         setIsLoading(true);
@@ -550,5 +557,3 @@ export default function CalendarPage() {
     </>
   );
 }
-
-    
