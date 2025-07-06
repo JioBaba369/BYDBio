@@ -99,8 +99,8 @@ export const getEventsByUser = async (userId: string): Promise<Event[]> => {
   const querySnapshot = await getDocs(q);
   return querySnapshot.docs.map(doc => {
       const data = doc.data();
-      if (!data.startDate) {
-        console.warn(`Event ${doc.id} for user ${userId} is missing a start date and will be skipped.`);
+      if (!data.startDate || !data.createdAt) {
+        console.warn(`Event ${doc.id} for user ${userId} is missing a required date field and will be skipped.`);
         return null;
       }
       return { 

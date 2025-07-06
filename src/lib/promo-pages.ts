@@ -51,7 +51,13 @@ export const getPromoPagesByUser = async (userId: string): Promise<PromoPage[]> 
   const promoPagesRef = collection(db, 'promoPages');
   const q = query(promoPagesRef, where('authorId', '==', userId), orderBy('createdAt', 'desc'));
   const querySnapshot = await getDocs(q);
-  return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as PromoPage));
+  return querySnapshot.docs
+    .map(doc => {
+        const data = doc.data();
+        if (!data.createdAt) return null;
+        return { id: doc.id, ...doc.data() } as PromoPage
+    })
+    .filter((page): page is PromoPage => page !== null);
 };
 
 // Function to create a new promo page

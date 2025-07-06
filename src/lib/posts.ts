@@ -77,7 +77,13 @@ export const getPostsByUser = async (userId: string): Promise<Post[]> => {
   const postsRef = collection(db, 'posts');
   const q = query(postsRef, where('authorId', '==', userId), orderBy('createdAt', 'desc'));
   const querySnapshot = await getDocs(q);
-  return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post));
+  return querySnapshot.docs
+    .map(doc => {
+        const data = doc.data();
+        if (!data.createdAt) return null;
+        return { id: doc.id, ...data } as Post
+    })
+    .filter((post): post is Post => post !== null);
 };
 
 // Function to create a new post

@@ -59,13 +59,14 @@ export const getListingsByUser = async (userId: string): Promise<Listing[]> => {
   const querySnapshot = await getDocs(q);
   return querySnapshot.docs.map(doc => {
       const data = doc.data();
+      if (!data.createdAt) return null;
       return { 
           id: doc.id, 
           ...data,
           startDate: data.startDate ? (data.startDate as Timestamp).toDate() : null,
           endDate: data.endDate ? (data.endDate as Timestamp).toDate() : null,
       } as Listing
-  });
+  }).filter((listing): listing is Listing => listing !== null);
 };
 
 // Function to create a new listing
