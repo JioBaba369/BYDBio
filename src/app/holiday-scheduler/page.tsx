@@ -10,16 +10,19 @@ import { getHolidays, type GetHolidaysOutput } from '@/ai/flows/get-holidays-flo
 import { Skeleton } from '@/components/ui/skeleton';
 import { CalendarDays, Sparkles } from 'lucide-react';
 import { ClientFormattedDate } from '@/components/client-formatted-date';
+import { Badge } from '@/components/ui/badge';
+import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
 const HolidaySchedulerSkeleton = () => (
     <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-        {[...Array(4)].map((_, i) => (
+        {[...Array(8)].map((_, i) => (
             <Card key={i}>
-                <CardHeader className="p-4">
-                    <Skeleton className="h-6 w-3/4 mx-auto" />
+                <CardHeader className="p-4 pb-2">
+                    <Skeleton className="h-5 w-3/4 mx-auto" />
+                     <Skeleton className="h-4 w-1/2 mx-auto mt-1" />
                 </CardHeader>
-                <CardContent className="p-4 pt-0">
-                    <Skeleton className="h-4 w-1/2 mx-auto" />
+                <CardContent className="p-4 pt-2 flex justify-center">
+                    <Skeleton className="h-6 w-24" />
                 </CardContent>
             </Card>
         ))}
@@ -27,7 +30,7 @@ const HolidaySchedulerSkeleton = () => (
 );
 
 export default function PublicHolidaysPage() {
-    const [query, setQuery] = useState('Next public holiday in the United States');
+    const [query, setQuery] = useState('Holidays in the United States this year');
     const [holidays, setHolidays] = useState<GetHolidaysOutput['holidays']>([]);
     const [isLoading, setIsLoading] = useState(false);
     const { toast } = useToast();
@@ -76,7 +79,7 @@ export default function PublicHolidaysPage() {
                         Ask the AI
                     </CardTitle>
                     <CardDescription>
-                        Use natural language to ask for holidays. For example: "Public holidays in Canada for 2025" or "Next holiday in Australia".
+                        Use natural language to ask for holidays. For example: "Public holidays in Canada for 2025" or "Next holiday in Australia". For US states, try "Holidays in California this year".
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -114,12 +117,28 @@ export default function PublicHolidaysPage() {
                     <CardContent>
                          <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
                             {holidays.map((holiday, index) => (
-                                <Card key={index} className="text-center bg-muted/30">
-                                    <CardHeader className="p-4">
+                                <Card key={index} className="text-center bg-muted/30 flex flex-col">
+                                    <CardHeader className="p-4 pb-2 flex-grow">
                                         <CardTitle className="text-base">{holiday.name}</CardTitle>
+                                        <p className="font-semibold text-primary pt-1"><ClientFormattedDate date={holiday.date} formatStr="PPP" /></p>
                                     </CardHeader>
                                     <CardContent className="p-4 pt-0">
-                                        <p className="font-semibold text-primary"><ClientFormattedDate date={holiday.date} formatStr="PPP" /></p>
+                                        {holiday.isGlobal === false && holiday.counties && holiday.counties.length > 0 ? (
+                                            <TooltipProvider>
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <Badge variant="secondary" className="cursor-default">
+                                                            State Holiday ({holiday.counties.length})
+                                                        </Badge>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>
+                                                        <p className="max-w-xs">{holiday.counties.join(', ')}</p>
+                                                    </TooltipContent>
+                                                </Tooltip>
+                                            </TooltipProvider>
+                                        ) : (
+                                            <Badge variant="outline" className="cursor-default">National Holiday</Badge>
+                                        )}
                                     </CardContent>
                                 </Card>
                             ))}

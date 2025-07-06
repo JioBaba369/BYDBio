@@ -23,6 +23,8 @@ type NagerDateHoliday = {
 type Holiday = {
   name: string;
   date: string;
+  counties: string[] | null;
+  isGlobal: boolean;
 };
 
 export async function getPublicHolidays(
@@ -54,6 +56,8 @@ export async function getPublicHolidays(
     return holidays.map((holiday) => ({
       name: holiday.name,
       date: holiday.date,
+      counties: holiday.counties,
+      isGlobal: holiday.global,
     }));
   } catch (error) {
     console.error('Error fetching public holidays:', error);

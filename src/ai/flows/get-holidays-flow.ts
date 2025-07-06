@@ -25,6 +25,8 @@ const GetHolidaysOutputSchema = z.object({
         date: z
           .string()
           .describe('The date of the holiday in YYYY-MM-DD format.'),
+        counties: z.array(z.string()).optional().nullable().describe('An array of states or regions where this holiday is observed. This field is null or empty for national holidays.'),
+        isGlobal: z.boolean().describe('Whether the holiday is a national holiday.'),
       })
     )
     .describe('A list of public holidays for the specified country and year.'),
@@ -40,7 +42,12 @@ const getPublicHolidaysTool = ai.defineTool(
       year: z.number(),
       countryCode: z.string().length(2).describe('The two-letter ISO 3166-1 alpha-2 country code (e.g., "US", "GB", "CA").'),
     }),
-    outputSchema: z.array(z.object({ name: z.string(), date: z.string() })),
+    outputSchema: z.array(z.object({
+        name: z.string(),
+        date: z.string(),
+        counties: z.array(z.string()).optional().nullable(),
+        isGlobal: z.boolean(),
+    })),
   },
   async (input) => getPublicHolidays(input.year, input.countryCode)
 );
