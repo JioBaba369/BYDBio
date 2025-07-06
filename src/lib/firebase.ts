@@ -1,3 +1,4 @@
+
 import { initializeApp, getApps, getApp, type FirebaseApp } from "firebase/app";
 import { getAuth, connectAuthEmulator } from "firebase/auth";
 import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
@@ -21,6 +22,10 @@ const storage = getStorage(app);
 
 // A flag to ensure we only connect to the emulators once.
 let emulatorsConnected = false;
+
+console.log("Firebase Config being used:", firebaseConfig);
+console.log("NODE_ENV:", process.env.NODE_ENV);
+console.log("Are emulators expected to connect?", process.env.NODE_ENV === 'development' && !emulatorsConnected);
 
 // In development, connect to the emulators. This needs to be guarded
 // to prevent re-initialization during hot-reloads.
