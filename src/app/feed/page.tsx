@@ -92,7 +92,7 @@ export default function FeedPage() {
     if (refreshFollowing) {
         setIsFollowingLoading(true);
         try {
-            const posts = await getFeedPosts(user.following);
+            const posts = await getFeedPosts([...user.following, user.uid]);
             setFollowingFeed(posts.map(post => ({
                 ...post,
                 isLiked: post.likedBy.includes(user.uid),
