@@ -13,28 +13,22 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-// This is a common pattern for singletons in Next.js development
-// to avoid issues with Hot Module Replacement (HMR).
-declare global {
-  var _emulatorsConnected: boolean | undefined;
-}
-
-
 // Initialize Firebase
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 const storage = getStorage(app);
 
-// In development mode, connect to the emulators
-if (process.env.NODE_ENV === 'development' && !global._emulatorsConnected) {
+// In development mode, connect to the emulators.
+// The connect*Emulator functions are idempotent, so they can be called multiple times
+// without issues, which is helpful for Next.js's hot-reloading environment.
+if (process.env.NODE_ENV === 'development') {
     try {
         // Use 127.0.0.1 instead of localhost to avoid potential resolution issues
         connectAuthEmulator(auth, "http://127.0.0.1:9099", { disableRegeneration: true });
         connectFirestoreEmulator(db, "127.0.0.1", 8080);
         connectStorageEmulator(storage, "127.0.0.1", 9199);
-        console.log("Successfully connected to Firebase Emulators.");
-        global._emulatorsConnected = true;
+        console.log("Attempting to connect to Firebase Emulators...");
     } catch (error) {
         console.error("Error connecting to Firebase emulators: ", error);
     }
