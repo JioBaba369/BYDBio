@@ -7,12 +7,12 @@ import { useAuth } from './auth-provider';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from './ui/dropdown-menu';
 import { Button } from './ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar';
-import { ChevronDown, LogOut, Settings, User, Palette } from 'lucide-react';
+import { ChevronDown, LogOut, Settings, User, Palette, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { isAuthPath } from '@/lib/paths';
 import React, { useState, useEffect } from 'react';
 import { DashboardSkeleton } from './dashboard-skeleton';
@@ -20,6 +20,8 @@ import { DashboardSkeleton } from './dashboard-skeleton';
 function Header() {
     const { user } = useAuth();
     const { toast } = useToast();
+    const router = useRouter();
+    const pathname = usePathname();
 
     const handleLogout = async () => {
         try {
@@ -41,11 +43,19 @@ function Header() {
 
     if (!user) return null;
 
+    const showBackButton = pathname !== '/';
+
     return (
         <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background/80 backdrop-blur-sm px-4 md:px-6">
             <div className="md:hidden">
                 <SidebarTrigger />
             </div>
+            {showBackButton && (
+                <Button variant="ghost" size="icon" onClick={() => router.back()} className="h-8 w-8">
+                    <ArrowLeft className="h-5 w-5" />
+                    <span className="sr-only">Back</span>
+                </Button>
+            )}
             <div className="w-full flex-1">
                 {/* We can add a search bar here later if needed */}
             </div>
