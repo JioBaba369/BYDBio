@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useToast } from '@/hooks/use-toast';
 import { getHolidays, type GetHolidaysOutput } from '@/ai/flows/get-holidays-flow';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Rocket } from 'lucide-react';
+import { CalendarDays } from 'lucide-react';
 
 const HolidaySchedulerSkeleton = () => (
     <div className="space-y-4">
@@ -19,7 +19,7 @@ const HolidaySchedulerSkeleton = () => (
     </div>
 );
 
-export default function HolidaySchedulerPage() {
+export default function PublicHolidaysPage() {
     const [country, setCountry] = useState('US');
     const [year, setYear] = useState(new Date().getFullYear().toString());
     const [holidays, setHolidays] = useState<GetHolidaysOutput['holidays']>([]);
@@ -61,18 +61,18 @@ export default function HolidaySchedulerPage() {
         <div className="space-y-6">
             <div>
                 <h1 className="text-2xl sm:text-3xl font-bold font-headline flex items-center gap-2">
-                    <Rocket className="h-8 w-8 text-primary" />
-                    AI Holiday Scheduler
+                    <CalendarDays className="h-8 w-8 text-primary" />
+                    Public Holidays
                 </h1>
                 <p className="text-muted-foreground">
-                    Use our AI agent to find public holidays for any country and year.
+                    Find public holidays for any country and year using our AI-powered helper.
                 </p>
             </div>
             
             <Card>
                 <CardHeader>
-                    <CardTitle>Find Holidays</CardTitle>
-                    <CardDescription>Enter a country name (e.g., "United States", "GB") and a year.</CardDescription>
+                    <CardTitle>Find Public Holidays</CardTitle>
+                    <CardDescription>Enter a country name or 2-letter code (e.g., "United States", "GB") and a year.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <form onSubmit={handleFetchHolidays} className="grid sm:grid-cols-3 gap-4 items-end">

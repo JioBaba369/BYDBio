@@ -27,7 +27,7 @@ import {
   Link2,
   Building2,
   Share2,
-  CalendarCheck,
+  CalendarDays,
   LayoutDashboard,
   Rss,
 } from 'lucide-react';
@@ -180,10 +180,10 @@ export function MainSidebar() {
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip="Holiday Scheduler" isActive={isActive('/holiday-scheduler')}>
+                <SidebarMenuButton asChild tooltip="Public Holidays" isActive={isActive('/holiday-scheduler')}>
                   <Link href="/holiday-scheduler">
-                    <CalendarCheck />
-                    <span>Holiday Scheduler</span>
+                    <CalendarDays />
+                    <span>Public Holidays</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
