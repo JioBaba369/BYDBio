@@ -20,16 +20,19 @@ const db = getFirestore(app);
 const storage = getStorage(app);
 
 // In development, connect to the emulators.
+// We use a global flag to ensure this only runs once, even with hot-reloading.
 if (process.env.NODE_ENV === 'development') {
-    // Check if emulators are already connected to prevent errors on hot-reloads
-    // @ts-ignore - _isInitialized is not in the type definition but it's a reliable way to check
-    if (!auth.emulatorConfig) {
+    // This is a robust way to ensure the emulators are only connected once.
+    // This is necessary because in development, Next.js can re-run this file.
+    if (!(globalThis as any)._firebaseEmulatorsConnected) {
         try {
             console.log("Connecting to Firebase Emulators...");
             connectAuthEmulator(auth, "http://127.0.0.1:9099", { disableRegeneration: true });
             connectFirestoreEmulator(db, "127.0.0.1", 8081);
             connectStorageEmulator(storage, "127.0.0.1", 9198);
             console.log("Successfully connected to Firebase Emulators.");
+            // Set the global flag to true after successful connection
+            (globalThis as any)._firebaseEmulatorsConnected = true;
         } catch (error) {
             console.error("Error connecting to emulators:", error);
         }
