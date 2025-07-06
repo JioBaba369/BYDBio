@@ -18,7 +18,7 @@ export default function LinksClientPage({ user }: { user: User }) {
   return (
     <div className="bg-dot min-h-screen antialiased">
       <div className="container mx-auto max-w-md p-4 sm:p-8">
-        <div className="absolute top-4 left-4">
+        <div className="mb-8">
             <Button asChild variant="ghost" size="sm">
                 <Link href={`/u/${username}`} className="inline-flex items-center gap-2 text-muted-foreground hover:text-primary">
                     <ArrowLeft className="h-4 w-4" />
@@ -27,7 +27,7 @@ export default function LinksClientPage({ user }: { user: User }) {
             </Button>
         </div>
 
-        <div className="flex flex-col items-center text-center pt-16">
+        <div className="flex flex-col items-center text-center">
             <Avatar className="h-24 w-24 mb-4 ring-2 ring-primary/20 ring-offset-4 ring-offset-background">
                 <AvatarImage src={avatarUrl} alt={name} data-ai-hint="person portrait"/>
                 <AvatarFallback>{avatarFallback}</AvatarFallback>
