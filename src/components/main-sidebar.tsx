@@ -10,16 +10,11 @@ import {
   SidebarMenuItem,
   SidebarGroup,
   SidebarGroupLabel,
-  SidebarSeparator,
-  SidebarMenuButton,
   SidebarFooter,
+  SidebarMenuButton,
 } from '@/components/ui/sidebar';
 import { Logo } from './logo';
 import {
-  Briefcase,
-  Calendar,
-  LayoutDashboard,
-  Rss,
   Settings,
   User,
   Search,
@@ -27,14 +22,14 @@ import {
   Bell,
   Compass,
   Megaphone,
-  Tags,
-  Gift,
-  Building2,
   Package,
   UserCircle,
   Link2,
+  Building2,
   Share2,
   CalendarCheck,
+  LayoutDashboard,
+  Rss,
 } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -52,7 +47,7 @@ export function MainSidebar() {
   const isActive = (path: string) => {
     // Use exact path matching for active state.
     // The usePathname hook does not include query params, so this works for pages like /settings?tab=...
-    return pathname === path;
+    return path === pathname;
   };
 
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -145,115 +140,113 @@ export function MainSidebar() {
             </div>
           </form>
         </SidebarGroup>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarGroupLabel>General</SidebarGroupLabel>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Dashboard" isActive={isActive('/')}>
-              <Link href="/">
-                <LayoutDashboard />
-                <span>Dashboard</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Explore" isActive={isActive('/explore')}>
-              <Link href="/explore">
-                <Compass />
-                <span>Explore</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Status Feed" isActive={isActive('/feed')}>
-              <Link href="/feed">
-                <Rss />
-                <span>Status Feed</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Connections" isActive={isActive('/connections')}>
-              <Link href="/connections">
-                <Users />
-                <span>Connections</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Notifications" isActive={isActive('/notifications')}>
-              <Link href="/notifications">
-                <Bell />
-                <span>Notifications</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
         
-          <SidebarMenuItem>
-            <SidebarSeparator className="my-1" />
-          </SidebarMenuItem>
-
-          <SidebarMenuItem>
+        <SidebarGroup>
+          <SidebarGroupLabel>General</SidebarGroupLabel>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild tooltip="Dashboard" isActive={isActive('/')}>
+                <Link href="/">
+                  <LayoutDashboard />
+                  <span>Dashboard</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild tooltip="Explore" isActive={isActive('/explore')}>
+                <Link href="/explore">
+                  <Compass />
+                  <span>Explore</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild tooltip="Status Feed" isActive={isActive('/feed')}>
+                <Link href="/feed">
+                  <Rss />
+                  <span>Status Feed</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild tooltip="Connections" isActive={isActive('/connections')}>
+                <Link href="/connections">
+                  <Users />
+                  <span>Connections</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild tooltip="Notifications" isActive={isActive('/notifications')}>
+                <Link href="/notifications">
+                  <Bell />
+                  <span>Notifications</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroup>
+        
+        <SidebarGroup>
             <SidebarGroupLabel>Workspace</SidebarGroupLabel>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Profile Editor" isActive={isActive('/profile')}>
-              <Link href="/profile">
-                <User />
-                <span>Profile Editor</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="My Content" isActive={isActive('/calendar')}>
-              <Link href="/calendar">
-                <Package />
-                <span>My Content</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Holiday Scheduler" isActive={isActive('/holiday-scheduler')}>
-              <Link href="/holiday-scheduler">
-                <CalendarCheck />
-                <span>Holiday Scheduler</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-
-          <SidebarMenuItem>
-            <SidebarSeparator className="my-1" />
-          </SidebarMenuItem>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Profile Editor" isActive={isActive('/profile')}>
+                  <Link href="/profile">
+                    <User />
+                    <span>Profile Editor</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="My Content" isActive={isActive('/calendar')}>
+                  <Link href="/calendar">
+                    <Package />
+                    <span>My Content</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Holiday Scheduler" isActive={isActive('/holiday-scheduler')}>
+                  <Link href="/holiday-scheduler">
+                    <CalendarCheck />
+                    <span>Holiday Scheduler</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+        </SidebarGroup>
           
-          <SidebarMenuItem>
-            <SidebarGroupLabel>My Public Profile</SidebarGroupLabel>
-          </SidebarMenuItem>
-           <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Bio Page" isActive={isActive(`/u/${user.username}`)}>
-              <Link href={`/u/${user.username}`}>
-                <UserCircle />
-                <span>Bio Page</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Digital Business Card" isActive={isActive(`/u/${user.username}/card`)}>
-              <Link href={`/u/${user.username}/card`}>
-                <Building2 />
-                <span>Digital Business Card</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Links Page" isActive={isActive(`/u/${user.username}/links`)}>
-              <Link href={`/u/${user.username}/links`}>
-                <Link2 />
-                <span>Links Page</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
+        <SidebarGroup>
+          <SidebarGroupLabel>My Public Profile</SidebarGroupLabel>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild tooltip="Bio Page" isActive={isActive(`/u/${user.username}`)}>
+                <Link href={`/u/${user.username}`}>
+                  <UserCircle />
+                  <span>Bio Page</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild tooltip="Digital Business Card" isActive={isActive(`/u/${user.username}/card`)}>
+                <Link href={`/u/${user.username}/card`}>
+                  <Building2 />
+                  <span>Digital Business Card</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild tooltip="Links Page" isActive={isActive(`/u/${user.username}/links`)}>
+                <Link href={`/u/${user.username}/links`}>
+                  <Link2 />
+                  <span>Links Page</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroup>
+
       </SidebarContent>
       <SidebarFooter>
         <SidebarMenu>
