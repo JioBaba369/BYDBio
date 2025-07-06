@@ -5,6 +5,8 @@ import OfferDetailClient from './offer-detail-client';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import type { Timestamp } from 'firebase/firestore';
+import { doc, increment, updateDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 export async function generateMetadata({ params }: { params: { offerId: string } }): Promise<Metadata> {
   const data = await getOfferAndAuthor(params.offerId);
@@ -41,6 +43,11 @@ export async function generateMetadata({ params }: { params: { offerId: string }
 
 export default async function PublicOfferPage({ params }: { params: { offerId: string } }) {
     const data = await getOfferAndAuthor(params.offerId);
+
+    if (data) {
+        const offerRef = doc(db, 'offers', params.offerId);
+        await updateDoc(offerRef, { views: increment(1) });
+    }
 
     if (!data) {
         return (

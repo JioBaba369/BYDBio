@@ -5,6 +5,8 @@ import ListingDetailClient from './listing-detail-client';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import type { Timestamp } from 'firebase/firestore';
+import { doc, increment, updateDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 export async function generateMetadata({ params }: { params: { listingId: string } }): Promise<Metadata> {
   const data = await getListingAndAuthor(params.listingId);
@@ -41,6 +43,11 @@ export async function generateMetadata({ params }: { params: { listingId: string
 
 export default async function PublicListingPage({ params }: { params: { listingId: string } }) {
     const data = await getListingAndAuthor(params.listingId);
+
+    if (data) {
+        const listingRef = doc(db, 'listings', params.listingId);
+        await updateDoc(listingRef, { views: increment(1) });
+    }
 
     if (!data) {
         return (

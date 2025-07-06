@@ -1,206 +1,409 @@
-
 {
+
   "indexes": [
-    {
-      "collectionGroup": "posts",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "authorId",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "createdAt",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "jobs",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "authorId",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "createdAt",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "listings",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "authorId",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "createdAt",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "events",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "authorId",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "createdAt",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "offers",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "authorId",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "createdAt",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "promoPages",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "authorId",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "createdAt",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "promoPages",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "authorId",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "createdAt",
-          "order": "ASCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "events",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "status",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "startDate",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "users",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "searchableKeywords",
-          "arrayConfig": "CONTAINS"
-        },
-        {
-          "fieldPath": "uid",
-          "order": "ASCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "notifications",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "userId",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "createdAt",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "promoPages",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "searchableKeywords",
-          "arrayConfig": "CONTAINS"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "events",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "searchableKeywords",
-          "arrayConfig": "CONTAINS"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "jobs",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "searchableKeywords",
-          "arrayConfig": "CONTAINS"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "listings",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "searchableKeywords",
-          "arrayConfig": "CONTAINS"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "offers",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "searchableKeywords",
-          "arrayConfig": "CONTAINS"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "users",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "following",
-          "arrayConfig": "CONTAINS"
-        }
-      ]
-    }
+  
+  {
+  
+  "collectionGroup": "posts",
+  
+  "queryScope": "COLLECTION",
+  
+  "fields": [
+  
+  {
+  
+  "fieldPath": "authorId",
+  
+  "order": "ASCENDING"
+  
+  },
+  
+  {
+  
+  "fieldPath": "createdAt",
+  
+  "order": "DESCENDING"
+  
+  }
+  
+  ]
+  
+  },
+  
+  {
+  
+  "collectionGroup": "jobs",
+  
+  "queryScope": "COLLECTION",
+  
+  "fields": [
+  
+  {
+  
+  "fieldPath": "authorId",
+  
+  "order": "ASCENDING"
+  
+  },
+  
+  {
+  
+  "fieldPath": "createdAt",
+  
+  "order": "DESCENDING"
+  
+  }
+  
+  ]
+  
+  },
+  
+  {
+  
+  "collectionGroup": "listings",
+  
+  "queryScope": "COLLECTION",
+  
+  "fields": [
+  
+  {
+  
+  "fieldPath": "authorId",
+  
+  "order": "ASCENDING"
+  
+  },
+  
+  {
+  
+  "fieldPath": "createdAt",
+  
+  "order": "DESCENDING"
+  
+  }
+  
+  ]
+  
+  },
+  
+  {
+  
+  "collectionGroup": "events",
+  
+  "queryScope": "COLLECTION",
+  
+  "fields": [
+  
+  {
+  
+  "fieldPath": "authorId",
+  
+  "order": "ASCENDING"
+  
+  },
+  
+  {
+  
+  "fieldPath": "createdAt",
+  
+  "order": "DESCENDING"
+  
+  }
+  
+  ]
+  
+  },
+  
+  {
+  
+  "collectionGroup": "offers",
+  
+  "queryScope": "COLLECTION",
+  
+  "fields": [
+  
+  {
+  
+  "fieldPath": "authorId",
+  
+  "order": "ASCENDING"
+  
+  },
+  
+  {
+  
+  "fieldPath": "createdAt",
+  
+  "order": "DESCENDING"
+  
+  }
+  
+  ]
+  
+  },
+  
+  {
+  
+  "collectionGroup": "promoPages",
+  
+  "queryScope": "COLLECTION",
+  
+  "fields": [
+  
+  {
+  
+  "fieldPath": "authorId",
+  
+  "order": "ASCENDING"
+  
+  },
+  
+  {
+  
+  "fieldPath": "createdAt",
+  
+  "order": "DESCENDING"
+  
+  }
+  
+  ]
+  
+  },
+  
+  {
+  
+  "collectionGroup": "promoPages",
+  
+  "queryScope": "COLLECTION",
+  
+  "fields": [
+  
+  {
+  
+  "fieldPath": "authorId",
+  
+  "order": "ASCENDING"
+  
+  },
+  
+  {
+  
+  "fieldPath": "createdAt",
+  
+  "order": "ASCENDING"
+  
+  }
+  
+  ]
+  
+  },
+  
+  {
+  
+  "collectionGroup": "events",
+  
+  "queryScope": "COLLECTION",
+  
+  "fields": [
+  
+  {
+  
+  "fieldPath": "status",
+  
+  "order": "ASCENDING"
+  
+  },
+  
+  {
+  
+  "fieldPath": "startDate",
+  
+  "order": "DESCENDING"
+  
+  }
+  
+  ]
+  
+  },
+  
+  {
+  
+  "collectionGroup": "users",
+  
+  "queryScope": "COLLECTION",
+  
+  "fields": [
+  
+  {
+  
+  "fieldPath": "searchableKeywords",
+  
+  "arrayConfig": "CONTAINS"
+  
+  },
+  
+  {
+  
+  "fieldPath": "uid",
+  
+  "order": "ASCENDING"
+  
+  }
+  
+  ]
+  
+  },
+  
+  {
+  
+  "collectionGroup": "notifications",
+  
+  "queryScope": "COLLECTION",
+  
+  "fields": [
+  
+  {
+  
+  "fieldPath": "userId",
+  
+  "order": "ASCENDING"
+  
+  },
+  
+  {
+  
+  "fieldPath": "createdAt",
+  
+  "order": "DESCENDING"
+  
+  }
+  
+  ]
+  
+  },
+  
+  {
+  
+  "collectionGroup": "promoPages",
+  
+  "queryScope": "COLLECTION",
+  
+  "fields": [
+  
+  {
+  
+  "fieldPath": "searchableKeywords",
+  
+  "arrayConfig": "CONTAINS"
+  
+  }
+  
+  ]
+  
+  },
+  
+  {
+  
+  "collectionGroup": "events",
+  
+  "queryScope": "COLLECTION",
+  
+  "fields": [
+  
+  {
+  
+  "fieldPath": "searchableKeywords",
+  
+  "arrayConfig": "CONTAINS"
+  
+  }
+  
+  ]
+  
+  },
+  
+  {
+  
+  "collectionGroup": "jobs",
+  
+  "queryScope": "COLLECTION",
+  
+  "fields": [
+  
+  {
+  
+  "fieldPath": "searchableKeywords",
+  
+  "arrayConfig": "CONTAINS"
+  
+  }
+  
+  ]
+  
+  },
+  
+  {
+  
+  "collectionGroup": "listings",
+  
+  "queryScope": "COLLECTION",
+  
+  "fields": [
+  
+  {
+  
+  "fieldPath": "searchableKeywords",
+  
+  "arrayConfig": "CONTAINS"
+  
+  }
+  
+  ]
+  
+  },
+  
+  {
+  
+  "collectionGroup": "offers",
+  
+  "queryScope": "COLLECTION",
+  
+  "fields": [
+  
+  {
+  
+  "fieldPath": "searchableKeywords",
+  
+  "arrayConfig": "CONTAINS"
+  
+  }
+  
+  ]
+  
+  },
+  
+  {
+  
+  "collectionGroup": "users",
+  
+  "queryScope": "COLLECTION",
+  
+  "fields": [
+  
+  {
+  
+  "fieldPath": "following",
+  
+  "arrayConfig": "CONTAINS"
+  
+  }
+  
+  ]
+  
+  }
+  
   ],
+  
   "fieldOverrides": []
-}
+  
+  }

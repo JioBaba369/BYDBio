@@ -5,6 +5,8 @@ import PromoPageClient from './promo-page-client';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import type { Timestamp } from 'firebase/firestore';
+import { doc, increment, updateDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 export async function generateMetadata({ params }: { params: { promoId: string } }): Promise<Metadata> {
   const data = await getPromoPageAndAuthor(params.promoId);
@@ -48,6 +50,11 @@ export async function generateMetadata({ params }: { params: { promoId: string }
 
 export default async function PublicPromoPage({ params }: { params: { promoId: string } }) {
     const data = await getPromoPageAndAuthor(params.promoId);
+
+    if (data) {
+        const promoPageRef = doc(db, 'promoPages', params.promoId);
+        await updateDoc(promoPageRef, { views: increment(1) });
+    }
 
     if (!data) {
         return (
