@@ -1,7 +1,7 @@
 
 'use client';
 
-import type { PostWithAuthor, QuotedPostInfo, RepostedPostInfo } from '@/lib/posts';
+import type { PostWithAuthor, EmbeddedPostInfoWithAuthor } from '@/lib/posts';
 import { useAuth } from '@/components/auth-provider';
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import Link from "next/link";
@@ -25,24 +25,26 @@ interface PostCardProps {
 }
 
 // Renders an embedded post, used for both quotes and reposts.
-const EmbeddedPostView = ({ post }: { post: QuotedPostInfo | RepostedPostInfo }) => (
+const EmbeddedPostView = ({ post }: { post: EmbeddedPostInfoWithAuthor }) => (
     <div className="mt-2 border rounded-lg overflow-hidden transition-colors hover:bg-muted/30">
-        <div className="p-4">
-            <Link href={`/u/${post.author.username}`} className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Avatar className="h-5 w-5">
-                    <AvatarImage src={post.author.avatarUrl} />
-                    <AvatarFallback>{post.author.name.charAt(0)}</AvatarFallback>
-                </Avatar>
-                <span className="font-semibold text-foreground hover:underline">{post.author.name}</span>
-                <span>@{post.author.username}</span>
-            </Link>
-            <p className="mt-2 text-sm whitespace-pre-wrap">{post.content}</p>
-        </div>
-        {post.imageUrl && (
-            <div className="mt-2 aspect-video relative">
-                <Image src={post.imageUrl} alt="Embedded post image" layout="fill" className="object-cover" />
+        <Link href={`/u/${post.author.username}`}>
+            <div className="p-4">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Avatar className="h-5 w-5">
+                        <AvatarImage src={post.author.avatarUrl} />
+                        <AvatarFallback>{post.author.name.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <span className="font-semibold text-foreground hover:underline">{post.author.name}</span>
+                    <span>@{post.author.username}</span>
+                </div>
+                <p className="mt-2 text-sm whitespace-pre-wrap">{post.content}</p>
             </div>
-        )}
+            {post.imageUrl && (
+                <div className="mt-2 aspect-video relative bg-muted">
+                    <Image src={post.imageUrl} alt="Embedded post image" layout="fill" className="object-cover" />
+                </div>
+            )}
+        </Link>
     </div>
 );
 
@@ -68,7 +70,7 @@ export function PostCard({ item, onLike, onDelete, onRepost, onQuote }: PostCard
                 <div className="px-4 pt-3 pb-0 text-sm text-muted-foreground font-semibold flex items-center gap-2">
                     <Repeat className="h-4 w-4"/>
                     <Link href={`/u/${item.author.username}`} className="hover:underline">
-                        {user?.uid === item.author.uid ? "You" : item.author.name} reposted
+                        {user?.uid === item.author.id ? "You" : item.author.name} reposted
                     </Link>
                 </div>
             )}
@@ -107,10 +109,10 @@ export function PostCard({ item, onLike, onDelete, onRepost, onQuote }: PostCard
                 )}
 
                 {/* Render the quoted post if it exists (for quote-posts) */}
-                {item.quotedPost && <EmbeddedPostView post={item.quotedPost} />}
+                {item.quotedPost && item.quotedPost.author && <EmbeddedPostView post={item.quotedPost} />}
 
                 {/* Render the reposted post if it exists (for reposts) */}
-                {item.repostedPost && <EmbeddedPostView post={item.repostedPost} />}
+                {item.repostedPost && item.repostedPost.author && <EmbeddedPostView post={item.repostedPost} />}
 
                 {/* Render the image if it's NOT a repost and has an image */}
                 {!isRepost && item.imageUrl && (
@@ -124,11 +126,11 @@ export function PostCard({ item, onLike, onDelete, onRepost, onQuote }: PostCard
                     <Heart className={cn("h-5 w-5", item.isLiked && "fill-red-500 text-red-500")} />
                     <span>{item.likes}</span>
                 </Button>
-                <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground hover:text-green-500" onClick={() => onRepost(item.id)} disabled={isRepost}>
+                <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground hover:text-green-500" onClick={() => onRepost(isRepost ? item.repostedPost!.id : item.id)}>
                     <Repeat className="h-5 w-5" />
                     <span>{item.repostCount || 0}</span>
                 </Button>
-                 <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground hover:text-blue-500" onClick={() => onQuote(item)} disabled={isRepost}>
+                 <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground hover:text-blue-500" onClick={() => onQuote(item)}>
                     <QuoteIcon className="h-5 w-5" />
                     <span>Quote</span>
                 </Button>

@@ -23,21 +23,23 @@ import type { User } from './users';
 import { createNotification } from './notifications';
 import { getUsersByIds } from './users';
 
-export type QuotedPostInfo = {
+// This is the structure stored in Firestore for a quoted or reposted post.
+export type EmbeddedPostInfo = {
   id: string;
   content: string;
   imageUrl: string | null;
+  authorId: string;
+};
+
+// This is the structure used on the client, with author details populated.
+export type EmbeddedPostInfoWithAuthor = EmbeddedPostInfo & {
   author: {
-      uid: string;
-      name: string;
-      username: string;
-      avatarUrl: string;
-  }
-}
-
-// A reposted post uses the same structure as a quoted post for its embedded data.
-export type RepostedPostInfo = QuotedPostInfo;
-
+    uid: string;
+    name: string;
+    username: string;
+    avatarUrl: string;
+  };
+};
 
 export type Post = {
   id: string; // Document ID from Firestore
@@ -49,11 +51,16 @@ export type Post = {
   comments: number;
   createdAt: Timestamp;
   repostCount?: number;
-  quotedPost?: QuotedPostInfo;
-  repostedPost?: RepostedPostInfo;
+  quotedPost?: EmbeddedPostInfo;
+  repostedPost?: EmbeddedPostInfo;
 };
 
-export type PostWithAuthor = Omit<Post, 'createdAt'> & { author: User; createdAt: string; };
+export type PostWithAuthor = Omit<Post, 'createdAt'> & {
+  author: User;
+  createdAt: string;
+  quotedPost?: EmbeddedPostInfoWithAuthor;
+  repostedPost?: EmbeddedPostInfoWithAuthor;
+};
 
 // Function to fetch a single post by its ID
 export const getPost = async (id: string): Promise<Post | null> => {
@@ -74,7 +81,7 @@ export const getPostsByUser = async (userId: string): Promise<Post[]> => {
 };
 
 // Function to create a new post
-export const createPost = async (userId: string, data: Pick<Post, 'content' | 'imageUrl'> & { quotedPost?: QuotedPostInfo }) => {
+export const createPost = async (userId: string, data: Pick<Post, 'content' | 'imageUrl'> & { quotedPost?: EmbeddedPostInfo }) => {
   const postsRef = collection(db, 'posts');
   await addDoc(postsRef, {
     ...data,
@@ -117,7 +124,11 @@ export const toggleLikePost = async (postId: string, userId: string) => {
             likedBy: arrayUnion(userId),
             likes: increment(1)
         });
-        const contentSnippet = postData.content.substring(0, 40) + (postData.content.length > 40 ? '...' : '');
+        
+        // Use reposted content for notification if it's a repost, otherwise use main content
+        const contentForNotification = postData.repostedPost?.content || postData.content;
+        const contentSnippet = contentForNotification.substring(0, 40) + (contentForNotification.length > 40 ? '...' : '');
+
         await createNotification(postData.authorId, 'new_like', userId, postId, contentSnippet);
     }
 
@@ -139,24 +150,11 @@ export const repostPost = async (originalPostId: string, reposterId: string) => 
         throw new Error("Cannot repost a post that is already a repost.");
     }
     
-    const originalAuthorRef = doc(db, 'users', originalPostData.authorId);
-    const originalAuthorDoc = await getDoc(originalAuthorRef);
-
-    if (!originalAuthorDoc.exists()) {
-        throw new Error("Original author not found.");
-    }
-    const originalAuthorData = originalAuthorDoc.data() as User;
-    
-    const repostedPostData: RepostedPostInfo = {
+    const repostedPostData: EmbeddedPostInfo = {
         id: originalPostId,
         content: originalPostData.content,
         imageUrl: originalPostData.imageUrl,
-        author: {
-            uid: originalPostData.authorId,
-            name: originalAuthorData.name,
-            username: originalAuthorData.username,
-            avatarUrl: originalAuthorData.avatarUrl
-        }
+        authorId: originalPostData.authorId,
     };
 
     const batch = writeBatch(db);
@@ -183,6 +181,68 @@ export const repostPost = async (originalPostId: string, reposterId: string) => 
     await batch.commit();
 };
 
+const populatePostAuthors = async (posts: Post[]): Promise<PostWithAuthor[]> => {
+    if (posts.length === 0) return [];
+
+    const authorIds = new Set<string>();
+    posts.forEach(post => {
+        authorIds.add(post.authorId);
+        if (post.quotedPost?.authorId) {
+            authorIds.add(post.quotedPost.authorId);
+        }
+        if (post.repostedPost?.authorId) {
+            authorIds.add(post.repostedPost.authorId);
+        }
+    });
+
+    const authors = await getUsersByIds(Array.from(authorIds));
+    const authorMap = new Map(authors.map(author => [author.uid, author]));
+
+    return posts.map(post => {
+        const author = authorMap.get(post.authorId);
+        if (!author) return null; // Skip post if main author not found
+
+        const populatedPost: PostWithAuthor = {
+            ...post,
+            author,
+            createdAt: (post.createdAt as Timestamp).toDate().toISOString(),
+        };
+
+        if (post.quotedPost) {
+            const quotedAuthor = authorMap.get(post.quotedPost.authorId);
+            if (quotedAuthor) {
+                populatedPost.quotedPost = {
+                    ...post.quotedPost,
+                    author: {
+                        uid: quotedAuthor.uid,
+                        name: quotedAuthor.name,
+                        username: quotedAuthor.username,
+                        avatarUrl: quotedAuthor.avatarUrl,
+                    }
+                };
+            }
+        }
+        
+        if (post.repostedPost) {
+            const repostedAuthor = authorMap.get(post.repostedPost.authorId);
+            if (repostedAuthor) {
+                populatedPost.repostedPost = {
+                    ...post.repostedPost,
+                    author: {
+                        uid: repostedAuthor.uid,
+                        name: repostedAuthor.name,
+                        username: repostedAuthor.username,
+                        avatarUrl: repostedAuthor.avatarUrl,
+                    }
+                };
+            }
+        }
+
+        return populatedPost;
+    }).filter((post): post is PostWithAuthor => post !== null);
+}
+
+
 // Function to fetch posts for the user's feed
 export const getFeedPosts = async (followingIds: string[]): Promise<PostWithAuthor[]> => {
     if (followingIds.length === 0) {
@@ -193,29 +253,12 @@ export const getFeedPosts = async (followingIds: string[]): Promise<PostWithAuth
     const q = query(postsRef, where('authorId', 'in', followingIds), orderBy('createdAt', 'desc'), limit(50));
     const querySnapshot = await getDocs(q);
     
-    if (querySnapshot.empty) {
-        return [];
-    }
-
     const postsData = querySnapshot.docs.map(doc => ({
         id: doc.id,
         ...(doc.data() as Omit<Post, 'id'>)
     }));
 
-    const authorIds = [...new Set(postsData.map(post => post.authorId))];
-    const authors = await getUsersByIds(authorIds);
-    const authorMap = new Map(authors.map(author => [author.uid, author]));
-
-    return postsData.map(post => {
-        const author = authorMap.get(post.authorId);
-        if (!author) return null;
-        
-        return {
-            ...post,
-            author,
-            createdAt: (post.createdAt as Timestamp).toDate().toISOString(),
-        }
-    }).filter((post): post is PostWithAuthor => post !== null);
+    return populatePostAuthors(postsData);
 };
 
 /**
@@ -243,18 +286,5 @@ export const getDiscoveryPosts = async (userId: string, followingIds: string[]):
         ...(doc.data() as Omit<Post, 'id'>)
     }));
 
-    const authorIds = [...new Set(postsData.map(post => post.authorId))];
-    const authors = await getUsersByIds(authorIds);
-    const authorMap = new Map(authors.map(author => [author.uid, author]));
-
-    return postsData.map(post => {
-        const author = authorMap.get(post.authorId);
-        if (!author) return null;
-
-        return {
-            ...post,
-            author,
-            createdAt: (post.createdAt as Timestamp).toDate().toISOString(),
-        }
-    }).filter((post): post is PostWithAuthor => post !== null);
+    return populatePostAuthors(postsData);
 };

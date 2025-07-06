@@ -12,7 +12,7 @@ import { useAuth } from "@/components/auth-provider"
 import { useToast } from "@/hooks/use-toast"
 import Link from "next/link"
 import ImageCropper from "@/components/image-cropper"
-import { getFeedPosts, createPost, toggleLikePost, deletePost, getDiscoveryPosts, type PostWithAuthor, repostPost, type QuotedPostInfo } from "@/lib/posts"
+import { getFeedPosts, createPost, toggleLikePost, deletePost, getDiscoveryPosts, type PostWithAuthor, repostPost, type EmbeddedPostInfo } from "@/lib/posts"
 import { Skeleton } from "@/components/ui/skeleton"
 import { uploadImage } from "@/lib/storage"
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog"
@@ -180,18 +180,13 @@ export default function FeedPage() {
             imageUrlToPost = await uploadImage(croppedImageUrl, `posts/${user.uid}/${Date.now()}`);
         }
 
-        let quotedPostData: QuotedPostInfo | undefined = undefined;
+        let quotedPostData: EmbeddedPostInfo | undefined = undefined;
         if (postToQuote) {
             quotedPostData = {
                 id: postToQuote.id,
                 content: postToQuote.content,
                 imageUrl: postToQuote.imageUrl,
-                author: {
-                    uid: postToQuote.author.uid,
-                    name: postToQuote.author.name,
-                    username: postToQuote.author.username,
-                    avatarUrl: postToQuote.author.avatarUrl,
-                }
+                authorId: postToQuote.author.uid,
             };
         }
 
@@ -240,9 +235,9 @@ export default function FeedPage() {
       await repostPost(postId, user.uid);
       toast({ title: "Reposted!" });
       await fetchFeeds(true, true); // Refresh both feeds to show the new repost
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error reposting:", error);
-      toast({ title: "Failed to repost", variant: "destructive" });
+      toast({ title: error.message || "Failed to repost", variant: "destructive" });
     }
   };
   
