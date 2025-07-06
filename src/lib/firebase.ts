@@ -22,23 +22,17 @@ const db = getFirestore(app);
 const storage = getStorage(app);
 
 // In development, connect to the emulators.
-// We use a global variable to ensure this only runs once, even with Next.js's hot-reloading.
-// This is the definitive fix for the intermittent "auth/network-request-failed" error.
 if (process.env.NODE_ENV === 'development') {
-    // Check if the emulators are already connected to avoid re-connecting on every hot-reload.
-    if (!(global as any)._firebaseEmulatorsConnected) {
-        console.log("Connecting to Firebase Emulators for the first time...");
-        try {
-            connectAuthEmulator(auth, "http://127.0.0.1:9099", { disableRegeneration: true });
-            connectFirestoreEmulator(db, "127.0.0.1", 8080);
-            connectStorageEmulator(storage, "127.0.0.1", 9199);
-            // Set the global flag to true after successful connection.
-            (global as any)._firebaseEmulatorsConnected = true;
-            console.log("Successfully connected to Firebase Emulators.");
-        } catch (error) {
-            // This catch block is for the initial connection attempt.
-            console.error("Critical error connecting to Firebase Emulators:", error);
-        }
+    // Note: The connect...Emulator functions have internal guards to prevent reconnecting.
+    // We are using different ports to avoid conflicts with other services on your machine.
+    console.log("Attempting to connect to Firebase Emulators on new ports...");
+    try {
+        connectAuthEmulator(auth, "http://127.0.0.1:9099");
+        connectFirestoreEmulator(db, "127.0.0.1", 8081); // New port
+        connectStorageEmulator(storage, "127.0.0.1", 9198); // New port
+        console.log("Successfully configured to use Firebase Emulators.");
+    } catch (error) {
+        console.error("Error connecting to emulators:", error);
     }
 }
 

@@ -13,24 +13,24 @@
     },
     "firestore": {
       "host": "127.0.0.1",
-      "port": 8080
+      "port": 8081
     },
     "storage": {
       "host": "127.0.0.1",
-      "port": 9199
+      "port": 9198
     },
     "ui": {
       "enabled": true,
       "host": "127.0.0.1",
-      "port": 4000
+      "port": 4002
     },
     "hub": {
       "host": "127.0.0.1",
-      "port": 4400
+      "port": 4402
     },
     "logging": {
       "host": "127.0.0.1",
-      "port": 4500
+      "port": 4502
     }
   }
 }
