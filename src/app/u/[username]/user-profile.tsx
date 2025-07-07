@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import type { User } from '@/lib/users';
-import type { PostWithAuthor, Post } from '@/lib/posts';
+import type { PostWithAuthor } from '@/lib/posts';
 import type { Listing } from '@/lib/listings';
 import type { Offer } from '@/lib/offers';
 import type { Job } from '@/lib/jobs';
@@ -40,11 +40,11 @@ interface UserProfilePageProps {
   userProfileData: User;
   content: {
     posts: PostWithAuthor[];
-    listings: (Omit<Listing, 'createdAt' | 'startDate' | 'endDate'> & { createdAt: string, startDate?: string | null, endDate?: string | null })[];
-    jobs: (Omit<Job, 'postingDate' | 'createdAt' | 'startDate' | 'endDate'> & { postingDate: string, createdAt: string, startDate?: string | null, endDate?: string | null })[];
-    events: (Omit<Event, 'startDate' | 'endDate' | 'createdAt'> & { startDate: string, endDate?: string | null, createdAt: string })[];
-    offers: (Omit<Offer, 'startDate' | 'endDate' | 'createdAt'> & { startDate: string, endDate?: string | null, createdAt: string })[];
-    promoPages: (Omit<PromoPage, 'createdAt'> & { createdAt: string })[];
+    listings: Listing[];
+    jobs: Job[];
+    events: Event[];
+    offers: Offer[];
+    promoPages: PromoPage[];
   }
 }
 
@@ -78,7 +78,7 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
         router.push('/auth/sign-in');
         return;
     }
-    if (currentUser.uid === userProfileData.uid) return;
+    if (isOwner) return;
 
     setIsFollowLoading(true);
     const currentlyFollowing = isFollowing;
@@ -393,8 +393,8 @@ END:VCARD`;
 
         <Card className="bg-card/80 backdrop-blur-sm p-6 sm:p-8 shadow-2xl rounded-2xl border-primary/10 text-center">
             <div className="flex flex-col items-center gap-2">
-                <a href={`/u/${username}/card`} className="text-sm text-primary hover:underline font-semibold">View Digital Business Card</a>
-                <a href={`/u/${username}/links`} className="text-sm text-primary hover:underline font-semibold">View Links Page</a>
+                <Link href={`/u/${username}/card`} className="text-sm text-primary hover:underline font-semibold">View Digital Business Card</Link>
+                <Link href={`/u/${username}/links`} className="text-sm text-primary hover:underline font-semibold">View Links Page</Link>
             </div>
             <Separator className="my-8" />
             <div>

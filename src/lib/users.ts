@@ -157,6 +157,7 @@ export const updateUser = async (uid: string, data: Partial<User>) => {
                 ...newName.toLowerCase().split(' ').filter(Boolean),
                 newUsername.toLowerCase()
             ])];
+            // Only update the fallback if the name is explicitly being changed.
             if(data.name) {
                 dataToUpdate.avatarFallback = data.name.charAt(0).toUpperCase();
             }

@@ -91,10 +91,10 @@ export default async function PublicProfilePageWrapper({ params }: { params: { u
     // Serialize date objects before passing to client component
     const content = {
         posts: posts,
-        listings: listings.map(l => ({ ...l, createdAt: (l.createdAt as Timestamp).toDate().toISOString(), startDate: l.startDate ? (l.startDate as Date).toISOString() : null, endDate: l.endDate ? (l.endDate as Date).toISOString() : null })),
-        jobs: jobs.map(j => ({ ...j, postingDate: (j.postingDate as Date).toISOString(), createdAt: (j.createdAt as Timestamp).toDate().toISOString(), startDate: j.startDate ? (j.startDate as Date).toISOString() : null, endDate: j.endDate ? (j.endDate as Date).toISOString() : null })),
-        events: events.map(e => ({ ...e, startDate: (e.startDate as Date).toISOString(), endDate: e.endDate ? (e.endDate as Date).toISOString() : null, createdAt: (e.createdAt as Timestamp).toDate().toISOString() })),
-        offers: offers.map(o => ({ ...o, startDate: (o.startDate as Date).toISOString(), endDate: o.endDate ? (o.endDate as Date).toISOString() : null, createdAt: (o.createdAt as Timestamp).toDate().toISOString() })),
+        listings: listings.map(l => ({ ...l, createdAt: (l.createdAt as Timestamp).toDate().toISOString(), startDate: l.startDate ? (l.startDate instanceof Timestamp ? l.startDate.toDate() : new Date(l.startDate as string)).toISOString() : null, endDate: l.endDate ? (l.endDate instanceof Timestamp ? l.endDate.toDate() : new Date(l.endDate as string)).toISOString() : null })),
+        jobs: jobs.map(j => ({ ...j, postingDate: (j.postingDate instanceof Timestamp ? j.postingDate.toDate() : new Date(j.postingDate as string)).toISOString(), createdAt: (j.createdAt as Timestamp).toDate().toISOString(), startDate: j.startDate ? (j.startDate instanceof Timestamp ? j.startDate.toDate() : new Date(j.startDate as string)).toISOString() : null, endDate: j.endDate ? (j.endDate instanceof Timestamp ? j.endDate.toDate() : new Date(j.endDate as string)).toISOString() : null })),
+        events: events.map(e => ({ ...e, startDate: (e.startDate instanceof Timestamp ? e.startDate.toDate() : new Date(e.startDate as string)).toISOString(), endDate: e.endDate ? (e.endDate instanceof Timestamp ? e.endDate.toDate() : new Date(e.endDate as string)).toISOString() : null, createdAt: (e.createdAt as Timestamp).toDate().toISOString() })),
+        offers: offers.map(o => ({ ...o, startDate: (o.startDate instanceof Timestamp ? o.startDate.toDate() : new Date(o.startDate as string)).toISOString(), endDate: o.endDate ? (o.endDate instanceof Timestamp ? o.endDate.toDate() : new Date(o.endDate as string)).toISOString() : null, createdAt: (o.createdAt as Timestamp).toDate().toISOString() })),
         promoPages: promoPages.map(p => ({ ...p, createdAt: (p.createdAt as Timestamp).toDate().toISOString() })),
     };
 

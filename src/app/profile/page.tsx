@@ -26,7 +26,7 @@ import BioGenerator from "@/components/ai/bio-generator";
 import ImageCropper from "@/components/image-cropper";
 import { useAuth } from "@/components/auth-provider";
 import { Skeleton } from "@/components/ui/skeleton";
-import { updateUser } from "@/lib/users";
+import { updateUser, type User as AppUser } from "@/lib/users";
 import { Label } from "@/components/ui/label";
 import { uploadImage } from "@/lib/storage";
 
@@ -317,7 +317,7 @@ export default function ProfilePage() {
         const publicData = publicProfileForm.getValues();
         const cardData = businessCardForm.getValues();
         
-        let dataToUpdate: Partial<User> = {
+        let dataToUpdate: Partial<AppUser> = {
             name: publicData.name,
             bio: publicData.bio,
             businessCard: cardData,
@@ -340,11 +340,12 @@ export default function ProfilePage() {
         });
 
     } catch(error: any) {
-       if (error.message === "Username is already taken.") {
-           publicProfileForm.setError("username", { type: "manual", message: error.message });
-           toast({ title: "Update Failed", description: error.message, variant: 'destructive'});
+       if (error.message.includes("Username is already taken")) {
+           publicProfileForm.setError("username", { type: "manual", message: "This username is already taken. Please choose another." });
+           toast({ title: "Update Failed", description: "This username is already taken.", variant: 'destructive'});
        } else {
-           toast({ title: "Error saving profile", description: error.message, variant: 'destructive'});
+           console.error("Error saving profile:", error);
+           toast({ title: "Error saving profile", description: "An unexpected error occurred.", variant: 'destructive'});
        }
     } finally {
         setIsSavingProfile(false);
@@ -649,7 +650,7 @@ END:VCARD`;
                                 </Avatar>
                                 <p className="font-headline font-semibold text-lg">{watchedPublicProfile.name || 'Your Name'}</p>
                                 <p className="text-primary text-sm">{watchedBusinessCard.title || 'Your Title'}</p>
-                                <p className="text-muted-foreground text-xs flex items-center justify-center gap-1.5 mt-1"><Building className="h-3 w-3"/>{watchedBusinessCard.company || 'Your Company'}</p>
+                                <p className="text-muted-foreground text-xs flex items-center justify-center gap-1.5 mt-1"><Building className="h-3.5 w-3.5"/>{watchedBusinessCard.company || 'Your Company'}</p>
                                 </div>
                                 <div className="flex justify-center mt-4">
                                 {vCardData ? (

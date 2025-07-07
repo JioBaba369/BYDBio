@@ -98,7 +98,7 @@ export const getEvent = async (id: string): Promise<Event | null> => {
 // Function to fetch all events for a specific user
 export const getEventsByUser = async (userId: string): Promise<Event[]> => {
   const eventsRef = collection(db, 'events');
-  const q = query(eventsRef, where('authorId', '==', userId));
+  const q = query(eventsRef, where('authorId', '==', userId), orderBy('createdAt', 'desc'));
   const querySnapshot = await getDocs(q);
   return querySnapshot.docs.map(doc => {
       const data = doc.data();
@@ -259,149 +259,78 @@ const serializeFirestoreTimestamps = (data: any): any => {
 
 // This function fetches ALL content types for a user for the Content Calendar.
 export const getCalendarItems = async (userId: string): Promise<CalendarItem[]> => {
-    const eventsQuery = query(collection(db, 'events'), where('authorId', '==', userId));
-    const rsvpedEventsQuery = query(collection(db, 'events'), where('rsvps', 'array-contains', userId));
-    const offersQuery = query(collection(db, 'offers'), where('authorId', '==', userId));
-    const jobsQuery = query(collection(db, 'jobs'), where('authorId', '==', userId));
-    const listingsQuery = query(collection(db, 'listings'), where('authorId', '==', userId));
-    const promoPagesQuery = query(collection(db, 'promoPages'), where('authorId', '==', userId));
+    const collectionsToFetch = ['events', 'offers', 'jobs', 'listings', 'promoPages'];
     
+    const userContentPromises = collectionsToFetch.map(c => 
+        getDocs(query(collection(db, c), where('authorId', '==', userId)))
+    );
+    
+    // Also fetch events the user has RSVP'd to, but didn't create
+    const rsvpedEventsPromise = getDocs(
+        query(collection(db, 'events'), where('rsvps', 'array-contains', userId))
+    );
+
     const [
         eventsSnapshot,
-        rsvpedEventsSnapshot,
         offersSnapshot,
         jobsSnapshot,
         listingsSnapshot,
         promoPagesSnapshot,
-    ] = await Promise.all([
-        getDocs(eventsQuery),
-        getDocs(rsvpedEventsSnapshot),
-        getDocs(offersQuery),
-        getDocs(jobsQuery),
-        getDocs(listingsQuery),
-        getDocs(promoPagesQuery),
-    ]);
-
-    const itemsMap = new Map<string, any>();
+        rsvpedEventsSnapshot
+    ] = await Promise.all([...userContentPromises, rsvpedEventsPromise]);
     
-    const processDoc = (doc: any, type: string) => {
-        const key = `${type}-${doc.id}`;
-        // Store the original item if it doesn't exist, to preserve author-created events over RSVPs
-        if (!itemsMap.has(key)) {
+    const allItems = new Map<string, any>();
+
+    const processSnapshot = (snapshot: any, type: string) => {
+        snapshot.forEach((doc: any) => {
             const data = doc.data();
-            const serializedData = serializeFirestoreTimestamps(data);
-            itemsMap.set(key, { ...serializedData, id: doc.id, type });
-        }
+            const key = `${type}-${doc.id}`;
+            // If it's an event, we only add it if it's not one the user created themselves (to avoid duplicates)
+            if (type === 'event_rsvped') {
+                if (data.authorId !== userId) {
+                    allItems.set(key, { ...data, id: doc.id, type: 'event', isExternal: true });
+                }
+            } else {
+                // For user-created content, always add it.
+                allItems.set(key, { ...data, id: doc.id, type });
+            }
+        });
     };
-    
-    // Process created events first to give them priority
-    eventsSnapshot.forEach(doc => processDoc(doc, 'event'));
-    offersSnapshot.forEach(doc => processDoc(doc, 'offer'));
-    jobsSnapshot.forEach(doc => processDoc(doc, 'job'));
-    listingsSnapshot.forEach(doc => processDoc(doc, 'listing'));
-    promoPagesSnapshot.forEach(doc => processDoc(doc, 'promoPage'));
-    // Process RSVPs, which won't overwrite existing entries from the user
-    rsvpedEventsSnapshot.forEach(doc => processDoc(doc, 'event'));
 
-    const allItems = Array.from(itemsMap.values());
+    processSnapshot(eventsSnapshot, 'event');
+    processSnapshot(offersSnapshot, 'offer');
+    processSnapshot(jobsSnapshot, 'job');
+    processSnapshot(listingsSnapshot, 'listing');
+    processSnapshot(promoPagesSnapshot, 'promoPage');
+    processSnapshot(rsvpedEventsSnapshot, 'event_rsvped');
     
-    const formattedItems: CalendarItem[] = allItems.map((item: any) => {
-        let primaryDate: string | null = null;
-        if (item.type === 'event' || item.type === 'offer') {
-            primaryDate = item.startDate;
-        } else if (item.type === 'job') {
-            primaryDate = item.postingDate;
-        } else if (item.type === 'listing' || item.type === 'promoPage') {
-            primaryDate = item.createdAt;
-        }
-
+    const formattedItems: CalendarItem[] = Array.from(allItems.values()).map((item: any) => {
+        const serializedItem = serializeFirestoreTimestamps(item);
+        let primaryDate = serializedItem.startDate || serializedItem.postingDate || serializedItem.createdAt;
         if (!primaryDate) return null;
-        
-        // Final check to ensure a user's own event is never marked as external
-        const isExternal = item.authorId !== userId;
 
-        switch(item.type) {
-            case 'event':
-                return {
-                    id: item.id,
-                    type: 'Event' as const,
-                    date: primaryDate,
-                    title: item.title,
-                    description: item.description,
-                    location: item.location,
-                    imageUrl: item.imageUrl,
-                    editPath: isExternal ? `/events/${item.id}` : `/events/${item.id}/edit`,
-                    isExternal,
-                    status: item.status,
-                    views: item.views,
-                    rsvps: item.rsvps,
-                };
-            case 'offer':
-                 return {
-                    id: item.id,
-                    type: 'Offer' as const,
-                    date: primaryDate,
-                    title: item.title,
-                    description: item.description,
-                    category: item.category,
-                    imageUrl: item.imageUrl,
-                    editPath: `/offers/${item.id}/edit`,
-                    isExternal: false,
-                    status: item.status,
-                    views: item.views,
-                    claims: item.claims,
-                };
-            case 'job':
-                 return {
-                    id: item.id,
-                    type: 'Job' as const,
-                    date: primaryDate,
-                    title: item.title,
-                    description: item.description,
-                    company: item.company,
-                    jobType: item.type,
-                    location: item.location,
-                    imageUrl: item.imageUrl,
-                    editPath: `/opportunities/${item.id}/edit`,
-                    isExternal: false,
-                    status: item.status,
-                    views: item.views,
-                    applicants: item.applicants
-                };
-            case 'listing':
-                 return {
-                    id: item.id,
-                    type: 'Listing' as const,
-                    date: primaryDate,
-                    title: item.title,
-                    description: item.description,
-                    category: item.category,
-                    price: item.price,
-                    imageUrl: item.imageUrl,
-                    editPath: `/listings/${item.id}/edit`,
-                    isExternal: false,
-                    status: item.status,
-                    views: item.views,
-                    clicks: item.clicks,
-                };
-            case 'promoPage':
-                 return {
-                    id: item.id,
-                    type: 'Promo Page' as const,
-                    date: primaryDate,
-                    title: item.name,
-                    description: item.description,
-                    imageUrl: item.imageUrl,
-                    editPath: `/promo/${item.id}/edit`,
-                    isExternal: false,
-                    status: item.status,
-                    views: item.views,
-                    clicks: item.clicks,
-                };
-            default:
-                return null;
-        }
-    }).filter((item): item is CalendarItem => item !== null && !!item.date);
+        return {
+            id: serializedItem.id,
+            type: (item.type.charAt(0).toUpperCase() + item.type.slice(1)).replace(/_/g, ' ') as CalendarItem['type'],
+            date: primaryDate,
+            title: serializedItem.title || serializedItem.name,
+            description: serializedItem.description,
+            location: serializedItem.location,
+            category: serializedItem.category,
+            company: serializedItem.company,
+            jobType: item.type === 'job' ? serializedItem.type : undefined,
+            price: serializedItem.price,
+            imageUrl: serializedItem.imageUrl,
+            editPath: item.isExternal ? `/events/${item.id}` : `/${item.type}s/${item.id}/edit`, // pluralizes collection name
+            isExternal: item.isExternal || false,
+            status: serializedItem.status,
+            views: serializedItem.views,
+            clicks: serializedItem.clicks,
+            claims: serializedItem.claims,
+            applicants: serializedItem.applicants,
+            rsvps: serializedItem.rsvps,
+        };
+    }).filter((item): item is CalendarItem => item !== null);
 
     return formattedItems.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 };

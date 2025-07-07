@@ -90,20 +90,11 @@ export default function ConnectionsPage() {
         }
     }, [user?.uid, fetchConnections]);
 
-    const handleToggleFollow = async (targetUser: User, isCurrentlyFollowing: boolean) => {
+    const handleToggleFollow = async (targetUser: User) => {
         if (!user || togglingFollowId) return;
-        setTogglingFollowId(targetUser.uid);
         
-        // Optimistic Updates
-        if (isCurrentlyFollowing) {
-            setFollowingList(prev => prev.filter(u => u.uid !== targetUser.uid));
-            if (!suggestedList.some(s => s.uid === targetUser.uid)) {
-                setSuggestedList(prev => [...prev, targetUser]);
-            }
-        } else {
-            setFollowingList(prev => [...prev, targetUser]);
-            setSuggestedList(prev => prev.filter(u => u.uid !== targetUser.uid));
-        }
+        setTogglingFollowId(targetUser.uid);
+        const isCurrentlyFollowing = followingList.some(u => u.uid === targetUser.uid);
 
         try {
             if (isCurrentlyFollowing) {
@@ -113,16 +104,11 @@ export default function ConnectionsPage() {
                 await followUser(user.uid, targetUser.uid);
                 toast({ title: `You are now following ${targetUser.name}` });
             }
+            // Refetch all connection data to ensure UI consistency
+            await fetchConnections();
         } catch (error) {
             console.error("Error following/unfollowing user:", error);
             toast({ title: "Something went wrong", variant: "destructive" });
-            // Revert optimistic updates on failure
-            if (isCurrentlyFollowing) {
-                setFollowingList(prev => [...prev, targetUser]);
-                setSuggestedList(prev => prev.filter(u => u.uid !== targetUser.uid));
-            } else {
-                setFollowingList(prev => prev.filter(u => u.uid !== targetUser.uid));
-            }
         } finally {
             setTogglingFollowId(null);
         }
@@ -269,7 +255,7 @@ export default function ConnectionsPage() {
                                         </div>
                                     </Link>
                                     <div className="flex items-center gap-2 flex-shrink-0">
-                                        <Button size="sm" variant={isFollowedByCurrentUser ? 'secondary' : 'default'} onClick={() => handleToggleFollow(followerUser, isFollowedByCurrentUser)} disabled={isProcessing}>
+                                        <Button size="sm" variant={isFollowedByCurrentUser ? 'secondary' : 'default'} onClick={() => handleToggleFollow(followerUser)} disabled={isProcessing}>
                                             {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : isFollowedByCurrentUser ? <UserCheck className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
                                             {isFollowedByCurrentUser ? 'Following' : 'Follow'}
                                         </Button>
@@ -308,7 +294,7 @@ export default function ConnectionsPage() {
                                                 <p className="text-sm text-muted-foreground">@{followingUser.username}</p>
                                             </div>
                                         </Link>
-                                        <Button size="sm" variant="secondary" onClick={() => handleToggleFollow(followingUser, true)} disabled={isProcessing}>
+                                        <Button size="sm" variant="secondary" onClick={() => handleToggleFollow(followingUser)} disabled={isProcessing}>
                                             {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UserCheck className="mr-2 h-4 w-4" />}
                                             Following
                                         </Button>
@@ -350,7 +336,7 @@ export default function ConnectionsPage() {
                                     <p className="text-sm text-muted-foreground text-center line-clamp-2 h-10 mt-2">
                                         {suggestedUser.bio}
                                     </p>
-                                    <Button size="sm" variant="default" onClick={() => handleToggleFollow(suggestedUser, false)} className="w-full mt-2" disabled={isProcessing}>
+                                    <Button size="sm" variant="default" onClick={() => handleToggleFollow(suggestedUser)} className="w-full mt-2" disabled={isProcessing}>
                                         {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UserPlus className="mr-2 h-4 w-4" />}
                                         Follow
                                     </Button>

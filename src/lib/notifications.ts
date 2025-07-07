@@ -53,23 +53,23 @@ export const createNotification = async (
   if (userId === actorId) {
     return;
   }
-
-  // Check user's notification preferences
-  const userDocRef = doc(db, 'users', userId);
-  const userDoc = await getDoc(userDocRef);
-  if (!userDoc.exists()) return;
-  const userData = userDoc.data() as User;
   
-  if (type === 'new_follower' && userData.notificationSettings?.newFollowers === false) {
-      return; // User has disabled new follower notifications
-  }
-  if (type === 'new_like' && userData.notificationSettings?.newLikes === false) {
-      return; // User has disabled new like notifications
-  }
-  if (type === 'event_rsvp' && userData.notificationSettings?.eventRsvps === false) {
-      return; // User has disabled event rsvp notifications
+  // For user-generated notifications, check the recipient's preferences
+  if (actorId) {
+    const userDocRef = doc(db, 'users', userId);
+    const userDoc = await getDoc(userDocRef);
+    if (!userDoc.exists()) return; // Don't create notification for non-existent user
+    
+    const userData = userDoc.data() as User;
+    const settings = userData.notificationSettings;
+    
+    // Exit if the specific notification type is disabled
+    if (type === 'new_follower' && settings?.newFollowers === false) return;
+    if (type === 'new_like' && settings?.newLikes === false) return;
+    if (type === 'event_rsvp' && settings?.eventRsvps === false) return;
   }
   
+  // Proceed to create notification for system messages or if user settings allow
   const notificationsRef = collection(db, 'notifications');
   
   await addDoc(notificationsRef, {
