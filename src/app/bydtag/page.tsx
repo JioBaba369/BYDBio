@@ -9,8 +9,10 @@ import { CheckCircle, Nfc, ArrowRight, Star, Zap, Palette, Share2, Contact } fro
 import Image from "next/image";
 import Link from "next/link";
 import { ClientYear } from "@/components/client-year";
+import { useAuth } from "@/components/auth-provider";
 
 export default function BydTagPage() {
+  const { user } = useAuth();
   const features = [
     {
       icon: Nfc,
@@ -81,7 +83,7 @@ export default function BydTagPage() {
             </p>
             <div className="mt-8">
               <Button asChild size="lg" variant="secondary">
-                <Link href="/bydtag/design">Design Your BYD BioTAG <ArrowRight className="ml-2 h-5 w-5" /></Link>
+                <Link href={user ? "/bydtag/design" : "/auth/sign-up"}>Design Your BYD BioTAG <ArrowRight className="ml-2 h-5 w-5" /></Link>
               </Button>
             </div>
           </div>
@@ -231,7 +233,7 @@ export default function BydTagPage() {
                         Connect your BYD BioTAG to your profile and start sharing your brand with the world. Shipping is on us.
                     </p>
                     <Button asChild size="lg" className="w-full md:w-auto mt-6">
-                        <Link href="/bydtag/design">Order Now</Link>
+                        <Link href={user ? "/bydtag/design" : "/auth/sign-up"}>Order Now</Link>
                     </Button>
                 </div>
             </div>

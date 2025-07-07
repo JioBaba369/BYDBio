@@ -15,6 +15,7 @@ import { useAuth } from '@/components/auth-provider';
 import { ArrowRight, ArrowLeft, RefreshCw, Download, Upload } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import QRCode from 'qrcode.react';
@@ -164,6 +165,7 @@ TagPreview.displayName = 'TagPreview';
 
 export default function BydTagDesignPage() {
   const { user } = useAuth();
+  const router = useRouter();
   const { toast } = useToast();
   const [side, setSide] = useState<'front' | 'back'>('front');
   const previewRef = useRef<HTMLDivElement>(null);
@@ -219,6 +221,14 @@ export default function BydTagDesignPage() {
   const watchedValues = form.watch();
 
   const onSubmit = (data: DesignFormValues) => {
+    if (!user) {
+      toast({
+        title: "Create an Account to Continue",
+        description: "You need an account to save and order your design.",
+      });
+      router.push('/auth/sign-up');
+      return;
+    }
     console.log(data);
     // In a real app, this would trigger an order flow.
     toast({
