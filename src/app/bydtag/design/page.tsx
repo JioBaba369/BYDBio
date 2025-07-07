@@ -41,11 +41,9 @@ const designSchema = z.object({
 type DesignFormValues = z.infer<typeof designSchema>;
 
 const TagPreview = ({ values, user, side }: { values: DesignFormValues; user: any; side: 'front' | 'back' }) => {
-    // New text color logic based on form value
     const textColor = values.textColor === 'light' ? 'text-white' : 'text-gray-900';
     const subtitleColor = values.textColor === 'light' ? 'text-gray-300' : 'text-gray-500';
 
-    // New background logic
     const cardBgClass = values.backgroundImageUrl ? '' : {
         black: 'bg-gray-900',
         white: 'bg-white',
@@ -58,162 +56,108 @@ const TagPreview = ({ values, user, side }: { values: DesignFormValues; user: an
         backgroundPosition: 'center',
     } : {};
 
-
+    // BACK OF CARD
     if (side === 'back') {
-        const isDarkBack = values.cardColor === 'black' || values.cardColor === 'blue';
-        const backCardBg = {
-            black: 'bg-gray-900',
-            white: 'bg-white',
-            blue: 'bg-blue-600',
-        }[values.cardColor];
-        const backTextColor = isDarkBack ? 'text-white' : 'text-gray-900';
-        const backSubtitleColor = isDarkBack ? 'text-gray-300' : 'text-gray-500';
-        
+        const backCardBg = cardBgClass || (values.textColor === 'light' ? 'bg-gray-900' : 'bg-white');
         return (
-            <div className={cn("aspect-[85.6/53.98] w-full rounded-xl flex flex-col items-center justify-between p-4 transition-colors", backCardBg)}>
-                <Logo className={cn("text-lg", backTextColor)} />
-                {values.showQrCode && user ? (
-                    <div className="flex flex-col items-center gap-2">
-                        <div className="bg-white p-2 rounded-lg shadow-md">
-                            <QRCode
-                                value={`https://byd.bio/u/${user.username}`}
-                                size={90}
-                                bgColor="#ffffff"
-                                fgColor="#000000"
-                                renderAs="svg"
-                            />
+            <div className={cn("aspect-[85.6/53.98] w-full rounded-xl flex flex-col items-center justify-between p-4 transition-colors relative", backCardBg)} style={cardStyle}>
+                 {values.backgroundImageUrl && <div className="absolute inset-0 bg-black/60 rounded-xl" />}
+                 <div className="relative z-10 w-full flex flex-col items-center justify-between h-full">
+                    <Logo className={cn("text-lg", textColor)} />
+                    {values.showQrCode && user ? (
+                        <div className="flex flex-col items-center gap-2">
+                            <div className="bg-white p-2 rounded-lg shadow-md">
+                                <QRCode
+                                    value={`https://byd.bio/u/${user.username}`}
+                                    size={90}
+                                    bgColor="#ffffff"
+                                    fgColor="#000000"
+                                    renderAs="svg"
+                                />
+                            </div>
+                            <p className={cn("text-xs font-mono", subtitleColor)}>{`byd.bio/u/${user.username}`}</p>
                         </div>
-                        <p className={cn("text-xs font-mono", backSubtitleColor)}>{`byd.bio/u/${user.username}`}</p>
-                    </div>
-                ) : (
-                    <div className={cn("text-center", textColor)}>
-                        {/* Empty placeholder */}
-                    </div>
-                )}
-                 <p className={cn("text-xs font-semibold", backSubtitleColor)}>Tap or Scan to Connect</p>
+                    ) : <div />}
+                    <p className={cn("text-xs font-semibold", subtitleColor)}>Tap or Scan to Connect</p>
+                </div>
             </div>
         )
     }
-    
+
+    // FRONT OF CARD
     const layout = values.layout || 'vertical';
 
-    const AvatarElement = (
-        <div className="shrink-0">
+    const renderAvatar = (sizeClass: string, fallbackClass: string) => (
+         <div className="shrink-0">
             {values.logoUrl ? (
-                <Image src={values.logoUrl} alt="Logo" width={80} height={80} className="h-20 w-20 rounded-full object-cover" data-ai-hint="logo" />
+                <Image src={values.logoUrl} alt="Logo" width={96} height={96} className={cn(sizeClass, "rounded-full object-cover")} data-ai-hint="logo" />
             ) : user ? (
-                <Avatar className="h-20 w-20">
+                <Avatar className={sizeClass}>
                     <AvatarImage src={user.avatarUrl} alt={user.name} data-ai-hint="person portrait"/>
-                    <AvatarFallback className="text-3xl">{user.name.charAt(0)}</AvatarFallback>
+                    <AvatarFallback className={fallbackClass}>{user.name.charAt(0)}</AvatarFallback>
                 </Avatar>
             ) : (
-                <div className="h-20 w-20 rounded-full bg-muted flex items-center justify-center" />
+                <div className={cn(sizeClass, "rounded-full bg-muted flex items-center justify-center")} />
             )}
         </div>
     );
-
-    const TextElement = ({textAlign = 'text-center'}) => (
-        <div className={cn("flex-grow space-y-1", textAlign)}>
-            <h3 className={cn("font-bold text-2xl", textColor)}>{values.name || 'Your Name'}</h3>
-            <p className={cn("text-md", subtitleColor)}>{values.title || 'Your Title'}</p>
-            {values.company && <p className={cn("text-sm opacity-80", subtitleColor)}>{values.company}</p>}
-        </div>
-    );
-
-    const mainContainerClasses = cn(
-        "aspect-[85.6/53.98] w-full rounded-xl p-6 transition-colors relative",
-        cardBgClass
-    );
-
-    const CardContentWrapper = ({ children, className }: { children: React.ReactNode, className?: string }) => (
-        <div className={cn(mainContainerClasses, className)} style={cardStyle}>
-            {values.backgroundImageUrl && <div className="absolute inset-0 bg-black/40 rounded-xl" />}
-            <div className="relative z-10 w-full h-full flex items-center gap-6">
-                {children}
-            </div>
-        </div>
-    );
-
-
-    if (layout === 'vertical') {
-        const VerticalAvatar = (
-            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
-                {values.logoUrl ? (
-                    <Image src={values.logoUrl} alt="Logo" width={96} height={96} className="h-24 w-24 rounded-full object-cover shadow-lg border-4 border-background" data-ai-hint="logo" />
-                ) : user ? (
-                    <Avatar className="h-24 w-24 shadow-lg border-4 border-background">
-                        <AvatarImage src={user.avatarUrl} alt={user.name} data-ai-hint="person portrait"/>
-                        <AvatarFallback className="text-4xl">{user.name.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                ) : (
-                    <div className="h-24 w-24 rounded-full bg-muted flex items-center justify-center shadow-lg border-4 border-background" />
-                )}
+    
+    // Default Card (Horizontal)
+    if (layout === 'horizontal-left' || layout === 'horizontal-right') {
+        const textElement = (
+            <div className={cn("flex-grow space-y-0.5", layout === 'horizontal-left' ? "text-left" : "text-right")}>
+                <h3 className={cn("font-bold text-xl leading-tight", textColor)}>{values.name || 'Your Name'}</h3>
+                <p className={cn("text-sm", subtitleColor)}>{values.title || 'Your Title'}</p>
+                {values.company && <p className={cn("text-xs opacity-80", subtitleColor)}>{values.company}</p>}
             </div>
         );
-        
+
         return (
-             <div className={cn("aspect-[53.98/85.6] w-full rounded-xl transition-colors relative p-0 overflow-hidden flex flex-col", cardBgClass)} style={cardStyle}>
+             <div className={cn("aspect-[85.6/53.98] w-full rounded-xl p-4 transition-colors relative flex items-center gap-4", cardBgClass, layout === 'horizontal-right' ? 'flex-row-reverse' : '')} style={cardStyle}>
                 {values.backgroundImageUrl && <div className="absolute inset-0 bg-black/40 rounded-xl" />}
-                <div className="h-1/2 w-full shrink-0" />
-                <div className="h-1/2 w-full flex flex-col items-center justify-start pt-16 px-4">
-                     <div className="relative z-10 text-center space-y-1">
-                        <h3 className={cn("font-bold text-2xl", textColor)}>{values.name || 'Your Name'}</h3>
-                        <p className={cn("text-md", subtitleColor)}>{values.title || 'Your Title'}</p>
-                        {values.company && <p className={cn("text-sm opacity-90", subtitleColor)}>{values.company}</p>}
-                    </div>
+                <div className="relative z-10 flex w-full items-center gap-4">
+                    {renderAvatar("h-16 w-16", "text-2xl")}
+                    {textElement}
                 </div>
-                {VerticalAvatar}
             </div>
         );
     }
     
-    if (layout === 'horizontal-left') {
-        return (
-             <CardContentWrapper className="justify-center">
-                {AvatarElement}
-                <TextElement textAlign="text-left" />
-            </CardContentWrapper>
-        );
-    }
-
-    if (layout === 'horizontal-right') {
-        return (
-            <CardContentWrapper className="justify-center">
-                <TextElement textAlign="text-right" />
-                {AvatarElement}
-            </CardContentWrapper>
-        );
-    }
-    
+    // Lanyard Card
     if (layout === 'lanyard') {
-        return (
-            <CardContentWrapper className="justify-center items-center">
-                 {/* Hole punch indicator */}
+         return (
+            <div className={cn("aspect-[85.6/53.98] w-full rounded-xl p-6 transition-colors relative flex items-center gap-6", cardBgClass)} style={cardStyle}>
+                {values.backgroundImageUrl && <div className="absolute inset-0 bg-black/40 rounded-xl" />}
                 <div className="absolute top-3 left-1/2 -translate-x-1/2 w-4 h-4 rounded-full bg-white/50 border border-white/80" />
-                <div className="flex items-center gap-6 w-full px-4">
-                    <div className="shrink-0">
-                        {values.logoUrl ? (
-                            <Image src={values.logoUrl} alt="Logo" width={96} height={96} className="h-24 w-24 rounded-full object-cover" data-ai-hint="logo" />
-                        ) : user ? (
-                            <Avatar className="h-24 w-24">
-                                <AvatarImage src={user.avatarUrl} alt={user.name} data-ai-hint="person portrait"/>
-                                <AvatarFallback className="text-4xl">{user.name.charAt(0)}</AvatarFallback>
-                            </Avatar>
-                        ) : (
-                            <div className="h-24 w-24 rounded-full bg-muted flex items-center justify-center" />
-                        )}
-                    </div>
-                    <div className="flex-grow space-y-1 text-left">
+                <div className="relative z-10 flex w-full items-center gap-6">
+                    {renderAvatar("h-24 w-24", "text-4xl")}
+                     <div className="flex-grow space-y-1 text-left">
                         <h3 className={cn("font-bold text-3xl", textColor)}>{values.name || 'Your Name'}</h3>
                         <p className={cn("text-lg", subtitleColor)}>{values.title || 'Your Title'}</p>
                         {values.company && <p className={cn("text-md opacity-80", subtitleColor)}>{values.company}</p>}
                     </div>
                 </div>
-            </CardContentWrapper>
+            </div>
         );
     }
-
-    return null; // Fallback
+    
+    // Vertical Card (Default)
+    return (
+        <div className={cn("aspect-[53.98/85.6] w-full rounded-xl transition-colors relative p-0 overflow-hidden flex flex-col", cardBgClass)} style={cardStyle}>
+            {values.backgroundImageUrl && <div className="absolute inset-0 bg-black/40 rounded-xl" />}
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-2/3 z-20">
+                {renderAvatar("h-20 w-20 shadow-lg border-4 border-background", "text-3xl")}
+            </div>
+            <div className="flex-grow" />
+            <div className="flex-shrink-0 h-2/5 flex flex-col items-center justify-center text-center p-4">
+                <div className="relative z-10 space-y-1">
+                    <h3 className={cn("font-bold text-xl", textColor)}>{values.name || 'Your Name'}</h3>
+                    <p className={cn("text-sm", subtitleColor)}>{values.title || 'Your Title'}</p>
+                    {values.company && <p className={cn("text-xs opacity-90", subtitleColor)}>{values.company}</p>}
+                </div>
+            </div>
+        </div>
+    );
 };
 
 
