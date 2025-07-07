@@ -35,6 +35,7 @@ import {
   Tags,
   Gift,
   Calendar,
+  Nfc,
 } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -236,6 +237,14 @@ export function MainSidebar() {
                   <Link href="/calendar">
                     <Package />
                     <span>My Content</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="BYDTAG" isActive={isActive('/bydtag')}>
+                  <Link href="/bydtag">
+                    <Nfc />
+                    <span>BYDTAG</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
