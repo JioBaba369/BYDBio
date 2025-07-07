@@ -146,7 +146,7 @@ export const updateUser = async (uid: string, data: Partial<User>) => {
         }
     }
     
-    // If name or username is being updated, also update searchableKeywords
+    // If name or username is being updated, also update searchableKeywords and avatarFallback
     if (data.name || data.username) {
         const userDoc = await getDoc(userDocRef);
         if (userDoc.exists()) {

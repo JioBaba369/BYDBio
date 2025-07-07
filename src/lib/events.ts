@@ -284,24 +284,24 @@ export const getCalendarItems = async (userId: string): Promise<CalendarItem[]> 
 
     const itemsMap = new Map<string, any>();
     
-    const processDoc = (doc: any, type: string, source?: string) => {
+    const processDoc = (doc: any, type: string) => {
         const key = `${type}-${doc.id}`;
-        // Don't overwrite events from `createdEventsQuery` with `rsvpedEventsQuery`
-        if (source === 'rsvped' && itemsMap.has(key)) return;
-
-        const data = doc.data();
-        const serializedData = serializeFirestoreTimestamps(data);
-        
-        itemsMap.set(key, { ...serializedData, id: doc.id, type, source });
+        // Store the original item if it doesn't exist, to preserve author-created events over RSVPs
+        if (!itemsMap.has(key)) {
+            const data = doc.data();
+            const serializedData = serializeFirestoreTimestamps(data);
+            itemsMap.set(key, { ...serializedData, id: doc.id, type });
+        }
     };
-
-    eventsSnapshot.forEach(doc => processDoc(doc, 'event', 'created'));
-    rsvpedEventsSnapshot.forEach(doc => processDoc(doc, 'event', 'rsvped'));
+    
+    // Process created events first to give them priority
+    eventsSnapshot.forEach(doc => processDoc(doc, 'event'));
     offersSnapshot.forEach(doc => processDoc(doc, 'offer'));
     jobsSnapshot.forEach(doc => processDoc(doc, 'job'));
     listingsSnapshot.forEach(doc => processDoc(doc, 'listing'));
     promoPagesSnapshot.forEach(doc => processDoc(doc, 'promoPage'));
-
+    // Process RSVPs, which won't overwrite existing entries from the user
+    rsvpedEventsSnapshot.forEach(doc => processDoc(doc, 'event'));
 
     const allItems = Array.from(itemsMap.values());
     
@@ -316,10 +316,12 @@ export const getCalendarItems = async (userId: string): Promise<CalendarItem[]> 
         }
 
         if (!primaryDate) return null;
+        
+        // Final check to ensure a user's own event is never marked as external
+        const isExternal = item.authorId !== userId;
 
         switch(item.type) {
             case 'event':
-                const isExternal = item.source === 'rsvped';
                 return {
                     id: item.id,
                     type: 'Event' as const,

@@ -28,8 +28,8 @@ const EventPageSkeleton = () => (
                 <Skeleton className="h-10 w-36" />
             </div>
         </div>
-        <div className="grid gap-6 md:grid-cols-2">
-            {[...Array(2)].map((_, i) => (
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {[...Array(3)].map((_, i) => (
                 <Card key={i}>
                     <Skeleton className="h-52 w-full rounded-t-lg" />
                     <CardHeader>
@@ -131,7 +131,7 @@ export default function EventsClient({ initialEvents }: { initialEvents: EventWi
       
       {allEvents.length > 0 ? (
         view === 'grid' ? (
-          <div className="grid gap-6 md:grid-cols-2">
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {allEvents.map((event) => {
               const isOwner = user && event.author.uid === user.uid;
               const isRsvped = user && event.rsvps?.includes(user.uid);

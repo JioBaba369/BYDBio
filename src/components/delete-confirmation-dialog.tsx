@@ -11,6 +11,9 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useState } from "react"
+import { Button } from "./ui/button"
+import { buttonVariants } from "./ui/button"
+import { cn } from "@/lib/utils"
 
 interface DeleteConfirmationDialogProps {
   open: boolean;
@@ -72,7 +75,13 @@ export function DeleteConfirmationDialog({
         )}
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction onClick={handleConfirm} disabled={!isConfirmed}>Continue</AlertDialogAction>
+          <AlertDialogAction 
+            onClick={handleConfirm} 
+            disabled={!isConfirmed}
+            className={cn(buttonVariants({ variant: "destructive" }))}
+          >
+            Continue
+          </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

@@ -25,8 +25,8 @@ const JobPageSkeleton = () => (
             </div>
             <Skeleton className="h-10 w-48" />
         </div>
-        <div className="grid gap-6 md:grid-cols-2">
-            {[...Array(2)].map((_, i) => (
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {[...Array(3)].map((_, i) => (
                 <Card key={i}>
                     <Skeleton className="h-48 w-full rounded-t-lg" />
                     <CardHeader>
@@ -90,7 +90,7 @@ export default function OpportunitiesClient({ initialJobs }: { initialJobs: JobW
       
       {jobs.length > 0 ? (
         view === 'grid' ? (
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {jobs.map((job) => (
             <Card key={job.id} className="flex flex-col">
               {job.imageUrl && (

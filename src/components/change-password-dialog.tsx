@@ -43,6 +43,13 @@ export function ChangePasswordDialog({ open, onOpenChange }: ChangePasswordDialo
     },
   });
 
+  const handleOpenChange = (isOpen: boolean) => {
+    if (!isOpen) {
+      form.reset(); // Reset form when dialog is closed
+    }
+    onOpenChange(isOpen);
+  };
+
   const onSubmit = async (data: ChangePasswordFormValues) => {
     if (!firebaseUser || !firebaseUser.email) {
         toast({ title: "Error", description: "You must be logged in to change your password.", variant: "destructive" });
@@ -59,8 +66,7 @@ export function ChangePasswordDialog({ open, onOpenChange }: ChangePasswordDialo
         title: "Password Changed",
         description: "Your password has been updated successfully.",
       });
-      form.reset();
-      onOpenChange(false);
+      handleOpenChange(false);
     } catch (error: any) {
       console.error("Change password error:", error);
       let description = "An unexpected error occurred.";
@@ -81,7 +87,7 @@ export function ChangePasswordDialog({ open, onOpenChange }: ChangePasswordDialo
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Change Password</DialogTitle>
@@ -131,7 +137,7 @@ export function ChangePasswordDialog({ open, onOpenChange }: ChangePasswordDialo
               )}
             />
             <DialogFooter>
-              <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
+              <Button type="button" variant="ghost" onClick={() => handleOpenChange(false)}>Cancel</Button>
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting ? "Changing..." : "Change Password"}
               </Button>

@@ -30,7 +30,7 @@ import {
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { useAuth } from "@/components/auth-provider"
-import { useMemo, useState, useEffect } from "react"
+import { useMemo, useState, useEffect, useCallback } from "react"
 import { collection, query, where, getDocs } from "firebase/firestore"
 import { db } from "@/lib/firebase"
 import { LandingPage } from "@/components/landing-page"
@@ -54,43 +54,44 @@ function Dashboard() {
   const [activity, setActivity] = useState<ActivityItem[]>([]);
   const [isActivityLoading, setIsActivityLoading] = useState(true);
 
-  useEffect(() => {
-    if (user?.uid) {
-      const fetchDashboardData = async () => {
-        setIsCountsLoading(true);
-        setIsActivityLoading(true);
+  const fetchDashboardData = useCallback(async () => {
+    if (!user?.uid) return;
 
-        // Fetch counts
-        try {
-          const collections = ['jobs', 'events', 'offers', 'listings', 'posts', 'promoPages'];
-          const countPromises = collections.map(col => {
-            const collRef = collection(db, col);
-            const q = query(collRef, where("authorId", "==", user.uid));
-            return getDocs(q).then(snapshot => snapshot.size);
-          });
-          const [jobs, events, offers, listings, posts, promoPages] = await Promise.all(countPromises);
-          setCounts({ jobs, events, offers, listings, posts, promoPages });
-        } catch (error) {
-          console.error("Error fetching content counts:", error);
-          setCounts(null);
-        } finally {
-          setIsCountsLoading(false);
-        }
+    setIsCountsLoading(true);
+    setIsActivityLoading(true);
 
-        // Fetch activity
-        try {
-            const recentActivity = await getRecentActivity(user.uid);
-            setActivity(recentActivity);
-        } catch (error) {
-            console.error("Error fetching recent activity:", error);
-            setActivity([]);
-        } finally {
-            setIsActivityLoading(false);
-        }
-      };
-      fetchDashboardData();
+    // Fetch counts
+    try {
+      const collections = ['jobs', 'events', 'offers', 'listings', 'posts', 'promoPages'];
+      const countPromises = collections.map(col => {
+        const collRef = collection(db, col);
+        const q = query(collRef, where("authorId", "==", user.uid));
+        return getDocs(q).then(snapshot => snapshot.size);
+      });
+      const [jobs, events, offers, listings, posts, promoPages] = await Promise.all(countPromises);
+      setCounts({ jobs, events, offers, listings, posts, promoPages });
+    } catch (error) {
+      console.error("Error fetching content counts:", error);
+      setCounts(null);
+    } finally {
+      setIsCountsLoading(false);
+    }
+
+    // Fetch activity
+    try {
+        const recentActivity = await getRecentActivity(user.uid);
+        setActivity(recentActivity);
+    } catch (error) {
+        console.error("Error fetching recent activity:", error);
+        setActivity([]);
+    } finally {
+        setIsActivityLoading(false);
     }
   }, [user?.uid]);
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, [fetchDashboardData]);
 
   const { totalContent, profileCompletion } = useMemo(() => {
     if (!user) {

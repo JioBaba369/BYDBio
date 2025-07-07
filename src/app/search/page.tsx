@@ -273,7 +273,7 @@ export default function SearchPage() {
 
         <TabsContent value="promoPages" className="pt-4">
              {results.promoPages.length > 0 ? (
-                <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                   {results.promoPages.map((item) => (
                     <Card key={item.id} className="flex flex-col">
                       {item.imageUrl &&
@@ -368,7 +368,7 @@ export default function SearchPage() {
 
         <TabsContent value="jobs" className="pt-4">
             {results.jobs.length > 0 ? (
-                <div className="grid gap-6 md:grid-cols-2">
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                     {results.jobs.map((job) => (
                         <Card key={job.id} className="flex flex-col transition-all hover:shadow-md">
                             <CardHeader>
@@ -413,7 +413,7 @@ export default function SearchPage() {
 
         <TabsContent value="events" className="pt-4">
             {results.events.length > 0 ? (
-                <div className="grid gap-6 md:grid-cols-2">
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                     {results.events.map((event) => (
                         <Card key={event.id} className="flex flex-col transition-all hover:shadow-md">
                             {event.imageUrl && (
@@ -462,7 +462,7 @@ export default function SearchPage() {
 
         <TabsContent value="offers" className="pt-4">
             {results.offers.length > 0 ? (
-                <div className="grid gap-6 md:grid-cols-2">
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                     {results.offers.map((offer) => (
                         <Card key={offer.id} className="flex flex-col transition-all hover:shadow-md">
                            <CardHeader>

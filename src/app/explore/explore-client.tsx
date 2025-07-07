@@ -72,6 +72,7 @@ export default function ExploreClient({ initialItems }: { initialItems: PublicCo
             break;
         case 'date':
         default:
+            sorted.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
             break;
     }
     return sorted;
