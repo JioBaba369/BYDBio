@@ -227,6 +227,7 @@ export default function ProfilePage() {
   const [isCropperOpen, setIsCropperOpen] = useState(false);
   const [croppedImageUrl, setCroppedImageUrl] = useState<string | null>(null);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -395,6 +396,7 @@ export default function ProfilePage() {
   const handleCropComplete = async (url: string) => {
     if (!firebaseUser) return;
     
+    setIsUploadingAvatar(true);
     toast({ title: "Uploading...", description: "Please wait while we upload your new avatar." });
 
     try {
@@ -415,6 +417,8 @@ export default function ProfilePage() {
         description: "There was a problem uploading your picture. Please try again.",
         variant: 'destructive'
       });
+    } finally {
+      setIsUploadingAvatar(false);
     }
     
     setIsCropperOpen(false);
@@ -683,7 +687,7 @@ END:VCARD`;
                    </div>
                 </CardContent>
                 <CardFooter>
-                    <Button type="button" onClick={handleSaveProfileAndCard} disabled={!isProfileDirty || isSavingProfile}>
+                    <Button type="button" onClick={handleSaveProfileAndCard} disabled={!isProfileDirty || isSavingProfile || isUploadingAvatar}>
                         {isSavingProfile ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                         {isSavingProfile ? "Saving..." : "Save Changes"}
                     </Button>

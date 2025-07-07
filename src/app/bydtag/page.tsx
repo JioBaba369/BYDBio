@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CheckCircle, Nfc, ArrowRight, Star, Zap, Palette, Share2, Contact } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { ClientYear } from "@/components/client-year";
 
 export default function BydTagPage() {
   const features = [
@@ -239,7 +240,7 @@ export default function BydTagPage() {
       </main>
 
       <footer className="container mx-auto px-4 sm:px-6 py-6 text-center text-muted-foreground text-sm">
-         <p>&copy; {new Date().getFullYear()} BYD.Bio. All Rights Reserved.</p>
+         <p>&copy; <ClientYear /> BYD.Bio. All Rights Reserved.</p>
       </footer>
     </div>
   );

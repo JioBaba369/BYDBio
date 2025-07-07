@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useSearchParams } from 'next/navigation';
@@ -5,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { UserPlus, UserCheck, Search as SearchIcon, Briefcase, MapPin, Tag, Calendar, Users, Tags, DollarSign, Gift, Eye, Building2, ExternalLink, Megaphone, Loader2, Rss } from "lucide-react";
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -88,79 +89,79 @@ export default function SearchPage() {
   const [results, setResults] = useState<SearchResults>({ users: [], listings: [], jobs: [], events: [], offers: [], promoPages: [], posts: [] });
   const [togglingFollowId, setTogglingFollowId] = useState<string | null>(null);
 
-  useEffect(() => {
-    const performSearch = async () => {
-        if (!queryParam) return;
-        setIsLoading(true);
+  const performSearch = useCallback(async () => {
+    if (!queryParam) return;
+    setIsLoading(true);
 
-        try {
-            const searchKeywords = queryParam.toLowerCase().split(' ').filter(Boolean).slice(0, 10);
-            if (searchKeywords.length === 0) {
-                setResults({ users: [], listings: [], jobs: [], events: [], offers: [], promoPages: [], posts: [] });
-                setIsLoading(false);
-                return;
-            }
-
-            // Search users
-            const userResults = await searchUsers(queryParam);
-            
-            // Search content collections
-            const collectionsToSearch = ['listings', 'jobs', 'events', 'offers', 'promoPages', 'posts'];
-            const contentPromises = collectionsToSearch.map(col => getDocs(query(collection(db, col), where('searchableKeywords', 'array-contains-any', searchKeywords))));
-            
-            const [listingsSnap, jobsSnap, eventsSnap, offersSnap, promoPagesSnap, postsSnap] = await Promise.all(contentPromises);
-
-            const allContent: (any & { type: string })[] = [
-                ...listingsSnap.docs.map(doc => ({ ...doc.data(), id: doc.id, type: 'listing' })),
-                ...jobsSnap.docs.map(doc => ({ ...doc.data(), id: doc.id, type: 'job' })),
-                ...eventsSnap.docs.map(doc => ({ ...doc.data(), id: doc.id, type: 'event' })),
-                ...offersSnap.docs.map(doc => ({ ...doc.data(), id: doc.id, type: 'offer' })),
-                ...promoPagesSnap.docs.map(doc => ({ ...doc.data(), id: doc.id, type: 'promoPage' })),
-                ...postsSnap.docs.map(doc => ({ ...doc.data(), id: doc.id, type: 'post' })),
-            ];
-
-            const authorIds = [...new Set(allContent.map(item => item.authorId))];
-            const authors = await getUsersByIds(authorIds);
-            const authorMap = new Map(authors.map(author => [author.uid, author]));
-            
-            const newResults: SearchResults = {
-                users: userResults.filter(u => u.uid !== user?.uid),
-                listings: [],
-                jobs: [],
-                events: [],
-                offers: [],
-                promoPages: [],
-                posts: [],
-            };
-
-            allContent.forEach(item => {
-                const author = authorMap.get(item.authorId);
-                if (author) {
-                    switch (item.type) {
-                        case 'listing': newResults.listings.push({ ...item, author }); break;
-                        case 'job': newResults.jobs.push({ ...item, author }); break;
-                        case 'event': newResults.events.push({ ...item, author }); break;
-                        case 'offer': newResults.offers.push({ ...item, author }); break;
-                        case 'promoPage': newResults.promoPages.push({ ...item, author }); break;
-                        case 'post': newResults.posts.push({ ...item, author }); break;
-                    }
-                }
-            });
-
-            setResults(newResults);
-
-        } catch (err) {
-            console.error("Search failed:", err);
-            toast({ title: "Search failed", description: "Could not perform search.", variant: "destructive" });
-        } finally {
+    try {
+        const searchKeywords = queryParam.toLowerCase().split(' ').filter(Boolean).slice(0, 10);
+        if (searchKeywords.length === 0) {
+            setResults({ users: [], listings: [], jobs: [], events: [], offers: [], promoPages: [], posts: [] });
             setIsLoading(false);
+            return;
         }
-    };
-    
+
+        // Search users
+        const userResults = await searchUsers(queryParam);
+        
+        // Search content collections
+        const collectionsToSearch = ['listings', 'jobs', 'events', 'offers', 'promoPages', 'posts'];
+        const contentPromises = collectionsToSearch.map(col => getDocs(query(collection(db, col), where('searchableKeywords', 'array-contains-any', searchKeywords))));
+        
+        const [listingsSnap, jobsSnap, eventsSnap, offersSnap, promoPagesSnap, postsSnap] = await Promise.all(contentPromises);
+
+        const allContent: (any & { type: string })[] = [
+            ...listingsSnap.docs.map(doc => ({ ...doc.data(), id: doc.id, type: 'listing' })),
+            ...jobsSnap.docs.map(doc => ({ ...doc.data(), id: doc.id, type: 'job' })),
+            ...eventsSnap.docs.map(doc => ({ ...doc.data(), id: doc.id, type: 'event' })),
+            ...offersSnap.docs.map(doc => ({ ...doc.data(), id: doc.id, type: 'offer' })),
+            ...promoPagesSnap.docs.map(doc => ({ ...doc.data(), id: doc.id, type: 'promoPage' })),
+            ...postsSnap.docs.map(doc => ({ ...doc.data(), id: doc.id, type: 'post' })),
+        ];
+
+        const authorIds = [...new Set(allContent.map(item => item.authorId))];
+        const authors = await getUsersByIds(authorIds);
+        const authorMap = new Map(authors.map(author => [author.uid, author]));
+        
+        const newResults: SearchResults = {
+            users: userResults.filter(u => u.uid !== user?.uid),
+            listings: [],
+            jobs: [],
+            events: [],
+            offers: [],
+            promoPages: [],
+            posts: [],
+        };
+
+        allContent.forEach(item => {
+            const author = authorMap.get(item.authorId);
+            if (author) {
+                switch (item.type) {
+                    case 'listing': newResults.listings.push({ ...item, author }); break;
+                    case 'job': newResults.jobs.push({ ...item, author }); break;
+                    case 'event': newResults.events.push({ ...item, author }); break;
+                    case 'offer': newResults.offers.push({ ...item, author }); break;
+                    case 'promoPage': newResults.promoPages.push({ ...item, author }); break;
+                    case 'post': newResults.posts.push({ ...item, author }); break;
+                }
+            }
+        });
+
+        setResults(newResults);
+
+    } catch (err) {
+        console.error("Search failed:", err);
+        toast({ title: "Search failed", description: "Could not perform search.", variant: "destructive" });
+    } finally {
+        setIsLoading(false);
+    }
+  }, [queryParam, user?.uid, toast]);
+
+  useEffect(() => {
     if (!authLoading && queryParam) {
         performSearch();
     }
-  }, [queryParam, authLoading, user?.uid, toast]);
+  }, [queryParam, authLoading, performSearch]);
 
   const handleToggleFollow = async (targetUser: User) => {
     if (!user || togglingFollowId) return;
