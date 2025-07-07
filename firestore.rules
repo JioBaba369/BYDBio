@@ -59,7 +59,7 @@ service cloud.firestore {
       // Author can update most fields. 'views' can be incremented by anyone. 'rsvps' can be modified by any authenticated user.
       allow update: if isOwner(resource.data.authorId) ||
                        (isUserAuthenticated() && isOnlyChanging(['rsvps'])) ||
-                       isOnlyChanging(['views']);
+                       (isOnlyChanging(['views']) && request.resource.data.views == (resource.data.views || 0) + 1);
     }
     
     // LISTINGS
@@ -68,17 +68,21 @@ service cloud.firestore {
       allow read: if true;
       allow create: if isOwner(request.resource.data.authorId);
       // Author can update. Anyone can increment views/clicks.
-      allow update: if isOwner(resource.data.authorId) || isOnlyChanging(['views', 'clicks']);
+      allow update: if isOwner(resource.data.authorId) ||
+                       ((isOnlyChanging(['views']) && request.resource.data.views == (resource.data.views || 0) + 1) ||
+                        (isOnlyChanging(['clicks']) && request.resource.data.clicks == (resource.data.clicks || 0) + 1));
       allow delete: if isOwner(resource.data.authorId);
     }
 
-    // PROMO PAGES (formerly Businesses)
+    // PROMO PAGES
     // Publicly readable. Only the author can manage their promo pages.
     match /promoPages/{promoPageId} {
       allow read: if true;
       allow create: if isOwner(request.resource.data.authorId);
       // Author can update. Anyone can increment views/clicks.
-      allow update: if isOwner(resource.data.authorId) || isOnlyChanging(['views', 'clicks']);
+      allow update: if isOwner(resource.data.authorId) ||
+                       ((isOnlyChanging(['views']) && request.resource.data.views == (resource.data.views || 0) + 1) ||
+                        (isOnlyChanging(['clicks']) && request.resource.data.clicks == (resource.data.clicks || 0) + 1));
       allow delete: if isOwner(resource.data.authorId);
     }
 
@@ -88,7 +92,9 @@ service cloud.firestore {
       allow read: if true;
       allow create: if isOwner(request.resource.data.authorId);
       // Author can update. Anyone can increment views/applicants.
-      allow update: if isOwner(resource.data.authorId) || isOnlyChanging(['views', 'applicants']);
+      allow update: if isOwner(resource.data.authorId) ||
+                       ((isOnlyChanging(['views']) && request.resource.data.views == (resource.data.views || 0) + 1) ||
+                        (isOnlyChanging(['applicants']) && request.resource.data.applicants == (resource.data.applicants || 0) + 1));
       allow delete: if isOwner(resource.data.authorId);
     }
 
@@ -98,15 +104,16 @@ service cloud.firestore {
       allow read: if true;
       allow create: if isOwner(request.resource.data.authorId);
       // Author can update. Anyone can increment views/claims.
-      allow update: if isOwner(resource.data.authorId) || isOnlyChanging(['views', 'claims']);
+      allow update: if isOwner(resource.data.authorId) ||
+                       ((isOnlyChanging(['views']) && request.resource.data.views == (resource.data.views || 0) + 1) ||
+                        (isOnlyChanging(['claims']) && request.resource.data.claims == (resource.data.claims || 0) + 1));
       allow delete: if isOwner(resource.data.authorId);
     }
 
     // NOTIFICATIONS
-    // Authenticated users can create notifications. Only the recipient can manage their notifications.
+    // Users can create notifications. Guests can only create contact form notifications. Only the recipient can manage their own.
     match /notifications/{notificationId} {
-      allow create: if (isUserAuthenticated() && request.resource.data.actorId == request.auth.uid) || // Case 1: An authenticated user is the actor
-                       (request.auth == null && request.resource.data.type == 'contact_form_submission' && request.resource.data.actorId == null); // Case 2: A guest sends a contact message
+      allow create: if (request.resource.data.type == 'contact_form_submission') || isUserAuthenticated();
       allow read, update, delete: if isOwner(resource.data.userId);
     }
     
@@ -116,20 +123,6 @@ service cloud.firestore {
         allow create: if isOwner(request.resource.data.userId);
         allow read, update: if isOwner(resource.data.userId);
         allow delete: if false; // Should be handled by a backend process
-    }
-    
-    // MESSAGES
-    // Anyone can send a message. Only the recipient can read/update. Deletion restricted.
-    match /messages/{messageId} {
-      allow create: if true; // Anyone (even unauthenticated users) can send a message.
-      allow read, update: if isOwner(resource.data.recipientId);
-      allow delete: if false; // Deletion is restricted to maintain history.
-    }
-    
-    // DIARY NOTES (Personal, private notes)
-    // A user can only create and manage (read, update, delete) their own diary notes.
-    match /diaryNotes/{diaryNoteId} {
-        allow read, write: if isOwner(resource.data.userId); // 'write' includes create, update, and delete
     }
   }
 }
