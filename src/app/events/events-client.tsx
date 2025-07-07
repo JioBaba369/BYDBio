@@ -141,7 +141,7 @@ export default function EventsClient({ initialEvents }: { initialEvents: EventWi
               <Card key={event.id} className="flex flex-col">
                 {event.imageUrl && (
                   <div className="overflow-hidden rounded-t-lg">
-                    <Image src={event.imageUrl} alt={event.title} width={600} height={400} className="w-full object-cover aspect-video" data-ai-hint="event poster" />
+                    <Image src={event.imageUrl} alt={event.title} width={600} height={400} className="w-full object-cover aspect-video" />
                   </div>
                 )}
                 <CardHeader>
@@ -149,7 +149,7 @@ export default function EventsClient({ initialEvents }: { initialEvents: EventWi
                     <CardDescription className="pt-2">
                         <Link href={`/u/${event.author.username}`} className="flex items-center gap-2 hover:underline">
                             <Avatar className="h-6 w-6">
-                                <AvatarImage src={event.author.avatarUrl} data-ai-hint="person portrait" />
+                                <AvatarImage src={event.author.avatarUrl} />
                                 <AvatarFallback>{event.author.name.charAt(0)}</AvatarFallback>
                             </Avatar>
                             <span className="text-xs">Hosted by {event.author.name}</span>
@@ -221,13 +221,13 @@ export default function EventsClient({ initialEvents }: { initialEvents: EventWi
                       <TableCell>
                         <div className="flex items-center gap-4">
                           {event.imageUrl && (
-                            <Image src={event.imageUrl} alt={event.title} width={100} height={56} className="rounded-md object-cover hidden sm:block aspect-video" data-ai-hint="event poster" />
+                            <Image src={event.imageUrl} alt={event.title} width={100} height={56} className="rounded-md object-cover hidden sm:block aspect-video" />
                           )}
                           <div className="space-y-1">
                             <Link href={`/events/${event.id}`} className="font-semibold hover:underline">{event.title}</Link>
                               <div className="text-xs text-muted-foreground flex items-center gap-2">
                                 <Avatar className="h-4 w-4">
-                                    <AvatarImage src={event.author.avatarUrl} data-ai-hint="person portrait" />
+                                    <AvatarImage src={event.author.avatarUrl} />
                                     <AvatarFallback>{event.author.name.charAt(0)}</AvatarFallback>
                                 </Avatar>
                                 by {event.author.name}

@@ -246,7 +246,7 @@ export default function ConnectionsPage() {
                                 <div className="flex items-center justify-between gap-4">
                                     <Link href={`/u/${followerUser.username}`} className="flex items-center gap-4 hover:underline">
                                         <Avatar>
-                                            <AvatarImage src={followerUser.avatarUrl} data-ai-hint="person portrait" />
+                                            <AvatarImage src={followerUser.avatarUrl} />
                                             <AvatarFallback>{followerUser.name.charAt(0)}</AvatarFallback>
                                         </Avatar>
                                         <div>
@@ -286,7 +286,7 @@ export default function ConnectionsPage() {
                                     <div className="flex items-center justify-between gap-4">
                                         <Link href={`/u/${followingUser.username}`} className="flex items-center gap-4 hover:underline">
                                             <Avatar>
-                                                <AvatarImage src={followingUser.avatarUrl} data-ai-hint="person portrait" />
+                                                <AvatarImage src={followingUser.avatarUrl} />
                                                 <AvatarFallback>{followingUser.name.charAt(0)}</AvatarFallback>
                                             </Avatar>
                                             <div>
@@ -327,7 +327,7 @@ export default function ConnectionsPage() {
                                 <CardContent className="p-6 flex flex-col items-center text-center gap-2">
                                     <Link href={`/u/${suggestedUser.username}`} className="hover:underline">
                                         <Avatar className="h-20 w-20 mb-2">
-                                            <AvatarImage src={suggestedUser.avatarUrl} data-ai-hint="person portrait" />
+                                            <AvatarImage src={suggestedUser.avatarUrl} />
                                             <AvatarFallback>{suggestedUser.name.charAt(0)}</AvatarFallback>
                                         </Avatar>
                                         <p className="font-semibold">{suggestedUser.name}</p>

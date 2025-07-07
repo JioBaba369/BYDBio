@@ -65,7 +65,7 @@ END:VCARD`;
           <CardContent className="p-6 pt-0">
             <div className="flex flex-col items-center text-center -mt-16">
               <Avatar className="h-28 w-28 border-4 border-background bg-background shadow-lg">
-                <AvatarImage src={avatarUrl} alt={name} data-ai-hint="person portrait"/>
+                <AvatarImage src={avatarUrl} alt={name} />
                 <AvatarFallback>{avatarFallback}</AvatarFallback>
               </Avatar>
               <h1 className="font-headline text-3xl font-bold mt-4">{name}</h1>

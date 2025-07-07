@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 import { Image as ImageIcon, Send, X, Users, Compass, Loader2 } from "lucide-react"
-import HashtagSuggester from "@/components/ai/hashtag-suggester"
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useAuth } from "@/components/auth-provider"
 import { useToast } from "@/hooks/use-toast"
@@ -416,7 +415,7 @@ export default function FeedPage() {
           <CardContent className="p-4">
             <div className="flex gap-4">
               <Avatar>
-                <AvatarImage src={user.avatarUrl} data-ai-hint="woman smiling"/>
+                <AvatarImage src={user.avatarUrl} />
                 <AvatarFallback>{user.avatarFallback}</AvatarFallback>
               </Avatar>
               <div className="w-full space-y-2">
@@ -436,9 +435,6 @@ export default function FeedPage() {
                     </Button>
                   </div>
                 )}
-                 <HashtagSuggester content={postContent} onSelectHashtag={(tag) => {
-                    setPostContent(prev => prev ? `${prev.trim()} ${tag}`: tag);
-                  }} />
               </div>
             </div>
           </CardContent>

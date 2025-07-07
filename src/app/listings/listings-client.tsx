@@ -94,7 +94,7 @@ export default function ListingsClient({ initialListings }: { initialListings: L
             <Card key={item.id} className="flex flex-col">
               {item.imageUrl && (
                   <div className="overflow-hidden rounded-t-lg">
-                  <Image src={item.imageUrl} alt={item.title} width={600} height={400} className="w-full object-cover aspect-video" data-ai-hint="product design"/>
+                  <Image src={item.imageUrl} alt={item.title} width={600} height={400} className="w-full object-cover aspect-video" />
                   </div>
               )}
               <CardHeader>
@@ -102,7 +102,7 @@ export default function ListingsClient({ initialListings }: { initialListings: L
                   <CardDescription className="pt-2">
                       <Link href={`/u/${item.author.username}`} className="flex items-center gap-2 hover:underline">
                           <Avatar className="h-6 w-6">
-                              <AvatarImage src={item.author.avatarUrl} data-ai-hint="person portrait" />
+                              <AvatarImage src={item.author.avatarUrl} />
                               <AvatarFallback>{item.author.name.charAt(0)}</AvatarFallback>
                           </Avatar>
                           <span className="text-xs">by {item.author.name}</span>
@@ -164,13 +164,13 @@ export default function ListingsClient({ initialListings }: { initialListings: L
                       <TableCell>
                         <div className="flex items-center gap-4">
                           {item.imageUrl && (
-                            <Image src={item.imageUrl} alt={item.title} width={100} height={56} className="rounded-md object-cover hidden sm:block aspect-video" data-ai-hint="product design" />
+                            <Image src={item.imageUrl} alt={item.title} width={100} height={56} className="rounded-md object-cover hidden sm:block aspect-video" />
                           )}
                           <div className="space-y-1">
                             <Link href={`/l/${item.id}`} className="font-semibold hover:underline">{item.title}</Link>
                               <div className="text-xs text-muted-foreground flex items-center gap-2">
                                 <Avatar className="h-4 w-4">
-                                    <AvatarImage src={item.author.avatarUrl} data-ai-hint="person portrait" />
+                                    <AvatarImage src={item.author.avatarUrl} />
                                     <AvatarFallback>{item.author.name.charAt(0)}</AvatarFallback>
                                 </Avatar>
                                 by {item.author.name}

@@ -52,21 +52,18 @@ export default function BydTagPage() {
       title: "Freelance Designer",
       quote: "The BYD BioTAG is a game-changer for networking events. It's so sleek and people are always impressed when I just tap my tag on their phone.",
       avatar: "https://placehold.co/100x100.png",
-      aiHint: "man smiling",
     },
     {
       name: "Samantha Lee",
       title: "Realtor",
       quote: "I've saved so much on printing business cards. Plus, I can update my listings on my profile and my tag instantly links to the new info. Genius!",
       avatar: "https://placehold.co/100x100.png",
-      aiHint: "woman smiling",
     },
     {
         name: "David Chen",
         title: "Tech Entrepreneur",
         quote: "As a startup founder, making a memorable first impression is key. The BYD BioTAG does just that. It's modern, efficient, and reflects our brand perfectly.",
         avatar: "https://placehold.co/100x100.png",
-        aiHint: "man portrait",
     }
   ];
 
@@ -94,7 +91,6 @@ export default function BydTagPage() {
                 height={600}
                 alt="BYD BioTAG Product"
                 className="rounded-full opacity-20"
-                data-ai-hint="nfc technology"
              />
           </div>
            <div className="absolute -top-48 -left-32">
@@ -104,7 +100,6 @@ export default function BydTagPage() {
                 height={600}
                 alt="BYD BioTAG Product"
                 className="rounded-full opacity-20"
-                data-ai-hint="digital business card"
              />
           </div>
         </section>
@@ -118,7 +113,6 @@ export default function BydTagPage() {
                         fill
                         alt="A hand holding a BYD BioTAG to a phone"
                         className="object-contain"
-                        data-ai-hint="NFC business card"
                    />
                 </div>
                 <div className="space-y-8">
@@ -191,7 +185,7 @@ export default function BydTagPage() {
                             <CardContent className="p-6">
                                 <div className="flex items-center gap-4 mb-4">
                                     <Avatar className="h-12 w-12">
-                                        <AvatarImage src={testimonial.avatar} data-ai-hint={testimonial.aiHint} />
+                                        <AvatarImage src={testimonial.avatar} />
                                         <AvatarFallback>{testimonial.name.charAt(0)}</AvatarFallback>
                                     </Avatar>
                                     <div>
@@ -222,7 +216,6 @@ export default function BydTagPage() {
                         fill
                         alt="BYD BioTAG Product Shot"
                         className="object-contain"
-                        data-ai-hint="NFC credit card"
                    />
                 </div>
                 <div className="text-center md:text-left">

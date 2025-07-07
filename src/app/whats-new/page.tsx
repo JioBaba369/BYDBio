@@ -26,25 +26,11 @@ const updates: UpdateItem[] = [
     description: 'Bridge the physical and digital worlds with BYDTAG. This NFC-enabled tag links directly to your digital business card, allowing you to share your profile with a single tap. A modern, impressive, and eco-friendly way to network.',
     badge: { text: 'New Feature', icon: Nfc, className: 'bg-green-100 text-green-800 border-green-200 dark:bg-green-900/50 dark:text-green-300 dark:border-green-700/80' },
   },
-   {
-    date: '2025-07-30T12:00:00Z',
-    version: 'v1.8.0',
-    title: 'AI Content Writer for Descriptions',
-    description: 'Stuck writing descriptions for your events, jobs, or listings? Our new AI Content Writer can help. Just provide a few keywords, and the AI will generate a professional and engaging description for you, saving you time and effort.',
-    badge: { text: 'New Feature', icon: Rocket, className: 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/50 dark:text-blue-300 dark:border-blue-700/80' },
-  },
   {
     date: '2025-07-29T12:00:00Z',
     version: 'v1.7.0',
     title: 'Foundational Refactoring & Major Bug Bash',
     description: 'In our most significant update yet, we have performed a deep-dive refactoring of the entire application. This addresses over a dozen subtle "misfiring" bugs, improves data consistency, and enhances performance across the board. Key improvements include optimized database queries, more robust user interaction logic, and a streamlined codebase for future features.',
-    badge: { text: 'Improvement', icon: Zap, className: 'bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/50 dark:text-yellow-300 dark:border-yellow-700/80' },
-  },
-  {
-    date: '2025-07-28T12:00:00Z',
-    version: 'v1.6.0',
-    title: 'Smarter Holiday Finder with AI Tools',
-    description: 'Our AI holiday scheduler now uses a dedicated tool to fetch holiday data from a reliable source, making it faster and more accurate than ever. This showcases advanced agentic AI behavior!',
     badge: { text: 'Improvement', icon: Zap, className: 'bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/50 dark:text-yellow-300 dark:border-yellow-700/80' },
   },
   {

@@ -94,10 +94,10 @@ const TagPreview = forwardRef<HTMLDivElement, { values: DesignFormValues; user: 
     const renderAvatar = (sizeClass: string, fallbackClass: string) => (
          <div className="shrink-0">
             {values.logoUrl ? (
-                <Image src={values.logoUrl} alt="Logo" width={96} height={96} className={cn(sizeClass, "rounded-full object-cover")} data-ai-hint="logo" />
+                <Image src={values.logoUrl} alt="Logo" width={96} height={96} className={cn(sizeClass, "rounded-full object-cover")} />
             ) : user ? (
                 <Avatar className={sizeClass}>
-                    <AvatarImage src={user.avatarUrl} alt={user.name} data-ai-hint="person portrait"/>
+                    <AvatarImage src={user.avatarUrl} alt={user.name} />
                     <AvatarFallback className={fallbackClass}>{user.name.charAt(0)}</AvatarFallback>
                 </Avatar>
             ) : (

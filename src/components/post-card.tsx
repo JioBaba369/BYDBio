@@ -103,7 +103,7 @@ export function PostCard({ item, onLike, onDelete, onRepost, onQuote, isLoading 
                 <div className="flex items-center justify-between">
                     <Link href={`/u/${item.author.username}`} className="flex items-center gap-3 hover:underline">
                         <Avatar>
-                            <AvatarImage src={item.author.avatarUrl} data-ai-hint="person portrait"/>
+                            <AvatarImage src={item.author.avatarUrl} />
                             <AvatarFallback>{item.author.name.charAt(0)}</AvatarFallback>
                         </Avatar>
                         <div>
@@ -142,7 +142,7 @@ export function PostCard({ item, onLike, onDelete, onRepost, onQuote, isLoading 
                 {/* Render the image if it's NOT a repost and has an image */}
                 {!isRepost && item.imageUrl && (
                     <div className="mt-4 rounded-lg overflow-hidden border">
-                        <Image src={item.imageUrl} alt="Post image" width={600} height={400} className="object-cover" data-ai-hint="office workspace"/>
+                        <Image src={item.imageUrl} alt="Post image" width={600} height={400} className="object-cover" />
                     </div>
                 )}
             </CardContent>

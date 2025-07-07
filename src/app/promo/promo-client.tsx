@@ -139,7 +139,7 @@ export default function PromoClient({ initialPromoPages }: { initialPromoPages: 
               <Card key={item.id} className="flex flex-col">
                 {item.imageUrl &&
                   <div className="overflow-hidden rounded-t-lg">
-                    <Image src={item.imageUrl} alt={item.name} width={600} height={300} className="w-full object-cover aspect-[2/1]" data-ai-hint="office storefront"/>
+                    <Image src={item.imageUrl} alt={item.name} width={600} height={300} className="w-full object-cover aspect-[2/1]" />
                   </div>
                 }
                 <CardHeader>
@@ -149,7 +149,7 @@ export default function PromoClient({ initialPromoPages }: { initialPromoPages: 
                           <CardDescription className="pt-2">
                               <Link href={`/u/${item.author.username}`} className="flex items-center gap-2 hover:underline">
                                   <Avatar className="h-6 w-6">
-                                      <AvatarImage src={item.author.avatarUrl} data-ai-hint="person portrait" />
+                                      <AvatarImage src={item.author.avatarUrl} />
                                       <AvatarFallback>{item.author.name.charAt(0)}</AvatarFallback>
                                   </Avatar>
                                   <span className="text-xs">by {item.author.name}</span>
@@ -218,13 +218,13 @@ export default function PromoClient({ initialPromoPages }: { initialPromoPages: 
                         <TableCell>
                           <div className="flex items-center gap-4">
                             {item.logoUrl && (
-                              <Image src={item.logoUrl} alt={item.name} width={40} height={40} className="rounded-full object-cover hidden sm:block aspect-square" data-ai-hint="logo" />
+                              <Image src={item.logoUrl} alt={item.name} width={40} height={40} className="rounded-full object-cover hidden sm:block aspect-square" />
                             )}
                             <div className="space-y-1">
                               <Link href={`/p/${item.id}`} className="font-semibold hover:underline">{item.name}</Link>
                                 <div className="text-xs text-muted-foreground flex items-center gap-2">
                                   <Avatar className="h-4 w-4">
-                                      <AvatarImage src={item.author.avatarUrl} data-ai-hint="person portrait" />
+                                      <AvatarImage src={item.author.avatarUrl} />
                                       <AvatarFallback>{item.author.name.charAt(0)}</AvatarFallback>
                                   </Avatar>
                                   by {item.author.name}

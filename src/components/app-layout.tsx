@@ -62,7 +62,7 @@ function Header() {
               <DropdownMenuTrigger asChild>
                 <Button variant="secondary" className="flex items-center gap-2 rounded-full h-9 px-3">
                   <Avatar className="h-7 w-7">
-                    <AvatarImage src={user.avatarUrl} alt={user.name} data-ai-hint="person smiling" />
+                    <AvatarImage src={user.avatarUrl} alt={user.name} />
                     <AvatarFallback>{user.avatarFallback}</AvatarFallback>
                   </Avatar>
                   <span className="hidden sm:inline">{user.name}</span>

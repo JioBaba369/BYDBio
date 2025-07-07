@@ -45,7 +45,6 @@ export default function ListingDetailClient({ listing, author }: ListingDetailCl
                                         width={800}
                                         height={500}
                                         className="w-full h-full object-cover"
-                                        data-ai-hint="product design"
                                     />
                                 </div>
                             )}

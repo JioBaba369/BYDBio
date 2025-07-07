@@ -297,7 +297,7 @@ export function ListingForm({ defaultValues, onSubmit, isSaving }: ListingFormPr
                             <div className="space-y-2">
                                 <div className="aspect-video w-full rounded-md border border-dashed flex items-center justify-center">
                                     {watchedImageUrl ? (
-                                        <Image src={watchedImageUrl} alt="Listing image" width={300} height={169} className="object-cover rounded-md" data-ai-hint="product design" />
+                                        <Image src={watchedImageUrl} alt="Listing image" width={300} height={169} className="object-cover rounded-md" />
                                     ) : (
                                         <p className="text-sm text-muted-foreground">No image</p>
                                     )}

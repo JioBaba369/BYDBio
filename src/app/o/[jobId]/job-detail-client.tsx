@@ -45,7 +45,6 @@ export default function JobDetailClient({ job, author }: JobDetailClientProps) {
                                         width={1200}
                                         height={400}
                                         className="w-full h-full object-cover"
-                                        data-ai-hint="office workspace"
                                     />
                                 </div>
                             )}

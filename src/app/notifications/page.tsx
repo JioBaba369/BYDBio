@@ -136,7 +136,7 @@ export default function NotificationsPage() {
             <div className="flex items-start gap-4">
                 <div className="relative">
                 <Avatar>
-                    <AvatarImage src={actor?.avatarUrl} alt={actor?.name} data-ai-hint="person portrait"/>
+                    <AvatarImage src={actor?.avatarUrl} alt={actor?.name} />
                     <AvatarFallback>{actor?.avatarFallback || notification.senderName?.charAt(0) || 'A'}</AvatarFallback>
                 </Avatar>
                 <div className="absolute -bottom-1 -right-1 bg-background rounded-full p-0.5">

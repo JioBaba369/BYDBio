@@ -265,7 +265,7 @@ END:VCARD`;
           <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-primary/5 via-blue-500/5 to-teal-400/5 opacity-50 z-0"></div>
           <div className="relative z-10 flex flex-col items-center text-center">
             <Avatar className="w-24 h-24 mb-4 border-4 border-background shadow-lg">
-              <AvatarImage src={avatarUrl} alt={name} data-ai-hint="woman smiling" />
+              <AvatarImage src={avatarUrl} alt={name} />
               <AvatarFallback>{avatarFallback}</AvatarFallback>
             </Avatar>
             <h1 className="font-headline text-3xl font-bold text-foreground">{name}</h1>

@@ -516,7 +516,7 @@ END:VCARD`;
                                       <Label>Profile Picture</Label>
                                       <div className="flex items-center gap-4">
                                       <Avatar className="h-20 w-20">
-                                          <AvatarImage src={croppedImageUrl || user.avatarUrl} data-ai-hint="woman smiling"/>
+                                          <AvatarImage src={croppedImageUrl || user.avatarUrl} />
                                           <AvatarFallback>{user.avatarFallback}</AvatarFallback>
                                       </Avatar>
                                       <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}><Upload className="mr-2 h-4 w-4"/> Change Photo</Button>
@@ -638,7 +638,7 @@ END:VCARD`;
                              <div className="w-full max-w-[280px] bg-muted/30 p-6 rounded-xl shadow-lg border mx-auto">
                                 <div className="text-center">
                                 <Avatar className="h-20 w-20 mx-auto mb-2">
-                                    <AvatarImage src={croppedImageUrl || user.avatarUrl} data-ai-hint="woman smiling"/>
+                                    <AvatarImage src={croppedImageUrl || user.avatarUrl} />
                                     <AvatarFallback>{user.avatarFallback}</AvatarFallback>
                                 </Avatar>
                                 <p className="font-headline font-semibold text-lg">{watchedPublicProfile.name || 'Your Name'}</p>
@@ -742,7 +742,7 @@ END:VCARD`;
                       <div className="bg-muted/40 p-4 rounded-lg h-[500px] overflow-y-auto">
                         <div className="flex flex-col items-center text-center">
                             <Avatar className="h-20 w-20 mb-3 ring-2 ring-primary/20 ring-offset-2 ring-offset-background">
-                                <AvatarImage src={user.avatarUrl} alt={user.name} data-ai-hint="person portrait"/>
+                                <AvatarImage src={user.avatarUrl} alt={user.name} />
                                 <AvatarFallback>{user.avatarFallback}</AvatarFallback>
                             </Avatar>
                             <h1 className="font-headline text-xl font-bold">{user.name}</h1>

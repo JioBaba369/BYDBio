@@ -95,7 +95,7 @@ export default function OpportunitiesClient({ initialJobs }: { initialJobs: JobW
             <Card key={job.id} className="flex flex-col">
               {job.imageUrl && (
                 <div className="overflow-hidden rounded-t-lg">
-                  <Image src={job.imageUrl} alt={job.title} width={600} height={400} className="w-full object-cover aspect-video" data-ai-hint="office workspace" />
+                  <Image src={job.imageUrl} alt={job.title} width={600} height={400} className="w-full object-cover aspect-video" />
                 </div>
               )}
               <CardHeader>
@@ -104,7 +104,7 @@ export default function OpportunitiesClient({ initialJobs }: { initialJobs: JobW
                   <CardDescription className="pt-2">
                       <Link href={`/u/${job.author.username}`} className="flex items-center gap-2 hover:underline">
                           <Avatar className="h-6 w-6">
-                              <AvatarImage src={job.author.avatarUrl} data-ai-hint="person portrait" />
+                              <AvatarImage src={job.author.avatarUrl} />
                               <AvatarFallback>{job.author.name.charAt(0)}</AvatarFallback>
                           </Avatar>
                           <span className="text-xs">by {job.author.name}</span>

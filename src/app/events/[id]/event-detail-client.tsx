@@ -93,7 +93,6 @@ export default function EventDetailClient({ event, author }: EventDetailClientPr
                                         width={1200} 
                                         height={400} 
                                         className="w-full h-full object-cover"
-                                        data-ai-hint="event poster"
                                     />
                                 </div>
                             )}
@@ -191,7 +190,7 @@ export default function EventDetailClient({ event, author }: EventDetailClientPr
                                                         <TooltipTrigger>
                                                             <Link href={`/u/${attendee.username}`}>
                                                                 <Avatar>
-                                                                    <AvatarImage src={attendee.avatarUrl} alt={attendee.name} data-ai-hint="person portrait"/>
+                                                                    <AvatarImage src={attendee.avatarUrl} alt={attendee.name} />
                                                                     <AvatarFallback>{attendee.name.charAt(0)}</AvatarFallback>
                                                                 </Avatar>
                                                             </Link>

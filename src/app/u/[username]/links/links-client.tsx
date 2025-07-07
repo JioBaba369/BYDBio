@@ -19,7 +19,7 @@ export default function LinksClientPage({ user }: { user: User }) {
       <div className="container mx-auto max-w-md p-4 sm:p-8">
         <div className="flex flex-col items-center text-center">
             <Avatar className="h-24 w-24 mb-4 ring-2 ring-primary/20 ring-offset-4 ring-offset-background">
-                <AvatarImage src={avatarUrl} alt={name} data-ai-hint="person portrait"/>
+                <AvatarImage src={avatarUrl} alt={name} />
                 <AvatarFallback>{avatarFallback}</AvatarFallback>
             </Avatar>
             <div className="flex items-center gap-2">

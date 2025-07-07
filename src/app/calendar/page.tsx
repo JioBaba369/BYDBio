@@ -465,7 +465,7 @@ export default function CalendarPage() {
                           <Card key={item.id} className="shadow-sm flex flex-col">
                               {item.imageUrl && (
                                 <div className="overflow-hidden rounded-t-lg">
-                                  <Image src={item.imageUrl} alt={item.title} width={600} height={400} className="w-full object-cover aspect-video" data-ai-hint="office laptop" />
+                                  <Image src={item.imageUrl} alt={item.title} width={600} height={400} className="w-full object-cover aspect-video" />
                                 </div>
                               )}
                               <CardHeader className="p-4 pb-2">

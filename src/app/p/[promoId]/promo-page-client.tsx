@@ -42,7 +42,6 @@ export default function PromoPageClient({ promoPage, author }: PromoPageClientPr
                                         width={1200} 
                                         height={400} 
                                         className="w-full h-full object-cover"
-                                        data-ai-hint="office storefront"
                                     />
                                 </div>
                             )}
@@ -55,7 +54,6 @@ export default function PromoPageClient({ promoPage, author }: PromoPageClientPr
                                             width={120}
                                             height={120}
                                             className="rounded-full border-4 border-background bg-background shrink-0"
-                                            data-ai-hint="logo"
                                         />
                                     )}
                                     <div className="pt-16 flex-1">
