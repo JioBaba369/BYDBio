@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -9,10 +10,14 @@ import ShareButton from "@/components/share-button";
 import { linkIcons } from "@/lib/link-icons";
 import { Separator } from "@/components/ui/separator";
 import type { User } from "@/lib/users";
+import { useAuth } from "@/components/auth-provider";
+import { ContactForm } from "@/components/contact-form";
 
 
 export default function LinksClientPage({ user }: { user: User }) {
   const { name, username, avatarUrl, avatarFallback, bio, links } = user;
+  const { user: currentUser } = useAuth();
+  const isOwner = currentUser?.uid === user.uid;
 
   return (
     <div className="bg-dot min-h-screen antialiased">
@@ -48,6 +53,12 @@ export default function LinksClientPage({ user }: { user: User }) {
                         </a>
                     )
                 })}
+            </div>
+        )}
+
+        {!isOwner && (
+            <div className="mt-8">
+                <ContactForm recipientId={user.uid} />
             </div>
         )}
 

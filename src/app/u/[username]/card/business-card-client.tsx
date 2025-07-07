@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -11,6 +12,8 @@ import ShareButton from "@/components/share-button";
 import type { User } from "@/lib/users";
 import { saveAs } from "file-saver";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/components/auth-provider";
+import { ContactForm } from "@/components/contact-form";
 
 const escapeVCard = (str: string | undefined | null): string => {
   if (!str) return '';
@@ -23,6 +26,8 @@ const escapeVCard = (str: string | undefined | null): string => {
 
 export default function BusinessCardClient({ user }: { user: User }) {
   const { toast } = useToast();
+  const { user: currentUser } = useAuth();
+  const isOwner = currentUser?.uid === user.uid;
   
   const { name, avatarUrl, avatarFallback, businessCard } = user;
   const { 
@@ -98,6 +103,8 @@ END:VCARD`;
           </CardContent>
         </Card>
         
+        {!isOwner && <ContactForm recipientId={user.uid} />}
+
         <div className="text-center">
             <Link href="/" className="text-sm text-muted-foreground hover:text-primary flex items-center justify-center gap-2">
                 Powered by <Logo className="text-lg text-foreground" />
