@@ -58,17 +58,26 @@ const TagPreview = ({ values, user, side }: { values: DesignFormValues; user: an
     }
 
     return (
-        <div className={cn("aspect-[85.6/53.98] w-full rounded-xl flex flex-col items-center justify-center p-4 transition-colors", cardBg)}>
-             {values.logoUrl ? (
-                <Image src={values.logoUrl} alt="Logo" width={64} height={64} className="h-16 w-16 rounded-full object-cover mb-2" data-ai-hint="logo" />
-            ) : user ? (
-                <Avatar className="h-16 w-16 mb-2">
-                    <AvatarImage src={user.avatarUrl} alt={user.name} data-ai-hint="person portrait"/>
-                    <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                </Avatar>
-            ) : null}
-            <h3 className={cn("font-bold text-lg text-center", textColor)}>{values.name || 'Your Name'}</h3>
-            <p className={cn("text-sm text-center", subtitleColor)}>{values.title || 'Your Title'}</p>
+        <div className={cn("aspect-[85.6/53.98] w-full rounded-xl flex flex-row items-center justify-start p-6 transition-colors gap-6", cardBg)}>
+            {/* Avatar/Logo on the left */}
+            <div>
+                {values.logoUrl ? (
+                    <Image src={values.logoUrl} alt="Logo" width={80} height={80} className="h-20 w-20 rounded-full object-cover" data-ai-hint="logo" />
+                ) : user ? (
+                    <Avatar className="h-20 w-20">
+                        <AvatarImage src={user.avatarUrl} alt={user.name} data-ai-hint="person portrait"/>
+                        <AvatarFallback className="text-3xl">{user.name.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                ) : (
+                    <div className="h-20 w-20 rounded-full bg-muted flex items-center justify-center" />
+                )}
+            </div>
+
+            {/* Text on the right */}
+            <div className="text-left">
+                <h3 className={cn("font-bold text-2xl", textColor)}>{values.name || 'Your Name'}</h3>
+                <p className={cn("text-md", subtitleColor)}>{values.title || 'Your Title'}</p>
+            </div>
         </div>
     );
 };
