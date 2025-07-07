@@ -179,17 +179,14 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
     }
     setLoadingAction({ postId, action: 'repost' });
     try {
-        const newPostData = await repostPost(postId, currentUser.uid);
-        if (isOwner) {
-            setLocalPosts(prev => [{ ...newPostData, isLiked: false }, ...prev]);
-        }
-        toast({ title: "Reposted!", description: "It will appear on your feed." });
+      await repostPost(postId, currentUser.uid);
+      toast({ title: "Reposted!", description: "It will now appear on your own feed." });
     } catch (error: any) {
         toast({ title: "Failed to repost", description: error.message, variant: 'destructive' });
     } finally {
         setLoadingAction(null);
     }
-  }
+  };
 
   const handleQuote = (post: PostWithAuthor) => {
     if (!currentUser) {
