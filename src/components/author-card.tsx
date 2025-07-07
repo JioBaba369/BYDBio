@@ -1,10 +1,9 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
 import type { User } from '@/lib/users';
 import Link from 'next/link';
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/components/auth-provider';
@@ -69,7 +68,7 @@ export function AuthorCard({ author, isOwner, authorTypeLabel }: AuthorCardProps
       <CardHeader className="text-center">
         <CardTitle className="text-lg">About the {authorTypeLabel}</CardTitle>
       </CardHeader>
-      <CardContent className="flex flex-col items-center text-center">
+      <CardContent className="flex flex-col items-center p-6 text-center">
         <Link href={`/u/${author.username}`} className="block">
           <Avatar className="h-20 w-20 mb-2">
             <AvatarImage src={author.avatarUrl} data-ai-hint="person portrait" />
@@ -78,20 +77,20 @@ export function AuthorCard({ author, isOwner, authorTypeLabel }: AuthorCardProps
         </Link>
         <Link href={`/u/${author.username}`} className="font-semibold hover:underline">{author.name}</Link>
         <p className="text-sm text-muted-foreground">@{author.username}</p>
+         <div className="mt-4 w-full space-y-2">
+            {currentUser && !isOwner && (
+                <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={handleFollowToggle}
+                    disabled={isFollowLoading}
+                >
+                    {isFollowLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : isFollowing ? <UserCheck className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
+                    {isFollowing ? 'Following' : 'Follow'}
+                </Button>
+            )}
+        </div>
       </CardContent>
-      <CardFooter>
-        {currentUser && !isOwner && (
-            <Button
-                variant="outline"
-                className="w-full"
-                onClick={handleFollowToggle}
-                disabled={isFollowLoading}
-            >
-                {isFollowLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : isFollowing ? <UserCheck className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
-                {isFollowing ? 'Following' : 'Follow'}
-            </Button>
-        )}
-      </CardFooter>
     </Card>
   );
 }
