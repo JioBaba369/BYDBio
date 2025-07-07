@@ -66,7 +66,7 @@ export function AuthorCard({ author, isOwner, authorTypeLabel }: AuthorCardProps
 
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="text-center">
         <CardTitle className="text-lg">About the {authorTypeLabel}</CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col items-center text-center">
