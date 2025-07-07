@@ -19,6 +19,13 @@ type UpdateItem = {
 
 const updates: UpdateItem[] = [
   {
+    date: 'July 29, 2024',
+    version: 'v1.7.0',
+    title: 'Foundational Refactoring & Major Bug Bash',
+    description: 'In our most significant update yet, we have performed a deep-dive refactoring of the entire application. This addresses over a dozen subtle "misfiring" bugs, improves data consistency, and enhances performance across the board. Key improvements include optimized database queries, more robust user interaction logic, and a streamlined codebase for future features.',
+    badge: { text: 'Improvement', icon: Zap, className: 'bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/50 dark:text-yellow-300 dark:border-yellow-700/80' },
+  },
+  {
     date: 'July 28, 2024',
     version: 'v1.6.0',
     title: 'Smarter Holiday Finder with AI Tools',

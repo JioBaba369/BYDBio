@@ -31,13 +31,16 @@ import {
   LayoutDashboard,
   Rss,
   Mail,
+  Briefcase,
+  Tags,
+  Gift,
+  Calendar,
 } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Input } from './ui/input';
 import { useAuth } from './auth-provider';
 import { Skeleton } from './ui/skeleton';
-import { Button } from './ui/button';
 
 export function MainSidebar() {
   const pathname = usePathname();
@@ -47,6 +50,8 @@ export function MainSidebar() {
 
   const isActive = (path: string) => {
     if (path === '/') return pathname === '/';
+    // For explore, we want an exact match, not startsWith
+    if (path === '/explore') return pathname === '/explore';
     return pathname.startsWith(path);
   };
 
@@ -127,14 +132,6 @@ export function MainSidebar() {
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Explore" isActive={isActive('/explore')}>
-                <Link href="/explore">
-                  <Compass />
-                  <span>Explore</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
               <SidebarMenuButton asChild tooltip="Status Feed" isActive={isActive('/feed')}>
                 <Link href="/feed">
                   <Rss />
@@ -169,6 +166,60 @@ export function MainSidebar() {
           </SidebarMenu>
         </SidebarGroup>
         
+         <SidebarGroup>
+          <SidebarGroupLabel>Browse</SidebarGroupLabel>
+          <SidebarMenu>
+             <SidebarMenuItem>
+              <SidebarMenuButton asChild tooltip="Explore All" isActive={isActive('/explore')}>
+                <Link href="/explore">
+                  <Compass />
+                  <span>Explore All</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+             <SidebarMenuItem>
+              <SidebarMenuButton asChild tooltip="Promo Pages" isActive={isActive('/promo')}>
+                <Link href="/promo">
+                  <Megaphone />
+                  <span>Promo Pages</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild tooltip="Listings" isActive={isActive('/listings')}>
+                <Link href="/listings">
+                  <Tags />
+                  <span>Listings</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild tooltip="Jobs" isActive={isActive('/opportunities')}>
+                <Link href="/opportunities">
+                  <Briefcase />
+                  <span>Jobs</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+             <SidebarMenuItem>
+              <SidebarMenuButton asChild tooltip="Events" isActive={isActive('/events')}>
+                <Link href="/events">
+                  <Calendar />
+                  <span>Events</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+             <SidebarMenuItem>
+              <SidebarMenuButton asChild tooltip="Offers" isActive={isActive('/offers')}>
+                <Link href="/offers">
+                  <Gift />
+                  <span>Offers</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroup>
+
         <SidebarGroup>
             <SidebarGroupLabel>Workspace</SidebarGroupLabel>
             <SidebarMenu>

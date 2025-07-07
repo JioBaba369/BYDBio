@@ -77,10 +77,10 @@ export const getFollowers = async (userId: string): Promise<User[]> => {
 };
 
 // Get suggested users to follow
-export const getSuggestedUsers = async (userId: string): Promise<User[]> => {
+export const getSuggestedUsers = async (userId: string, count: number = 10): Promise<User[]> => {
     const usersRef = collection(db, 'users');
-    // Fetch a batch of users, ideally not the current user or those they follow.
-    const q = query(usersRef, limit(50));
+    // Fetch a larger batch of users to increase the chance of finding suggestions.
+    const q = query(usersRef, limit(100));
     const querySnapshot = await getDocs(q);
     
     const users = querySnapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() } as User));
@@ -91,5 +91,6 @@ export const getSuggestedUsers = async (userId: string): Promise<User[]> => {
     // Filter out the current user and anyone they already follow from the fetched batch
     const suggestions = users.filter(u => u.uid !== userId && !followingIds.includes(u.uid));
 
-    return suggestions.slice(0, 10); // Return a smaller, more manageable list
+    // Return a smaller, more manageable list
+    return suggestions.slice(0, count);
 };

@@ -11,27 +11,29 @@ import type { Event } from '@/lib/events';
 import type { PromoPage } from "@/lib/promo-pages";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Briefcase, Calendar, Tag, MapPin, Heart, MessageCircle, DollarSign, Building2, Tags, ExternalLink, Globe, UserCheck, UserPlus, QrCode, Edit, Loader2 } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { ExternalLink, UserCheck, UserPlus, QrCode, Edit, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
-import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Logo } from "@/components/logo";
 import ShareButton from "@/components/share-button";
 import { linkIcons } from "@/lib/link-icons";
-import Image from "next/image";
 import { useAuth } from "@/components/auth-provider";
 import { followUser, unfollowUser } from "@/lib/connections";
 import { useRouter } from "next/navigation";
 import QRCode from "qrcode.react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { ClientFormattedDate } from "@/components/client-formatted-date";
-import { formatCurrency } from "@/lib/utils";
 import { PostCard } from "@/components/post-card";
 import { toggleLikePost, deletePost, repostPost } from '@/lib/posts';
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
 import { ContactUserForm } from "@/components/contact-user-form";
+import { ContentFeedCard } from "@/components/feed/content-feed-card";
+import { PromoPageFeedItem } from "@/components/feed/promo-page-feed-item";
+import { ListingFeedItem } from "@/components/feed/listing-feed-item";
+import { JobFeedItem } from "@/components/feed/job-feed-item";
+import { EventFeedItem } from "@/components/feed/event-feed-item";
+import { OfferFeedItem } from "@/components/feed/offer-feed-item";
 
 
 interface UserProfilePageProps {
@@ -236,12 +238,12 @@ END:VCARD`;
   
   const allContent = useMemo(() => {
     const combined = [
-      ...localPosts.map(item => ({ ...item, type: 'post', date: item.createdAt })),
-      ...promoPages.map(item => ({ ...item, type: 'promoPage', date: item.createdAt })),
-      ...listings.map(item => ({ ...item, type: 'listing', date: item.createdAt })),
-      ...jobs.map(item => ({ ...item, type: 'job', date: item.postingDate })),
-      ...events.map(item => ({ ...item, type: 'event', date: item.startDate })),
-      ...offers.map(item => ({ ...item, type: 'offer', date: item.startDate })),
+      ...localPosts.map(item => ({ ...item, type: 'post' as const, date: item.createdAt })),
+      ...promoPages.map(item => ({ ...item, type: 'promoPage' as const, date: item.createdAt })),
+      ...listings.map(item => ({ ...item, type: 'listing' as const, date: item.createdAt })),
+      ...jobs.map(item => ({ ...item, type: 'job' as const, date: item.postingDate })),
+      ...events.map(item => ({ ...item, type: 'event' as const, date: item.startDate })),
+      ...offers.map(item => ({ ...item, type: 'offer' as const, date: item.startDate })),
     ];
     combined.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     return combined;
@@ -337,100 +339,39 @@ END:VCARD`;
                 <CardContent className="space-y-4">
                     {allContent.map(item => {
                         const uniqueKey = `${item.type}-${item.id}`;
-                        switch(item.type) {
-                            case 'post': {
-                                const postItem = item as (PostWithAuthor & { isLiked: boolean });
-                                return (
-                                    <PostCard
-                                        key={uniqueKey}
-                                        item={postItem}
-                                        onLike={handleLike}
-                                        onDelete={openDeleteDialog}
-                                        onRepost={handleRepost}
-                                        onQuote={handleQuote}
-                                        isLoading={loadingAction?.postId === item.id}
-                                        loadingAction={loadingAction?.postId === item.id ? loadingAction.action : null}
-                                    />
-                                );
-                            }
-                            case 'promoPage': return (
-                                <Card key={uniqueKey} className="shadow-none border">
-                                    <CardHeader><CardTitle className="text-base">Created a new promo page</CardTitle></CardHeader>
-                                    <CardContent>
-                                        <Link href={`/p/${item.id}`} className="block hover:bg-muted/50 p-4 rounded-lg border -m-4">
-                                            <div className="flex gap-4">
-                                                {item.logoUrl && <Image src={item.logoUrl} alt={item.name} width={56} height={56} className="rounded-full object-contain bg-muted" data-ai-hint="logo"/>}
-                                                <div className="flex-1">
-                                                    <p className="font-semibold">{item.name}</p>
-                                                    <p className="text-sm text-muted-foreground line-clamp-2">{item.description}</p>
-                                                </div>
-                                            </div>
-                                        </Link>
-                                    </CardContent>
-                                    <CardFooter className="text-xs text-muted-foreground px-4 pb-4 pt-2"><ClientFormattedDate date={item.createdAt} relative /></CardFooter>
-                                </Card>
+                        if (item.type === 'post') {
+                            const postItem = item as (PostWithAuthor & { isLiked: boolean });
+                            return (
+                                <PostCard
+                                    key={uniqueKey}
+                                    item={postItem}
+                                    onLike={handleLike}
+                                    onDelete={openDeleteDialog}
+                                    onRepost={handleRepost}
+                                    onQuote={handleQuote}
+                                    isLoading={loadingAction?.postId === item.id}
+                                    loadingAction={loadingAction?.postId === item.id ? loadingAction.action : null}
+                                />
                             );
-                            case 'listing': return (
-                                <Card key={uniqueKey} className="shadow-none border">
-                                     <CardHeader><CardTitle className="text-base">Added a new listing</CardTitle></CardHeader>
-                                     <CardContent>
-                                         <Link href={`/l/${item.id}`} className="block hover:bg-muted/50 p-4 rounded-lg border -m-4">
-                                            <div className="flex gap-4 items-center">
-                                                {item.imageUrl && <Image src={item.imageUrl} alt={item.title} width={120} height={80} className="rounded-lg object-cover" data-ai-hint="product design"/>}
-                                                <div className="flex-1">
-                                                    <p className="font-semibold">{item.title}</p>
-                                                    <p className="text-primary font-bold">{formatCurrency(item.price)}</p>
-                                                    <Badge variant="secondary" className="mt-1">{item.category}</Badge>
-                                                </div>
-                                            </div>
-                                        </Link>
-                                     </CardContent>
-                                     <CardFooter className="text-xs text-muted-foreground px-4 pb-4 pt-2"><ClientFormattedDate date={item.createdAt} relative /></CardFooter>
-                                </Card>
-                            );
-                            case 'job': return (
-                                <Card key={uniqueKey} className="shadow-none border">
-                                    <CardHeader><CardTitle className="text-base">Posted a new job</CardTitle></CardHeader>
-                                     <CardContent>
-                                        <Link href={`/o/${item.id}`} className="block hover:bg-muted/50 p-4 rounded-lg border -m-4">
-                                            <p className="font-semibold">{item.title}</p>
-                                            <p className="text-sm text-muted-foreground flex items-center gap-1.5"><Building2 className="h-4 w-4"/> {item.company}</p>
-                                            <p className="text-sm text-muted-foreground flex items-center gap-1.5"><MapPin className="h-4 w-4"/> {item.location}</p>
-                                            <Badge variant="destructive" className="mt-2">{item.type}</Badge>
-                                        </Link>
-                                     </CardContent>
-                                     <CardFooter className="text-xs text-muted-foreground px-4 pb-4 pt-2"><ClientFormattedDate date={item.postingDate} relative /></CardFooter>
-                                </Card>
-                            );
-                            case 'event': return (
-                                <Card key={uniqueKey} className="shadow-none border">
-                                    <CardHeader><CardTitle className="text-base">Created a new event</CardTitle></CardHeader>
-                                     <CardContent>
-                                        <Link href={`/events/${item.id}`} className="block hover:bg-muted/50 p-4 rounded-lg border -m-4">
-                                            {item.imageUrl && <Image src={item.imageUrl} alt={item.title} width={600} height={200} className="rounded-lg object-cover w-full aspect-video mb-2" data-ai-hint="event poster"/>}
-                                            <p className="font-semibold">{item.title}</p>
-                                            <p className="text-sm text-muted-foreground flex items-center gap-1.5"><Calendar className="h-4 w-4"/> <ClientFormattedDate date={item.startDate} formatStr="PPP p"/></p>
-                                            <p className="text-sm text-muted-foreground flex items-center gap-1.5"><MapPin className="h-4 w-4"/> {item.location}</p>
-                                        </Link>
-                                     </CardContent>
-                                     <CardFooter className="text-xs text-muted-foreground px-4 pb-4 pt-2"><ClientFormattedDate date={item.startDate} relative /></CardFooter>
-                                </Card>
-                            );
-                            case 'offer': return (
-                                 <Card key={uniqueKey} className="shadow-none border">
-                                    <CardHeader><CardTitle className="text-base">Posted a new offer</CardTitle></CardHeader>
-                                     <CardContent>
-                                        <Link href={`/offer/${item.id}`} className="block hover:bg-muted/50 p-4 rounded-lg border -m-4">
-                                            <p className="font-semibold">{item.title}</p>
-                                            <p className="text-sm text-muted-foreground line-clamp-2">{item.description}</p>
-                                            <Badge variant="secondary" className="mt-2">{item.category}</Badge>
-                                        </Link>
-                                     </CardContent>
-                                     <CardFooter className="text-xs text-muted-foreground px-4 pb-4 pt-2"><ClientFormattedDate date={item.startDate} relative /></CardFooter>
-                                </Card>
-                            );
-                            default: return null;
                         }
+
+                        const componentMap = {
+                            promoPage: { title: "Created a new promo page", component: <PromoPageFeedItem item={item as PromoPage} /> },
+                            listing: { title: "Added a new listing", component: <ListingFeedItem item={item as Listing} /> },
+                            job: { title: "Posted a new job", component: <JobFeedItem item={item as Job} /> },
+                            event: { title: "Created a new event", component: <EventFeedItem item={item as Event} /> },
+                            offer: { title: "Posted a new offer", component: <OfferFeedItem item={item as Offer} /> },
+                        };
+                        
+                        const content = componentMap[item.type as keyof typeof componentMap];
+                        
+                        if (!content) return null;
+                        
+                        return (
+                            <ContentFeedCard key={uniqueKey} title={content.title} date={item.date}>
+                                {content.component}
+                            </ContentFeedCard>
+                        );
                     })}
                 </CardContent>
             </Card>
@@ -457,7 +398,7 @@ END:VCARD`;
             <div>
                 <Logo className="justify-center text-foreground" />
                 <p className="mt-2 text-sm text-muted-foreground">Build Your Dream Bio. Your professional hub for profiles, links, and opportunities.</p>
-                <Button asChild className="mt-4 font-bold"><Link href="/">Get Started Free</Link></Button>
+                <Button asChild className="mt-4 font-bold"><Link href="/">Get Started for Free</Link></Button>
             </div>
         </Card>
       </div>
