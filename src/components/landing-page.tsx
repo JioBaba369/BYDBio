@@ -11,6 +11,39 @@ import { Badge } from "@/components/ui/badge";
 import { ClientYear } from "./client-year";
 
 export function LandingPage() {
+  const features = [
+    {
+      icon: Sparkles,
+      title: "Creators & Influencers",
+      description: "Monetize your passion. Share your content, sell products, and manage your community from one link.",
+    },
+    {
+      icon: Briefcase,
+      title: "Freelancers & Consultants",
+      description: "Showcase your expertise. Build a dynamic portfolio, list your services, and attract new clients.",
+    },
+    {
+      icon: Rocket,
+      title: "Entrepreneurs",
+      description: "Launch your vision. Create a sleek promo page for your business, post jobs, and build your brand.",
+    },
+    {
+      icon: Users,
+      title: "Community Organizers",
+      description: "Engage your audience. Host events, manage RSVPs, and keep your community connected and informed.",
+    },
+    {
+      icon: Building,
+      title: "Small Businesses",
+      description: "Streamline business communication. Build promo pages, manage listings, and engage directly with customers.",
+    },
+    {
+      icon: Search,
+      title: "Job Seekers",
+      description: "Land your next role. Follow companies, discover opportunities, and showcase your professional brand online.",
+    }
+  ];
+
   return (
     <div className="flex flex-col min-h-screen bg-background">
       <header className="container mx-auto px-4 sm:px-6 h-20 flex items-center justify-between">
@@ -24,9 +57,9 @@ export function LandingPage() {
         {/* Hero Section */}
         <section className="text-center py-20 sm:py-32">
           <div className="container mx-auto px-4 sm:px-6">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-headline font-bold tracking-tighter">Your All-In-One Hub for a Powerful Online Presence</h1>
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tighter">The Essential Toolkit for Your Digital Identity</h1>
             <p className="mt-4 max-w-2xl mx-auto text-lg text-muted-foreground">
-              Whether you're a creator, freelancer, or entrepreneur, BYD.Bio gives you the tools to build your brand, share your work, and connect with your audience.
+              One link for your bio, business, and brand. Create a beautiful profile, share your work, and connect with your audience—all in one place.
             </p>
             <div className="mt-8 flex justify-center gap-4">
               <Button asChild size="lg">
@@ -54,54 +87,21 @@ export function LandingPage() {
         <section className="py-20 sm:py-32">
           <div className="container mx-auto px-4 sm:px-6">
             <div className="text-center mb-12">
-              <h2 className="text-3xl sm:text-4xl font-headline font-bold">A Platform for Growth</h2>
+              <h2 className="text-3xl sm:text-4xl font-bold">A Platform for Growth</h2>
               <p className="mt-3 max-w-xl mx-auto text-muted-foreground">
                 A powerful toolkit for a new generation of digital professionals and businesses.
               </p>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-              <Card className="text-center p-6 border-transparent shadow-lg bg-card hover:border-primary/20 transition-all">
-                  <div className="w-16 h-16 rounded-lg bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                    <Sparkles className="h-8 w-8 text-primary" />
+              {features.map((feature, index) => (
+                <div key={index} className="text-center p-6">
+                  <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                    <feature.icon className="h-6 w-6 text-primary" />
                   </div>
-                  <h3 className="text-xl font-semibold font-headline">Creators & Influencers</h3>
-                  <p className="text-muted-foreground mt-2 text-sm">Monetize your passion. Share your content, sell products, and manage your community from one link.</p>
-              </Card>
-               <Card className="text-center p-6 border-transparent shadow-lg bg-card hover:border-primary/20 transition-all">
-                  <div className="w-16 h-16 rounded-lg bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                    <Briefcase className="h-8 w-8 text-primary" />
-                  </div>
-                  <h3 className="text-xl font-semibold font-headline">Freelancers & Consultants</h3>
-                  <p className="text-muted-foreground mt-2 text-sm">Showcase your expertise. Build a dynamic portfolio, list your services, and attract new clients.</p>
-              </Card>
-              <Card className="text-center p-6 border-transparent shadow-lg bg-card hover:border-primary/20 transition-all">
-                  <div className="w-16 h-16 rounded-lg bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                    <Rocket className="h-8 w-8 text-primary" />
-                  </div>
-                  <h3 className="text-xl font-semibold font-headline">Entrepreneurs</h3>
-                  <p className="text-muted-foreground mt-2 text-sm">Launch your vision. Create a sleek promo page for your business, post jobs, and build your brand.</p>
-              </Card>
-              <Card className="text-center p-6 border-transparent shadow-lg bg-card hover:border-primary/20 transition-all">
-                  <div className="w-16 h-16 rounded-lg bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                    <Users className="h-8 w-8 text-primary" />
-                  </div>
-                  <h3 className="text-xl font-semibold font-headline">Community Organizers</h3>
-                  <p className="text-muted-foreground mt-2 text-sm">Engage your audience. Host events, manage RSVPs, and keep your community connected and informed.</p>
-              </Card>
-              <Card className="text-center p-6 border-transparent shadow-lg bg-card hover:border-primary/20 transition-all">
-                  <div className="w-16 h-16 rounded-lg bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                    <Building className="h-8 w-8 text-primary" />
-                  </div>
-                  <h3 className="text-xl font-semibold font-headline">Small Businesses</h3>
-                  <p className="text-muted-foreground mt-2 text-sm">Streamline business communication. Build promo pages, manage listings, and engage directly with customers.</p>
-              </Card>
-              <Card className="text-center p-6 border-transparent shadow-lg bg-card hover:border-primary/20 transition-all">
-                  <div className="w-16 h-16 rounded-lg bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                    <Search className="h-8 w-8 text-primary" />
-                  </div>
-                  <h3 className="text-xl font-semibold font-headline">Job Seekers</h3>
-                  <p className="text-muted-foreground mt-2 text-sm">Land your next role. Follow companies, discover opportunities, and showcase your professional brand online.</p>
-              </Card>
+                  <h3 className="text-lg font-semibold">{feature.title}</h3>
+                  <p className="text-muted-foreground mt-2 text-sm">{feature.description}</p>
+                </div>
+              ))}
             </div>
           </div>
         </section>
@@ -112,7 +112,7 @@ export function LandingPage() {
                 <div className="grid md:grid-cols-2 gap-12 items-center bg-muted/40 p-8 sm:p-12 rounded-2xl">
                     <div className="text-center md:text-left">
                         <Badge>New</Badge>
-                        <h2 className="text-3xl sm:text-4xl font-headline font-bold mt-2">Introducing the BYDTAG</h2>
+                        <h2 className="text-3xl sm:text-4xl font-bold mt-2">Introducing the BYDTAG</h2>
                         <p className="mt-4 text-muted-foreground text-lg">
                             The smartest business card on the planet. Your BYDTAG is an NFC-enabled card that links directly to your digital business card. Just one tap is all it takes to share your contact info, social links, and more.
                         </p>
@@ -136,7 +136,7 @@ export function LandingPage() {
         {/* Final CTA */}
         <section className="text-center py-20 sm:py-24 bg-muted/40">
            <div className="container mx-auto px-4 sm:px-6">
-             <h2 className="text-3xl sm:text-4xl font-headline font-bold">Ready to Build Your Dream Bio?</h2>
+             <h2 className="text-3xl sm:text-4xl font-bold">Ready to Build Your Dream Bio?</h2>
              <div className="mt-8">
                 <Button asChild size="lg">
                     <Link href="/auth/sign-up">Start for Free</Link>

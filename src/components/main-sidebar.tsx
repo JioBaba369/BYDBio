@@ -66,7 +66,7 @@ export function MainSidebar() {
      return (
       <Sidebar>
         <SidebarHeader>
-          <Logo className="text-sidebar-foreground" />
+          <Logo />
         </SidebarHeader>
         <SidebarContent className="p-2 space-y-2">
           <div className='p-2'><Skeleton className="h-8 w-full" /></div>
@@ -103,7 +103,7 @@ export function MainSidebar() {
   return (
     <Sidebar>
       <SidebarHeader>
-        <Logo className="text-sidebar-foreground" />
+        <Logo />
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
@@ -112,7 +112,7 @@ export function MainSidebar() {
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search..."
-                className="w-full pl-8 bg-sidebar-accent text-sidebar-foreground placeholder:text-sidebar-foreground/60 border-sidebar-border focus-visible:ring-sidebar-ring"
+                className="w-full pl-8"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
