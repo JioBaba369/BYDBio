@@ -114,9 +114,9 @@ const TagPreview = ({ values, user, side }: { values: DesignFormValues; user: an
 
     const TextElement = ({textAlign = 'text-center'}) => (
         <div className={cn("flex-grow space-y-1", textAlign)}>
-            <h3 className={cn("font-bold text-2xl truncate", textColor)}>{values.name || 'Your Name'}</h3>
-            <p className={cn("text-md truncate", subtitleColor)}>{values.title || 'Your Title'}</p>
-            {values.company && <p className={cn("text-sm truncate opacity-80", subtitleColor)}>{values.company}</p>}
+            <h3 className={cn("font-bold text-2xl", textColor)}>{values.name || 'Your Name'}</h3>
+            <p className={cn("text-md", subtitleColor)}>{values.title || 'Your Title'}</p>
+            {values.company && <p className={cn("text-sm opacity-80", subtitleColor)}>{values.company}</p>}
         </div>
     );
 
@@ -127,7 +127,7 @@ const TagPreview = ({ values, user, side }: { values: DesignFormValues; user: an
 
     const CardContentWrapper = ({ children, className }: { children: React.ReactNode, className?: string }) => (
         <div className={cn(mainContainerClasses, className)} style={cardStyle}>
-            {values.backgroundImageUrl && <div className="absolute inset-0 bg-black/30 rounded-xl" />}
+            {values.backgroundImageUrl && <div className="absolute inset-0 bg-black/40 rounded-xl" />}
             <div className="relative z-10 w-full h-full flex items-center gap-6">
                 {children}
             </div>
@@ -151,21 +151,15 @@ const TagPreview = ({ values, user, side }: { values: DesignFormValues; user: an
             </div>
         );
         
-        const VerticalText = () => (
-            <div className="text-center mt-14 w-full">
-                <h3 className={cn("font-bold text-3xl truncate", textColor)}>{values.name || 'Your Name'}</h3>
-                <p className={cn("text-lg truncate", subtitleColor)}>{values.title || 'Your Title'}</p>
-                {values.company && <p className={cn("text-md truncate opacity-80", subtitleColor)}>{values.company}</p>}
-            </div>
-        );
-        
         return (
-             <div className={cn("aspect-[85.6/53.98] w-full rounded-xl transition-colors relative p-0 overflow-hidden flex flex-col", cardBgClass)} style={cardStyle}>
-                {values.backgroundImageUrl && <div className="absolute inset-0 bg-black/30 rounded-xl" />}
-                <div className="h-1/2 w-full relative" />
-                <div className="h-1/2 w-full flex flex-col justify-center items-center p-6 relative">
-                    <div className="relative z-10 w-full">
-                        <VerticalText />
+             <div className={cn("aspect-[53.98/85.6] w-full rounded-xl transition-colors relative p-0 overflow-hidden flex flex-col", cardBgClass)} style={cardStyle}>
+                {values.backgroundImageUrl && <div className="absolute inset-0 bg-black/40 rounded-xl" />}
+                <div className="h-1/2 w-full shrink-0" />
+                <div className="h-1/2 w-full flex flex-col items-center justify-start pt-16 px-4">
+                     <div className="relative z-10 text-center space-y-1">
+                        <h3 className={cn("font-bold text-2xl", textColor)}>{values.name || 'Your Name'}</h3>
+                        <p className={cn("text-md", subtitleColor)}>{values.title || 'Your Title'}</p>
+                        {values.company && <p className={cn("text-sm opacity-90", subtitleColor)}>{values.company}</p>}
                     </div>
                 </div>
                 {VerticalAvatar}
@@ -210,9 +204,9 @@ const TagPreview = ({ values, user, side }: { values: DesignFormValues; user: an
                         )}
                     </div>
                     <div className="flex-grow space-y-1 text-left">
-                        <h3 className={cn("font-bold text-3xl truncate", textColor)}>{values.name || 'Your Name'}</h3>
-                        <p className={cn("text-lg truncate", subtitleColor)}>{values.title || 'Your Title'}</p>
-                        {values.company && <p className={cn("text-md truncate opacity-80", subtitleColor)}>{values.company}</p>}
+                        <h3 className={cn("font-bold text-3xl", textColor)}>{values.name || 'Your Name'}</h3>
+                        <p className={cn("text-lg", subtitleColor)}>{values.title || 'Your Title'}</p>
+                        {values.company && <p className={cn("text-md opacity-80", subtitleColor)}>{values.company}</p>}
                     </div>
                 </div>
             </CardContentWrapper>
