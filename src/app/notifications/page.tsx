@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { CheckCheck, Bell, UserPlus, Heart, Calendar } from "lucide-react";
 import { useAuth } from "@/components/auth-provider";
 import { useState, useEffect } from "react";
-import { getNotificationsForUser, markNotificationsAsRead, markSingleNotificationAsRead, type NotificationWithActor } from "@/lib/notifications";
+import { getNotificationsWithActors, markNotificationsAsRead, markSingleNotificationAsRead, type NotificationWithActor } from "@/lib/notifications";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
@@ -36,13 +36,15 @@ export default function NotificationsPage() {
     useEffect(() => {
         if (user) {
             setIsLoading(true);
-            getNotificationsForUser(user.uid)
+            getNotificationsWithActors(user.uid)
                 .then(setNotifications)
                 .finally(() => setIsLoading(false));
         }
     }, [user]);
 
-    const unreadCount = notifications.filter(n => !n.read).length;
+    const unreadCount = notifications.filter(n => !n.read && n.type !== 'contact_form_submission').length;
+    const nonContactNotifications = notifications.filter(n => n.type !== 'contact_form_submission');
+
 
     const handleMarkAllAsRead = async () => {
         if (!user || unreadCount === 0) return;
@@ -173,9 +175,9 @@ export default function NotificationsPage() {
                         <NotificationSkeleton />
                         <NotificationSkeleton />
                         </>
-                    ) : notifications.length > 0 ? (
+                    ) : nonContactNotifications.length > 0 ? (
                     <div>
-                        {notifications.map(notification => (
+                        {nonContactNotifications.map(notification => (
                             <NotificationItem key={notification.id} notification={notification} />
                         ))}
                     </div>

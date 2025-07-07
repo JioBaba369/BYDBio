@@ -140,6 +140,14 @@ export function MainSidebar() {
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
+              <SidebarMenuButton asChild tooltip="Inbox" isActive={isActive('/inbox')}>
+                <Link href="/inbox">
+                  <Mail />
+                  <span>Inbox</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
               <SidebarMenuButton asChild tooltip="Connections" isActive={isActive('/connections')}>
                 <Link href="/connections">
                   <Users />

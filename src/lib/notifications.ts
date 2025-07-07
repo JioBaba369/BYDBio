@@ -17,29 +17,36 @@ import {
 import { db } from '@/lib/firebase';
 import { getUsersByIds, type User } from './users';
 
-export type NotificationType = 'new_follower' | 'new_like' | 'event_rsvp';
+export type NotificationType = 'new_follower' | 'new_like' | 'event_rsvp' | 'contact_form_submission';
 
 export type Notification = {
   id: string; // Document ID
   userId: string; // The user receiving the notification
-  actorId?: string; // The user who performed the action.
+  actorId: string | null; // The user who performed the action. Null for system or anonymous actions.
   type: NotificationType;
   entityId?: string; // e.g., postId, eventId
   entityTitle?: string; // A title or snippet for context
   read: boolean;
   createdAt: Timestamp;
+  // Fields for contact form submissions
+  senderName?: string;
+  senderEmail?: string;
+  messageBody?: string;
 };
 
-export type NotificationWithActor = Notification & { actor: User | null };
+export type NotificationWithActor = Omit<Notification, 'actorId'> & { actor: User | null };
 
 // Create a notification
 export const createNotification = async (
   userId: string,
   type: NotificationType,
-  actorId?: string,
+  actorId: string | null, // Can be null for system actions or anonymous contact forms
   notificationData: {
     entityId?: string;
     entityTitle?: string;
+    senderName?: string;
+    senderEmail?: string;
+    messageBody?: string;
   } = {}
 ) => {
   // Don't notify users about their own actions
@@ -76,7 +83,7 @@ export const createNotification = async (
 };
 
 // Get notifications for a user
-export const getNotificationsForUser = async (userId: string): Promise<NotificationWithActor[]> => {
+export const getNotificationsForUser = async (userId: string): Promise<Notification[]> => {
   const notificationsRef = collection(db, 'notifications');
   const q = query(
     notificationsRef,
@@ -91,6 +98,13 @@ export const getNotificationsForUser = async (userId: string): Promise<Notificat
   }
 
   const notifications = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Notification));
+  
+  return notifications;
+};
+
+// Get notifications for a user, populating actor details where applicable
+export const getNotificationsWithActors = async (userId: string): Promise<NotificationWithActor[]> => {
+  const notifications = await getNotificationsForUser(userId);
 
   const actorIds = notifications.map(n => n.actorId).filter((id): id is string => !!id);
   const uniqueActorIds = [...new Set(actorIds)];

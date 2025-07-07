@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/components/auth-provider';
 import { useToast } from '@/hooks/use-toast';
-import { getNotificationsForUser, type NotificationWithActor, markSingleNotificationAsRead } from '@/lib/notifications';
+import { getNotificationsForUser, type Notification, markSingleNotificationAsRead } from '@/lib/notifications';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -57,9 +57,9 @@ const InboxSkeleton = () => (
 export default function InboxPage() {
     const { user, loading: authLoading } = useAuth();
     const { toast } = useToast();
-    const [messages, setMessages] = useState<NotificationWithActor[]>([]);
+    const [messages, setMessages] = useState<Notification[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [selectedMessage, setSelectedMessage] = useState<NotificationWithActor | null>(null);
+    const [selectedMessage, setSelectedMessage] = useState<Notification | null>(null);
 
     useEffect(() => {
         if (user) {
@@ -77,7 +77,7 @@ export default function InboxPage() {
         }
     }, [user, toast]);
     
-    const handleRowClick = (message: NotificationWithActor) => {
+    const handleRowClick = (message: Notification) => {
         const originalMessages = [...messages];
         setSelectedMessage(message);
         if (!message.read) {

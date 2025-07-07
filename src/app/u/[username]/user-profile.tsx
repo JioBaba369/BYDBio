@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useMemo } from "react";
@@ -32,6 +33,7 @@ import { ListingFeedItem } from "@/components/feed/listing-feed-item";
 import { JobFeedItem } from "@/components/feed/job-feed-item";
 import { EventFeedItem } from "@/components/feed/event-feed-item";
 import { OfferFeedItem } from "@/components/feed/offer-feed-item";
+import { ContactForm } from "@/components/contact-form";
 
 
 interface UserProfilePageProps {
@@ -331,6 +333,10 @@ END:VCARD`;
           </div>
         </Card>
         
+        {!isOwner && (
+            <ContactForm recipientId={userProfileData.uid} />
+        )}
+
         {hasContent && (
             <Card id="content" className="bg-card/80 backdrop-blur-sm shadow-2xl rounded-2xl border-primary/10">
                 <CardHeader>
