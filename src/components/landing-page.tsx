@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from "next/link";
@@ -7,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Logo } from "@/components/logo";
 import { Building, Briefcase, Rocket, Users, Sparkles, Search, Nfc } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { ClientYear } from "./client-year";
 
 export function LandingPage() {
   return (
@@ -145,7 +147,7 @@ export function LandingPage() {
       </main>
 
       <footer className="container mx-auto px-4 sm:px-6 py-6 text-center text-muted-foreground text-sm">
-        <p>&copy; {new Date().getFullYear()} BYD.Bio. All Rights Reserved.</p>
+        <p>&copy; <ClientYear /> BYD.Bio. All Rights Reserved.</p>
       </footer>
     </div>
   );
