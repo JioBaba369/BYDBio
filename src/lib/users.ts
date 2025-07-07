@@ -1,5 +1,5 @@
 
-import { collection, query, where, getDocs, limit, doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
+import { collection, query, where, getDocs, limit, doc, getDoc, setDoc, updateDoc, deleteDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { deleteUser, type User as FirebaseUser } from "firebase/auth";
 import type { Timestamp } from "firebase/firestore";
@@ -221,18 +221,19 @@ export async function searchUsers(searchText: string): Promise<User[]> {
 
 
 /**
- * Deletes a user's account from Firebase Authentication and their profile from Firestore.
- * This is a destructive action. For a production app, related content should be cleaned up
- * via a Cloud Function to ensure all associated data is removed.
+ * Deletes a user's account from Firebase Authentication.
+ * This is a destructive action. For a production app, all associated user data in Firestore
+ * (profile, posts, events, etc.) should be cleaned up via a Cloud Function that triggers
+ * on user deletion (`functions.auth.user().onDelete()`).
  * @param fbUser The Firebase User object to delete.
  */
 export const deleteUserAccount = async (fbUser: FirebaseUser) => {
-    // 1. Delete user's profile document from Firestore
-    const userDocRef = doc(db, 'users', fbUser.uid);
-    await deleteDoc(userDocRef);
-
-    // 2. Delete user from Firebase Auth
-    // This is the last step. It requires recent sign-in, which will be handled by Firebase Auth SDK.
-    // The SDK will throw an error if re-authentication is needed, which should be caught by the calling component.
+    // Deleting the user from Firebase Auth is the primary action.
+    // The SDK will throw an error if re-authentication is needed, which is caught by the calling component.
     await deleteUser(fbUser);
+
+    // IMPORTANT: In a production application, you should set up a Cloud Function
+    // triggered by `onDelete` to remove the user's document from the 'users' collection
+    // and all other content they have created. Deleting documents from the client-side
+    // after auth deletion is unreliable and not recommended.
 };
