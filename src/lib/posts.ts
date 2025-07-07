@@ -92,16 +92,23 @@ export const createPost = async (userId: string, data: Pick<Post, 'content' | 'i
   const postsRef = collection(db, 'posts');
   const keywords = [...new Set(data.content.toLowerCase().split(' ').filter(Boolean))];
 
-  const docRef = await addDoc(postsRef, {
-    ...data,
+  const postData: any = {
     authorId: userId,
+    content: data.content,
+    imageUrl: data.imageUrl,
     createdAt: serverTimestamp(),
     likes: 0,
     likedBy: [],
     comments: 0,
     repostCount: 0,
     searchableKeywords: keywords,
-  });
+  };
+
+  if (data.quotedPost) {
+    postData.quotedPost = data.quotedPost;
+  }
+
+  const docRef = await addDoc(postsRef, postData);
   const newPostDoc = await getDoc(docRef);
   return { id: newPostDoc.id, ...newPostDoc.data() } as Post;
 };
