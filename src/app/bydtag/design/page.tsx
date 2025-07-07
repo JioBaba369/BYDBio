@@ -30,7 +30,7 @@ const designSchema = z.object({
   cardColor: z.enum(['black', 'white', 'blue']).default('black'),
   backgroundImageUrl: z.string().optional(),
   textColor: z.enum(['light', 'dark']).default('light'),
-  layout: z.enum(['vertical', 'horizontal-left', 'horizontal-right']).default('vertical'),
+  layout: z.enum(['vertical', 'horizontal-left', 'horizontal-right', 'lanyard']).default('vertical'),
   logoUrl: z.string().optional(),
   name: z.string().min(1, 'Name is required'),
   title: z.string().optional(),
@@ -160,6 +160,34 @@ const TagPreview = ({ values, user, side }: { values: DesignFormValues; user: an
             <CardContentWrapper className="justify-center">
                 <TextElement textAlign="text-right" />
                 {AvatarElement}
+            </CardContentWrapper>
+        );
+    }
+    
+    if (layout === 'lanyard') {
+        return (
+            <CardContentWrapper className="justify-center items-center">
+                 {/* Hole punch indicator */}
+                <div className="absolute top-3 left-1/2 -translate-x-1/2 w-4 h-4 rounded-full bg-white/50 border border-white/80" />
+                <div className="flex items-center gap-6 w-full px-4">
+                    <div className="shrink-0">
+                        {values.logoUrl ? (
+                            <Image src={values.logoUrl} alt="Logo" width={96} height={96} className="h-24 w-24 rounded-full object-cover" data-ai-hint="logo" />
+                        ) : user ? (
+                            <Avatar className="h-24 w-24">
+                                <AvatarImage src={user.avatarUrl} alt={user.name} data-ai-hint="person portrait"/>
+                                <AvatarFallback className="text-4xl">{user.name.charAt(0)}</AvatarFallback>
+                            </Avatar>
+                        ) : (
+                            <div className="h-24 w-24 rounded-full bg-muted flex items-center justify-center" />
+                        )}
+                    </div>
+                    <div className="flex-grow space-y-1 text-left">
+                        <h3 className={cn("font-bold text-3xl truncate", textColor)}>{values.name || 'Your Name'}</h3>
+                        <p className={cn("text-lg truncate", subtitleColor)}>{values.title || 'Your Title'}</p>
+                        {values.company && <p className={cn("text-md truncate opacity-80", subtitleColor)}>{values.company}</p>}
+                    </div>
+                </div>
             </CardContentWrapper>
         );
     }
@@ -407,7 +435,7 @@ export default function BydTagDesignPage() {
                                           <RadioGroup
                                               onValueChange={field.onChange}
                                               defaultValue={field.value}
-                                              className="grid grid-cols-3 gap-2"
+                                              className="grid grid-cols-2 gap-2"
                                           >
                                               <FormItem>
                                                   <FormControl><RadioGroupItem value="vertical" className="sr-only" /></FormControl>
@@ -420,6 +448,10 @@ export default function BydTagDesignPage() {
                                               <FormItem>
                                                   <FormControl><RadioGroupItem value="horizontal-right" className="sr-only" /></FormControl>
                                                   <FormLabel className={cn("flex font-normal items-center justify-center rounded-md border p-4 cursor-pointer hover:bg-accent", field.value === 'horizontal-right' && 'border-primary ring-2 ring-primary')}>H (Right)</FormLabel>
+                                              </FormItem>
+                                               <FormItem>
+                                                  <FormControl><RadioGroupItem value="lanyard" className="sr-only" /></FormControl>
+                                                  <FormLabel className={cn("flex font-normal items-center justify-center rounded-md border p-4 cursor-pointer hover:bg-accent", field.value === 'lanyard' && 'border-primary ring-2 ring-primary')}>Lanyard</FormLabel>
                                               </FormItem>
                                           </RadioGroup>
                                       </FormControl>
