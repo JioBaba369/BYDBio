@@ -20,6 +20,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import QRCode from 'qrcode.react';
 import { saveAs } from 'file-saver';
 import { useToast } from '@/hooks/use-toast';
+import html2canvas from 'html2canvas';
 
 // Schema for the form
 const designSchema = z.object({
@@ -33,7 +34,7 @@ const designSchema = z.object({
 
 type DesignFormValues = z.infer<typeof designSchema>;
 
-const TagPreview = ({ values, user, side, qrCodeRef }: { values: DesignFormValues; user: any; side: 'front' | 'back', qrCodeRef: React.RefObject<HTMLDivElement> }) => {
+const TagPreview = ({ values, user, side }: { values: DesignFormValues; user: any; side: 'front' | 'back' }) => {
     const isDark = values.cardColor === 'black' || values.cardColor === 'blue';
     const cardBg = {
         black: 'bg-gray-900',
@@ -47,7 +48,7 @@ const TagPreview = ({ values, user, side, qrCodeRef }: { values: DesignFormValue
         return (
             <div className={cn("aspect-[85.6/53.98] w-full rounded-xl flex flex-col items-center justify-center p-4 transition-colors", cardBg)}>
                 {values.showQrCode && user ? (
-                    <div ref={qrCodeRef} className="bg-white p-2 rounded-lg">
+                    <div className="bg-white p-2 rounded-lg">
                          <QRCode
                             value={`https://byd.bio/u/${user.username}`}
                             size={100}
@@ -125,7 +126,7 @@ export default function BydTagDesignPage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [side, setSide] = useState<'front' | 'back'>('front');
-  const qrCodeRef = useRef<HTMLDivElement>(null);
+  const previewRef = useRef<HTMLDivElement>(null);
 
   const form = useForm<DesignFormValues>({
     resolver: zodResolver(designSchema),
@@ -163,27 +164,45 @@ export default function BydTagDesignPage() {
     });
   };
 
-  const handleDownloadQr = () => {
-    if (side === 'front' || !qrCodeRef.current) {
-        toast({
-            title: "Flip Card First",
-            description: "Please flip to the back of the card to download the QR code.",
-            variant: "destructive",
-        });
-        return;
+  const handleDownloadCardImage = () => {
+    if (!previewRef.current) {
+      toast({
+        title: 'Error Downloading',
+        description: 'Could not find the card preview element.',
+        variant: 'destructive',
+      });
+      return;
     }
-    const svgElement = qrCodeRef.current.querySelector('svg');
-    if (svgElement) {
-        const svgData = new XMLSerializer().serializeToString(svgElement);
-        const blob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
-        saveAs(blob, 'bydtag-qrcode.svg');
-    } else {
+
+    toast({
+        title: 'Generating Image...',
+        description: 'Please wait a moment.',
+    });
+
+    html2canvas(previewRef.current, { 
+      backgroundColor: null, // Makes background transparent for the capture
+      useCORS: true,
+      scale: 3 // Increase resolution for better quality
+    }).then((canvas) => {
+      canvas.toBlob((blob) => {
+        if (blob) {
+            saveAs(blob, `bydtag-${side}-design.png`);
+        } else {
+            toast({
+                title: 'Download Failed',
+                description: 'Could not create image blob.',
+                variant: 'destructive',
+            });
+        }
+      }, 'image/png');
+    }).catch(err => {
+        console.error("Error generating card image:", err);
         toast({
-            title: "Download Failed",
-            description: "Could not find the QR code to download.",
-            variant: "destructive",
+            title: 'Download Failed',
+            description: 'An unexpected error occurred while generating the image.',
+            variant: 'destructive',
         });
-    }
+    });
   };
 
   const colorOptions = [
@@ -213,15 +232,17 @@ export default function BydTagDesignPage() {
                             <CardTitle>Live Preview</CardTitle>
                         </CardHeader>
                         <CardContent>
-                             <TagPreview values={watchedValues} user={user} side={side} qrCodeRef={qrCodeRef} />
+                             <div ref={previewRef}>
+                                <TagPreview values={watchedValues} user={user} side={side} />
+                             </div>
                              <div className="grid grid-cols-2 gap-2 mt-4">
                                 <Button type="button" variant="outline" className="w-full" onClick={() => setSide(s => s === 'front' ? 'back' : 'front')}>
                                     <RefreshCw className="mr-2 h-4 w-4" />
                                     Flip Card
                                 </Button>
-                                <Button type="button" variant="outline" className="w-full" onClick={handleDownloadQr}>
+                                <Button type="button" variant="outline" className="w-full" onClick={handleDownloadCardImage}>
                                     <Download className="mr-2 h-4 w-4" />
-                                    Download QR
+                                    Download Card
                                 </Button>
                              </div>
                         </CardContent>
