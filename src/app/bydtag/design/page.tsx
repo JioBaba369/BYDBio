@@ -30,6 +30,7 @@ const designSchema = z.object({
   logoUrl: z.string().optional(),
   name: z.string().min(1, 'Name is required'),
   title: z.string().optional(),
+  company: z.string().optional(),
   showQrCode: z.boolean().default(true),
 });
 
@@ -90,9 +91,10 @@ const TagPreview = ({ values, user, side }: { values: DesignFormValues; user: an
     );
 
     const TextElement = ({textAlign = 'text-center'}) => (
-        <div className={textAlign}>
+        <div className={cn("flex-grow space-y-1", textAlign)}>
             <h3 className={cn("font-bold text-2xl truncate", textColor)}>{values.name || 'Your Name'}</h3>
             <p className={cn("text-md truncate", subtitleColor)}>{values.title || 'Your Title'}</p>
+            {values.company && <p className={cn("text-sm truncate opacity-80", subtitleColor)}>{values.company}</p>}
         </div>
     );
 
@@ -107,7 +109,7 @@ const TagPreview = ({ values, user, side }: { values: DesignFormValues; user: an
     
     if (layout === 'horizontal-left') {
         return (
-            <div className={cn("aspect-[85.6/53.98] w-full rounded-xl flex items-center justify-center p-6 transition-colors gap-6", cardBg)}>
+            <div className={cn("aspect-[85.6/53.98] w-full rounded-xl flex items-center p-6 transition-colors gap-6", cardBg)}>
                 {AvatarElement}
                 <TextElement textAlign="text-left" />
             </div>
@@ -116,7 +118,7 @@ const TagPreview = ({ values, user, side }: { values: DesignFormValues; user: an
 
     if (layout === 'horizontal-right') {
         return (
-            <div className={cn("aspect-[85.6/53.98] w-full rounded-xl flex items-center justify-center p-6 transition-colors gap-6", cardBg)}>
+            <div className={cn("aspect-[85.6/53.98] w-full rounded-xl flex items-center p-6 transition-colors gap-6", cardBg)}>
                 <TextElement textAlign="text-right" />
                 {AvatarElement}
             </div>
@@ -140,6 +142,7 @@ export default function BydTagDesignPage() {
       layout: 'vertical',
       name: '',
       title: '',
+      company: '',
       logoUrl: '',
       showQrCode: true,
     },
@@ -152,6 +155,7 @@ export default function BydTagDesignPage() {
         layout: form.getValues('layout'),
         name: user.name || '',
         title: user.businessCard?.title || '',
+        company: user.businessCard?.company || '',
         logoUrl: user.avatarUrl || '',
         showQrCode: form.getValues('showQrCode'),
       });
@@ -348,8 +352,19 @@ export default function BydTagDesignPage() {
                                 name="title"
                                 render={({ field }) => (
                                     <FormItem>
-                                    <FormLabel>Title/Company on Card (Optional)</FormLabel>
-                                    <FormControl><Input placeholder="CEO at Acme Inc." {...field} /></FormControl>
+                                    <FormLabel>Title on Card (Optional)</FormLabel>
+                                    <FormControl><Input placeholder="CEO" {...field} /></FormControl>
+                                    <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                             <FormField
+                                control={form.control}
+                                name="company"
+                                render={({ field }) => (
+                                    <FormItem>
+                                    <FormLabel>Company on Card (Optional)</FormLabel>
+                                    <FormControl><Input placeholder="Acme Inc." {...field} /></FormControl>
                                     <FormMessage />
                                     </FormItem>
                                 )}
