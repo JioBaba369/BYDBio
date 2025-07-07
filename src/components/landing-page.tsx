@@ -38,9 +38,9 @@ export function LandingPage() {
 
         {/* Visual Showcase */}
         <section className="container mx-auto px-4 sm:px-6">
-           <div className="relative rounded-xl border-8 border-foreground/5 bg-background/50 p-2 shadow-2xl overflow-hidden max-w-5xl mx-auto">
+           <div className="relative rounded-xl border bg-card p-2 shadow-2xl overflow-hidden max-w-5xl mx-auto">
              <Image 
-                src="https://images.unsplash.com/photo-1696041759885-16f488660bea?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxNHx8Q1JNLiUyMEN1c3RvbWVyJTIwbmV0d29yayUyMHJlbGF0aW9uc2hpcCUyMG1hbmFnZW1lbnQlMjBjb25jZXB0JTJDJTIwQnVzaW5lc3NtYW4lMjBob2xkJTIwb2YlMjBnbG9iYWwlMjBzdHJ1Y3R1cmUlMjBjdXN0b21lciUyMG5ldHdvcmslMjB0ZWNobm9sb2d5JTJDJTIwRGF0YSUyMGV4Y2hhbmdlcyUyMGRldmVsb3BtZW50LiUyMGN1c3RvbWVyJTIwc2VydmljZSUyQyUyMEludGVybmV0JTIwQnVzaW5lc3MlMjBzdHJhdGVneS58ZW58MHx8fHwxNzUxODAyNjY4fDA&ixlib=rb-4.1.0&q=80&w=1080" 
+                src="https://placehold.co/1200x600.png"
                 width={1200}
                 height={600}
                 alt="BYD.Bio Profile Example"
