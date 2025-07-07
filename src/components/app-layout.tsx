@@ -15,9 +15,10 @@ import { useToast } from '@/hooks/use-toast';
 import { usePathname, useRouter } from 'next/navigation';
 import { isAuthPath } from '@/lib/paths';
 import React from 'react';
+import { Skeleton } from './ui/skeleton';
 
 function Header() {
-    const { user } = useAuth();
+    const { user, loading } = useAuth();
     const { toast } = useToast();
     const router = useRouter();
     const pathname = usePathname();
@@ -39,6 +40,18 @@ function Header() {
           });
         }
     };
+    
+    if (loading) {
+        return (
+            <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background/80 backdrop-blur-sm px-4 md:px-6">
+                 <div className="md:hidden">
+                    <Skeleton className="h-7 w-7" />
+                </div>
+                <div className="w-full flex-1"></div>
+                <Skeleton className="h-9 w-32 rounded-full" />
+            </header>
+        )
+    }
 
     if (!user) return null;
 
@@ -109,24 +122,17 @@ function Header() {
 }
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
-    const { user, loading } = useAuth();
     const pathname = usePathname();
-
     const onAuthPage = isAuthPath(pathname);
-    const isLandingPage = pathname === '/' && !user && !loading;
-
-    if (isLandingPage) {
-        return <>{children}</>;
-    }
 
     return (
         <>
             <MainSidebar />
             <SidebarInset className="flex flex-col flex-1">
-                {!onAuthPage && user && <Header />}
-                <div className="p-4 sm:p-6 flex-1 overflow-y-auto relative">
+                {!onAuthPage && <Header />}
+                <main className="p-4 sm:p-6 flex-1 overflow-y-auto relative">
                     {children}
-                </div>
+                </main>
             </SidebarInset>
         </>
     );
