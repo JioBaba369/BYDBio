@@ -107,8 +107,17 @@ export default function SearchPage() {
             setIsLoading(false);
         }
     };
-    performSearch();
-  }, [queryParam, user, toast]);
+    
+    // We only want to re-run the search when the query parameter changes.
+    // The user object (used to filter out the current user) doesn't need to be
+    // a dependency, as we don't want to re-fetch all search results every time
+    // the user object changes (e.g., their 'following' list is updated).
+    // The authLoading check ensures we don't search before the user state is known.
+    if (!authLoading) {
+        performSearch();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [queryParam, authLoading]);
 
   const handleToggleFollow = async (targetUser: User) => {
     if (!user) return;
