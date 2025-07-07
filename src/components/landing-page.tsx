@@ -110,7 +110,7 @@ export function LandingPage() {
         <section className="py-20 sm:py-24">
             <div className="container mx-auto px-4 sm:px-6">
                 <div className="grid md:grid-cols-2 gap-12 items-center bg-muted/40 p-8 sm:p-12 rounded-2xl">
-                    <div>
+                    <div className="text-center md:text-left">
                         <Badge>New</Badge>
                         <h2 className="text-3xl sm:text-4xl font-headline font-bold mt-2">Introducing the BYDTAG</h2>
                         <p className="mt-4 text-muted-foreground text-lg">
