@@ -29,7 +29,7 @@ function Header() {
             title: 'Logged Out',
             description: 'You have been successfully logged out.',
           });
-          // The AuthProvider will handle the redirect.
+          router.push('/');
         } catch (error) {
            console.error("Logout error:", error);
            toast({
