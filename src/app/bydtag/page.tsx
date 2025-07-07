@@ -91,6 +91,7 @@ export default function BydTagPage() {
                 height={600}
                 alt="BYD BioTAG Product"
                 className="rounded-full opacity-20"
+                data-ai-hint="abstract geometric"
              />
           </div>
            <div className="absolute -top-48 -left-32">
@@ -100,6 +101,7 @@ export default function BydTagPage() {
                 height={600}
                 alt="BYD BioTAG Product"
                 className="rounded-full opacity-20"
+                data-ai-hint="abstract pattern"
              />
           </div>
         </section>
@@ -113,6 +115,7 @@ export default function BydTagPage() {
                         fill
                         alt="A hand holding a BYD BioTAG to a phone"
                         className="object-contain"
+                        data-ai-hint="nfc payment"
                    />
                 </div>
                 <div className="space-y-8">
@@ -185,7 +188,7 @@ export default function BydTagPage() {
                             <CardContent className="p-6">
                                 <div className="flex items-center gap-4 mb-4">
                                     <Avatar className="h-12 w-12">
-                                        <AvatarImage src={testimonial.avatar} />
+                                        <AvatarImage src={testimonial.avatar} data-ai-hint="person portrait" />
                                         <AvatarFallback>{testimonial.name.charAt(0)}</AvatarFallback>
                                     </Avatar>
                                     <div>
@@ -216,6 +219,7 @@ export default function BydTagPage() {
                         fill
                         alt="BYD BioTAG Product Shot"
                         className="object-contain"
+                        data-ai-hint="product design"
                    />
                 </div>
                 <div className="text-center md:text-left">
