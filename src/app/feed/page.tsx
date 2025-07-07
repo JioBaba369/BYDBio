@@ -332,7 +332,7 @@ export default function FeedPage() {
             onRepost={handleRepost} 
             onQuote={handleQuote} 
             isLoading={loadingAction?.postId === item.id}
-            loadingAction={loadingAction?.postId === item.id ? loadingAction.action : null}
+            loadingAction={loadingAction && loadingAction.postId === item.id ? loadingAction.action : null}
             />)}
         </div>;
     }
