@@ -87,9 +87,9 @@ export const getPostsByUser = async (userId: string): Promise<Post[]> => {
 };
 
 // Function to create a new post
-export const createPost = async (userId: string, data: Pick<Post, 'content' | 'imageUrl'> & { quotedPost?: EmbeddedPostInfo }) => {
+export const createPost = async (userId: string, data: Pick<Post, 'content' | 'imageUrl'> & { quotedPost?: EmbeddedPostInfo }): Promise<Post> => {
   const postsRef = collection(db, 'posts');
-  await addDoc(postsRef, {
+  const docRef = await addDoc(postsRef, {
     ...data,
     authorId: userId,
     createdAt: serverTimestamp(),
@@ -98,6 +98,8 @@ export const createPost = async (userId: string, data: Pick<Post, 'content' | 'i
     comments: 0,
     repostCount: 0,
   });
+  const newPostDoc = await getDoc(docRef);
+  return { id: newPostDoc.id, ...newPostDoc.data() } as Post;
 };
 
 // Function to delete a post
@@ -142,7 +144,7 @@ export const toggleLikePost = async (postId: string, userId: string) => {
 }
 
 // A repost is a new post that links to an original post.
-export const repostPost = async (originalPostId: string, reposterId: string) => {
+export const repostPost = async (originalPostId: string, reposterId: string): Promise<Post> => {
     const postRef = doc(db, 'posts', originalPostId);
     const postDoc = await getDoc(postRef);
 
@@ -172,7 +174,7 @@ export const repostPost = async (originalPostId: string, reposterId: string) => 
 
     // 2. Create the new post document for the reposter
     const newPostRef = doc(collection(db, 'posts')); // auto-generate ID
-    batch.set(newPostRef, {
+    const newPostData = {
         authorId: reposterId,
         content: '', // Reposts have no original content of their own
         imageUrl: null,
@@ -182,9 +184,13 @@ export const repostPost = async (originalPostId: string, reposterId: string) => 
         likedBy: [],
         comments: 0,
         repostCount: 0,
-    });
+    };
+    batch.set(newPostRef, newPostData);
     
     await batch.commit();
+
+    const newDoc = await getDoc(newPostRef);
+    return { id: newDoc.id, ...newDoc.data() } as Post;
 };
 
 export const populatePostAuthors = async (posts: Post[]): Promise<PostWithAuthor[]> => {

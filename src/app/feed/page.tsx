@@ -12,7 +12,7 @@ import { useAuth } from "@/components/auth-provider"
 import { useToast } from "@/hooks/use-toast"
 import Link from "next/link"
 import ImageCropper from "@/components/image-cropper"
-import { getFeedPosts, createPost, toggleLikePost, deletePost, getDiscoveryPosts, type PostWithAuthor, repostPost, type EmbeddedPostInfo, type Post } from "@/lib/posts"
+import { getFeedPosts, createPost, toggleLikePost, deletePost, getDiscoveryPosts, type PostWithAuthor, repostPost, type EmbeddedPostInfo, type Post, type EmbeddedPostInfoWithAuthor } from "@/lib/posts"
 import { Skeleton } from "@/components/ui/skeleton"
 import { uploadImage } from "@/lib/storage"
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog"
@@ -210,10 +210,24 @@ export default function FeedPage() {
             };
         }
 
-        const newPostData = await createPost(user.uid, { content: postContent, imageUrl: imageUrlToPost, quotedPost: quotedPostData });
+        const newPost = await createPost(user.uid, { content: postContent, imageUrl: imageUrlToPost, quotedPost: quotedPostData });
+        
+        const newPostForFeed: FeedItem = {
+            ...newPost,
+            author: user,
+            createdAt: (newPost.createdAt as Timestamp).toDate().toISOString(),
+            isLiked: false
+        };
+
+        if (newPost.quotedPost && postToQuote) {
+            newPostForFeed.quotedPost = {
+                ...newPost.quotedPost,
+                author: postToQuote.author
+            };
+        }
         
         // Optimistic update
-        setFollowingFeed(prev => [{ ...newPostData, isLiked: false }, ...prev]);
+        setFollowingFeed(prev => [newPostForFeed, ...prev]);
         
         setPostContent('');
         setCroppedImageUrl(null);
@@ -276,9 +290,36 @@ export default function FeedPage() {
     if (!user || loadingAction) return;
 
     setLoadingAction({ postId, action: 'repost' });
+
+    const originalPost = [...followingFeed, ...discoveryFeed].find(p => p.id === postId);
+    if (!originalPost) {
+        toast({ title: "Error", description: "Could not find the original post to repost.", variant: "destructive" });
+        setLoadingAction(null);
+        return;
+    }
+
     try {
-      const newPostData = await repostPost(postId, user.uid);
-      setFollowingFeed(prev => [{ ...newPostData, isLiked: false }, ...prev]);
+      const newPost = await repostPost(postId, user.uid);
+      
+      const populatedRepostedPost: EmbeddedPostInfoWithAuthor = {
+          ...newPost.repostedPost!,
+          author: {
+              uid: originalPost.author.uid,
+              name: originalPost.author.name,
+              username: originalPost.author.username,
+              avatarUrl: originalPost.author.avatarUrl,
+          }
+      };
+      
+      const newPostForFeed: FeedItem = {
+        ...newPost,
+        author: user,
+        createdAt: (newPost.createdAt as Timestamp).toDate().toISOString(),
+        isLiked: false,
+        repostedPost: populatedRepostedPost,
+      };
+
+      setFollowingFeed(prev => [newPostForFeed, ...prev]);
       toast({ title: "Reposted!" });
     } catch (error: any) {
       console.error("Error reposting:", error);
