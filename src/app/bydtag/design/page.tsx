@@ -143,15 +143,16 @@ const TagPreview = ({ values, user, side }: { values: DesignFormValues; user: an
     
     // Vertical Card (Default)
     return (
-        <div className={cn("aspect-[53.98/85.6] w-full rounded-xl transition-colors relative p-0 overflow-hidden flex flex-col", cardBgClass)} style={cardStyle}>
+        <div className={cn("aspect-[53.98/85.6] w-full rounded-xl transition-colors relative flex flex-col justify-end overflow-hidden", cardBgClass)} style={cardStyle}>
             {values.backgroundImageUrl && <div className="absolute inset-0 bg-black/40 rounded-xl" />}
-            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-2/3 z-20">
-                {renderAvatar("h-20 w-20 shadow-lg border-4 border-background", "text-3xl")}
+            
+            <div className="absolute top-[45%] left-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
+                 {renderAvatar("h-20 w-20 shadow-lg border-4 border-background", "text-3xl")}
             </div>
-            <div className="flex-grow" />
-            <div className="flex-shrink-0 h-2/5 flex flex-col items-center justify-center text-center p-4">
-                <div className="relative z-10 space-y-1">
-                    <h3 className={cn("font-bold text-xl", textColor)}>{values.name || 'Your Name'}</h3>
+
+            <div className="pt-12 pb-4 px-4 text-center">
+                 <div className="relative z-0 space-y-1">
+                    <h3 className={cn("font-bold text-xl leading-tight", textColor)}>{values.name || 'Your Name'}</h3>
                     <p className={cn("text-sm", subtitleColor)}>{values.title || 'Your Title'}</p>
                     {values.company && <p className={cn("text-xs opacity-90", subtitleColor)}>{values.company}</p>}
                 </div>
