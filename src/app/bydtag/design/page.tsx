@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, forwardRef } from 'react';
 import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -40,7 +40,7 @@ const designSchema = z.object({
 
 type DesignFormValues = z.infer<typeof designSchema>;
 
-const TagPreview = ({ values, user, side }: { values: DesignFormValues; user: any; side: 'front' | 'back' }) => {
+const TagPreview = forwardRef<HTMLDivElement, { values: DesignFormValues; user: any; side: 'front' | 'back' }>(({ values, user, side }, ref) => {
     const textColor = values.textColor === 'light' ? 'text-white' : 'text-gray-900';
     const subtitleColor = values.textColor === 'light' ? 'text-gray-300' : 'text-gray-500';
     const layout = values.layout || 'vertical';
@@ -59,13 +59,13 @@ const TagPreview = ({ values, user, side }: { values: DesignFormValues; user: an
     
     // Determine aspect ratio based on layout
     const isPortrait = layout === 'vertical';
-    const aspectRatioClass = isPortrait ? 'aspect-[53.98/85.6]' : 'aspect-[85.6/53.98]';
+    const aspectRatioClass = isPortrait ? 'aspect-[53.98/85.60]' : 'aspect-[85.60/53.98]';
 
     // BACK OF CARD
     if (side === 'back') {
         const backCardBg = cardBgClass || (values.textColor === 'light' ? 'bg-gray-900' : 'bg-white');
         return (
-            <div className={cn("w-full rounded-xl flex flex-col items-center justify-between p-4 transition-colors relative", aspectRatioClass, backCardBg)} style={cardStyle}>
+            <div ref={ref} className={cn("w-full rounded-xl flex flex-col items-center justify-between p-4 transition-colors relative", aspectRatioClass, backCardBg)} style={cardStyle}>
                  {values.backgroundImageUrl && <div className="absolute inset-0 bg-black/60 rounded-xl" />}
                  <div className="relative z-10 w-full flex flex-col items-center justify-between h-full">
                     <Logo className={cn("text-lg", textColor)} />
@@ -116,7 +116,7 @@ const TagPreview = ({ values, user, side }: { values: DesignFormValues; user: an
         );
 
         return (
-             <div className={cn("w-full rounded-xl p-6 transition-colors relative flex", aspectRatioClass, cardBgClass)} style={cardStyle}>
+             <div ref={ref} className={cn("w-full rounded-xl p-6 transition-colors relative flex", aspectRatioClass, cardBgClass)} style={cardStyle}>
                 {values.backgroundImageUrl && <div className="absolute inset-0 bg-black/50 rounded-xl" />}
                 <div className={cn("relative z-10 flex w-full items-center gap-5", layout === 'horizontal-right' ? 'flex-row-reverse' : '')}>
                     {renderAvatar("h-20 w-20", "text-3xl")}
@@ -129,7 +129,7 @@ const TagPreview = ({ values, user, side }: { values: DesignFormValues; user: an
     // Lanyard Card
     if (layout === 'lanyard') {
          return (
-            <div className={cn("w-full rounded-xl p-8 transition-colors relative flex items-center gap-8", aspectRatioClass, cardBgClass)} style={cardStyle}>
+            <div ref={ref} className={cn("w-full rounded-xl p-8 transition-colors relative flex items-center gap-8", aspectRatioClass, cardBgClass)} style={cardStyle}>
                 {values.backgroundImageUrl && <div className="absolute inset-0 bg-black/50 rounded-xl" />}
                 <div className="absolute top-4 left-1/2 -translate-x-1/2 w-5 h-5 rounded-full bg-white/50 border-2 border-white/80" />
                 <div className="relative z-10 flex w-full items-center gap-8">
@@ -146,7 +146,7 @@ const TagPreview = ({ values, user, side }: { values: DesignFormValues; user: an
     
     // Vertical Card (Default)
     return (
-        <div className={cn("w-full rounded-xl p-8 transition-colors relative flex", aspectRatioClass, cardBgClass)} style={cardStyle}>
+        <div ref={ref} className={cn("w-full rounded-xl p-8 transition-colors relative flex", aspectRatioClass, cardBgClass)} style={cardStyle}>
             {values.backgroundImageUrl && <div className="absolute inset-0 bg-black/50 rounded-xl" />}
             <div className="relative z-10 flex w-full flex-col items-center justify-center text-center space-y-4">
                 {renderAvatar("h-28 w-28", "text-5xl")}
@@ -158,7 +158,8 @@ const TagPreview = ({ values, user, side }: { values: DesignFormValues; user: an
             </div>
         </div>
     );
-};
+});
+TagPreview.displayName = 'TagPreview';
 
 
 export default function BydTagDesignPage() {
@@ -306,9 +307,11 @@ export default function BydTagDesignPage() {
                               <CardTitle>Live Preview</CardTitle>
                           </CardHeader>
                           <CardContent>
-                              <div ref={previewRef}>
-                                  <TagPreview values={watchedValues} user={user} side={side} />
-                              </div>
+                                <div className="flex items-center justify-center rounded-lg bg-muted/20 p-4 min-h-[520px]">
+                                    <div className="w-full max-w-[320px]">
+                                        <TagPreview ref={previewRef} values={watchedValues} user={user} side={side} />
+                                    </div>
+                                </div>
                               <div className="grid grid-cols-2 gap-2 mt-4">
                                   <Button type="button" variant="outline" className="w-full" onClick={() => setSide(s => s === 'front' ? 'back' : 'front')}>
                                       <RefreshCw className="mr-2 h-4 w-4" />
