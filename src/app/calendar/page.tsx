@@ -305,7 +305,7 @@ export default function CalendarPage() {
         itemName={selectedItem?.type.toLowerCase() ?? 'item'}
         itemDescription={selectedItem?.isExternal ? "This will only remove it from your calendar, not delete the event itself." : `This action cannot be undone. To confirm, please type "DELETE" below.`}
         confirmationText={selectedItem?.isExternal ? undefined : "DELETE"}
-        confirmationLabel={`This will permanently delete this ${selectedItem?.type.toLowerCase()}.`}
+        confirmationLabel={selectedItem?.isExternal ? `Remove "${selectedItem.title}" from your calendar?` : `This will permanently delete this ${selectedItem?.type.toLowerCase()}.`}
       />
       <div className="space-y-6">
         <div className="flex items-center justify-between">

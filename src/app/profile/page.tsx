@@ -289,8 +289,7 @@ export default function ProfilePage() {
       });
       setCroppedImageUrl(user.avatarUrl || null);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
+  }, [user, publicProfileForm, businessCardForm, linksForm]);
 
   const watchedPublicProfile = publicProfileForm.watch();
   const watchedBusinessCard = businessCardForm.watch();
