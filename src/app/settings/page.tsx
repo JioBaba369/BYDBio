@@ -61,6 +61,13 @@ const areSettingsEqual = (a: NotificationSettings | null, b: NotificationSetting
     );
 };
 
+const DEFAULT_NOTIFICATION_SETTINGS: NotificationSettings = {
+    newFollowers: true,
+    newLikes: true,
+    eventRsvps: true,
+    offersAndUpdates: true,
+};
+
 
 export default function SettingsPage() {
     const { user, firebaseUser, loading } = useAuth();
@@ -82,8 +89,9 @@ export default function SettingsPage() {
     
     useEffect(() => {
         if (user) {
-            setNotificationSettings(user.notificationSettings);
-            setInitialNotificationSettings(user.notificationSettings);
+            const currentSettings = user.notificationSettings || DEFAULT_NOTIFICATION_SETTINGS;
+            setNotificationSettings(currentSettings);
+            setInitialNotificationSettings(currentSettings);
         }
     }, [user]);
 
