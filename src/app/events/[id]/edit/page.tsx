@@ -4,7 +4,7 @@
 import { EventForm, EventFormValues } from "@/components/forms/event-form";
 import { useToast } from "@/hooks/use-toast";
 import { useParams, useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { getEvent, updateEvent, type Event } from "@/lib/events";
 import { uploadImage } from "@/lib/storage";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -69,6 +69,18 @@ export default function EditEventPage() {
                 setIsLoading(false);
             });
     }, [eventId, user, router, toast]);
+
+    const formDefaultValues = useMemo(() => {
+        if (!eventToEdit) {
+            return undefined;
+        }
+        // Ensure date objects are correctly typed for the form
+        return {
+            ...eventToEdit,
+            startDate: eventToEdit.startDate ? new Date(eventToEdit.startDate) : new Date(),
+            endDate: eventToEdit.endDate ? new Date(eventToEdit.endDate) : null,
+        };
+    }, [eventToEdit]);
     
     const onSubmit = async (data: EventFormValues) => {
         if (!user) {
@@ -120,7 +132,7 @@ export default function EditEventPage() {
                     </Link>
                 </Button>
             </div>
-            <EventForm defaultValues={eventToEdit} onSubmit={onSubmit} isSaving={isSaving} />
+            <EventForm defaultValues={formDefaultValues} onSubmit={onSubmit} isSaving={isSaving} />
         </div>
     )
 }
