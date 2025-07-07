@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useAuth } from '@/components/auth-provider';
-import { ArrowRight, ArrowLeft, RefreshCw, Download } from 'lucide-react';
+import { ArrowRight, ArrowLeft, RefreshCw, Download, Upload } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
@@ -22,10 +22,14 @@ import { saveAs } from 'file-saver';
 import { useToast } from '@/hooks/use-toast';
 import html2canvas from 'html2canvas';
 import { Logo } from '@/components/logo';
+import ImageCropper from '@/components/image-cropper';
+import { Label } from '@/components/ui/label';
 
 // Schema for the form
 const designSchema = z.object({
   cardColor: z.enum(['black', 'white', 'blue']).default('black'),
+  backgroundImageUrl: z.string().optional(),
+  textColor: z.enum(['light', 'dark']).default('light'),
   layout: z.enum(['vertical', 'horizontal-left', 'horizontal-right']).default('vertical'),
   logoUrl: z.string().optional(),
   name: z.string().min(1, 'Name is required'),
@@ -37,19 +41,37 @@ const designSchema = z.object({
 type DesignFormValues = z.infer<typeof designSchema>;
 
 const TagPreview = ({ values, user, side }: { values: DesignFormValues; user: any; side: 'front' | 'back' }) => {
-    const isDark = values.cardColor === 'black' || values.cardColor === 'blue';
-    const cardBg = {
+    // New text color logic based on form value
+    const textColor = values.textColor === 'light' ? 'text-white' : 'text-gray-900';
+    const subtitleColor = values.textColor === 'light' ? 'text-gray-300' : 'text-gray-500';
+
+    // New background logic
+    const cardBgClass = values.backgroundImageUrl ? '' : {
         black: 'bg-gray-900',
         white: 'bg-white',
         blue: 'bg-blue-600',
     }[values.cardColor];
-    const textColor = isDark ? 'text-white' : 'text-gray-900';
-    const subtitleColor = isDark ? 'text-gray-300' : 'text-gray-500';
+
+    const cardStyle = values.backgroundImageUrl ? {
+        backgroundImage: `url(${values.backgroundImageUrl})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+    } : {};
+
 
     if (side === 'back') {
+        const isDarkBack = values.cardColor === 'black' || values.cardColor === 'blue';
+        const backCardBg = {
+            black: 'bg-gray-900',
+            white: 'bg-white',
+            blue: 'bg-blue-600',
+        }[values.cardColor];
+        const backTextColor = isDarkBack ? 'text-white' : 'text-gray-900';
+        const backSubtitleColor = isDarkBack ? 'text-gray-300' : 'text-gray-500';
+        
         return (
-            <div className={cn("aspect-[85.6/53.98] w-full rounded-xl flex flex-col items-center justify-between p-4 transition-colors", cardBg)}>
-                <Logo className={cn("text-lg", textColor)} />
+            <div className={cn("aspect-[85.6/53.98] w-full rounded-xl flex flex-col items-center justify-between p-4 transition-colors", backCardBg)}>
+                <Logo className={cn("text-lg", backTextColor)} />
                 {values.showQrCode && user ? (
                     <div className="flex flex-col items-center gap-2">
                         <div className="bg-white p-2 rounded-lg shadow-md">
@@ -61,14 +83,14 @@ const TagPreview = ({ values, user, side }: { values: DesignFormValues; user: an
                                 renderAs="svg"
                             />
                         </div>
-                        <p className={cn("text-xs font-mono", subtitleColor)}>{`byd.bio/u/${user.username}`}</p>
+                        <p className={cn("text-xs font-mono", backSubtitleColor)}>{`byd.bio/u/${user.username}`}</p>
                     </div>
                 ) : (
                     <div className={cn("text-center", textColor)}>
                         {/* Empty placeholder */}
                     </div>
                 )}
-                 <p className={cn("text-xs font-semibold", subtitleColor)}>Tap or Scan to Connect</p>
+                 <p className={cn("text-xs font-semibold", backSubtitleColor)}>Tap or Scan to Connect</p>
             </div>
         )
     }
@@ -98,30 +120,47 @@ const TagPreview = ({ values, user, side }: { values: DesignFormValues; user: an
         </div>
     );
 
+    const mainContainerClasses = cn(
+        "aspect-[85.6/53.98] w-full rounded-xl p-6 transition-colors relative",
+        cardBgClass
+    );
+
+    const CardContentWrapper = ({ children, className }: { children: React.ReactNode, className?: string }) => (
+        <div className={cn(mainContainerClasses, className)} style={cardStyle}>
+            {values.backgroundImageUrl && <div className="absolute inset-0 bg-black/30 rounded-xl" />}
+            <div className="relative z-10 w-full h-full flex items-center gap-6">
+                {children}
+            </div>
+        </div>
+    );
+
+
     if (layout === 'vertical') {
         return (
-            <div className={cn("aspect-[85.6/53.98] w-full rounded-xl flex flex-col items-center justify-center p-6 transition-colors gap-4", cardBg)}>
-                {AvatarElement}
-                <TextElement />
-            </div>
+             <CardContentWrapper className="flex items-center justify-center">
+                 <div className="flex flex-col items-center justify-center gap-4">
+                    {AvatarElement}
+                    <TextElement />
+                 </div>
+            </CardContentWrapper>
         );
     }
     
     if (layout === 'horizontal-left') {
         return (
-            <div className={cn("aspect-[85.6/53.98] w-full rounded-xl flex items-center p-6 transition-colors gap-6", cardBg)}>
+             <CardContentWrapper className="justify-center">
                 {AvatarElement}
                 <TextElement textAlign="text-left" />
-            </div>
+            </CardContentWrapper>
         );
     }
 
     if (layout === 'horizontal-right') {
         return (
-            <div className={cn("aspect-[85.6/53.98] w-full rounded-xl flex items-center p-6 transition-colors gap-6", cardBg)}>
+            <CardContentWrapper className="justify-center">
                 <TextElement textAlign="text-right" />
                 {AvatarElement}
-            </div>
+            </CardContentWrapper>
         );
     }
 
@@ -134,11 +173,16 @@ export default function BydTagDesignPage() {
   const { toast } = useToast();
   const [side, setSide] = useState<'front' | 'back'>('front');
   const previewRef = useRef<HTMLDivElement>(null);
+  const [bgImageToCrop, setBgImageToCrop] = useState<string | null>(null);
+  const [isBgCropperOpen, setIsBgCropperOpen] = useState(false);
+  const bgFileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<DesignFormValues>({
     resolver: zodResolver(designSchema),
     defaultValues: {
       cardColor: 'black',
+      backgroundImageUrl: '',
+      textColor: 'light',
       layout: 'vertical',
       name: '',
       title: '',
@@ -151,16 +195,32 @@ export default function BydTagDesignPage() {
   useEffect(() => {
     if (user) {
       form.reset({
-        cardColor: form.getValues('cardColor'),
-        layout: form.getValues('layout'),
+        ...form.getValues(),
         name: user.name || '',
         title: user.businessCard?.title || '',
         company: user.businessCard?.company || '',
         logoUrl: user.avatarUrl || '',
-        showQrCode: form.getValues('showQrCode'),
       });
     }
   }, [user, form]);
+  
+  const onBgFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+        const file = e.target.files[0];
+        const reader = new FileReader();
+        reader.addEventListener('load', () => {
+            setBgImageToCrop(reader.result as string);
+            setIsBgCropperOpen(true);
+        });
+        reader.readAsDataURL(file);
+        e.target.value = '';
+    }
+  };
+
+  const handleBgCropComplete = (url: string) => {
+    form.setValue('backgroundImageUrl', url, { shouldDirty: true });
+    setIsBgCropperOpen(false);
+  };
 
   const watchedValues = form.watch();
 
@@ -221,182 +281,207 @@ export default function BydTagDesignPage() {
   ];
 
   return (
-    <div className="space-y-6">
-        <div>
-            <Button asChild variant="ghost" size="sm" className="mb-4 -ml-4">
-                <Link href="/bydtag">
-                    <ArrowLeft className="mr-2 h-4 w-4" />
-                    Back to BYDTAG Info
-                </Link>
-            </Button>
-            <h1 className="text-2xl sm:text-3xl font-bold font-headline">Design Your BYDTAG</h1>
-            <p className="text-muted-foreground">Customize your physical NFC tag to match your brand.</p>
-        </div>
-        <FormProvider {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="grid md:grid-cols-2 gap-8 items-start">
-                 {/* Preview Column */}
-                <div className="space-y-4 md:sticky top-20">
-                     <Card>
-                        <CardHeader>
-                            <CardTitle>Live Preview</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                             <div ref={previewRef}>
-                                <TagPreview values={watchedValues} user={user} side={side} />
-                             </div>
-                             <div className="grid grid-cols-2 gap-2 mt-4">
-                                <Button type="button" variant="outline" className="w-full" onClick={() => setSide(s => s === 'front' ? 'back' : 'front')}>
-                                    <RefreshCw className="mr-2 h-4 w-4" />
-                                    Flip Card
-                                </Button>
-                                <Button type="button" variant="outline" className="w-full" onClick={handleDownloadCardImage}>
-                                    <Download className="mr-2 h-4 w-4" />
-                                    Download Card
-                                </Button>
-                             </div>
-                        </CardContent>
-                    </Card>
-                </div>
+    <>
+      <ImageCropper
+        imageSrc={bgImageToCrop}
+        open={isBgCropperOpen}
+        onOpenChange={setIsBgCropperOpen}
+        onCropComplete={handleBgCropComplete}
+        aspectRatio={85.6 / 53.98}
+        isRound={false}
+      />
+      <div className="space-y-6">
+          <div>
+              <Button asChild variant="ghost" size="sm" className="mb-4 -ml-4">
+                  <Link href="/bydtag">
+                      <ArrowLeft className="mr-2 h-4 w-4" />
+                      Back to BYDTAG Info
+                  </Link>
+              </Button>
+              <h1 className="text-2xl sm:text-3xl font-bold font-headline">Design Your BYDTAG</h1>
+              <p className="text-muted-foreground">Customize your physical NFC tag to match your brand.</p>
+          </div>
+          <FormProvider {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="grid md:grid-cols-2 gap-8 items-start">
+                  {/* Preview Column */}
+                  <div className="space-y-4 md:sticky top-20">
+                      <Card>
+                          <CardHeader>
+                              <CardTitle>Live Preview</CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                              <div ref={previewRef}>
+                                  <TagPreview values={watchedValues} user={user} side={side} />
+                              </div>
+                              <div className="grid grid-cols-2 gap-2 mt-4">
+                                  <Button type="button" variant="outline" className="w-full" onClick={() => setSide(s => s === 'front' ? 'back' : 'front')}>
+                                      <RefreshCw className="mr-2 h-4 w-4" />
+                                      Flip Card
+                                  </Button>
+                                  <Button type="button" variant="outline" className="w-full" onClick={handleDownloadCardImage}>
+                                      <Download className="mr-2 h-4 w-4" />
+                                      Download Card
+                                  </Button>
+                              </div>
+                          </CardContent>
+                      </Card>
+                  </div>
 
-                {/* Form Column */}
-                <div className="space-y-6">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Customization</CardTitle>
-                            <CardDescription>Changes will be reflected in the live preview.</CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-6">
-                             <FormField
-                                control={form.control}
-                                name="cardColor"
-                                render={({ field }) => (
-                                    <FormItem>
-                                    <FormLabel>Card Color</FormLabel>
-                                    <FormControl>
-                                        <RadioGroup
-                                            onValueChange={field.onChange}
-                                            defaultValue={field.value}
-                                            className="flex gap-4"
-                                        >
-                                            {colorOptions.map(opt => (
-                                                <FormItem key={opt.value}>
-                                                    <FormControl>
-                                                        <RadioGroupItem value={opt.value} className="sr-only" />
-                                                    </FormControl>
-                                                    <FormLabel>
-                                                        <div className={cn("h-10 w-10 rounded-full cursor-pointer ring-2 ring-transparent ring-offset-2 ring-offset-background", opt.className, field.value === opt.value && 'ring-primary')} />
-                                                    </FormLabel>
-                                                </FormItem>
-                                            ))}
-                                        </RadioGroup>
-                                    </FormControl>
-                                    <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                            <FormField
-                                control={form.control}
-                                name="layout"
-                                render={({ field }) => (
-                                    <FormItem>
-                                    <FormLabel>Card Layout</FormLabel>
-                                    <FormControl>
-                                        <RadioGroup
-                                            onValueChange={field.onChange}
-                                            defaultValue={field.value}
-                                            className="grid grid-cols-3 gap-2"
-                                        >
-                                            <FormItem>
-                                                <FormControl>
-                                                    <RadioGroupItem value="vertical" className="sr-only" />
-                                                </FormControl>
-                                                <FormLabel className={cn("flex font-normal items-center justify-center rounded-md border p-4 cursor-pointer hover:bg-accent", field.value === 'vertical' && 'border-primary ring-2 ring-primary')}>
-                                                    Vertical
-                                                </FormLabel>
-                                            </FormItem>
-                                            <FormItem>
-                                                <FormControl>
-                                                    <RadioGroupItem value="horizontal-left" className="sr-only" />
-                                                </FormControl>
-                                                <FormLabel className={cn("flex font-normal items-center justify-center rounded-md border p-4 cursor-pointer hover:bg-accent", field.value === 'horizontal-left' && 'border-primary ring-2 ring-primary')}>
-                                                    H (Left)
-                                                </FormLabel>
-                                            </FormItem>
-                                            <FormItem>
-                                                <FormControl>
-                                                    <RadioGroupItem value="horizontal-right" className="sr-only" />
-                                                </FormControl>
-                                                <FormLabel className={cn("flex font-normal items-center justify-center rounded-md border p-4 cursor-pointer hover:bg-accent", field.value === 'horizontal-right' && 'border-primary ring-2 ring-primary')}>
-                                                    H (Right)
-                                                </FormLabel>
-                                            </FormItem>
-                                        </RadioGroup>
-                                    </FormControl>
-                                    <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                            <FormField
-                                control={form.control}
-                                name="name"
-                                render={({ field }) => (
-                                    <FormItem>
-                                    <FormLabel>Name on Card</FormLabel>
-                                    <FormControl><Input placeholder="Jane Doe" {...field} /></FormControl>
-                                    <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                             <FormField
-                                control={form.control}
-                                name="title"
-                                render={({ field }) => (
-                                    <FormItem>
-                                    <FormLabel>Title on Card (Optional)</FormLabel>
-                                    <FormControl><Input placeholder="CEO" {...field} /></FormControl>
-                                    <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                             <FormField
-                                control={form.control}
-                                name="company"
-                                render={({ field }) => (
-                                    <FormItem>
-                                    <FormLabel>Company on Card (Optional)</FormLabel>
-                                    <FormControl><Input placeholder="Acme Inc." {...field} /></FormControl>
-                                    <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                             <FormField
-                                control={form.control}
-                                name="showQrCode"
-                                render={({ field }) => (
-                                    <FormItem className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
-                                    <div className="space-y-0.5">
-                                        <FormLabel>Show QR Code on Back</FormLabel>
-                                        <FormDescription>
-                                        A QR code backup ensures compatibility with older phones.
-                                        </FormDescription>
-                                    </div>
-                                    <FormControl>
-                                        <Switch
-                                        checked={field.value}
-                                        onCheckedChange={field.onChange}
-                                        />
-                                    </FormControl>
-                                    </FormItem>
-                                )}
-                            />
-                        </CardContent>
-                    </Card>
-                    <Button type="submit" size="lg" className="w-full">
-                        Proceed to Order <ArrowRight className="ml-2 h-5 w-5" />
-                    </Button>
-                </div>
-            </form>
-        </FormProvider>
-    </div>
+                  {/* Form Column */}
+                  <div className="space-y-6">
+                      <Card>
+                          <CardHeader>
+                              <CardTitle>Customization</CardTitle>
+                              <CardDescription>Changes will be reflected in the live preview.</CardDescription>
+                          </CardHeader>
+                          <CardContent className="space-y-6">
+                              <FormField
+                                  control={form.control}
+                                  name="cardColor"
+                                  render={({ field }) => (
+                                      <FormItem>
+                                      <FormLabel>Solid Color Background</FormLabel>
+                                      <FormControl>
+                                          <RadioGroup
+                                              onValueChange={(value) => {
+                                                  field.onChange(value);
+                                                  form.setValue('backgroundImageUrl', ''); // Clear background image
+                                                  form.setValue('textColor', (value === 'white' ? 'dark' : 'light'));
+                                              }}
+                                              defaultValue={field.value}
+                                              className="flex gap-4"
+                                          >
+                                              {colorOptions.map(opt => (
+                                                  <FormItem key={opt.value}>
+                                                      <FormControl>
+                                                          <RadioGroupItem value={opt.value} className="sr-only" />
+                                                      </FormControl>
+                                                      <FormLabel>
+                                                          <div className={cn("h-10 w-10 rounded-full cursor-pointer ring-2 ring-transparent ring-offset-2 ring-offset-background", opt.className, field.value === opt.value && !watchedValues.backgroundImageUrl && 'ring-primary')} />
+                                                      </FormLabel>
+                                                  </FormItem>
+                                              ))}
+                                          </RadioGroup>
+                                      </FormControl>
+                                      <FormMessage />
+                                      </FormItem>
+                                  )}
+                              />
+                               <div>
+                                  <Label>Custom Background</Label>
+                                  <Button type="button" variant="outline" className="w-full mt-2" onClick={() => bgFileInputRef.current?.click()}>
+                                      <Upload className="mr-2 h-4 w-4" /> Upload Background Image
+                                  </Button>
+                                  <input type="file" ref={bgFileInputRef} className="hidden" accept="image/png, image/jpeg" onChange={onBgFileChange} />
+                              </div>
+                               <FormField
+                                  control={form.control}
+                                  name="textColor"
+                                  render={({ field }) => (
+                                      <FormItem className="space-y-3">
+                                      <FormLabel>Text Color</FormLabel>
+                                      <FormControl>
+                                          <RadioGroup onValueChange={field.onChange} value={field.value} className="flex gap-x-6">
+                                              <FormItem className="flex items-center space-x-2 space-y-0">
+                                                  <FormControl><RadioGroupItem value="light" /></FormControl>
+                                                  <Label className="font-normal">Light</Label>
+                                              </FormItem>
+                                              <FormItem className="flex items-center space-x-2 space-y-0">
+                                                  <FormControl><RadioGroupItem value="dark" /></FormControl>
+                                                  <Label className="font-normal">Dark</Label>
+                                              </FormItem>
+                                          </RadioGroup>
+                                      </FormControl>
+                                      <FormDescription>Choose light text for dark cards/images, and dark text for light ones.</FormDescription>
+                                      <FormMessage />
+                                      </FormItem>
+                                  )}
+                                />
+                              <FormField
+                                  control={form.control}
+                                  name="layout"
+                                  render={({ field }) => (
+                                      <FormItem>
+                                      <FormLabel>Card Layout</FormLabel>
+                                      <FormControl>
+                                          <RadioGroup
+                                              onValueChange={field.onChange}
+                                              defaultValue={field.value}
+                                              className="grid grid-cols-3 gap-2"
+                                          >
+                                              <FormItem>
+                                                  <FormControl><RadioGroupItem value="vertical" className="sr-only" /></FormControl>
+                                                  <FormLabel className={cn("flex font-normal items-center justify-center rounded-md border p-4 cursor-pointer hover:bg-accent", field.value === 'vertical' && 'border-primary ring-2 ring-primary')}>Vertical</FormLabel>
+                                              </FormItem>
+                                              <FormItem>
+                                                  <FormControl><RadioGroupItem value="horizontal-left" className="sr-only" /></FormControl>
+                                                  <FormLabel className={cn("flex font-normal items-center justify-center rounded-md border p-4 cursor-pointer hover:bg-accent", field.value === 'horizontal-left' && 'border-primary ring-2 ring-primary')}>H (Left)</FormLabel>
+                                              </FormItem>
+                                              <FormItem>
+                                                  <FormControl><RadioGroupItem value="horizontal-right" className="sr-only" /></FormControl>
+                                                  <FormLabel className={cn("flex font-normal items-center justify-center rounded-md border p-4 cursor-pointer hover:bg-accent", field.value === 'horizontal-right' && 'border-primary ring-2 ring-primary')}>H (Right)</FormLabel>
+                                              </FormItem>
+                                          </RadioGroup>
+                                      </FormControl>
+                                      <FormMessage />
+                                      </FormItem>
+                                  )}
+                              />
+                              <FormField
+                                  control={form.control}
+                                  name="name"
+                                  render={({ field }) => (
+                                      <FormItem>
+                                      <FormLabel>Name on Card</FormLabel>
+                                      <FormControl><Input placeholder="Jane Doe" {...field} /></FormControl>
+                                      <FormMessage />
+                                      </FormItem>
+                                  )}
+                              />
+                              <FormField
+                                  control={form.control}
+                                  name="title"
+                                  render={({ field }) => (
+                                      <FormItem>
+                                      <FormLabel>Title on Card (Optional)</FormLabel>
+                                      <FormControl><Input placeholder="CEO" {...field} /></FormControl>
+                                      <FormMessage />
+                                      </FormItem>
+                                  )}
+                              />
+                              <FormField
+                                  control={form.control}
+                                  name="company"
+                                  render={({ field }) => (
+                                      <FormItem>
+                                      <FormLabel>Company on Card (Optional)</FormLabel>
+                                      <FormControl><Input placeholder="Acme Inc." {...field} /></FormControl>
+                                      <FormMessage />
+                                      </FormItem>
+                                  )}
+                              />
+                              <FormField
+                                  control={form.control}
+                                  name="showQrCode"
+                                  render={({ field }) => (
+                                      <FormItem className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
+                                      <div className="space-y-0.5">
+                                          <FormLabel>Show QR Code on Back</FormLabel>
+                                          <FormDescription>A QR code backup ensures compatibility with older phones.</FormDescription>
+                                      </div>
+                                      <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
+                                      </FormItem>
+                                  )}
+                              />
+                          </CardContent>
+                      </Card>
+                      <Button type="submit" size="lg" className="w-full">
+                          Proceed to Order <ArrowRight className="ml-2 h-5 w-5" />
+                      </Button>
+                  </div>
+              </form>
+          </FormProvider>
+      </div>
+    </>
   );
 }
