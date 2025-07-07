@@ -157,11 +157,14 @@ export default function BydTagDesignPage() {
   const onSubmit = (data: DesignFormValues) => {
     console.log(data);
     // In a real app, this would trigger an order flow.
-    alert('Order placed! (This is a demo)');
+    toast({
+        title: "Order Placed! (Demo)",
+        description: "In a real app, this would redirect you to a checkout page.",
+    });
   };
 
   const handleDownloadQr = () => {
-    if (!qrCodeRef.current) {
+    if (side === 'front' || !qrCodeRef.current) {
         toast({
             title: "Flip Card First",
             description: "Please flip to the back of the card to download the QR code.",
