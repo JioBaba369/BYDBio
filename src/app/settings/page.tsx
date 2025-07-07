@@ -12,13 +12,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useTheme } from "next-themes";
 import Link from "next/link";
 import { Monitor, Moon, Sun, Loader2 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/components/auth-provider";
 import { Skeleton } from "@/components/ui/skeleton";
 import { deleteUserAccount, updateUser, type NotificationSettings } from "@/lib/users";
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { ChangePasswordDialog } from "@/components/change-password-dialog";
 
 const SettingsPageSkeleton = () => (
@@ -51,27 +51,46 @@ const SettingsPageSkeleton = () => (
     </div>
 );
 
+const areSettingsEqual = (a: NotificationSettings | null, b: NotificationSettings | null): boolean => {
+    if (!a || !b) return a === b;
+    return (
+        a.newFollowers === b.newFollowers &&
+        a.newLikes === b.newLikes &&
+        a.eventRsvps === b.eventRsvps &&
+        a.offersAndUpdates === b.offersAndUpdates
+    );
+};
+
 
 export default function SettingsPage() {
     const { user, firebaseUser, loading } = useAuth();
     const { setTheme, theme } = useTheme();
     const { toast } = useToast();
+    const router = useRouter();
     
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
+
+    const [initialNotificationSettings, setInitialNotificationSettings] = useState<NotificationSettings | null>(null);
     const [notificationSettings, setNotificationSettings] = useState<NotificationSettings | null>(null);
     const [isSavingNotifications, setIsSavingNotifications] = useState(false);
 
     const searchParams = useSearchParams();
     const tabParam = searchParams.get('tab');
     const validTabs = ['profile', 'appearance', 'notifications', 'security'];
-    const defaultTab = tabParam && validTabs.includes(tabParam) ? tabParam : 'profile';
+    const activeTab = tabParam && validTabs.includes(tabParam) ? tabParam : 'profile';
     
     useEffect(() => {
         if (user) {
             setNotificationSettings(user.notificationSettings);
+            setInitialNotificationSettings(user.notificationSettings);
         }
     }, [user]);
+
+    const isNotificationsDirty = useMemo(() => {
+        if (!initialNotificationSettings || !notificationSettings) return false;
+        return !areSettingsEqual(initialNotificationSettings, notificationSettings);
+    }, [initialNotificationSettings, notificationSettings]);
 
     const handleSaveNotificationSettings = async () => {
         if (!user || !notificationSettings) return;
@@ -79,6 +98,7 @@ export default function SettingsPage() {
         setIsSavingNotifications(true);
         try {
             await updateUser(user.uid, { notificationSettings });
+            setInitialNotificationSettings(notificationSettings);
             toast({ title: "Notification settings saved", description: "Your notification preferences have been updated." });
         } catch (error) {
             console.error("Failed to update notification settings:", error);
@@ -122,6 +142,10 @@ export default function SettingsPage() {
             }
         }
     };
+    
+    const handleTabChange = (value: string) => {
+        router.push(`/settings?tab=${value}`, { scroll: false });
+    };
 
     if (loading || !user || !notificationSettings) {
         return <SettingsPageSkeleton />;
@@ -145,7 +169,7 @@ export default function SettingsPage() {
                         Manage your account settings, appearance, and preferences.
                     </p>
                 </div>
-                <Tabs defaultValue={defaultTab} className="w-full">
+                <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
                     <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4">
                         <TabsTrigger value="profile">Profile</TabsTrigger>
                         <TabsTrigger value="appearance">Appearance</TabsTrigger>
@@ -289,9 +313,9 @@ export default function SettingsPage() {
                                 </div>
                             </CardContent>
                              <CardFooter>
-                                <Button onClick={handleSaveNotificationSettings} disabled={isSavingNotifications}>
+                                <Button onClick={handleSaveNotificationSettings} disabled={isSavingNotifications || !isNotificationsDirty}>
                                     {isSavingNotifications && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                    Save Settings
+                                    Save Changes
                                 </Button>
                             </CardFooter>
                         </Card>
