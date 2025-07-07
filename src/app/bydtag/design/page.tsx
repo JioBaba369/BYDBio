@@ -22,6 +22,7 @@ import QRCode from 'qrcode.react';
 // Schema for the form
 const designSchema = z.object({
   cardColor: z.enum(['black', 'white', 'blue']).default('black'),
+  layout: z.enum(['vertical', 'horizontal-left', 'horizontal-right']).default('vertical'),
   logoUrl: z.string().optional(),
   name: z.string().min(1, 'Name is required'),
   title: z.string().optional(),
@@ -56,30 +57,59 @@ const TagPreview = ({ values, user, side }: { values: DesignFormValues; user: an
             </div>
         )
     }
+    
+    const layout = values.layout || 'vertical';
 
-    return (
-        <div className={cn("aspect-[85.6/53.98] w-full rounded-xl flex flex-col items-center justify-center p-6 transition-colors gap-4", cardBg)}>
-            {/* Avatar/Logo on top */}
-            <div>
-                {values.logoUrl ? (
-                    <Image src={values.logoUrl} alt="Logo" width={80} height={80} className="h-20 w-20 rounded-full object-cover" data-ai-hint="logo" />
-                ) : user ? (
-                    <Avatar className="h-20 w-20">
-                        <AvatarImage src={user.avatarUrl} alt={user.name} data-ai-hint="person portrait"/>
-                        <AvatarFallback className="text-3xl">{user.name.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                ) : (
-                    <div className="h-20 w-20 rounded-full bg-muted flex items-center justify-center" />
-                )}
-            </div>
-
-            {/* Text below */}
-            <div className="text-center">
-                <h3 className={cn("font-bold text-2xl", textColor)}>{values.name || 'Your Name'}</h3>
-                <p className={cn("text-md", subtitleColor)}>{values.title || 'Your Title'}</p>
-            </div>
+    const AvatarElement = (
+        <div className="shrink-0">
+            {values.logoUrl ? (
+                <Image src={values.logoUrl} alt="Logo" width={80} height={80} className="h-20 w-20 rounded-full object-cover" data-ai-hint="logo" />
+            ) : user ? (
+                <Avatar className="h-20 w-20">
+                    <AvatarImage src={user.avatarUrl} alt={user.name} data-ai-hint="person portrait"/>
+                    <AvatarFallback className="text-3xl">{user.name.charAt(0)}</AvatarFallback>
+                </Avatar>
+            ) : (
+                <div className="h-20 w-20 rounded-full bg-muted flex items-center justify-center" />
+            )}
         </div>
     );
+
+    const TextElement = ({textAlign = 'text-center'}) => (
+        <div className={textAlign}>
+            <h3 className={cn("font-bold text-2xl truncate", textColor)}>{values.name || 'Your Name'}</h3>
+            <p className={cn("text-md truncate", subtitleColor)}>{values.title || 'Your Title'}</p>
+        </div>
+    );
+
+    if (layout === 'vertical') {
+        return (
+            <div className={cn("aspect-[85.6/53.98] w-full rounded-xl flex flex-col items-center justify-center p-6 transition-colors gap-4", cardBg)}>
+                {AvatarElement}
+                <TextElement />
+            </div>
+        );
+    }
+    
+    if (layout === 'horizontal-left') {
+        return (
+            <div className={cn("aspect-[85.6/53.98] w-full rounded-xl flex items-center justify-center p-6 transition-colors gap-6", cardBg)}>
+                {AvatarElement}
+                <TextElement textAlign="text-left" />
+            </div>
+        );
+    }
+
+    if (layout === 'horizontal-right') {
+        return (
+            <div className={cn("aspect-[85.6/53.98] w-full rounded-xl flex items-center justify-center p-6 transition-colors gap-6", cardBg)}>
+                <TextElement textAlign="text-right" />
+                {AvatarElement}
+            </div>
+        );
+    }
+
+    return null; // Fallback
 };
 
 
@@ -91,6 +121,7 @@ export default function BydTagDesignPage() {
     resolver: zodResolver(designSchema),
     defaultValues: {
       cardColor: 'black',
+      layout: 'vertical',
       name: '',
       title: '',
       logoUrl: '',
@@ -102,6 +133,7 @@ export default function BydTagDesignPage() {
     if (user) {
       form.reset({
         cardColor: form.getValues('cardColor'),
+        layout: form.getValues('layout'),
         name: user.name || '',
         title: user.businessCard?.title || '',
         logoUrl: user.avatarUrl || '',
@@ -184,6 +216,48 @@ export default function BydTagDesignPage() {
                                                     </FormLabel>
                                                 </FormItem>
                                             ))}
+                                        </RadioGroup>
+                                    </FormControl>
+                                    <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="layout"
+                                render={({ field }) => (
+                                    <FormItem>
+                                    <FormLabel>Card Layout</FormLabel>
+                                    <FormControl>
+                                        <RadioGroup
+                                            onValueChange={field.onChange}
+                                            defaultValue={field.value}
+                                            className="grid grid-cols-3 gap-2"
+                                        >
+                                            <FormItem>
+                                                <FormControl>
+                                                    <RadioGroupItem value="vertical" className="sr-only" />
+                                                </FormControl>
+                                                <FormLabel className={cn("flex font-normal items-center justify-center rounded-md border p-4 cursor-pointer hover:bg-accent", field.value === 'vertical' && 'border-primary ring-2 ring-primary')}>
+                                                    Vertical
+                                                </FormLabel>
+                                            </FormItem>
+                                            <FormItem>
+                                                <FormControl>
+                                                    <RadioGroupItem value="horizontal-left" className="sr-only" />
+                                                </FormControl>
+                                                <FormLabel className={cn("flex font-normal items-center justify-center rounded-md border p-4 cursor-pointer hover:bg-accent", field.value === 'horizontal-left' && 'border-primary ring-2 ring-primary')}>
+                                                    H (Left)
+                                                </FormLabel>
+                                            </FormItem>
+                                            <FormItem>
+                                                <FormControl>
+                                                    <RadioGroupItem value="horizontal-right" className="sr-only" />
+                                                </FormControl>
+                                                <FormLabel className={cn("flex font-normal items-center justify-center rounded-md border p-4 cursor-pointer hover:bg-accent", field.value === 'horizontal-right' && 'border-primary ring-2 ring-primary')}>
+                                                    H (Right)
+                                                </FormLabel>
+                                            </FormItem>
                                         </RadioGroup>
                                     </FormControl>
                                     <FormMessage />
