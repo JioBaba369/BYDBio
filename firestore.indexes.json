@@ -1,15 +1,7 @@
 {
   "indexes": [
     {
-      "collectionGroup": "events",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "authorId", "order": "ASCENDING" },
-        { "fieldPath": "createdAt", "order": "DESCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "jobs",
+      "collectionGroup": "posts",
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "authorId", "order": "ASCENDING" },
@@ -20,14 +12,6 @@
       "collectionGroup": "jobs",
       "queryScope": "COLLECTION",
       "fields": [{ "fieldPath": "searchableKeywords", "arrayConfig": "CONTAINS" }]
-    },
-    {
-      "collectionGroup": "listings",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "authorId", "order": "ASCENDING" },
-        { "fieldPath": "createdAt", "order": "DESCENDING" }
-      ]
     },
     {
       "collectionGroup": "listings",
@@ -53,35 +37,6 @@
     {
       "collectionGroup": "offers",
       "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "authorId", "order": "ASCENDING" },
-        { "fieldPath": "createdAt", "order": "DESCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "offers",
-      "queryScope": "COLLECTION",
-      "fields": [{ "fieldPath": "searchableKeywords", "arrayConfig": "CONTAINS" }]
-    },
-    {
-      "collectionGroup": "posts",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "authorId", "order": "ASCENDING" },
-        { "fieldPath": "createdAt", "order": "DESCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "promoPages",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "authorId", "order": "ASCENDING" },
-        { "fieldPath": "createdAt", "order": "DESCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "promoPages",
-      "queryScope": "COLLECTION",
       "fields": [{ "fieldPath": "searchableKeywords", "arrayConfig": "CONTAINS" }]
     },
     {
@@ -96,6 +51,16 @@
     },
     {
       "collectionGroup": "users",
+      "queryScope": "COLLECTION",
+      "fields": [{ "fieldPath": "searchableKeywords", "arrayConfig": "CONTAINS" }]
+    },
+    {
+      "collectionGroup": "promoPages",
+      "queryScope": "COLLECTION",
+      "fields": [{ "fieldPath": "searchableKeywords", "arrayConfig": "CONTAINS" }]
+    },
+    {
+      "collectionGroup": "events",
       "queryScope": "COLLECTION",
       "fields": [{ "fieldPath": "searchableKeywords", "arrayConfig": "CONTAINS" }]
     },
