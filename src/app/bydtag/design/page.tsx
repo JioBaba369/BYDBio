@@ -41,8 +41,8 @@ const designSchema = z.object({
 type DesignFormValues = z.infer<typeof designSchema>;
 
 const TagPreview = forwardRef<HTMLDivElement, { values: DesignFormValues; user: any; side: 'front' | 'back' }>(({ values, user, side }, ref) => {
-    const textColor = values.textColor === 'light' ? 'text-white' : 'text-gray-900';
-    const subtitleColor = values.textColor === 'light' ? 'text-gray-300' : 'text-gray-500';
+    const textColor = values.textColor === 'light' ? 'text-primary-foreground' : 'text-foreground';
+    const subtitleColor = values.textColor === 'light' ? 'text-primary-foreground/80' : 'text-muted-foreground';
     const layout = values.layout || 'vertical';
 
     const cardBgClass = values.backgroundImageUrl ? '' : {
