@@ -1,7 +1,7 @@
 
 import type { Metadata } from 'next';
 import { getJobAndAuthor } from '@/lib/jobs';
-import JobDetailClient from './opportunity-detail-client';
+import OpportunityDetailClient from './client';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import type { User } from '@/lib/users';
@@ -65,5 +65,5 @@ export default async function PublicJobPage({ params }: { params: { opportunityI
         createdAt: (data.job.createdAt as Timestamp).toDate().toISOString(),
     };
 
-    return <JobDetailClient job={serializableJob} author={data.author} />;
+    return <OpportunityDetailClient job={serializableJob} author={data.author} />;
 }

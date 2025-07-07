@@ -69,7 +69,7 @@ export function AuthorCard({ author, isOwner, authorTypeLabel }: AuthorCardProps
       <CardHeader className="text-center">
         <CardTitle className="text-lg">About the {authorTypeLabel}</CardTitle>
       </CardHeader>
-      <CardContent className="flex flex-col items-center p-6 text-center">
+      <CardContent className="flex flex-col items-center text-center">
         <Link href={`/u/${author.username}`} className="block">
           <Avatar className="h-20 w-20 mb-2">
             <AvatarImage src={author.avatarUrl} data-ai-hint="person portrait" />
