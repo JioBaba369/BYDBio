@@ -12,7 +12,7 @@ import type { PromoPage } from "@/lib/promo-pages";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Briefcase, Calendar, Tag, MapPin, Heart, MessageCircle, DollarSign, Building2, Tags, ExternalLink, Globe, UserCheck, UserPlus, QrCode, Edit } from "lucide-react";
+import { Briefcase, Calendar, Tag, MapPin, Heart, MessageCircle, DollarSign, Building2, Tags, ExternalLink, Globe, UserCheck, UserPlus, QrCode, Edit, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
@@ -63,6 +63,7 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
   
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [postToDelete, setPostToDelete] = useState<PostWithAuthor | null>(null);
+  const [loadingAction, setLoadingAction] = useState<{ postId: string; action: 'like' | 'repost' } | null>(null);
 
   useEffect(() => {
     setIsFollowing(currentUser?.following?.includes(userProfileData.uid) || false);
@@ -102,14 +103,19 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
   };
 
   const handleLike = async (postId: string) => {
-    if (!currentUser) {
+    if (!currentUser || loadingAction) {
         toast({ title: "Please sign in to like posts.", variant: "destructive" });
         return;
     }
 
+    setLoadingAction({ postId, action: 'like' });
+
     const originalPosts = [...localPosts];
-    const postIndex = originalPosts.findIndex(p => p.id === postId);
-    if (postIndex === -1) return;
+    const postIndex = localPosts.findIndex(p => p.id === postId);
+    if (postIndex === -1) {
+        setLoadingAction(null);
+        return;
+    }
 
     const originalPost = { ...originalPosts[postIndex] };
 
@@ -131,6 +137,8 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
         toast({ title: "Something went wrong", variant: "destructive" });
         // Revert on error
         setLocalPosts(originalPosts);
+    } finally {
+        setLoadingAction(null);
     }
   };
 
@@ -160,10 +168,11 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
   };
 
   const handleRepost = async (postId: string) => {
-    if (!currentUser) {
+    if (!currentUser || loadingAction) {
         toast({ title: "Please sign in to repost." });
         return;
     }
+    setLoadingAction({ postId, action: 'repost' });
     try {
         await repostPost(postId, currentUser.uid);
         toast({ title: "Reposted!", description: "It will appear on your feed." });
@@ -175,6 +184,8 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
         }))
     } catch (error: any) {
         toast({ title: "Failed to repost", description: error.message, variant: 'destructive' });
+    } finally {
+        setLoadingAction(null);
     }
   }
 
@@ -314,6 +325,8 @@ END:VCARD`;
                                         onDelete={openDeleteDialog}
                                         onRepost={handleRepost}
                                         onQuote={handleQuote}
+                                        isLoading={loadingAction?.postId === item.id}
+                                        loadingAction={loadingAction?.postId === item.id ? loadingAction.action : null}
                                     />
                                 );
                             }

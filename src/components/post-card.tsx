@@ -9,7 +9,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { ClientFormattedDate } from "@/components/client-formatted-date";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, Trash2, Heart, Share2, Repeat, Quote as QuoteIcon, MessageCircle } from "lucide-react";
+import { MoreHorizontal, Trash2, Heart, Share2, Repeat, Quote as QuoteIcon, MessageCircle, Loader2 } from "lucide-react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { useToast } from '@/hooks/use-toast';
@@ -22,6 +22,8 @@ interface PostCardProps {
     onDelete: (post: FeedItem) => void;
     onRepost: (postId: string) => void;
     onQuote: (post: FeedItem) => void;
+    isLoading?: boolean;
+    loadingAction?: 'like' | 'repost' | 'quote' | null;
 }
 
 // Renders an embedded post, used for both quotes and reposts.
@@ -49,7 +51,7 @@ const EmbeddedPostView = ({ post }: { post: EmbeddedPostInfoWithAuthor }) => (
 );
 
 
-export function PostCard({ item, onLike, onDelete, onRepost, onQuote }: PostCardProps) {
+export function PostCard({ item, onLike, onDelete, onRepost, onQuote, isLoading = false, loadingAction = null }: PostCardProps) {
     const { user } = useAuth();
     const { toast } = useToast();
     const isOwner = user?.uid === item.author.uid;
@@ -145,23 +147,23 @@ export function PostCard({ item, onLike, onDelete, onRepost, onQuote }: PostCard
                 )}
             </CardContent>
             <CardFooter className="flex justify-start p-4 border-t gap-1">
-                <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground hover:text-primary" onClick={() => onLike(item.id)}>
-                    <Heart className={cn("h-5 w-5", item.isLiked && "fill-red-500 text-red-500")} />
+                <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground hover:text-primary" onClick={() => onLike(item.id)} disabled={isLoading}>
+                    {isLoading && loadingAction === 'like' ? <Loader2 className="h-5 w-5 animate-spin" /> : <Heart className={cn("h-5 w-5", item.isLiked && "fill-red-500 text-red-500")} />}
                     <span>{item.likes}</span>
                 </Button>
                 <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground" disabled>
                     <MessageCircle className="h-5 w-5" />
                     <span>{item.comments}</span>
                 </Button>
-                <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground hover:text-green-500" onClick={() => onRepost(isRepost ? item.repostedPost!.id : item.id)}>
-                    <Repeat className="h-5 w-5" />
+                <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground hover:text-green-500" onClick={() => onRepost(isRepost ? item.repostedPost!.id : item.id)} disabled={isLoading}>
+                    {isLoading && loadingAction === 'repost' ? <Loader2 className="h-5 w-5 animate-spin" /> : <Repeat className="h-5 w-5" />}
                     <span>{item.repostCount || 0}</span>
                 </Button>
-                 <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground hover:text-blue-500" onClick={() => onQuote(item)}>
+                 <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground hover:text-blue-500" onClick={() => onQuote(item)} disabled={isLoading}>
                     <QuoteIcon className="h-5 w-5" />
                     <span>Quote</span>
                 </Button>
-                <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground ml-auto" onClick={handleShare}>
+                <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground ml-auto" onClick={handleShare} disabled={isLoading}>
                     <Share2 className="h-5 w-5" />
                     <span>Share</span>
                 </Button>

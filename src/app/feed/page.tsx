@@ -101,6 +101,7 @@ export default function FeedPage() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [postToDelete, setPostToDelete] = useState<FeedItem | null>(null);
   const [postToQuote, setPostToQuote] = useState<FeedItem | null>(null);
+  const [loadingAction, setLoadingAction] = useState<{ postId: string; action: 'like' | 'repost' } | null>(null);
 
   const fetchFeeds = useCallback(async (refreshFollowing: boolean, refreshDiscovery: boolean) => {
     if (!user) return;
@@ -206,7 +207,9 @@ export default function FeedPage() {
   };
 
   const handleLike = async (postId: string) => {
-    if (!user) return;
+    if (!user || loadingAction) return;
+    
+    setLoadingAction({ postId, action: 'like' });
 
     // A helper function to perform the optimistic update on a feed
     const optimisticUpdate = (setFeed: React.Dispatch<React.SetStateAction<FeedItem[]>>) => {
@@ -242,11 +245,15 @@ export default function FeedPage() {
         // Revert on error
         setFollowingFeed(originalFollowingFeed);
         setDiscoveryFeed(originalDiscoveryFeed);
+    } finally {
+        setLoadingAction(null);
     }
   };
   
   const handleRepost = async (postId: string) => {
-    if (!user) return;
+    if (!user || loadingAction) return;
+
+    setLoadingAction({ postId, action: 'repost' });
     try {
       await repostPost(postId, user.uid);
       toast({ title: "Reposted!" });
@@ -254,6 +261,8 @@ export default function FeedPage() {
     } catch (error: any) {
       console.error("Error reposting:", error);
       toast({ title: error.message || "Failed to repost", variant: "destructive" });
+    } finally {
+      setLoadingAction(null);
     }
   };
   
@@ -293,7 +302,17 @@ export default function FeedPage() {
         return <PostCardSkeleton />;
     }
     if (items.length > 0) {
-        return <div className="space-y-6">{items.map(item => <PostCard key={item.id} item={item} onLike={handleLike} onDelete={openDeleteDialog} onRepost={handleRepost} onQuote={handleQuote} />)}</div>;
+        return <div className="space-y-6">{items.map(item => <PostCard 
+            key={item.id} 
+            item={item} 
+            onLike={handleLike} 
+            onDelete={openDeleteDialog} 
+            onRepost={handleRepost} 
+            onQuote={handleQuote} 
+            isLoading={loadingAction?.postId === item.id}
+            loadingAction={loadingAction?.postId === item.id ? loadingAction.action : null}
+            />)}
+        </div>;
     }
     return <>{emptyState}</>;
   };
