@@ -1,3 +1,4 @@
+
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -59,7 +60,7 @@ service cloud.firestore {
       // Author can update most fields. 'views' can be incremented by anyone. 'rsvps' can be modified by any authenticated user.
       allow update: if isOwner(resource.data.authorId) ||
                        (isUserAuthenticated() && isOnlyChanging(['rsvps'])) ||
-                       (isOnlyChanging(['views']) && request.resource.data.views == (resource.data.views || 0) + 1);
+                       (isOnlyChanging(['views']) && request.resource.data.views == resource.data.views + 1);
     }
     
     // LISTINGS
@@ -67,10 +68,10 @@ service cloud.firestore {
     match /listings/{listingId} {
       allow read: if true;
       allow create: if isOwner(request.resource.data.authorId);
-      // Author can update. Anyone can increment views/clicks.
+      // Author can update. Anyone can increment views/clicks by 1.
       allow update: if isOwner(resource.data.authorId) ||
-                       ((isOnlyChanging(['views']) && request.resource.data.views == (resource.data.views || 0) + 1) ||
-                        (isOnlyChanging(['clicks']) && request.resource.data.clicks == (resource.data.clicks || 0) + 1));
+                       (isOnlyChanging(['views']) && request.resource.data.views == resource.data.views + 1) ||
+                       (isOnlyChanging(['clicks']) && request.resource.data.clicks == resource.data.clicks + 1);
       allow delete: if isOwner(resource.data.authorId);
     }
 
@@ -79,10 +80,10 @@ service cloud.firestore {
     match /promoPages/{promoPageId} {
       allow read: if true;
       allow create: if isOwner(request.resource.data.authorId);
-      // Author can update. Anyone can increment views/clicks.
+      // Author can update. Anyone can increment views/clicks by 1.
       allow update: if isOwner(resource.data.authorId) ||
-                       ((isOnlyChanging(['views']) && request.resource.data.views == (resource.data.views || 0) + 1) ||
-                        (isOnlyChanging(['clicks']) && request.resource.data.clicks == (resource.data.clicks || 0) + 1));
+                       (isOnlyChanging(['views']) && request.resource.data.views == resource.data.views + 1) ||
+                       (isOnlyChanging(['clicks']) && request.resource.data.clicks == resource.data.clicks + 1);
       allow delete: if isOwner(resource.data.authorId);
     }
 
@@ -91,10 +92,10 @@ service cloud.firestore {
     match /jobs/{jobId} {
       allow read: if true;
       allow create: if isOwner(request.resource.data.authorId);
-      // Author can update. Anyone can increment views/applicants.
+      // Author can update. Anyone can increment views/applicants by 1.
       allow update: if isOwner(resource.data.authorId) ||
-                       ((isOnlyChanging(['views']) && request.resource.data.views == (resource.data.views || 0) + 1) ||
-                        (isOnlyChanging(['applicants']) && request.resource.data.applicants == (resource.data.applicants || 0) + 1));
+                       (isOnlyChanging(['views']) && request.resource.data.views == resource.data.views + 1) ||
+                       (isOnlyChanging(['applicants']) && request.resource.data.applicants == resource.data.applicants + 1);
       allow delete: if isOwner(resource.data.authorId);
     }
 
@@ -103,17 +104,18 @@ service cloud.firestore {
     match /offers/{offerId} {
       allow read: if true;
       allow create: if isOwner(request.resource.data.authorId);
-      // Author can update. Anyone can increment views/claims.
+      // Author can update. Anyone can increment views/claims by 1.
       allow update: if isOwner(resource.data.authorId) ||
-                       ((isOnlyChanging(['views']) && request.resource.data.views == (resource.data.views || 0) + 1) ||
-                        (isOnlyChanging(['claims']) && request.resource.data.claims == (resource.data.claims || 0) + 1));
+                       (isOnlyChanging(['views']) && request.resource.data.views == resource.data.views + 1) ||
+                       (isOnlyChanging(['claims']) && request.resource.data.claims == resource.data.claims + 1);
       allow delete: if isOwner(resource.data.authorId);
     }
 
     // NOTIFICATIONS
-    // Users can create notifications. Guests can only create contact form notifications. Only the recipient can manage their own.
+    // Users can create notifications. Only the recipient can manage their notifications.
     match /notifications/{notificationId} {
-      allow create: if (request.resource.data.type == 'contact_form_submission') || isUserAuthenticated();
+      // Allow creation if the user is authenticated, OR if it's an unauthenticated contact form submission.
+      allow create: if isUserAuthenticated() || request.resource.data.type == 'contact_form_submission';
       allow read, update, delete: if isOwner(resource.data.userId);
     }
     
@@ -123,6 +125,12 @@ service cloud.firestore {
         allow create: if isOwner(request.resource.data.userId);
         allow read, update: if isOwner(resource.data.userId);
         allow delete: if false; // Should be handled by a backend process
+    }
+    
+    // DIARY NOTES (Personal, private notes)
+    // A user can only create and manage (read, update, delete) their own diary notes.
+    match /diaryNotes/{diaryNoteId} {
+        allow read, write: if isOwner(resource.data.userId); // 'write' includes create, update, and delete
     }
   }
 }
