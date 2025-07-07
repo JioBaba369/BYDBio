@@ -14,8 +14,7 @@ import { auth } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { usePathname, useRouter } from 'next/navigation';
 import { isAuthPath } from '@/lib/paths';
-import React, { useState, useEffect } from 'react';
-import { DashboardSkeleton } from './dashboard-skeleton';
+import React from 'react';
 
 function Header() {
     const { user } = useAuth();
@@ -112,33 +111,10 @@ function Header() {
 export function AppLayout({ children }: { children: React.ReactNode }) {
     const { user, loading } = useAuth();
     const pathname = usePathname();
-    const [isClient, setIsClient] = useState(false);
-
-    useEffect(() => {
-        setIsClient(true);
-    }, []);
 
     const onAuthPage = isAuthPath(pathname);
     const isLandingPage = pathname === '/' && !user && !loading;
 
-    const AppShellSkeleton = () => (
-      <>
-        <MainSidebar />
-        <SidebarInset className="flex flex-col flex-1">
-          <div className="p-4 sm:p-6 flex-1 overflow-y-auto relative">
-            <DashboardSkeleton />
-          </div>
-        </SidebarInset>
-      </>
-    );
-
-    // If we're on the server, or the auth state is still loading,
-    // render the full app shell with skeletons. This matches the server render.
-    if (!isClient || loading) {
-        return <AppShellSkeleton />;
-    }
-
-    // Now that we are on the client and auth has loaded, we can safely render based on auth state.
     if (isLandingPage) {
         return <>{children}</>;
     }
