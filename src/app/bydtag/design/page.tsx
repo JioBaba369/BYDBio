@@ -143,18 +143,14 @@ const TagPreview = ({ values, user, side }: { values: DesignFormValues; user: an
     
     // Vertical Card (Default)
     return (
-        <div className={cn("aspect-[53.98/85.6] w-full rounded-xl transition-colors relative flex flex-col justify-end overflow-hidden", cardBgClass)} style={cardStyle}>
+        <div className={cn("aspect-[85.6/53.98] w-full rounded-xl p-4 transition-colors relative flex", cardBgClass)} style={cardStyle}>
             {values.backgroundImageUrl && <div className="absolute inset-0 bg-black/50 rounded-xl" />}
-            
-            <div className="absolute top-[45%] left-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
-                 {renderAvatar("h-20 w-20 shadow-lg border-4 border-background", "text-3xl")}
-            </div>
-
-            <div className="pt-12 pb-4 px-4 text-center">
-                 <div className="relative z-0 space-y-1">
+            <div className="relative z-10 flex w-full flex-col items-center justify-center text-center space-y-3">
+                {renderAvatar("h-16 w-16", "text-2xl")}
+                <div className="space-y-0.5">
                     <h3 className={cn("font-bold text-xl leading-tight", textColor)}>{values.name || 'Your Name'}</h3>
                     <p className={cn("text-sm leading-tight", subtitleColor)}>{values.title || 'Your Title'}</p>
-                    {values.company && <p className={cn("text-xs leading-tight opacity-90", subtitleColor)}>{values.company}</p>}
+                    {values.company && <p className={cn("text-xs leading-tight opacity-80", subtitleColor)}>{values.company}</p>}
                 </div>
             </div>
         </div>
@@ -407,9 +403,9 @@ export default function BydTagDesignPage() {
                                                 <FormItem>
                                                     <FormControl><RadioGroupItem value="vertical" className="sr-only" /></FormControl>
                                                     <FormLabel className={cn("flex flex-col items-center justify-center rounded-md border-2 p-4 cursor-pointer hover:bg-accent hover:border-primary", field.value === 'vertical' && 'border-primary')}>
-                                                        <div className="w-10 h-16 bg-muted rounded-md flex flex-col items-center justify-end p-1 relative">
-                                                            <div className="w-5 h-5 rounded-full bg-muted-foreground/50 absolute top-[35%]"></div>
-                                                            <div className="w-full space-y-1 p-1">
+                                                        <div className="w-20 h-12 bg-muted rounded-md flex flex-col items-center justify-center p-1 gap-1">
+                                                            <div className="w-5 h-5 rounded-full bg-muted-foreground/50"></div>
+                                                            <div className="w-full space-y-0.5">
                                                                 <div className="h-1.5 w-3/4 mx-auto bg-muted-foreground/50 rounded-full"></div>
                                                                 <div className="h-1.5 w-1/2 mx-auto bg-muted-foreground/50 rounded-full"></div>
                                                             </div>
