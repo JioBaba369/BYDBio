@@ -241,10 +241,10 @@ export function MainSidebar() {
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip="BYDTAG" isActive={isActive('/bydtag')}>
+                <SidebarMenuButton asChild tooltip="BYD BioTAG" isActive={isActive('/bydtag')}>
                   <Link href="/bydtag/design">
                     <Nfc />
-                    <span>BYDTAG</span>
+                    <span>BYD BioTAG</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>

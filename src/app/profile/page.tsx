@@ -666,7 +666,7 @@ END:VCARD`;
                                 <CardHeader className="p-4">
                                     <CardTitle className="text-base flex items-center justify-center gap-2">
                                         <Nfc className="h-5 w-5 text-primary"/>
-                                        Get Your BYDTAG
+                                        Get Your BYD BioTAG
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent className="p-4 pt-0">

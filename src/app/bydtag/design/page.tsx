@@ -249,7 +249,7 @@ export default function BydTagDesignPage() {
     }).then((canvas) => {
       canvas.toBlob((blob) => {
         if (blob) {
-            saveAs(blob, `bydtag-${side}-design.png`);
+            saveAs(blob, `byd-biotag-${side}-design.png`);
         } else {
             toast({
                 title: 'Download Failed',
@@ -289,10 +289,10 @@ export default function BydTagDesignPage() {
               <Button asChild variant="ghost" size="sm" className="mb-4 -ml-4">
                   <Link href="/bydtag">
                       <ArrowLeft className="mr-2 h-4 w-4" />
-                      Back to BYDTAG Info
+                      Back to BYD BioTAG Info
                   </Link>
               </Button>
-              <h1 className="text-2xl sm:text-3xl font-bold font-headline">Design Your BYDTAG</h1>
+              <h1 className="text-2xl sm:text-3xl font-bold font-headline">Design Your BYD BioTAG</h1>
               <p className="text-muted-foreground">Customize your physical NFC tag to match your brand.</p>
           </div>
           <FormProvider {...form}>
@@ -314,7 +314,7 @@ export default function BydTagDesignPage() {
                                   </Button>
                                   <Button type="button" variant="outline" className="w-full" onClick={handleDownloadCardImage}>
                                       <Download className="mr-2 h-4 w-4" />
-                                      Download Card
+                                      Download {side === 'front' ? 'Front' : 'Back'}
                                   </Button>
                               </div>
                           </CardContent>
