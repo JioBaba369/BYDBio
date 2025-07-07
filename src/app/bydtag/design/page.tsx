@@ -21,6 +21,7 @@ import QRCode from 'qrcode.react';
 import { saveAs } from 'file-saver';
 import { useToast } from '@/hooks/use-toast';
 import html2canvas from 'html2canvas';
+import { Logo } from '@/components/logo';
 
 // Schema for the form
 const designSchema = z.object({
@@ -46,23 +47,27 @@ const TagPreview = ({ values, user, side }: { values: DesignFormValues; user: an
 
     if (side === 'back') {
         return (
-            <div className={cn("aspect-[85.6/53.98] w-full rounded-xl flex flex-col items-center justify-center p-4 transition-colors", cardBg)}>
+            <div className={cn("aspect-[85.6/53.98] w-full rounded-xl flex flex-col items-center justify-between p-4 transition-colors", cardBg)}>
+                <Logo className={cn("text-lg", textColor)} />
                 {values.showQrCode && user ? (
-                    <div className="bg-white p-2 rounded-lg">
-                         <QRCode
-                            value={`https://byd.bio/u/${user.username}`}
-                            size={100}
-                            bgColor="#ffffff"
-                            fgColor="#000000"
-                            renderAs="svg"
-                         />
+                    <div className="flex flex-col items-center gap-2">
+                        <div className="bg-white p-2 rounded-lg shadow-md">
+                            <QRCode
+                                value={`https://byd.bio/u/${user.username}`}
+                                size={90}
+                                bgColor="#ffffff"
+                                fgColor="#000000"
+                                renderAs="svg"
+                            />
+                        </div>
+                        <p className={cn("text-xs font-mono", subtitleColor)}>{`byd.bio/u/${user.username}`}</p>
                     </div>
                 ) : (
                     <div className={cn("text-center", textColor)}>
-                        <p className="font-semibold">BYD.Bio</p>
+                        {/* Empty placeholder */}
                     </div>
                 )}
-                 <p className={cn("text-xs mt-2", subtitleColor)}>Tap to Connect</p>
+                 <p className={cn("text-xs font-semibold", subtitleColor)}>Tap or Scan to Connect</p>
             </div>
         )
     }
