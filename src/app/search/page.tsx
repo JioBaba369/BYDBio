@@ -1,11 +1,10 @@
-
 'use client';
 
 import { useSearchParams } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { UserPlus, UserCheck, Search as SearchIcon, Briefcase, MapPin, Tag, Calendar, Users, Tags, DollarSign, Gift, Eye, Building2, ExternalLink, Megaphone, Loader2 } from "lucide-react";
+import { UserPlus, UserCheck, Search as SearchIcon, Briefcase, MapPin, Tag, Calendar, Users, Tags, DollarSign, Gift, Eye, Building2, ExternalLink, Megaphone, Loader2, Rss } from "lucide-react";
 import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -24,6 +23,7 @@ import type { Offer } from '@/lib/offers';
 import type { Job } from '@/lib/jobs';
 import type { Event } from '@/lib/events';
 import type { PromoPage } from '@/lib/promo-pages';
+import type { Post } from '@/lib/posts';
 import { ClientFormattedDate } from '@/components/client-formatted-date';
 import { formatCurrency } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
@@ -36,6 +36,7 @@ type SearchResults = {
     events: ItemWithAuthor<Event>[];
     offers: ItemWithAuthor<Offer>[];
     promoPages: ItemWithAuthor<PromoPage>[];
+    posts: ItemWithAuthor<Post>[];
 }
 
 const SearchPageSkeleton = () => (
@@ -45,8 +46,9 @@ const SearchPageSkeleton = () => (
             <Skeleton className="h-4 w-80" />
         </div>
         <Tabs defaultValue="users" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-6">
+            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-7">
                 <TabsTrigger value="users" disabled><Skeleton className="h-5 w-20" /></TabsTrigger>
+                <TabsTrigger value="posts" disabled><Skeleton className="h-5 w-20" /></TabsTrigger>
                 <TabsTrigger value="promoPages" disabled><Skeleton className="h-5 w-24" /></TabsTrigger>
                 <TabsTrigger value="listings" disabled><Skeleton className="h-5 w-20" /></TabsTrigger>
                 <TabsTrigger value="jobs" disabled><Skeleton className="h-5 w-16" /></TabsTrigger>
@@ -83,7 +85,7 @@ export default function SearchPage() {
   const { toast } = useToast();
 
   const [isLoading, setIsLoading] = useState(false);
-  const [results, setResults] = useState<SearchResults>({ users: [], listings: [], jobs: [], events: [], offers: [], promoPages: [] });
+  const [results, setResults] = useState<SearchResults>({ users: [], listings: [], jobs: [], events: [], offers: [], promoPages: [], posts: [] });
   const [togglingFollowId, setTogglingFollowId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -92,16 +94,21 @@ export default function SearchPage() {
         setIsLoading(true);
 
         try {
-            const lowerCaseQuery = queryParam.toLowerCase();
+            const searchKeywords = queryParam.toLowerCase().split(' ').filter(Boolean).slice(0, 10);
+            if (searchKeywords.length === 0) {
+                setResults({ users: [], listings: [], jobs: [], events: [], offers: [], promoPages: [], posts: [] });
+                setIsLoading(false);
+                return;
+            }
 
             // Search users
             const userResults = await searchUsers(queryParam);
             
             // Search content collections
-            const collectionsToSearch = ['listings', 'jobs', 'events', 'offers', 'promoPages'];
-            const contentPromises = collectionsToSearch.map(col => getDocs(query(collection(db, col), where('searchableKeywords', 'array-contains', lowerCaseQuery))));
+            const collectionsToSearch = ['listings', 'jobs', 'events', 'offers', 'promoPages', 'posts'];
+            const contentPromises = collectionsToSearch.map(col => getDocs(query(collection(db, col), where('searchableKeywords', 'array-contains-any', searchKeywords))));
             
-            const [listingsSnap, jobsSnap, eventsSnap, offersSnap, promoPagesSnap] = await Promise.all(contentPromises);
+            const [listingsSnap, jobsSnap, eventsSnap, offersSnap, promoPagesSnap, postsSnap] = await Promise.all(contentPromises);
 
             const allContent: (any & { type: string })[] = [
                 ...listingsSnap.docs.map(doc => ({ ...doc.data(), id: doc.id, type: 'listing' })),
@@ -109,6 +116,7 @@ export default function SearchPage() {
                 ...eventsSnap.docs.map(doc => ({ ...doc.data(), id: doc.id, type: 'event' })),
                 ...offersSnap.docs.map(doc => ({ ...doc.data(), id: doc.id, type: 'offer' })),
                 ...promoPagesSnap.docs.map(doc => ({ ...doc.data(), id: doc.id, type: 'promoPage' })),
+                ...postsSnap.docs.map(doc => ({ ...doc.data(), id: doc.id, type: 'post' })),
             ];
 
             const authorIds = [...new Set(allContent.map(item => item.authorId))];
@@ -122,6 +130,7 @@ export default function SearchPage() {
                 events: [],
                 offers: [],
                 promoPages: [],
+                posts: [],
             };
 
             allContent.forEach(item => {
@@ -133,6 +142,7 @@ export default function SearchPage() {
                         case 'event': newResults.events.push({ ...item, author }); break;
                         case 'offer': newResults.offers.push({ ...item, author }); break;
                         case 'promoPage': newResults.promoPages.push({ ...item, author }); break;
+                        case 'post': newResults.posts.push({ ...item, author }); break;
                     }
                 }
             });
@@ -236,8 +246,9 @@ export default function SearchPage() {
       </div>
 
       <Tabs defaultValue="users" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-6">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-7">
             <TabsTrigger value="users">Users ({results.users.length})</TabsTrigger>
+            <TabsTrigger value="posts">Posts ({results.posts.length})</TabsTrigger>
             <TabsTrigger value="promoPages">Promo Pages ({results.promoPages.length})</TabsTrigger>
             <TabsTrigger value="listings">Listings ({results.listings.length})</TabsTrigger>
             <TabsTrigger value="jobs">Jobs ({results.jobs.length})</TabsTrigger>
@@ -278,6 +289,52 @@ export default function SearchPage() {
                         <Users className="h-12 w-12 mx-auto mb-4 text-gray-400" />
                         <h3 className="text-lg font-semibold text-foreground">No Users Found</h3>
                         <p>We couldn't find any users matching "{queryParam}". Try a different search.</p>
+                    </CardContent>
+                </Card>
+            )}
+        </TabsContent>
+        
+        <TabsContent value="posts" className="pt-4">
+            {results.posts.length > 0 ? (
+                <div className="space-y-4">
+                    {results.posts.map(post => (
+                        <Card key={post.id}>
+                            <CardContent className="p-4">
+                                <div className="flex items-center gap-3">
+                                    <Link href={`/u/${post.author.username}`}>
+                                        <Avatar>
+                                            <AvatarImage src={post.author.avatarUrl} data-ai-hint="person portrait" />
+                                            <AvatarFallback>{post.author.name.charAt(0)}</AvatarFallback>
+                                        </Avatar>
+                                    </Link>
+                                    <div className="w-full">
+                                        <div className="flex items-center justify-between">
+                                            <Link href={`/u/${post.author.username}`} className="hover:underline">
+                                                <p className="font-semibold">{post.author.name}</p>
+                                                <p className="text-sm text-muted-foreground">@{post.author.username}</p>
+                                            </Link>
+                                            <Link href={`/u/${post.author.username}`} className="text-sm text-muted-foreground hover:underline">
+                                                <ClientFormattedDate date={post.createdAt} relative />
+                                            </Link>
+                                        </div>
+                                        <p className="mt-2 text-sm whitespace-pre-wrap line-clamp-3">{post.content}</p>
+                                        {post.imageUrl && (
+                                            <div className="mt-2 rounded-lg overflow-hidden border">
+                                                <Image src={post.imageUrl} alt="Post image" width={500} height={281} className="object-cover" />
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    ))}
+                </div>
+            ) : (
+                <Card>
+                    <CardContent className="p-10 text-center text-muted-foreground">
+                        <Rss className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                        <h3 className="text-lg font-semibold text-foreground">No Posts Found</h3>
+                        <p>We couldn't find any posts matching "{queryParam}". Try a different search.</p>
                     </CardContent>
                 </Card>
             )}

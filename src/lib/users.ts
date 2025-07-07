@@ -202,11 +202,14 @@ export async function getUsersByIds(uids: string[]): Promise<User[]> {
 
 export async function searchUsers(searchText: string): Promise<User[]> {
     if (!searchText) return [];
-    const lowerCaseQuery = searchText.toLowerCase();
+    
+    const searchKeywords = searchText.toLowerCase().split(' ').filter(Boolean).slice(0, 10);
+    if (searchKeywords.length === 0) return [];
+
     const usersRef = collection(db, "users");
     
-    // This is a simplified search. For production, consider a dedicated search service like Algolia.
-    const q = query(usersRef, where('searchableKeywords', 'array-contains', lowerCaseQuery));
+    // Use array-contains-any for multi-keyword search
+    const q = query(usersRef, where('searchableKeywords', 'array-contains-any', searchKeywords));
 
     const querySnapshot = await getDocs(q);
 

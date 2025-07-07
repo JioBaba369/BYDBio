@@ -53,6 +53,7 @@ export type Post = {
   repostCount?: number;
   quotedPost?: EmbeddedPostInfo;
   repostedPost?: EmbeddedPostInfo;
+  searchableKeywords?: string[];
 };
 
 export type PostWithAuthor = Omit<Post, 'createdAt'> & {
@@ -89,6 +90,8 @@ export const getPostsByUser = async (userId: string): Promise<Post[]> => {
 // Function to create a new post
 export const createPost = async (userId: string, data: Pick<Post, 'content' | 'imageUrl'> & { quotedPost?: EmbeddedPostInfo }): Promise<Post> => {
   const postsRef = collection(db, 'posts');
+  const keywords = [...new Set(data.content.toLowerCase().split(' ').filter(Boolean))];
+
   const docRef = await addDoc(postsRef, {
     ...data,
     authorId: userId,
@@ -97,6 +100,7 @@ export const createPost = async (userId: string, data: Pick<Post, 'content' | 'i
     likedBy: [],
     comments: 0,
     repostCount: 0,
+    searchableKeywords: keywords,
   });
   const newPostDoc = await getDoc(docRef);
   return { id: newPostDoc.id, ...newPostDoc.data() } as Post;
@@ -164,6 +168,8 @@ export const repostPost = async (originalPostId: string, reposterId: string): Pr
         imageUrl: originalPostData.imageUrl,
         authorId: originalPostData.authorId,
     };
+    
+    const keywords = [...new Set(originalPostData.content.toLowerCase().split(' ').filter(Boolean))];
 
     const batch = writeBatch(db);
 
@@ -184,6 +190,7 @@ export const repostPost = async (originalPostId: string, reposterId: string): Pr
         likedBy: [],
         comments: 0,
         repostCount: 0,
+        searchableKeywords: keywords,
     };
     batch.set(newPostRef, newPostData);
     
