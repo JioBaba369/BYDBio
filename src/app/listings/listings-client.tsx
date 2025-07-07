@@ -64,8 +64,8 @@ export default function ListingsClient({ initialListings }: { initialListings: L
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold font-headline">Product & Service Listings</h1>
-          <p className="text-muted-foreground">Discover products, services, and digital goods from the community.</p>
+          <h1 className="text-2xl sm:text-3xl font-bold font-headline">Community Marketplace</h1>
+          <p className="text-muted-foreground">Discover products and services from the community.</p>
         </div>
         <div className="flex items-center gap-2">
           <div className="hidden sm:flex items-center gap-1 rounded-md bg-muted p-1">

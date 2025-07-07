@@ -62,8 +62,8 @@ export default function OffersClient({ initialOffers }: { initialOffers: OfferWi
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold font-headline">Offers</h1>
-          <p className="text-muted-foreground">Discover special offers and deals from the community.</p>
+          <h1 className="text-2xl sm:text-3xl font-bold font-headline">Community Offers</h1>
+          <p className="text-muted-foreground">Discover special offers, deals, and promotions.</p>
         </div>
         <div className="flex items-center gap-2">
           <div className="hidden sm:flex items-center gap-1 rounded-md bg-muted p-1">

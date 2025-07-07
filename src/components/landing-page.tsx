@@ -6,7 +6,7 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Logo } from "@/components/logo";
-import { Building, Briefcase, Rocket, Users, Sparkles, Search, Nfc } from "lucide-react";
+import { Building, Briefcase, Rocket, Users, Sparkles, Search, Nfc, Megaphone } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { ClientYear } from "./client-year";
 
@@ -48,9 +48,14 @@ export function LandingPage() {
     <div className="flex flex-col min-h-screen bg-background">
       <header className="container mx-auto px-4 sm:px-6 h-20 flex items-center justify-between">
         <Logo />
-        <Button asChild variant="ghost">
-          <Link href="/auth/sign-in">Sign In</Link>
-        </Button>
+        <div className="flex items-center gap-2">
+            <Button asChild variant="link">
+              <Link href="/whats-new">What's New</Link>
+            </Button>
+            <Button asChild variant="ghost">
+              <Link href="/auth/sign-in">Sign In</Link>
+            </Button>
+        </div>
       </header>
 
       <main className="flex-1">
@@ -78,7 +83,7 @@ export function LandingPage() {
                 height={600}
                 alt="BYD.Bio Profile Example"
                 className="rounded-md"
-                data-ai-hint="business strategy"
+                data-ai-hint="digital profile"
              />
            </div>
         </section>

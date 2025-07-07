@@ -109,8 +109,8 @@ export default function PromoClient({ initialPromoPages }: { initialPromoPages: 
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold font-headline">Promo Pages</h1>
-            <p className="text-muted-foreground">Discover promo pages from across the community.</p>
+            <h1 className="text-2xl sm:text-3xl font-bold font-headline">Business Pages</h1>
+            <p className="text-muted-foreground">Discover business pages and company profiles from the community.</p>
           </div>
           <div className="flex items-center gap-2">
             <div className="hidden sm:flex items-center gap-1 rounded-md bg-muted p-1">
@@ -125,7 +125,7 @@ export default function PromoClient({ initialPromoPages }: { initialPromoPages: 
               <Button asChild>
                 <Link href="/promo/create">
                   <PlusCircle className="mr-2 h-4 w-4" />
-                  Create Promo Page
+                  Create Page
                 </Link>
               </Button>
             )}
@@ -206,7 +206,7 @@ export default function PromoClient({ initialPromoPages }: { initialPromoPages: 
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Promo Page</TableHead>
+                    <TableHead>Business Page</TableHead>
                     <TableHead className="hidden md:table-cell">Contact</TableHead>
                     <TableHead className="hidden lg:table-cell text-center">Stats</TableHead>
                     <TableHead className="text-right">Action</TableHead>
@@ -218,7 +218,7 @@ export default function PromoClient({ initialPromoPages }: { initialPromoPages: 
                         <TableCell>
                           <div className="flex items-center gap-4">
                             {item.logoUrl && (
-                              <Image src={item.logoUrl} alt={item.name} width={40} height={40} className="rounded-full object-cover hidden sm:block aspect-square" />
+                              <Image src={item.logoUrl} alt={item.name} width={40} height={40} className="rounded-full object-contain bg-background hidden sm:block aspect-square" />
                             )}
                             <div className="space-y-1">
                               <Link href={`/p/${item.id}`} className="font-semibold hover:underline">{item.name}</Link>
@@ -271,8 +271,8 @@ export default function PromoClient({ initialPromoPages }: { initialPromoPages: 
         ) : (
           <Card className="text-center">
             <CardHeader>
-                <CardTitle>No Promo Pages Yet</CardTitle>
-                <CardDescription>Get started by creating your first promo page.</CardDescription>
+                <CardTitle>No Business Pages Yet</CardTitle>
+                <CardDescription>Get started by creating your first business page.</CardDescription>
             </CardHeader>
             <CardContent className="flex justify-center items-center p-10">
                 <Megaphone className="h-16 w-16 text-muted-foreground" />
@@ -282,7 +282,7 @@ export default function PromoClient({ initialPromoPages }: { initialPromoPages: 
                   <Button asChild className="w-full">
                       <Link href="/promo/create">
                         <PlusCircle className="mr-2 h-4 w-4" />
-                        Create Your First Promo Page
+                        Create Your First Page
                       </Link>
                   </Button>
               </CardFooter>

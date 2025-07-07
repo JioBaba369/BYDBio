@@ -65,8 +65,8 @@ export default function OpportunitiesClient({ initialJobs }: { initialJobs: JobW
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold font-headline">Jobs</h1>
-          <p className="text-muted-foreground">Discover curated jobs to boost your career.</p>
+          <h1 className="text-2xl sm:text-3xl font-bold font-headline">Opportunities</h1>
+          <p className="text-muted-foreground">Discover curated career opportunities from the community.</p>
         </div>
         <div className="flex items-center gap-2">
           <div className="hidden sm:flex items-center gap-1 rounded-md bg-muted p-1">
@@ -81,7 +81,7 @@ export default function OpportunitiesClient({ initialJobs }: { initialJobs: JobW
             <Button asChild>
               <Link href="/opportunities/create">
                 <PlusCircle className="mr-2 h-4 w-4" />
-                Post Job
+                Post Opportunity
               </Link>
             </Button>
           )}
@@ -197,8 +197,8 @@ export default function OpportunitiesClient({ initialJobs }: { initialJobs: JobW
       ) : (
         <Card className="text-center">
           <CardHeader>
-              <CardTitle>No Jobs Yet</CardTitle>
-              <CardDescription>No one has posted a job yet. Be the first!</CardDescription>
+              <CardTitle>No Opportunities Yet</CardTitle>
+              <CardDescription>No one has posted an opportunity yet. Be the first!</CardDescription>
           </CardHeader>
           <CardContent className="flex justify-center items-center p-10">
               <Briefcase className="h-16 w-16 text-muted-foreground" />
@@ -208,7 +208,7 @@ export default function OpportunitiesClient({ initialJobs }: { initialJobs: JobW
                 <Button asChild className="w-full">
                     <Link href="/opportunities/create">
                       <PlusCircle className="mr-2 h-4 w-4" />
-                      Post Your First Job
+                      Post Your First Opportunity
                     </Link>
                 </Button>
             </CardFooter>
