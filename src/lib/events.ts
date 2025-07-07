@@ -309,6 +309,17 @@ export const getCalendarItems = async (userId: string): Promise<CalendarItem[]> 
         let primaryDate = serializedItem.startDate || serializedItem.postingDate || serializedItem.createdAt;
         if (!primaryDate) return null;
 
+        const getEditPath = (itemType: string, id: string): string => {
+            switch(itemType) {
+                case 'event': return `/events/${id}/edit`;
+                case 'offer': return `/offers/${id}/edit`;
+                case 'job': return `/opportunities/${id}/edit`;
+                case 'listing': return `/listings/${id}/edit`;
+                case 'promoPage': return `/promo/${id}/edit`;
+                default: return `/calendar`;
+            }
+        };
+
         return {
             id: serializedItem.id,
             type: (item.type.charAt(0).toUpperCase() + item.type.slice(1)).replace(/_/g, ' ') as CalendarItem['type'],
@@ -321,7 +332,7 @@ export const getCalendarItems = async (userId: string): Promise<CalendarItem[]> 
             jobType: item.type === 'job' ? serializedItem.type : undefined,
             price: serializedItem.price,
             imageUrl: serializedItem.imageUrl,
-            editPath: item.isExternal ? `/events/${item.id}` : `/${item.type}s/${item.id}/edit`, // pluralizes collection name
+            editPath: item.isExternal ? `/events/${item.id}` : getEditPath(item.type, serializedItem.id),
             isExternal: item.isExternal || false,
             status: serializedItem.status,
             views: serializedItem.views,
