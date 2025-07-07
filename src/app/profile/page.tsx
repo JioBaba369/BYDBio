@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { PlusCircle, Trash2, User, CreditCard, Link2 as LinkIcon, Upload, GripVertical, Save, Building, Linkedin, Phone, Mail, Globe, ExternalLink, Loader2 } from "lucide-react"
+import { PlusCircle, Trash2, User, CreditCard, Link2 as LinkIcon, Upload, GripVertical, Save, Building, Linkedin, Phone, Mail, Globe, ExternalLink, Loader2, Nfc } from "lucide-react"
 import HashtagSuggester from "@/components/ai/hashtag-suggester"
 import { useEffect, useState, useRef, useMemo } from "react";
 import QRCode from 'qrcode.react';
@@ -29,6 +29,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { updateUser, type User as AppUser } from "@/lib/users";
 import { Label } from "@/components/ui/label";
 import { uploadImage } from "@/lib/storage";
+import Link from "next/link";
 
 const publicProfileSchema = z.object({
   name: z.string().min(1, "Name cannot be empty.").max(50, "Name cannot be longer than 50 characters."),
@@ -661,6 +662,22 @@ END:VCARD`;
                                 </div>
                                 <p className="text-xs text-muted-foreground text-center mt-2">Scan to save contact</p>
                             </div>
+                            <Card className="max-w-[280px] mx-auto mt-4 text-center border-primary/20">
+                                <CardHeader className="p-4">
+                                    <CardTitle className="text-base flex items-center justify-center gap-2">
+                                        <Nfc className="h-5 w-5 text-primary"/>
+                                        Get Your BYDTAG
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent className="p-4 pt-0">
+                                    <p className="text-sm text-muted-foreground">Bridge the physical and digital worlds. Share with a single tap.</p>
+                                </CardContent>
+                                <CardFooter className="p-4 pt-0">
+                                    <Button asChild variant="secondary" className="w-full">
+                                        <Link href="/bydtag">Learn More</Link>
+                                    </Button>
+                                </CardFooter>
+                            </Card>
                            </div>
                        </div>
                    </div>
