@@ -90,7 +90,7 @@ function Dashboard() {
       };
       fetchDashboardData();
     }
-  }, [user]);
+  }, [user?.uid]);
 
   const { totalContent, profileCompletion } = useMemo(() => {
     if (!user) {
