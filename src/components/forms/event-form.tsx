@@ -1,4 +1,3 @@
-
 'use client'
 
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -9,7 +8,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDes
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover"
-import { CalendarIcon, Upload, PlusCircle, Trash2, Sparkles, Loader2 } from "lucide-react"
+import { CalendarIcon, Upload, PlusCircle, Trash2 } from "lucide-react"
 import { Calendar } from "../ui/calendar"
 import { cn } from "@/lib/utils"
 import { format } from "date-fns"
@@ -18,8 +17,6 @@ import ImageCropper from "../image-cropper"
 import { useRef, useState } from "react"
 import { useToast } from "@/hooks/use-toast"
 import { Textarea } from "../ui/textarea"
-import { generateImage } from "@/ai/flows/generate-image"
-import { ContentGenerator } from "@/components/ai/content-generator"
 
 const eventFormSchema = z.object({
   title: z.string().min(2, "Title must be at least 2 characters.").max(100, "Title must not be longer than 100 characters."),
@@ -61,7 +58,6 @@ export function EventForm({ defaultValues, onSubmit, isSaving }: EventFormProps)
   const [imageToCrop, setImageToCrop] = useState<string | null>(null);
   const [isCropperOpen, setIsCropperOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [isGenerating, setIsGenerating] = useState(false);
   const { toast } = useToast();
 
   const form = useForm<EventFormValues>({
@@ -112,39 +108,6 @@ export function EventForm({ defaultValues, onSubmit, isSaving }: EventFormProps)
     });
   }
 
-  const handleGenerateImage = async () => {
-    const title = form.getValues('title');
-    if (!title) {
-        toast({
-            title: "Title is missing",
-            description: "Please enter an event title to generate an image.",
-            variant: "destructive",
-        });
-        return;
-    }
-
-    setIsGenerating(true);
-    toast({ title: "Generating image...", description: "The AI is working its magic. This may take a moment." });
-    try {
-        const result = await generateImage({ prompt: title });
-        if (result.imageUrl) {
-            form.setValue('imageUrl', result.imageUrl, { shouldDirty: true });
-            toast({ title: "Image generated!", description: "The new image has been set." });
-        } else {
-            throw new Error("No image URL returned");
-        }
-    } catch (error) {
-        console.error("Error generating image:", error);
-        toast({
-            title: "Image Generation Failed",
-            description: "Could not generate an image at this time. Please try again.",
-            variant: "destructive",
-        });
-    } finally {
-        setIsGenerating(false);
-    }
-  }
-
   return (
     <>
       <ImageCropper
@@ -187,12 +150,6 @@ export function EventForm({ defaultValues, onSubmit, isSaving }: EventFormProps)
                                         <Textarea placeholder="Tell everyone about your event..." {...field} rows={6} />
                                     </FormControl>
                                     <FormMessage />
-                                    <div className="pt-2">
-                                        <ContentGenerator
-                                            contentType="Event Description"
-                                            onGenerate={(content) => field.onChange(content)}
-                                        />
-                                    </div>
                                     </FormItem>
                                 )}
                             />
@@ -411,21 +368,9 @@ export function EventForm({ defaultValues, onSubmit, isSaving }: EventFormProps)
                                     <p className="text-sm text-muted-foreground">No image</p>
                                 )}
                             </div>
-                             <div className="flex gap-2">
-                                <Button type="button" variant="outline" className="w-full" onClick={() => fileInputRef.current?.click()}>
-                                    <Upload className="mr-2 h-4 w-4" /> Change Image
-                                </Button>
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    className="w-full"
-                                    onClick={handleGenerateImage}
-                                    disabled={isGenerating}
-                                >
-                                    {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-                                    {isGenerating ? "Generating..." : "Generate with AI"}
-                                </Button>
-                            </div>
+                            <Button type="button" variant="outline" className="w-full" onClick={() => fileInputRef.current?.click()}>
+                                <Upload className="mr-2 h-4 w-4" /> Change Image
+                            </Button>
                             <input
                                 type="file"
                                 ref={fileInputRef}

@@ -1,4 +1,3 @@
-
 'use client'
 
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -19,7 +18,6 @@ import { cn } from "@/lib/utils"
 import { format } from "date-fns"
 import { Calendar } from "../ui/calendar"
 import { Textarea } from "../ui/textarea"
-import { ContentGenerator } from "../ai/content-generator"
 
 const opportunityFormSchema = z.object({
   title: z.string().min(2, "Title must be at least 2 characters.").max(100, "Title must not be longer than 100 characters."),
@@ -162,12 +160,6 @@ export function OpportunityForm({ defaultValues, onSubmit, isSaving }: Opportuni
                                         />
                                     </FormControl>
                                     <FormMessage />
-                                    <div className="pt-2">
-                                        <ContentGenerator
-                                            contentType="Job Description"
-                                            onGenerate={(content) => field.onChange(content)}
-                                        />
-                                    </div>
                                     </FormItem>
                                 )}
                             />

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useMemo } from "react";
@@ -27,7 +26,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { PostCard } from "@/components/post-card";
 import { toggleLikePost, deletePost, repostPost } from '@/lib/posts';
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
-import { ContactUserForm } from "@/components/contact-user-form";
 import { ContentFeedCard } from "@/components/feed/content-feed-card";
 import { PromoPageFeedItem } from "@/components/feed/promo-page-feed-item";
 import { ListingFeedItem } from "@/components/feed/listing-feed-item";
@@ -375,18 +373,6 @@ END:VCARD`;
                             </ContentFeedCard>
                         );
                     })}
-                </CardContent>
-            </Card>
-        )}
-
-        {!isOwner && (
-            <Card className="bg-card/80 backdrop-blur-sm shadow-2xl rounded-2xl border-primary/10">
-                <CardHeader>
-                    <CardTitle>Contact {name.split(' ')[0]}</CardTitle>
-                    <CardDescription>Send a message directly to {name}.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <ContactUserForm recipientUsername={username} />
                 </CardContent>
             </Card>
         )}

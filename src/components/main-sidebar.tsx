@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -27,7 +26,6 @@ import {
   Link2,
   Building2,
   Share2,
-  CalendarDays,
   LayoutDashboard,
   Rss,
   Mail,
@@ -245,14 +243,6 @@ export function MainSidebar() {
                   <Link href="/bydtag/design">
                     <Nfc />
                     <span>BYD BioTAG</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip="Public Holidays" isActive={isActive('/holiday-scheduler')}>
-                  <Link href="/holiday-scheduler">
-                    <CalendarDays />
-                    <span>Public Holidays</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>

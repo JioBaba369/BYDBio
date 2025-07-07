@@ -1,4 +1,3 @@
-
 'use client'
 
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -19,7 +18,6 @@ import { Calendar } from "../ui/calendar"
 import { cn } from "@/lib/utils"
 import { format } from "date-fns"
 import { RadioGroup, RadioGroupItem } from "../ui/radio-group"
-import { ContentGenerator } from "../ai/content-generator"
 
 const listingFormSchema = z.object({
   title: z.string().min(2, "Title must be at least 2 characters.").max(100, "Title must not be longer than 100 characters."),
@@ -143,12 +141,6 @@ export function ListingForm({ defaultValues, onSubmit, isSaving }: ListingFormPr
                                         />
                                     </FormControl>
                                     <FormMessage />
-                                    <div className="pt-2">
-                                        <ContentGenerator
-                                            contentType="Listing Description"
-                                            onGenerate={(content) => field.onChange(content)}
-                                        />
-                                    </div>
                                     </FormItem>
                                 )}
                             />

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -8,7 +7,6 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { PlusCircle, Trash2, User, CreditCard, Link2 as LinkIcon, Upload, GripVertical, Save, Building, Linkedin, Phone, Mail, Globe, ExternalLink, Loader2, Nfc } from "lucide-react"
-import HashtagSuggester from "@/components/ai/hashtag-suggester"
 import { useEffect, useState, useRef, useMemo } from "react";
 import QRCode from 'qrcode.react';
 import { useForm, useFieldArray, FormProvider, useFormContext } from "react-hook-form";
@@ -22,7 +20,6 @@ import { cn } from "@/lib/utils";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import BioGenerator from "@/components/ai/bio-generator";
 import ImageCropper from "@/components/image-cropper";
 import { useAuth } from "@/components/auth-provider";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -293,7 +290,6 @@ export default function ProfilePage() {
 
   const watchedPublicProfile = publicProfileForm.watch();
   const watchedBusinessCard = businessCardForm.watch();
-  const watchedBio = publicProfileForm.watch('bio');
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -547,13 +543,6 @@ END:VCARD`;
                                           </FormItem>
                                       )}
                                       />
-                                      <BioGenerator onSelectBio={(bio) => publicProfileForm.setValue('bio', bio, { shouldDirty: true })} />
-                                      <div className="space-y-2">
-                                          <HashtagSuggester content={watchedBio || ''} onSelectHashtag={(tag) => {
-                                          const currentBio = publicProfileForm.getValues('bio') || '';
-                                          publicProfileForm.setValue('bio', `${currentBio.trim()} ${tag}`, { shouldDirty: true });
-                                          }} />
-                                      </div>
                                   </div>
                               </Card>
                             </form>
