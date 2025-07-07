@@ -17,21 +17,17 @@ import {
 import { db } from '@/lib/firebase';
 import { getUsersByIds, type User } from './users';
 
-export type NotificationType = 'new_follower' | 'new_like' | 'event_rsvp' | 'contact_form_submission';
+export type NotificationType = 'new_follower' | 'new_like' | 'event_rsvp';
 
 export type Notification = {
   id: string; // Document ID
   userId: string; // The user receiving the notification
-  actorId?: string; // The user who performed the action. Optional for system/guest messages.
+  actorId?: string; // The user who performed the action.
   type: NotificationType;
   entityId?: string; // e.g., postId, eventId
   entityTitle?: string; // A title or snippet for context
   read: boolean;
   createdAt: Timestamp;
-  // Fields for contact form messages
-  senderName?: string;
-  senderEmail?: string;
-  messageBody?: string;
 };
 
 export type NotificationWithActor = Notification & { actor: User | null };
@@ -44,9 +40,6 @@ export const createNotification = async (
   notificationData: {
     entityId?: string;
     entityTitle?: string;
-    messageBody?: string;
-    senderName?: string;
-    senderEmail?: string;
   } = {}
 ) => {
   // Don't notify users about their own actions

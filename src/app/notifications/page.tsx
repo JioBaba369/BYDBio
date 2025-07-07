@@ -3,7 +3,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { CheckCheck, Bell, UserPlus, Heart, Calendar, Mail } from "lucide-react";
+import { CheckCheck, Bell, UserPlus, Heart, Calendar } from "lucide-react";
 import { useAuth } from "@/components/auth-provider";
 import { useState, useEffect } from "react";
 import { getNotificationsForUser, markNotificationsAsRead, markSingleNotificationAsRead, type NotificationWithActor } from "@/lib/notifications";
@@ -14,8 +14,6 @@ import { useToast } from "@/hooks/use-toast";
 import { ClientFormattedDate } from "@/components/client-formatted-date";
 import { useRouter } from "next/navigation";
 import type { Timestamp } from "firebase/firestore";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Separator } from "@/components/ui/separator";
 
 const NotificationSkeleton = () => (
     <div className="flex items-center gap-4 p-4">
@@ -34,7 +32,6 @@ export default function NotificationsPage() {
     const router = useRouter();
     const [notifications, setNotifications] = useState<NotificationWithActor[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [selectedMessage, setSelectedMessage] = useState<NotificationWithActor | null>(null);
 
     useEffect(() => {
         if (user) {
@@ -79,53 +76,36 @@ export default function NotificationsPage() {
                 });
             }
             
-            if (notification.type === 'contact_form_submission') {
-                setSelectedMessage(notification);
-            } else if (link) {
+            if (link) {
                 router.push(link);
             }
         }
 
-        if (notification.type === 'contact_form_submission') {
-            icon = <Mail className="h-5 w-5 text-blue-500" />;
-            const sender = notification.senderName || 'Anonymous';
-            message = (
-              <>
-                <p><span className="font-semibold">{sender}</span> sent you a message from your profile page.</p>
-                {notification.messageBody && (
-                  <blockquote className="mt-2 pl-3 border-l-2 text-sm text-muted-foreground italic line-clamp-2">
-                    "{notification.messageBody}"
-                  </blockquote>
-                )}
-              </>
-            );
-        } else {
-             if (!actor) return null; // Don't render if the actor (user who performed action) is gone
+        if (!actor) return null; // Don't render if the actor (user who performed action) is gone
 
-            switch (notification.type) {
-                case 'new_follower':
-                icon = <UserPlus className="h-5 w-5 text-primary" />;
-                message = <p><span className="font-semibold">{actor.name}</span> started following you.</p>;
-                link = `/u/${actor.username}`;
-                break;
-                case 'new_like':
-                icon = <Heart className="h-5 w-5 text-red-500" />;
-                message = (
-                    <p>
-                        <span className="font-semibold">{actor.name}</span> liked your post:{" "}
-                        <span className="italic text-muted-foreground">"{notification.entityTitle}"</span>
-                    </p>
-                );
-                link = `/feed`; // A real app would link to the post: `/posts/${notification.entityId}`
-                break;
-                case 'event_rsvp':
-                icon = <Calendar className="h-5 w-5 text-purple-500" />;
-                message = <p><span className="font-semibold">{actor.name}</span> RSVP'd to your event: <span className="font-semibold">{notification.entityTitle}</span>.</p>;
-                link = `/events/${notification.entityId}`;
-                break;
-                default:
-                return null;
-            }
+        switch (notification.type) {
+            case 'new_follower':
+            icon = <UserPlus className="h-5 w-5 text-primary" />;
+            message = <p><span className="font-semibold">{actor.name}</span> started following you.</p>;
+            link = `/u/${actor.username}`;
+            break;
+            case 'new_like':
+            icon = <Heart className="h-5 w-5 text-red-500" />;
+            message = (
+                <p>
+                    <span className="font-semibold">{actor.name}</span> liked your post:{" "}
+                    <span className="italic text-muted-foreground">"{notification.entityTitle}"</span>
+                </p>
+            );
+            link = `/feed`; // A real app would link to the post: `/posts/${notification.entityId}`
+            break;
+            case 'event_rsvp':
+            icon = <Calendar className="h-5 w-5 text-purple-500" />;
+            message = <p><span className="font-semibold">{actor.name}</span> RSVP'd to your event: <span className="font-semibold">{notification.entityTitle}</span>.</p>;
+            link = `/events/${notification.entityId}`;
+            break;
+            default:
+            return null;
         }
         
         return (
@@ -137,7 +117,7 @@ export default function NotificationsPage() {
                 <div className="relative">
                 <Avatar>
                     <AvatarImage src={actor?.avatarUrl} alt={actor?.name} />
-                    <AvatarFallback>{actor?.avatarFallback || notification.senderName?.charAt(0) || 'A'}</AvatarFallback>
+                    <AvatarFallback>{actor?.avatarFallback || 'A'}</AvatarFallback>
                 </Avatar>
                 <div className="absolute -bottom-1 -right-1 bg-background rounded-full p-0.5">
                     {icon}
@@ -172,60 +152,42 @@ export default function NotificationsPage() {
     }
 
     return (
-        <>
-            <Dialog open={!!selectedMessage} onOpenChange={(open) => !open && setSelectedMessage(null)}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Message from {selectedMessage?.senderName}</DialogTitle>
-                         <DialogDescription>
-                            <span className="font-medium">From:</span> {selectedMessage?.senderEmail} <br />
-                            <span className="font-medium">Received:</span> <ClientFormattedDate date={selectedMessage?.createdAt as any} relative />
-                        </DialogDescription>
-                    </DialogHeader>
-                     <Separator />
-                    <div className="pt-2">
-                        <p className="whitespace-pre-wrap text-sm">{selectedMessage?.messageBody}</p>
-                    </div>
-                </DialogContent>
-            </Dialog>
-
-            <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h1 className="text-2xl sm:text-3xl font-bold font-headline">Notifications</h1>
-                        <p className="text-muted-foreground">
-                            {unreadCount > 0 ? `You have ${unreadCount} unread message${unreadCount > 1 ? 's' : ''}.` : 'No new notifications.'}
-                        </p>
-                    </div>
-                    <Button variant="outline" onClick={handleMarkAllAsRead} disabled={unreadCount === 0}>
-                        <CheckCheck className="mr-2 h-4 w-4" />
-                        Mark all as read
-                    </Button>
+        <div className="space-y-6">
+            <div className="flex items-center justify-between">
+                <div>
+                    <h1 className="text-2xl sm:text-3xl font-bold font-headline">Notifications</h1>
+                    <p className="text-muted-foreground">
+                        {unreadCount > 0 ? `You have ${unreadCount} unread message${unreadCount > 1 ? 's' : ''}.` : 'No new notifications.'}
+                    </p>
                 </div>
-                <Card>
-                    <CardContent className="p-0 divide-y">
-                        {isLoading ? (
-                            <>
-                            <NotificationSkeleton />
-                            <NotificationSkeleton />
-                            <NotificationSkeleton />
-                            </>
-                        ) : notifications.length > 0 ? (
-                        <div>
-                            {notifications.map(notification => (
-                                <NotificationItem key={notification.id} notification={notification} />
-                            ))}
-                        </div>
-                        ) : (
-                            <div className="p-10 text-center text-muted-foreground flex flex-col items-center gap-4">
-                                <Bell className="h-12 w-12" />
-                                <h3 className="text-lg font-semibold text-foreground">You're all caught up!</h3>
-                                <p>New notifications from followers and likes will appear here.</p>
-                            </div>
-                        )}
-                    </CardContent>
-                </Card>
+                <Button variant="outline" onClick={handleMarkAllAsRead} disabled={unreadCount === 0}>
+                    <CheckCheck className="mr-2 h-4 w-4" />
+                    Mark all as read
+                </Button>
             </div>
-        </>
+            <Card>
+                <CardContent className="p-0 divide-y">
+                    {isLoading ? (
+                        <>
+                        <NotificationSkeleton />
+                        <NotificationSkeleton />
+                        <NotificationSkeleton />
+                        </>
+                    ) : notifications.length > 0 ? (
+                    <div>
+                        {notifications.map(notification => (
+                            <NotificationItem key={notification.id} notification={notification} />
+                        ))}
+                    </div>
+                    ) : (
+                        <div className="p-10 text-center text-muted-foreground flex flex-col items-center gap-4">
+                            <Bell className="h-12 w-12" />
+                            <h3 className="text-lg font-semibold text-foreground">You're all caught up!</h3>
+                            <p>New notifications from followers and likes will appear here.</p>
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
+        </div>
     );
 }

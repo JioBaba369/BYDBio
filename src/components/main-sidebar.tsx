@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -151,14 +152,6 @@ export function MainSidebar() {
                 <Link href="/notifications">
                   <Bell />
                   <span>Notifications</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Inbox" isActive={isActive('/inbox')}>
-                <Link href="/inbox">
-                  <Mail />
-                  <span>Inbox</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
