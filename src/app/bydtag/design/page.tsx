@@ -113,9 +113,9 @@ const TagPreview = ({ values, user, side }: { values: DesignFormValues; user: an
         );
 
         return (
-             <div className={cn("aspect-[85.6/53.98] w-full rounded-xl p-4 transition-colors relative flex items-center gap-4", cardBgClass, layout === 'horizontal-right' ? 'flex-row-reverse' : '')} style={cardStyle}>
+             <div className={cn("aspect-[85.6/53.98] w-full rounded-xl p-4 transition-colors relative flex", cardBgClass)} style={cardStyle}>
                 {values.backgroundImageUrl && <div className="absolute inset-0 bg-black/40 rounded-xl" />}
-                <div className="relative z-10 flex w-full items-center gap-4">
+                <div className={cn("relative z-10 flex w-full items-center gap-4", layout === 'horizontal-right' ? 'flex-row-reverse' : '')}>
                     {renderAvatar("h-16 w-16", "text-2xl")}
                     {textElement}
                 </div>
@@ -391,40 +391,81 @@ export default function BydTagDesignPage() {
                                       </FormItem>
                                   )}
                                 />
-                              <FormField
-                                  control={form.control}
-                                  name="layout"
-                                  render={({ field }) => (
-                                      <FormItem>
-                                      <FormLabel>Card Layout</FormLabel>
-                                      <FormControl>
-                                          <RadioGroup
-                                              onValueChange={field.onChange}
-                                              defaultValue={field.value}
-                                              className="grid grid-cols-2 gap-2"
-                                          >
-                                              <FormItem>
-                                                  <FormControl><RadioGroupItem value="vertical" className="sr-only" /></FormControl>
-                                                  <FormLabel className={cn("flex font-normal items-center justify-center rounded-md border p-4 cursor-pointer hover:bg-accent", field.value === 'vertical' && 'border-primary ring-2 ring-primary')}>Vertical</FormLabel>
-                                              </FormItem>
-                                              <FormItem>
-                                                  <FormControl><RadioGroupItem value="horizontal-left" className="sr-only" /></FormControl>
-                                                  <FormLabel className={cn("flex font-normal items-center justify-center rounded-md border p-4 cursor-pointer hover:bg-accent", field.value === 'horizontal-left' && 'border-primary ring-2 ring-primary')}>H (Left)</FormLabel>
-                                              </FormItem>
-                                              <FormItem>
-                                                  <FormControl><RadioGroupItem value="horizontal-right" className="sr-only" /></FormControl>
-                                                  <FormLabel className={cn("flex font-normal items-center justify-center rounded-md border p-4 cursor-pointer hover:bg-accent", field.value === 'horizontal-right' && 'border-primary ring-2 ring-primary')}>H (Right)</FormLabel>
-                                              </FormItem>
-                                               <FormItem>
-                                                  <FormControl><RadioGroupItem value="lanyard" className="sr-only" /></FormControl>
-                                                  <FormLabel className={cn("flex font-normal items-center justify-center rounded-md border p-4 cursor-pointer hover:bg-accent", field.value === 'lanyard' && 'border-primary ring-2 ring-primary')}>Lanyard</FormLabel>
-                                              </FormItem>
-                                          </RadioGroup>
-                                      </FormControl>
-                                      <FormMessage />
-                                      </FormItem>
-                                  )}
-                              />
+                                <FormField
+                                    control={form.control}
+                                    name="layout"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                        <FormLabel>Card Layout</FormLabel>
+                                        <FormControl>
+                                            <RadioGroup
+                                                onValueChange={field.onChange}
+                                                defaultValue={field.value}
+                                                className="grid grid-cols-2 gap-4"
+                                            >
+                                                {/* Vertical */}
+                                                <FormItem>
+                                                    <FormControl><RadioGroupItem value="vertical" className="sr-only" /></FormControl>
+                                                    <FormLabel className={cn("flex flex-col items-center justify-center rounded-md border-2 p-4 cursor-pointer hover:bg-accent hover:border-primary", field.value === 'vertical' && 'border-primary')}>
+                                                        <div className="w-10 h-16 bg-muted rounded-md flex flex-col items-center justify-end p-1 relative">
+                                                            <div className="w-5 h-5 rounded-full bg-muted-foreground/50 absolute top-[35%]"></div>
+                                                            <div className="w-full space-y-1 p-1">
+                                                                <div className="h-1.5 w-3/4 mx-auto bg-muted-foreground/50 rounded-full"></div>
+                                                                <div className="h-1.5 w-1/2 mx-auto bg-muted-foreground/50 rounded-full"></div>
+                                                            </div>
+                                                        </div>
+                                                        <span className="mt-2 font-semibold">Vertical</span>
+                                                    </FormLabel>
+                                                </FormItem>
+                                                {/* H (Left) */}
+                                                <FormItem>
+                                                    <FormControl><RadioGroupItem value="horizontal-left" className="sr-only" /></FormControl>
+                                                    <FormLabel className={cn("flex flex-col items-center justify-center rounded-md border-2 p-4 cursor-pointer hover:bg-accent hover:border-primary", field.value === 'horizontal-left' && 'border-primary')}>
+                                                        <div className="w-20 h-12 bg-muted rounded-md flex items-center p-2 gap-2">
+                                                            <div className="w-6 h-6 rounded-full bg-muted-foreground/50 flex-shrink-0"></div>
+                                                            <div className="w-full space-y-1">
+                                                                <div className="h-1.5 w-full bg-muted-foreground/50 rounded-full"></div>
+                                                                <div className="h-1.5 w-3/4 bg-muted-foreground/50 rounded-full"></div>
+                                                            </div>
+                                                        </div>
+                                                        <span className="mt-2 font-semibold">H (Left)</span>
+                                                    </FormLabel>
+                                                </FormItem>
+                                                {/* H (Right) */}
+                                                <FormItem>
+                                                    <FormControl><RadioGroupItem value="horizontal-right" className="sr-only" /></FormControl>
+                                                    <FormLabel className={cn("flex flex-col items-center justify-center rounded-md border-2 p-4 cursor-pointer hover:bg-accent hover:border-primary", field.value === 'horizontal-right' && 'border-primary')}>
+                                                        <div className="w-20 h-12 bg-muted rounded-md flex items-center p-2 gap-2">
+                                                            <div className="w-full space-y-1">
+                                                                <div className="h-1.5 w-full bg-muted-foreground/50 rounded-full"></div>
+                                                                <div className="h-1.5 w-3/4 ml-auto bg-muted-foreground/50 rounded-full"></div>
+                                                            </div>
+                                                            <div className="w-6 h-6 rounded-full bg-muted-foreground/50 flex-shrink-0"></div>
+                                                        </div>
+                                                        <span className="mt-2 font-semibold">H (Right)</span>
+                                                    </FormLabel>
+                                                </FormItem>
+                                                {/* Lanyard */}
+                                                <FormItem>
+                                                    <FormControl><RadioGroupItem value="lanyard" className="sr-only" /></FormControl>
+                                                    <FormLabel className={cn("flex flex-col items-center justify-center rounded-md border-2 p-4 cursor-pointer hover:bg-accent hover:border-primary", field.value === 'lanyard' && 'border-primary')}>
+                                                        <div className="w-20 h-12 bg-muted rounded-md flex items-center p-2 gap-2 relative">
+                                                            <div className="w-2 h-2 rounded-full bg-muted-foreground/50 absolute top-1 left-1/2 -translate-x-1/2"></div>
+                                                            <div className="w-8 h-8 rounded-full bg-muted-foreground/50 flex-shrink-0"></div>
+                                                            <div className="w-full space-y-1">
+                                                                <div className="h-1.5 w-full bg-muted-foreground/50 rounded-full"></div>
+                                                                <div className="h-1.5 w-3/4 bg-muted-foreground/50 rounded-full"></div>
+                                                            </div>
+                                                        </div>
+                                                        <span className="mt-2 font-semibold">Lanyard</span>
+                                                    </FormLabel>
+                                                </FormItem>
+                                            </RadioGroup>
+                                        </FormControl>
+                                        <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
                               <FormField
                                   control={form.control}
                                   name="name"
