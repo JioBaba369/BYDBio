@@ -15,6 +15,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { User } from './users';
+import { getUsersByIds } from './users';
 
 export type Listing = {
   id: string; // Document ID from Firestore
@@ -145,33 +146,23 @@ export const getAllListings = async (): Promise<ListingWithAuthor[]> => {
     const q = query(listingsRef, where('status', '==', 'active'), orderBy('createdAt', 'desc'));
     const querySnapshot = await getDocs(q);
 
-    const listings: ListingWithAuthor[] = [];
-    const authorCache: { [key: string]: User } = {};
+    const listingDocs = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    if (listingDocs.length === 0) return [];
 
-    for (const listingDoc of querySnapshot.docs) {
-        const data = listingDoc.data();
-        const authorId = data.authorId;
-        let author = authorCache[authorId];
+    const authorIds = [...new Set(listingDocs.map(doc => doc.authorId))];
+    const authors = await getUsersByIds(authorIds);
+    const authorMap = new Map(authors.map(author => [author.uid, author]));
 
-        if (!author) {
-            const userDoc = await getDoc(doc(db, 'users', authorId));
-            if (userDoc.exists()) {
-                author = { uid: userDoc.id, ...userDoc.data() } as User;
-                authorCache[authorId] = author;
-            }
-        }
-        
-        if (author) {
-            listings.push({
-                id: listingDoc.id,
-                ...data,
-                createdAt: (data.createdAt as Timestamp).toDate().toISOString(),
-                startDate: data.startDate ? (data.startDate as Timestamp).toDate().toISOString() : null,
-                endDate: data.endDate ? (data.endDate as Timestamp).toDate().toISOString() : null,
-                author: { uid: author.uid, name: author.name, username: author.username, avatarUrl: author.avatarUrl }
-            } as ListingWithAuthor);
-        }
-    }
+    return listingDocs.map(data => {
+        const author = authorMap.get(data.authorId);
+        if (!author) return null;
 
-    return listings;
+        return {
+            ...data,
+            createdAt: (data.createdAt as Timestamp).toDate().toISOString(),
+            startDate: data.startDate ? (data.startDate as Timestamp).toDate().toISOString() : null,
+            endDate: data.endDate ? (data.endDate as Timestamp).toDate().toISOString() : null,
+            author: { uid: author.uid, name: author.name, username: author.username, avatarUrl: author.avatarUrl }
+        } as ListingWithAuthor;
+    }).filter((listing): listing is ListingWithAuthor => !!listing);
 };

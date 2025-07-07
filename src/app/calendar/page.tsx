@@ -88,7 +88,7 @@ export default function CalendarPage() {
   }, []);
   
   useEffect(() => {
-    if (user) {
+    if (user?.uid) {
         setIsLoading(true);
         getCalendarItems(user.uid)
             .then(setAllItems)
@@ -98,7 +98,7 @@ export default function CalendarPage() {
             })
             .finally(() => setIsLoading(false));
     }
-  }, [user, toast]);
+  }, [user?.uid, toast]);
 
 
   const areFiltersActive = !!searchTerm || !!locationFilter || typeFilters.size < 5;
@@ -150,7 +150,7 @@ export default function CalendarPage() {
   const handleDelete = async () => {
     if (!selectedItem || !user) return;
 
-    const previousItems = allItems;
+    const previousItems = [...allItems];
     // Optimistic UI update
     setAllItems(prev => prev.filter(item => item.id !== selectedItem.id));
 

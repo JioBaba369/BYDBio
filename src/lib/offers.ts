@@ -15,6 +15,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { User } from './users';
+import { getUsersByIds } from './users';
 
 export type Offer = {
   id: string; // Document ID from Firestore
@@ -154,38 +155,26 @@ export const getAllOffers = async (): Promise<OfferWithAuthor[]> => {
     const q = query(offersRef, where('status', '==', 'active'), orderBy('startDate', 'desc'));
     const querySnapshot = await getDocs(q);
 
-    const offers: OfferWithAuthor[] = [];
-    const authorCache: { [key: string]: User } = {};
+    const offerDocs = querySnapshot.docs
+        .map(doc => ({ id: doc.id, ...doc.data() }))
+        .filter(data => data.startDate); // Ensure offer has a start date
 
-    for (const offerDoc of querySnapshot.docs) {
-        const data = offerDoc.data();
-        if (!data.startDate) {
-            console.warn(`Offer ${offerDoc.id} is missing a startDate and will be skipped.`);
-            continue;
-        }
+    if (offerDocs.length === 0) return [];
+    
+    const authorIds = [...new Set(offerDocs.map(doc => doc.authorId))];
+    const authors = await getUsersByIds(authorIds);
+    const authorMap = new Map(authors.map(author => [author.uid, author]));
 
-        const authorId = data.authorId;
-        let author = authorCache[authorId];
-
-        if (!author) {
-            const userDoc = await getDoc(doc(db, 'users', authorId));
-            if (userDoc.exists()) {
-                author = { uid: userDoc.id, ...userDoc.data() } as User;
-                authorCache[authorId] = author;
-            }
-        }
+    return offerDocs.map(data => {
+        const author = authorMap.get(data.authorId);
+        if (!author) return null;
         
-        if (author) {
-            offers.push({
-                id: offerDoc.id,
-                ...data,
-                createdAt: (data.createdAt as Timestamp).toDate().toISOString(),
-                startDate: (data.startDate as Timestamp).toDate().toISOString(),
-                endDate: data.endDate ? (data.endDate as Timestamp).toDate().toISOString() : null,
-                author: { uid: author.uid, name: author.name, username: author.username, avatarUrl: author.avatarUrl }
-            } as OfferWithAuthor);
-        }
-    }
-
-    return offers;
+        return {
+            ...data,
+            createdAt: (data.createdAt as Timestamp).toDate().toISOString(),
+            startDate: (data.startDate as Timestamp).toDate().toISOString(),
+            endDate: data.endDate ? (data.endDate as Timestamp).toDate().toISOString() : null,
+            author: { uid: author.uid, name: author.name, username: author.username, avatarUrl: author.avatarUrl }
+        } as OfferWithAuthor;
+    }).filter((offer): offer is OfferWithAuthor => !!offer);
 };

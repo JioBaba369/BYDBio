@@ -22,6 +22,7 @@ import { db } from '@/lib/firebase';
 import type { User } from './users';
 import { formatCurrency } from './utils';
 import { createNotification } from './notifications';
+import { getUsersByIds } from './users';
 
 export type ItineraryItem = {
   time: string;
@@ -216,40 +217,28 @@ export const getAllEvents = async (): Promise<EventWithAuthor[]> => {
     const q = query(eventsRef, where('status', '==', 'active'), orderBy('startDate', 'desc'));
     const querySnapshot = await getDocs(q);
 
-    const events: EventWithAuthor[] = [];
-    const authorCache: { [key: string]: User } = {};
+    const eventDocs = querySnapshot.docs
+        .map(doc => ({ id: doc.id, ...doc.data() }))
+        .filter(data => data.startDate); // Ensure event has a start date
 
-    for (const eventDoc of querySnapshot.docs) {
-        const data = eventDoc.data();
-        if (!data.startDate) {
-            console.warn(`Event ${eventDoc.id} is missing a start date and will be skipped from getAllEvents.`);
-            continue;
-        }
-        
-        const authorId = data.authorId;
-        let author = authorCache[authorId];
+    if (eventDocs.length === 0) return [];
+    
+    const authorIds = [...new Set(eventDocs.map(doc => doc.authorId))];
+    const authors = await getUsersByIds(authorIds);
+    const authorMap = new Map(authors.map(author => [author.uid, author]));
 
-        if (!author) {
-            const userDoc = await getDoc(doc(db, 'users', authorId));
-            if (userDoc.exists()) {
-                author = { uid: userDoc.id, ...userDoc.data() } as User;
-                authorCache[authorId] = author;
-            }
-        }
-        
-        if (author) {
-            events.push({
-                id: eventDoc.id,
-                ...data,
-                createdAt: (data.createdAt as Timestamp).toDate().toISOString(),
-                startDate: (data.startDate as Timestamp).toDate().toISOString(),
-                endDate: data.endDate ? (data.endDate as Timestamp).toDate().toISOString() : null,
-                author: { uid: author.uid, name: author.name, username: author.username, avatarUrl: author.avatarUrl }
-            } as EventWithAuthor);
-        }
-    }
+    return eventDocs.map(data => {
+        const author = authorMap.get(data.authorId);
+        if (!author) return null;
 
-    return events;
+        return {
+            ...data,
+            createdAt: (data.createdAt as Timestamp).toDate().toISOString(),
+            startDate: (data.startDate as Timestamp).toDate().toISOString(),
+            endDate: data.endDate ? (data.endDate as Timestamp).toDate().toISOString() : null,
+            author: { uid: author.uid, name: author.name, username: author.username, avatarUrl: author.avatarUrl }
+        } as EventWithAuthor;
+    }).filter((event): event is EventWithAuthor => !!event);
 };
 
 const serializeFirestoreTimestamps = (data: any): any => {

@@ -15,6 +15,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { User } from './users';
+import { getUsersByIds } from './users';
 
 export type Job = {
   id: string; // Document ID from Firestore
@@ -173,40 +174,28 @@ export const getAllJobs = async (): Promise<JobWithAuthor[]> => {
     const q = query(jobsRef, where('status', '==', 'active'), orderBy('postingDate', 'desc'));
     const querySnapshot = await getDocs(q);
 
-    const jobs: JobWithAuthor[] = [];
-    const authorCache: { [key: string]: User } = {};
+    const jobDocs = querySnapshot.docs
+        .map(doc => ({ id: doc.id, ...doc.data() }))
+        .filter(data => data.postingDate); // Ensure job has a posting date
 
-    for (const jobDoc of querySnapshot.docs) {
-        const data = jobDoc.data();
-        if (!data.postingDate) {
-            console.warn(`Job ${jobDoc.id} is missing a postingDate and will be skipped.`);
-            continue;
-        }
+    if (jobDocs.length === 0) return [];
+    
+    const authorIds = [...new Set(jobDocs.map(doc => doc.authorId))];
+    const authors = await getUsersByIds(authorIds);
+    const authorMap = new Map(authors.map(author => [author.uid, author]));
 
-        const authorId = data.authorId;
-        let author = authorCache[authorId];
-
-        if (!author) {
-            const userDoc = await getDoc(doc(db, 'users', authorId));
-            if (userDoc.exists()) {
-                author = { uid: userDoc.id, ...userDoc.data() } as User;
-                authorCache[authorId] = author;
-            }
-        }
+    return jobDocs.map(data => {
+        const author = authorMap.get(data.authorId);
+        if (!author) return null;
         
-        if (author) {
-            jobs.push({
-                id: jobDoc.id,
-                ...data,
-                createdAt: (data.createdAt as Timestamp).toDate().toISOString(),
-                postingDate: (data.postingDate as Timestamp).toDate().toISOString(),
-                closingDate: data.closingDate ? (data.closingDate as Timestamp).toDate().toISOString() : null,
-                startDate: data.startDate ? (data.startDate as Timestamp).toDate().toISOString() : null,
-                endDate: data.endDate ? (data.endDate as Timestamp).toDate().toISOString() : null,
-                author: { uid: author.uid, name: author.name, username: author.username, avatarUrl: author.avatarUrl }
-            } as JobWithAuthor);
-        }
-    }
-
-    return jobs;
+        return {
+            ...data,
+            createdAt: (data.createdAt as Timestamp).toDate().toISOString(),
+            postingDate: (data.postingDate as Timestamp).toDate().toISOString(),
+            closingDate: data.closingDate ? (data.closingDate as Timestamp).toDate().toISOString() : null,
+            startDate: data.startDate ? (data.startDate as Timestamp).toDate().toISOString() : null,
+            endDate: data.endDate ? (data.endDate as Timestamp).toDate().toISOString() : null,
+            author: { uid: author.uid, name: author.name, username: author.username, avatarUrl: author.avatarUrl }
+        } as JobWithAuthor;
+    }).filter((job): job is JobWithAuthor => !!job);
 };

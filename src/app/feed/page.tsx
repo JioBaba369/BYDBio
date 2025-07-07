@@ -140,10 +140,10 @@ export default function FeedPage() {
   }, [user, toast]);
 
   useEffect(() => {
-    if (user) {
+    if (user?.uid) {
         fetchFeeds(true, true);
     }
-  }, [user, fetchFeeds]);
+  }, [user?.uid, fetchFeeds]);
 
   const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {

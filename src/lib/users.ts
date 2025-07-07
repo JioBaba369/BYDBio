@@ -81,42 +81,47 @@ const generateUniqueUsername = async (baseUsername: string): Promise<string> => 
  * This prevents overwriting data on subsequent logins.
  * @param user The user object from Firebase Authentication.
  * @param additionalData Additional data to include in the profile, like the name from the sign-up form.
+ * @returns An object indicating if the user was new.
  */
-export const createUserProfileIfNotExists = async (user: FirebaseUser, additionalData?: { name?: string }) => {
+export const createUserProfileIfNotExists = async (user: FirebaseUser, additionalData?: { name?: string }): Promise<{ isNewUser: boolean }> => {
     const userDocRef = doc(db, "users", user.uid);
     const userDoc = await getDoc(userDocRef);
 
-    if (!userDoc.exists()) {
-        const baseUsername = user.email?.split('@')[0].replace(/[^a-zA-Z0-9]/g, '').toLowerCase() || `user`;
-        const username = await generateUniqueUsername(baseUsername);
-        const name = additionalData?.name || user.displayName || "New User";
-
-        const searchableKeywords = [...new Set([
-            ...name.toLowerCase().split(' ').filter(Boolean),
-            username.toLowerCase()
-        ])];
-
-        await setDoc(userDocRef, {
-            uid: user.uid,
-            email: user.email,
-            name: name,
-            username: username,
-            avatarUrl: user.photoURL || `https://placehold.co/200x200.png`,
-            avatarFallback: name.charAt(0).toUpperCase(),
-            bio: "",
-            following: [],
-            followerCount: 0,
-            links: [],
-            businessCard: {},
-            notificationSettings: {
-                newFollowers: true,
-                newLikes: true,
-                eventRsvps: true,
-                offersAndUpdates: true,
-            },
-            searchableKeywords: searchableKeywords,
-        });
+    if (userDoc.exists()) {
+        return { isNewUser: false };
     }
+
+    const baseUsername = user.email?.split('@')[0].replace(/[^a-zA-Z0-9]/g, '').toLowerCase() || `user`;
+    const username = await generateUniqueUsername(baseUsername);
+    const name = additionalData?.name || user.displayName || "New User";
+
+    const searchableKeywords = [...new Set([
+        ...name.toLowerCase().split(' ').filter(Boolean),
+        username.toLowerCase()
+    ])];
+
+    await setDoc(userDocRef, {
+        uid: user.uid,
+        email: user.email,
+        name: name,
+        username: username,
+        avatarUrl: user.photoURL || `https://placehold.co/200x200.png`,
+        avatarFallback: name.charAt(0).toUpperCase(),
+        bio: "",
+        following: [],
+        followerCount: 0,
+        links: [],
+        businessCard: {},
+        notificationSettings: {
+            newFollowers: true,
+            newLikes: true,
+            eventRsvps: true,
+            offersAndUpdates: true,
+        },
+        searchableKeywords: searchableKeywords,
+    });
+    
+    return { isNewUser: true };
 };
 
 /**

@@ -15,6 +15,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { User } from './users';
+import { getUsersByIds } from './users';
 
 export type PromoPage = {
   id: string; // Document ID from Firestore
@@ -139,31 +140,21 @@ export const getAllPromoPages = async (): Promise<PromoPageWithAuthor[]> => {
     const q = query(promoPagesRef, where('status', '==', 'active'), orderBy('createdAt', 'desc'));
     const querySnapshot = await getDocs(q);
 
-    const promoPages: PromoPageWithAuthor[] = [];
-    const authorCache: { [key: string]: User } = {};
+    const promoPageDocs = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    if (promoPageDocs.length === 0) return [];
+    
+    const authorIds = [...new Set(promoPageDocs.map(doc => doc.authorId))];
+    const authors = await getUsersByIds(authorIds);
+    const authorMap = new Map(authors.map(author => [author.uid, author]));
 
-    for (const promoPageDoc of querySnapshot.docs) {
-        const data = promoPageDoc.data();
-        const authorId = data.authorId;
-        let author = authorCache[authorId];
+    return promoPageDocs.map(data => {
+        const author = authorMap.get(data.authorId);
+        if (!author) return null;
 
-        if (!author) {
-            const userDoc = await getDoc(doc(db, 'users', authorId));
-            if (userDoc.exists()) {
-                author = { uid: userDoc.id, ...userDoc.data() } as User;
-                authorCache[authorId] = author;
-            }
-        }
-        
-        if (author) {
-            promoPages.push({
-                id: promoPageDoc.id,
-                ...data,
-                createdAt: (data.createdAt as Timestamp).toDate().toISOString(),
-                author: { uid: author.uid, name: author.name, username: author.username, avatarUrl: author.avatarUrl }
-            } as PromoPageWithAuthor);
-        }
-    }
-
-    return promoPages;
+        return {
+            ...data,
+            createdAt: (data.createdAt as Timestamp).toDate().toISOString(),
+            author: { uid: author.uid, name: author.name, username: author.username, avatarUrl: author.avatarUrl }
+        } as PromoPageWithAuthor;
+    }).filter((page): page is PromoPageWithAuthor => !!page);
 };

@@ -41,6 +41,7 @@ export default function ImageCropper({
       const croppedImage = await getCroppedImg(
         imageSrc,
         croppedAreaPixels,
+        'image/png' // Always use PNG to support transparency
       )
       if (croppedImage) {
         onCropComplete(croppedImage)
@@ -99,7 +100,7 @@ export default function ImageCropper({
             />
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <Button variant="outline" onClick={() => handleOpenChange(false)}>Cancel</Button>
           <Button onClick={handleShowCroppedImage}>Save Image</Button>
         </DialogFooter>
       </DialogContent>

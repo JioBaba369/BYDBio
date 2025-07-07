@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UserPlus, UserCheck, QrCode, Loader2, Users, Search as SearchIcon } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import {
   AlertDialog,
@@ -58,67 +58,62 @@ export default function ConnectionsPage() {
     const router = useRouter();
     const { toast } = useToast();
 
-    useEffect(() => {
-        if (user) {
-            const fetchData = async () => {
-                setIsLoading(true);
-                try {
-                    const [followers, following, suggested] = await Promise.all([
-                        getFollowers(user.uid),
-                        getFollowing(user.uid),
-                        getSuggestedUsers(user.uid, user.following)
-                    ]);
-                    setFollowersList(followers);
-                    setFollowingList(following);
-                    setSuggestedList(suggested);
-                } catch (error) {
-                    console.error("Error fetching connections:", error);
-                    toast({ title: "Error fetching connections", variant: "destructive" });
-                } finally {
-                    setIsLoading(false);
-                }
-            };
-            fetchData();
+    const fetchConnections = useCallback(async () => {
+        if (!user) return;
+        setIsLoading(true);
+        try {
+            const [followers, following, suggested] = await Promise.all([
+                getFollowers(user.uid),
+                getFollowing(user.uid),
+                getSuggestedUsers(user.uid)
+            ]);
+            setFollowersList(followers);
+            setFollowingList(following);
+            setSuggestedList(suggested);
+        } catch (error) {
+            console.error("Error fetching connections:", error);
+            toast({ title: "Error fetching connections", variant: "destructive" });
+        } finally {
+            setIsLoading(false);
         }
-    }, [user]);
+    }, [user, toast]);
+
+    useEffect(() => {
+        if (user?.uid) {
+            fetchConnections();
+        }
+    }, [user?.uid, fetchConnections]);
 
     const handleToggleFollow = async (targetUser: User, isCurrentlyFollowing: boolean) => {
         if (!user || togglingFollowId) return;
         setTogglingFollowId(targetUser.uid);
         
-        const previousFollowersList = [...followersList];
-        const previousFollowingList = [...followingList];
-        const previousSuggestedList = [...suggestedList];
-
-        // Optimistic UI Update
-        if (isCurrentlyFollowing) {
-            setFollowingList(prev => prev.filter(u => u.uid !== targetUser.uid));
-            setSuggestedList(prev => {
-                if (prev.find(p => p.uid === targetUser.uid)) return prev;
-                return [...prev, targetUser]
-            });
-             setFollowersList(prev => prev.map(f => f.uid === targetUser.uid ? { ...f, followerCount: (f.followerCount || 0) -1 } : f));
-        } else {
-            setFollowingList(prev => [...prev, targetUser]);
-            setSuggestedList(prev => prev.filter(u => u.uid !== targetUser.uid));
-            setFollowersList(prev => prev.map(f => f.uid === targetUser.uid ? { ...f, followerCount: (f.followerCount || 0) + 1 } : f));
-        }
-        
         try {
             if (isCurrentlyFollowing) {
                 await unfollowUser(user.uid, targetUser.uid);
                 toast({ title: `Unfollowed ${targetUser.name}` });
+                setFollowingList(prev => prev.filter(u => u.uid !== targetUser.uid));
+                setSuggestedList(prev => {
+                    if (prev.find(p => p.uid === targetUser.uid)) return prev;
+                    return [...prev, targetUser]
+                });
             } else {
                 await followUser(user.uid, targetUser.uid);
                 toast({ title: `You are now following ${targetUser.name}` });
+                setFollowingList(prev => [...prev, targetUser]);
+                setSuggestedList(prev => prev.filter(u => u.uid !== targetUser.uid));
             }
+             // Refresh followers list if the followed/unfollowed user was in it
+            if (followersList.some(f => f.uid === targetUser.uid)) {
+                const newFollowersList = await getFollowers(user.uid);
+                setFollowersList(newFollowersList);
+            }
+
         } catch (error) {
             console.error("Error following/unfollowing user:", error);
             toast({ title: "Something went wrong", variant: "destructive" });
-            // Rollback UI on error
-            setFollowingList(previousFollowingList);
-            setSuggestedList(previousSuggestedList);
-            setFollowersList(previousFollowersList);
+            // Note: No explicit rollback here as we refetch for consistency.
+            // A more complex implementation could store previous state.
         } finally {
             setTogglingFollowId(null);
         }

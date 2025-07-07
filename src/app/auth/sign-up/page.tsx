@@ -71,11 +71,11 @@ export default function SignUpPage() {
       const user = userCredential.user;
 
       // Create user profile in Firestore if it doesn't exist
-      await createUserProfileIfNotExists(user);
+      const { isNewUser } = await createUserProfileIfNotExists(user);
 
        toast({
-        title: "Account Created",
-        description: "Welcome! We're redirecting you to your new profile.",
+        title: isNewUser ? "Account Created" : "Welcome Back!",
+        description: isNewUser ? "We're redirecting you to your new profile." : "You have been successfully signed in.",
       });
       router.push('/');
     } catch (error: any) {
