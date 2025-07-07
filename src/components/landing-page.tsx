@@ -5,7 +5,8 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Logo } from "@/components/logo";
-import { Building, Briefcase, Rocket, Users, Sparkles, Search } from "lucide-react";
+import { Building, Briefcase, Rocket, Users, Sparkles, Search, Nfc } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 export function LandingPage() {
   return (
@@ -101,6 +102,33 @@ export function LandingPage() {
               </Card>
             </div>
           </div>
+        </section>
+
+        {/* BYDTAG Section */}
+        <section className="py-20 sm:py-24">
+            <div className="container mx-auto px-4 sm:px-6">
+                <div className="grid md:grid-cols-2 gap-12 items-center bg-muted/40 p-8 sm:p-12 rounded-2xl">
+                    <div>
+                        <Badge>New</Badge>
+                        <h2 className="text-3xl sm:text-4xl font-headline font-bold mt-2">Introducing the BYDTAG</h2>
+                        <p className="mt-4 text-muted-foreground text-lg">
+                            The smartest business card on the planet. Your BYDTAG is an NFC-enabled card that links directly to your digital business card. Just one tap is all it takes to share your contact info, social links, and more.
+                        </p>
+                        <Button asChild className="mt-6">
+                            <Link href="/bydtag">Learn More</Link>
+                        </Button>
+                    </div>
+                    <div className="relative aspect-[4/3] max-w-sm mx-auto">
+                        <Image 
+                            src="https://placehold.co/600x400.png"
+                            fill
+                            alt="A hand holding a BYDTAG to a phone"
+                            className="object-contain"
+                            data-ai-hint="nfc payment"
+                        />
+                    </div>
+                </div>
+            </div>
         </section>
         
         {/* Final CTA */}

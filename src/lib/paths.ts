@@ -1,4 +1,5 @@
 
+
 // The paths for authentication which are public but have special layout considerations.
 const AUTH_PATHS = [
     '/auth/sign-in',
@@ -18,6 +19,15 @@ const PROTECTED_ROUTE_BASES = [
     '/holiday-scheduler',
 ];
 
+// Explicit public paths that aren't dynamic
+const EXPLICIT_PUBLIC_PATHS = [
+    '/',
+    '/explore',
+    '/whats-new',
+    '/url-tree',
+    '/bydtag'
+]
+
 /**
  * Checks if a given path is an authentication path.
  * @param path The path to check.
@@ -33,9 +43,8 @@ export const isAuthPath = (path: string) => {
  * @returns `true` if the path is public, `false` otherwise.
  */
 export const isPublicPath = (path: string) => {
-    // The dashboard is a special case: public for logged-out users (shows landing), private for logged-in.
-    // The AuthProvider handles the logged-in case, so we can treat it as public here.
-    if (path === '/') {
+    // Check for explicit public paths first.
+    if (EXPLICIT_PUBLIC_PATHS.includes(path)) {
         return true;
     }
     

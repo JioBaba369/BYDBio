@@ -51,6 +51,7 @@ export default function UrlTreePage() {
                     </li>
                      <li><span className={leafStyle}>/explore</span> - Explore All Content</li>
                      <li><span className={leafStyle}>/whats-new</span> - "What's New" Page</li>
+                     <li><span className={leafStyle}>/bydtag</span> - BYDTAG Product Page</li>
                      <li><span className={leafStyle}>/p/[promoId]</span> - Public Promo Page</li>
                      <li><span className={leafStyle}>/l/[listingId]</span> - Public Listing</li>
                      <li><span className={leafStyle}>/o/[jobId]</span> - Public Job Page</li>

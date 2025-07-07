@@ -3,7 +3,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Rocket, Zap, Palette, Bug, Calendar as CalendarIcon } from "lucide-react";
+import { Rocket, Zap, Palette, Bug, Calendar as CalendarIcon, Nfc } from "lucide-react";
 import { ClientFormattedDate } from "@/components/client-formatted-date";
 
 type UpdateItem = {
@@ -19,6 +19,13 @@ type UpdateItem = {
 };
 
 const updates: UpdateItem[] = [
+   {
+    date: '2025-07-31T12:00:00Z',
+    version: 'v1.9.0',
+    title: 'Introducing the BYDTAG',
+    description: 'Bridge the physical and digital worlds with BYDTAG. This NFC-enabled tag links directly to your digital business card, allowing you to share your profile with a single tap. A modern, impressive, and eco-friendly way to network.',
+    badge: { text: 'New Feature', icon: Nfc, className: 'bg-green-100 text-green-800 border-green-200 dark:bg-green-900/50 dark:text-green-300 dark:border-green-700/80' },
+  },
    {
     date: '2025-07-30T12:00:00Z',
     version: 'v1.8.0',
