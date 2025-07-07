@@ -2,6 +2,12 @@
 # https://firebase.google.com/docs/app-hosting/configure
 
 runConfig:
-  # Increase this value if you'd like to automatically spin up
-  # more instances in response to increased traffic.
-  maxInstances: 1
+  # Keep at least one instance running to reduce latency on new requests.
+  minInstances: 1
+  # Increase this value to automatically spin up more instances in response
+  # to increased traffic, up to a maximum of 10.
+  maxInstances: 10
+
+# Pin to a specific major version of Next.js to ensure build stability.
+# https://firebase.google.com/docs/app-hosting/build-container-image#pin_a_major_version
+runtime: nextjs20

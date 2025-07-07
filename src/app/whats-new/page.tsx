@@ -3,7 +3,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Rocket, Zap, Palette, Bug } from "lucide-react";
+import { Rocket, Zap, Palette, Bug, Calendar as CalendarIcon } from "lucide-react";
 import { ClientFormattedDate } from "@/components/client-formatted-date";
 
 type UpdateItem = {
@@ -84,32 +84,61 @@ const updates: UpdateItem[] = [
   },
 ];
 
+const UpdateCard = ({ item }: { item: UpdateItem }) => (
+    <div className="relative pl-8 sm:pl-12 py-6 group">
+        <div className="flex sm:items-center flex-col sm:flex-row mb-1">
+            <div className="absolute w-px h-full bg-border -translate-x-4 sm:-translate-x-6 top-0" />
+            <div className="absolute h-3 w-3 rounded-full bg-primary -translate-x-4 sm:-translate-x-6 top-8 ring-4 ring-background" />
+            <time className="sm:absolute left-0 translate-y-0.5 inline-flex items-center justify-center text-xs font-semibold uppercase w-20 h-6 mb-3 sm:mb-0 text-primary-foreground bg-primary rounded-full">
+                <ClientFormattedDate date={item.date} formatStr="MMM d" />
+            </time>
+            <h3 className="text-xl font-headline font-semibold text-foreground">{item.title}</h3>
+            <Badge variant="outline" className={`ml-auto hidden sm:flex ${item.badge.className}`}>
+                <item.badge.icon className="mr-1.5 h-3.5 w-3.5" />
+                {item.badge.text}
+            </Badge>
+        </div>
+        <p className="text-sm text-muted-foreground mt-2 sm:mt-0">{item.version}</p>
+        <p className="mt-2 text-muted-foreground">{item.description}</p>
+        <Badge variant="outline" className={`mt-2 flex sm:hidden w-fit ${item.badge.className}`}>
+            <item.badge.icon className="mr-1.5 h-3.5 w-3.5" />
+            {item.badge.text}
+        </Badge>
+    </div>
+);
+
+
 export default function WhatsNewPage() {
+    // Group updates by year
+    const updatesByYear = updates.reduce((acc, update) => {
+        const year = new Date(update.date).getFullYear();
+        if (!acc[year]) {
+            acc[year] = [];
+        }
+        acc[year].push(update);
+        return acc;
+    }, {} as Record<number, UpdateItem[]>);
+
+    const sortedYears = Object.keys(updatesByYear).map(Number).sort((a, b) => b - a);
+
     return (
         <div className="space-y-8 max-w-3xl mx-auto">
             <div className="text-center">
                 <h1 className="text-3xl font-bold font-headline">What's New in BYD.Bio</h1>
                 <p className="text-muted-foreground mt-2">Stay up-to-date with our latest features and improvements.</p>
             </div>
-            <div className="space-y-8">
-                {updates.map((update, index) => (
-                    <Card key={index} className="overflow-hidden">
-                        <CardHeader>
-                            <div className="flex items-center justify-between gap-4">
-                                <CardTitle className="text-xl font-headline">{update.title}</CardTitle>
-                                <Badge variant="outline" className={update.badge.className}>
-                                    <update.badge.icon className="mr-1.5 h-3.5 w-3.5" />
-                                    {update.badge.text}
-                                </Badge>
-                            </div>
-                            <CardDescription className="text-sm pt-1">
-                                <ClientFormattedDate date={update.date} formatStr="PPP"/> &bull; {update.version}
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <p className="text-muted-foreground">{update.description}</p>
-                        </CardContent>
-                    </Card>
+            <div className="space-y-12">
+                {sortedYears.map(year => (
+                    <div key={year}>
+                        <h2 className="text-2xl font-bold font-headline mb-4 flex items-center gap-2">
+                            <CalendarIcon className="w-6 h-6" /> {year}
+                        </h2>
+                        <div className="relative">
+                            {updatesByYear[year].map((update, index) => (
+                                <UpdateCard key={index} item={update} />
+                            ))}
+                        </div>
+                    </div>
                 ))}
             </div>
         </div>
