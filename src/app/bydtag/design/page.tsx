@@ -68,7 +68,7 @@ const TagPreview = ({ values, user, side }: { values: DesignFormValues; user: an
                         <div className="flex flex-col items-center gap-2">
                             <div className="bg-white p-2 rounded-lg shadow-md">
                                 <QRCode
-                                    value={`https://byd.bio/u/${user.username}`}
+                                    value={`${window.location.origin}/u/${user.username}`}
                                     size={90}
                                     bgColor="#ffffff"
                                     fgColor="#000000"
