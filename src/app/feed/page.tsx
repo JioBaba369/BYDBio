@@ -145,6 +145,24 @@ export default function FeedPage() {
     }
   }, [user?.uid, fetchFeeds]);
 
+  useEffect(() => {
+    const storedPostJson = sessionStorage.getItem('postToQuote');
+    if (storedPostJson) {
+        try {
+            const post = JSON.parse(storedPostJson);
+            // We cast here because the stored object is a stripped-down version,
+            // but it has all the fields needed for the QuotedPostPreview component.
+            setPostToQuote(post as FeedItem);
+            sessionStorage.removeItem('postToQuote');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            document.getElementById('new-post')?.focus();
+        } catch (error) {
+            console.error("Failed to parse post to quote from sessionStorage:", error);
+            sessionStorage.removeItem('postToQuote'); // Clean up bad data
+        }
+    }
+  }, []);
+
   const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];

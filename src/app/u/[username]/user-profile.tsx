@@ -189,9 +189,32 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
     }
   }
 
-  const handleQuote = () => {
-    router.push('/feed');
-    toast({ title: "Start a quote", description: "Quoting is available from your main feed." });
+  const handleQuote = (post: PostWithAuthor) => {
+    if (!currentUser) {
+        toast({ title: "Please sign in to quote posts." });
+        router.push('/auth/sign-in');
+        return;
+    }
+    try {
+        // Only store the data needed to reconstruct the quoted preview.
+        const postToStore = {
+            id: post.id,
+            content: post.content,
+            imageUrl: post.imageUrl,
+            author: { // Stripped down author
+                uid: post.author.uid,
+                name: post.author.name,
+                username: post.author.username,
+                avatarUrl: post.author.avatarUrl,
+            },
+        };
+
+        sessionStorage.setItem('postToQuote', JSON.stringify(postToStore));
+        router.push('/feed');
+    } catch (error) {
+        console.error("Could not set up post for quoting:", error);
+        toast({ title: "Could not quote post", variant: "destructive" });
+    }
   };
 
 

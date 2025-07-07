@@ -211,36 +211,6 @@ export default function ExploreClient({ initialItems }: { initialItems: PublicCo
                           const primaryStat = getPrimaryStat(item);
                           const itemTypeLabel = item.type === 'promoPage' ? 'Promo Page' : item.type;
                           
-                          if (item.type === 'promoPage') {
-                            const promoPage = item as any;
-                             return (
-                                <Card key={`${item.type}-${item.id}`} className="shadow-sm flex flex-col md:col-span-2 lg:col-span-2 relative overflow-hidden group">
-                                  {promoPage.imageUrl && (
-                                    <Image src={promoPage.imageUrl} alt={title} layout="fill" className="object-cover transition-transform duration-500 group-hover:scale-105" data-ai-hint="office storefront" />
-                                  )}
-                                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
-                                  <div className="relative flex flex-col justify-end p-6 h-64 text-white flex-grow">
-                                    <div className="flex items-center gap-4">
-                                      {promoPage.logoUrl && (
-                                        <Image src={promoPage.logoUrl} alt={`${title} logo`} width={80} height={80} className="rounded-full border-2 border-white/50 bg-black/20 shrink-0" data-ai-hint="logo" />
-                                      )}
-                                      <div className="flex-1">
-                                        <Badge variant="default" className="w-fit capitalize bg-white/20 text-white border-none backdrop-blur-sm">{itemTypeLabel}</Badge>
-                                        <CardTitle className="text-2xl mt-1 text-white"><Link href={getLink(item)} className="hover:underline">{title}</Link></CardTitle>
-                                        <Link href={`/u/${item.author.username}`} className="flex items-center gap-2 hover:underline text-sm opacity-80 mt-1">
-                                            <Avatar className="h-5 w-5">
-                                                <AvatarImage src={item.author.avatarUrl} alt={item.author.name} data-ai-hint="person portrait"/>
-                                                <AvatarFallback>{item.author.name.charAt(0)}</AvatarFallback>
-                                            </Avatar>
-                                            <span>by {item.author.name}</span>
-                                        </Link>
-                                      </div>
-                                    </div>
-                                  </div>
-                                </Card>
-                            )
-                          }
-                          
                           return (
                             <Card key={`${item.type}-${item.id}`} className="shadow-sm flex flex-col">
                                 {item.imageUrl && (
@@ -262,6 +232,7 @@ export default function ExploreClient({ initialItems }: { initialItems: PublicCo
                                             <span className="text-xs">{item.author.name}</span>
                                         </Link>
                                     </div>
+                                    <p className="line-clamp-2">{item.description}</p>
                                 </CardContent>
                                 <CardFooter className="flex-col items-start gap-4 border-t pt-4 px-4 pb-4">
                                     <div className="flex justify-between w-full text-xs text-muted-foreground">
