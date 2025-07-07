@@ -11,7 +11,7 @@ import { getJobsByUser } from '@/lib/jobs';
 import { getEventsByUser } from '@/lib/events';
 import { getOffersByUser } from '@/lib/offers';
 import { getPromoPagesByUser } from '@/lib/promo-pages';
-import type { Timestamp } from 'firebase/firestore';
+import { Timestamp } from 'firebase/firestore';
 
 export async function generateMetadata({ params }: { params: { username: string } }): Promise<Metadata> {
   const username = params.username;
