@@ -43,6 +43,7 @@ type DesignFormValues = z.infer<typeof designSchema>;
 const TagPreview = ({ values, user, side }: { values: DesignFormValues; user: any; side: 'front' | 'back' }) => {
     const textColor = values.textColor === 'light' ? 'text-white' : 'text-gray-900';
     const subtitleColor = values.textColor === 'light' ? 'text-gray-300' : 'text-gray-500';
+    const layout = values.layout || 'vertical';
 
     const cardBgClass = values.backgroundImageUrl ? '' : {
         black: 'bg-gray-900',
@@ -55,12 +56,16 @@ const TagPreview = ({ values, user, side }: { values: DesignFormValues; user: an
         backgroundSize: 'cover',
         backgroundPosition: 'center',
     } : {};
+    
+    // Determine aspect ratio based on layout
+    const isPortrait = layout === 'vertical';
+    const aspectRatioClass = isPortrait ? 'aspect-[53.98/85.6]' : 'aspect-[85.6/53.98]';
 
     // BACK OF CARD
     if (side === 'back') {
         const backCardBg = cardBgClass || (values.textColor === 'light' ? 'bg-gray-900' : 'bg-white');
         return (
-            <div className={cn("aspect-[85.6/53.98] w-full rounded-xl flex flex-col items-center justify-between p-4 transition-colors relative", backCardBg)} style={cardStyle}>
+            <div className={cn("w-full rounded-xl flex flex-col items-center justify-between p-4 transition-colors relative", aspectRatioClass, backCardBg)} style={cardStyle}>
                  {values.backgroundImageUrl && <div className="absolute inset-0 bg-black/60 rounded-xl" />}
                  <div className="relative z-10 w-full flex flex-col items-center justify-between h-full">
                     <Logo className={cn("text-lg", textColor)} />
@@ -69,7 +74,7 @@ const TagPreview = ({ values, user, side }: { values: DesignFormValues; user: an
                             <div className="bg-white p-2 rounded-lg shadow-md">
                                 <QRCode
                                     value={`${window.location.origin}/u/${user.username}`}
-                                    size={90}
+                                    size={isPortrait ? 120 : 90}
                                     bgColor="#ffffff"
                                     fgColor="#000000"
                                     renderAs="svg"
@@ -85,8 +90,6 @@ const TagPreview = ({ values, user, side }: { values: DesignFormValues; user: an
     }
 
     // FRONT OF CARD
-    const layout = values.layout || 'vertical';
-
     const renderAvatar = (sizeClass: string, fallbackClass: string) => (
          <div className="shrink-0">
             {values.logoUrl ? (
@@ -113,7 +116,7 @@ const TagPreview = ({ values, user, side }: { values: DesignFormValues; user: an
         );
 
         return (
-             <div className={cn("aspect-[85.6/53.98] w-full rounded-xl p-4 transition-colors relative flex", cardBgClass)} style={cardStyle}>
+             <div className={cn("w-full rounded-xl p-4 transition-colors relative flex", aspectRatioClass, cardBgClass)} style={cardStyle}>
                 {values.backgroundImageUrl && <div className="absolute inset-0 bg-black/50 rounded-xl" />}
                 <div className={cn("relative z-10 flex w-full items-center gap-4", layout === 'horizontal-right' ? 'flex-row-reverse' : '')}>
                     {renderAvatar("h-16 w-16", "text-2xl")}
@@ -126,7 +129,7 @@ const TagPreview = ({ values, user, side }: { values: DesignFormValues; user: an
     // Lanyard Card
     if (layout === 'lanyard') {
          return (
-            <div className={cn("aspect-[85.6/53.98] w-full rounded-xl p-6 transition-colors relative flex items-center gap-6", cardBgClass)} style={cardStyle}>
+            <div className={cn("w-full rounded-xl p-6 transition-colors relative flex items-center gap-6", aspectRatioClass, cardBgClass)} style={cardStyle}>
                 {values.backgroundImageUrl && <div className="absolute inset-0 bg-black/50 rounded-xl" />}
                 <div className="absolute top-3 left-1/2 -translate-x-1/2 w-4 h-4 rounded-full bg-white/50 border border-white/80" />
                 <div className="relative z-10 flex w-full items-center gap-6">
@@ -143,14 +146,14 @@ const TagPreview = ({ values, user, side }: { values: DesignFormValues; user: an
     
     // Vertical Card (Default)
     return (
-        <div className={cn("aspect-[85.6/53.98] w-full rounded-xl p-4 transition-colors relative flex", cardBgClass)} style={cardStyle}>
+        <div className={cn("w-full rounded-xl p-6 transition-colors relative flex", aspectRatioClass, cardBgClass)} style={cardStyle}>
             {values.backgroundImageUrl && <div className="absolute inset-0 bg-black/50 rounded-xl" />}
-            <div className="relative z-10 flex w-full flex-col items-center justify-center text-center space-y-3">
-                {renderAvatar("h-16 w-16", "text-2xl")}
-                <div className="space-y-0.5">
-                    <h3 className={cn("font-bold text-xl leading-tight", textColor)}>{values.name || 'Your Name'}</h3>
-                    <p className={cn("text-sm leading-tight", subtitleColor)}>{values.title || 'Your Title'}</p>
-                    {values.company && <p className={cn("text-xs leading-tight opacity-80", subtitleColor)}>{values.company}</p>}
+            <div className="relative z-10 flex w-full flex-col items-center justify-center text-center space-y-4">
+                {renderAvatar("h-24 w-24", "text-4xl")}
+                <div className="space-y-1">
+                    <h3 className={cn("font-bold text-2xl leading-tight", textColor)}>{values.name || 'Your Name'}</h3>
+                    <p className={cn("text-base leading-tight", subtitleColor)}>{values.title || 'Your Title'}</p>
+                    {values.company && <p className={cn("text-sm leading-tight opacity-80 pt-1", subtitleColor)}>{values.company}</p>}
                 </div>
             </div>
         </div>
@@ -269,6 +272,9 @@ export default function BydTagDesignPage() {
     { value: 'white', className: 'bg-white border' },
     { value: 'blue', className: 'bg-blue-600' },
   ];
+  
+  const isPortraitLayout = watchedValues.layout === 'vertical';
+  const cropperAspectRatio = isPortraitLayout ? 53.98 / 85.6 : 85.6 / 53.98;
 
   return (
     <>
@@ -277,7 +283,7 @@ export default function BydTagDesignPage() {
         open={isBgCropperOpen}
         onOpenChange={setIsBgCropperOpen}
         onCropComplete={handleBgCropComplete}
-        aspectRatio={85.6 / 53.98}
+        aspectRatio={cropperAspectRatio}
         isRound={false}
       />
       <div className="space-y-6">
@@ -403,7 +409,7 @@ export default function BydTagDesignPage() {
                                                 <FormItem>
                                                     <FormControl><RadioGroupItem value="vertical" className="sr-only" /></FormControl>
                                                     <FormLabel className={cn("flex flex-col items-center justify-center rounded-md border-2 p-4 cursor-pointer hover:bg-accent hover:border-primary", field.value === 'vertical' && 'border-primary')}>
-                                                        <div className="w-20 h-12 bg-muted rounded-md flex flex-col items-center justify-center p-1 gap-1">
+                                                        <div className="w-12 h-[75px] bg-muted rounded-md flex flex-col items-center justify-center p-1 gap-1">
                                                             <div className="w-5 h-5 rounded-full bg-muted-foreground/50"></div>
                                                             <div className="w-full space-y-0.5">
                                                                 <div className="h-1.5 w-3/4 mx-auto bg-muted-foreground/50 rounded-full"></div>
