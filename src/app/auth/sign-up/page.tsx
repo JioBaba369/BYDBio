@@ -13,9 +13,10 @@ import { Github } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createUserWithEmailAndPassword, GithubAuthProvider, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { createUserWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { createUserProfileIfNotExists } from "@/lib/users";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const signUpSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
@@ -68,29 +69,6 @@ export default function SignUpPage() {
       setIsSubmitting(false);
     }
   };
-
-  const handleSocialSignIn = async (provider: GoogleAuthProvider | GithubAuthProvider) => {
-    try {
-      const userCredential = await signInWithPopup(auth, provider);
-      const user = userCredential.user;
-
-      // Create user profile in Firestore if it doesn't exist
-      const { isNewUser } = await createUserProfileIfNotExists(user);
-
-       toast({
-        title: isNewUser ? "Account Created" : "Welcome Back!",
-        description: isNewUser ? "We're redirecting you to your new profile." : "You have been successfully signed in.",
-      });
-      router.push('/');
-    } catch (error: any) {
-       console.error("Social sign in error:", error);
-       toast({
-        title: "Sign Up Failed",
-        description: error.message || "Could not sign up with the selected provider.",
-        variant: "destructive",
-      });
-    }
-  }
   
   const GoogleIcon = () => (
     <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
@@ -159,10 +137,34 @@ export default function SignUpPage() {
             <span className="bg-background px-2 text-muted-foreground">Or sign up with</span>
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-4">
-          <Button variant="outline" onClick={() => handleSocialSignIn(new GoogleAuthProvider())}><GoogleIcon /> Google</Button>
-          <Button variant="outline" onClick={() => handleSocialSignIn(new GithubAuthProvider())}><Github className="mr-2" /> GitHub</Button>
-        </div>
+        <TooltipProvider>
+          <div className="grid grid-cols-2 gap-4">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="w-full" tabIndex={0}>
+                  <Button variant="outline" className="w-full" disabled>
+                    <GoogleIcon /> Google
+                  </Button>
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Coming Soon</p>
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="w-full" tabIndex={0}>
+                  <Button variant="outline" className="w-full" disabled>
+                    <Github className="mr-2" /> GitHub
+                  </Button>
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Coming Soon</p>
+              </TooltipContent>
+            </Tooltip>
+          </div>
+        </TooltipProvider>
       </CardContent>
       <CardFooter className="justify-center">
         <p className="text-sm text-muted-foreground">
