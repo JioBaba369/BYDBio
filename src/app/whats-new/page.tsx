@@ -19,6 +19,13 @@ type UpdateItem = {
 
 const updates: UpdateItem[] = [
   {
+    date: 'July 30, 2024',
+    version: 'v1.8.0',
+    title: 'AI Content Writer for Descriptions',
+    description: 'Stuck writing descriptions for your events, jobs, or listings? Our new AI Content Writer can help. Just provide a few keywords, and the AI will generate a professional and engaging description for you, saving you time and effort.',
+    badge: { text: 'New Feature', icon: Rocket, className: 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/50 dark:text-blue-300 dark:border-blue-700/80' },
+  },
+  {
     date: 'July 29, 2024',
     version: 'v1.7.0',
     title: 'Foundational Refactoring & Major Bug Bash',

@@ -6,3 +6,4 @@ import '@/ai/flows/generate-bio.ts';
 import '@/ai/flows/get-holidays-flow.ts';
 import '@/ai/flows/generate-image.ts';
 import '@/ai/flows/send-contact-message.ts';
+import '@/ai/flows/generate-content-flow.ts';

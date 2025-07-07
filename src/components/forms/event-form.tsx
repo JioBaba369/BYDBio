@@ -19,6 +19,7 @@ import { useRef, useState } from "react"
 import { useToast } from "@/hooks/use-toast"
 import { Textarea } from "../ui/textarea"
 import { generateImage } from "@/ai/flows/generate-image"
+import { ContentGenerator } from "@/components/ai/content-generator"
 
 const eventFormSchema = z.object({
   title: z.string().min(2, "Title must be at least 2 characters.").max(100, "Title must not be longer than 100 characters."),
@@ -186,6 +187,12 @@ export function EventForm({ defaultValues, onSubmit, isSaving }: EventFormProps)
                                         <Textarea placeholder="Tell everyone about your event..." {...field} rows={6} />
                                     </FormControl>
                                     <FormMessage />
+                                    <div className="pt-2">
+                                        <ContentGenerator
+                                            contentType="Event Description"
+                                            onGenerate={(content) => field.onChange(content)}
+                                        />
+                                    </div>
                                     </FormItem>
                                 )}
                             />

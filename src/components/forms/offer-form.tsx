@@ -18,6 +18,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover"
 import { cn } from "@/lib/utils"
 import { format } from "date-fns"
 import { Calendar } from "../ui/calendar"
+import { ContentGenerator } from "../ai/content-generator"
 
 const offerFormSchema = z.object({
   title: z.string().min(2, "Title must be at least 2 characters.").max(100, "Title must not be longer than 100 characters."),
@@ -142,6 +143,12 @@ export function OfferForm({ defaultValues, onSubmit, isSaving }: OfferFormProps)
                                         />
                                     </FormControl>
                                     <FormMessage />
+                                    <div className="pt-2">
+                                        <ContentGenerator
+                                            contentType="Offer Description"
+                                            onGenerate={(content) => field.onChange(content)}
+                                        />
+                                    </div>
                                     </FormItem>
                                 )}
                             />
