@@ -1,13 +1,12 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
 import type { User } from '@/lib/users';
 import type { Event } from '@/lib/events';
 import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MapPin, Calendar, Clock, ArrowLeft, Users, Ticket, User as UserIcon, CalendarPlus, Loader2, Edit, UserPlus, UserCheck } from 'lucide-react';
+import { MapPin, Calendar, Clock, ArrowLeft, Users, Ticket, User as UserIcon, CalendarPlus, Edit } from 'lucide-react';
 import Link from 'next/link';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
@@ -19,7 +18,7 @@ import { useToast } from '@/hooks/use-toast';
 import { ClientFormattedDate } from '@/components/client-formatted-date';
 import { parseISO } from 'date-fns';
 import { useAuth } from '@/components/auth-provider';
-import { followUser, unfollowUser } from '@/lib/connections';
+import { AuthorCard } from '@/components/author-card';
 
 
 interface EventDetailClientProps {
@@ -32,39 +31,6 @@ export default function EventDetailClient({ event, author }: EventDetailClientPr
     const { toast } = useToast();
     const attendeeCount = event.rsvps?.length || 0;
     const isOwner = currentUser && currentUser.uid === author.uid;
-    
-    const [isFollowing, setIsFollowing] = useState(currentUser?.following?.includes(author.uid) || false);
-    const [isFollowLoading, setIsFollowLoading] = useState(false);
-
-    useEffect(() => {
-        setIsFollowing(currentUser?.following?.includes(author.uid) || false);
-    }, [currentUser, author.uid]);
-    
-    const handleFollowToggle = async () => {
-        if (!currentUser) {
-            toast({ title: "Please sign in to follow users.", variant: "destructive" });
-            return;
-        }
-        if (currentUser.uid === author.uid) return;
-
-        setIsFollowLoading(true);
-        const currentlyFollowing = isFollowing;
-
-        try {
-            if (currentlyFollowing) {
-                await unfollowUser(currentUser.uid, author.uid);
-                toast({ title: `Unfollowed ${author.name}` });
-            } else {
-                await followUser(currentUser.uid, author.uid);
-                toast({ title: `You are now following ${author.name}` });
-            }
-            setIsFollowing(!currentlyFollowing);
-        } catch (error) {
-            toast({ title: "Something went wrong", variant: "destructive" });
-        } finally {
-            setIsFollowLoading(false);
-        }
-    };
 
     const handleAddToCalendar = () => {
         const date = parseISO(event.startDate as string);
@@ -262,34 +228,7 @@ export default function EventDetailClient({ event, author }: EventDetailClientPr
                         </Card>
                     </div>
                      <div className="md:col-span-1 space-y-6">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="text-lg">About the Host</CardTitle>
-                            </CardHeader>
-                            <CardContent className="flex flex-col items-center text-center">
-                                <Link href={`/u/${author.username}`} className="block">
-                                  <Avatar className="h-20 w-20 mb-2">
-                                    <AvatarImage src={author.avatarUrl} data-ai-hint="person portrait" />
-                                    <AvatarFallback>{author.avatarFallback}</AvatarFallback>
-                                  </Avatar>
-                                </Link>
-                                <Link href={`/u/${author.username}`} className="font-semibold hover:underline">{author.name}</Link>
-                                <p className="text-sm text-muted-foreground">@{author.username}</p>
-                                <div className="mt-4 w-full space-y-2">
-                                    {currentUser && !isOwner && (
-                                        <Button 
-                                            variant="outline"
-                                            className="w-full"
-                                            onClick={handleFollowToggle}
-                                            disabled={isFollowLoading}
-                                        >
-                                            {isFollowLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : isFollowing ? <UserCheck className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
-                                            {isFollowing ? 'Following' : 'Follow'}
-                                        </Button>
-                                    )}
-                                </div>
-                            </CardContent>
-                        </Card>
+                        <AuthorCard author={author} isOwner={isOwner} authorTypeLabel="Host" />
                     </div>
                 </div>
             </div>
