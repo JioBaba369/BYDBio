@@ -257,7 +257,7 @@ export default function FeedPage() {
     try {
       await repostPost(postId, user.uid);
       toast({ title: "Reposted!" });
-      await fetchFeeds(true, true); // Refresh both feeds to show the new repost
+      await fetchFeeds(true, false); // Refresh following feed only
     } catch (error: any) {
       console.error("Error reposting:", error);
       toast({ title: error.message || "Failed to repost", variant: "destructive" });

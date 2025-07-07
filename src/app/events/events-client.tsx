@@ -68,17 +68,22 @@ export default function EventsClient({ initialEvents }: { initialEvents: EventWi
     if (rsvpingEventId) return;
     
     setRsvpingEventId(eventId);
+    const originalEvents = [...allEvents];
+
+    // Optimistic UI update
+    setAllEvents(prev => prev.map(event => {
+        if (event.id === eventId) {
+            const isCurrentlyRsvped = event.rsvps?.includes(user.uid);
+            const newRsvps = isCurrentlyRsvped 
+                ? (event.rsvps || []).filter(uid => uid !== user.uid)
+                : [...(event.rsvps || []), user.uid];
+            return { ...event, rsvps: newRsvps };
+        }
+        return event;
+    }));
+
     try {
         const isNowRsvped = await toggleRsvp(eventId, user.uid);
-        setAllEvents(prev => prev.map(event => {
-            if (event.id === eventId) {
-                const newRsvps = isNowRsvped 
-                    ? [...(event.rsvps || []), user.uid] 
-                    : (event.rsvps || []).filter(uid => uid !== user.uid);
-                return { ...event, rsvps: newRsvps };
-            }
-            return event;
-        }));
         toast({
             title: isNowRsvped ? "You're going!" : "You are no longer attending",
             description: `"${eventTitle}" status updated in your diary.`
@@ -86,6 +91,8 @@ export default function EventsClient({ initialEvents }: { initialEvents: EventWi
     } catch (error) {
         console.error("RSVP error:", error);
         toast({ title: "Failed to update RSVP", variant: "destructive" });
+        // Rollback on error
+        setAllEvents(originalEvents);
     } finally {
         setRsvpingEventId(null);
     }

@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { UserPlus, UserCheck, Search as SearchIcon, Briefcase, MapPin, Tag, Calendar, Users, Tags, DollarSign, Gift, Eye, Building2, ExternalLink, Megaphone } from "lucide-react";
+import { UserPlus, UserCheck, Search as SearchIcon, Briefcase, MapPin, Tag, Calendar, Users, Tags, DollarSign, Gift, Eye, Building2, ExternalLink, Megaphone, Loader2 } from "lucide-react";
 import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -46,6 +46,7 @@ export default function SearchPage() {
 
   const [isLoading, setIsLoading] = useState(false);
   const [results, setResults] = useState<SearchResults>({ users: [], listings: [], jobs: [], events: [], offers: [], promoPages: [] });
+  const [togglingFollowId, setTogglingFollowId] = useState<string | null>(null);
 
   useEffect(() => {
     const performSearch = async () => {
@@ -108,21 +109,17 @@ export default function SearchPage() {
         }
     };
     
-    // We only want to re-run the search when the query parameter changes.
-    // The user object (used to filter out the current user) doesn't need to be
-    // a dependency, as we don't want to re-fetch all search results every time
-    // the user object changes (e.g., their 'following' list is updated).
-    // The authLoading check ensures we don't search before the user state is known.
-    if (!authLoading) {
+    if (!authLoading && queryParam) {
         performSearch();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [queryParam, authLoading]);
+  }, [queryParam, authLoading, user?.uid]);
 
   const handleToggleFollow = async (targetUser: User) => {
-    if (!user) return;
-    const isCurrentlyFollowing = targetUser.isFollowedByCurrentUser ?? user.following.includes(targetUser.uid);
-    const previousResults = results;
+    if (!user || togglingFollowId) return;
+    
+    setTogglingFollowId(targetUser.uid);
+    const isCurrentlyFollowing = user.following.includes(targetUser.uid);
+    const previousResults = { ...results };
 
     // Optimistic update
     setResults(prev => ({
@@ -131,7 +128,6 @@ export default function SearchPage() {
             u.uid === targetUser.uid 
             ? { 
                 ...u, 
-                isFollowedByCurrentUser: !isCurrentlyFollowing,
                 followerCount: (u.followerCount || 0) + (isCurrentlyFollowing ? -1 : 1)
               } 
             : u)
@@ -146,9 +142,10 @@ export default function SearchPage() {
         toast({ title: "Followed" });
       }
     } catch (error) {
-        // Revert on error
         setResults(previousResults);
         toast({ title: "Something went wrong", variant: "destructive" });
+    } finally {
+        setTogglingFollowId(null);
     }
   };
 
@@ -213,7 +210,8 @@ export default function SearchPage() {
             {results.users.length > 0 ? (
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     {results.users.map(u => {
-                        const isFollowedByCurrentUser = u.isFollowedByCurrentUser ?? user?.following.includes(u.uid) ?? false;
+                        const isFollowed = user?.following.includes(u.uid);
+                        const isProcessing = togglingFollowId === u.uid;
                         return (
                         <Card key={u.uid} className="transition-all hover:shadow-md">
                         <CardContent className="p-4 flex items-center justify-between gap-4">
@@ -227,9 +225,9 @@ export default function SearchPage() {
                                 <p className="text-sm text-muted-foreground">@{u.username}</p>
                             </div>
                             </Link>
-                            <Button size="sm" variant={isFollowedByCurrentUser ? 'secondary' : 'default'} onClick={() => handleToggleFollow(u)}>
-                            {isFollowedByCurrentUser ? <UserCheck className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
-                            {isFollowedByCurrentUser ? 'Following' : 'Follow'}
+                            <Button size="sm" variant={isFollowed ? 'secondary' : 'default'} onClick={() => handleToggleFollow(u)} disabled={isProcessing}>
+                            {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : isFollowed ? <UserCheck className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
+                            {isFollowed ? 'Following' : 'Follow'}
                             </Button>
                         </CardContent>
                         </Card>

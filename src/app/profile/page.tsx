@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { PlusCircle, Trash2, User, CreditCard, Link2 as LinkIcon, Upload, GripVertical, Save, Building, Linkedin, Phone, Mail, Globe, ExternalLink } from "lucide-react"
+import { PlusCircle, Trash2, User, CreditCard, Link2 as LinkIcon, Upload, GripVertical, Save, Building, Linkedin, Phone, Mail, Globe, ExternalLink, Loader2 } from "lucide-react"
 import HashtagSuggester from "@/components/ai/hashtag-suggester"
 import { useEffect, useState, useRef } from "react";
 import QRCode from 'qrcode.react';
@@ -226,6 +226,7 @@ export default function ProfilePage() {
   const [imageToCrop, setImageToCrop] = useState<string | null>(null);
   const [isCropperOpen, setIsCropperOpen] = useState(false);
   const [croppedImageUrl, setCroppedImageUrl] = useState<string | null>(null);
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -311,6 +312,7 @@ export default function ProfilePage() {
     }
 
     if (!firebaseUser) return;
+    setIsSavingProfile(true);
 
     try {
         const publicData = publicProfileForm.getValues();
@@ -334,6 +336,8 @@ export default function ProfilePage() {
 
     } catch(error) {
        toast({ title: "Error saving profile", variant: 'destructive'});
+    } finally {
+        setIsSavingProfile(false);
     }
   }
 
@@ -348,6 +352,7 @@ export default function ProfilePage() {
         title: "Links Saved",
         description: "Your link-in-bio page has been updated.",
       });
+      linksForm.reset(data); // Reset form to new values to clear dirty state
     } catch(error) {
        toast({ title: "Error saving links", variant: 'destructive'});
     }
@@ -641,9 +646,9 @@ END:VCARD`;
                    </div>
                 </CardContent>
                 <CardFooter>
-                    <Button type="button" onClick={handleSaveProfileAndCard} disabled={!isProfileDirty}>
-                        <Save className="mr-2 h-4 w-4" />
-                        Save Changes
+                    <Button type="button" onClick={handleSaveProfileAndCard} disabled={!isProfileDirty || isSavingProfile}>
+                        {isSavingProfile ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                        {isSavingProfile ? "Saving..." : "Save Changes"}
                     </Button>
                 </CardFooter>
             </Card>
@@ -694,8 +699,8 @@ END:VCARD`;
                     </CardContent>
                     <CardFooter>
                        <Button type="submit" disabled={linksForm.formState.isSubmitting || !linksForm.formState.isDirty}>
-                        <Save className="mr-2 h-4 w-4" />
-                        Save Links
+                        {linksForm.formState.isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                        {linksForm.formState.isSubmitting ? "Saving..." : "Save Links"}
                        </Button>
                     </CardFooter>
                   </Card>
