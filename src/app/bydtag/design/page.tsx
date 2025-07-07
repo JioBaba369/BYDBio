@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -12,12 +12,14 @@ import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useAuth } from '@/components/auth-provider';
-import { ArrowRight, ArrowLeft, RefreshCw } from 'lucide-react';
+import { ArrowRight, ArrowLeft, RefreshCw, Download } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import QRCode from 'qrcode.react';
+import { saveAs } from 'file-saver';
+import { useToast } from '@/hooks/use-toast';
 
 // Schema for the form
 const designSchema = z.object({
@@ -31,7 +33,7 @@ const designSchema = z.object({
 
 type DesignFormValues = z.infer<typeof designSchema>;
 
-const TagPreview = ({ values, user, side }: { values: DesignFormValues; user: any; side: 'front' | 'back' }) => {
+const TagPreview = ({ values, user, side, qrCodeRef }: { values: DesignFormValues; user: any; side: 'front' | 'back', qrCodeRef: React.RefObject<HTMLDivElement> }) => {
     const isDark = values.cardColor === 'black' || values.cardColor === 'blue';
     const cardBg = {
         black: 'bg-gray-900',
@@ -45,8 +47,14 @@ const TagPreview = ({ values, user, side }: { values: DesignFormValues; user: an
         return (
             <div className={cn("aspect-[85.6/53.98] w-full rounded-xl flex flex-col items-center justify-center p-4 transition-colors", cardBg)}>
                 {values.showQrCode && user ? (
-                    <div className="bg-white p-2 rounded-lg">
-                         <QRCode value={`https://byd.bio/u/${user.username}`} size={100} bgColor="#ffffff" fgColor="#000000" />
+                    <div ref={qrCodeRef} className="bg-white p-2 rounded-lg">
+                         <QRCode
+                            value={`https://byd.bio/u/${user.username}`}
+                            size={100}
+                            bgColor="#ffffff"
+                            fgColor="#000000"
+                            renderAs="svg"
+                         />
                     </div>
                 ) : (
                     <div className={cn("text-center", textColor)}>
@@ -115,7 +123,9 @@ const TagPreview = ({ values, user, side }: { values: DesignFormValues; user: an
 
 export default function BydTagDesignPage() {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [side, setSide] = useState<'front' | 'back'>('front');
+  const qrCodeRef = useRef<HTMLDivElement>(null);
 
   const form = useForm<DesignFormValues>({
     resolver: zodResolver(designSchema),
@@ -150,6 +160,29 @@ export default function BydTagDesignPage() {
     alert('Order placed! (This is a demo)');
   };
 
+  const handleDownloadQr = () => {
+    if (!qrCodeRef.current) {
+        toast({
+            title: "Flip Card First",
+            description: "Please flip to the back of the card to download the QR code.",
+            variant: "destructive",
+        });
+        return;
+    }
+    const svgElement = qrCodeRef.current.querySelector('svg');
+    if (svgElement) {
+        const svgData = new XMLSerializer().serializeToString(svgElement);
+        const blob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+        saveAs(blob, 'bydtag-qrcode.svg');
+    } else {
+        toast({
+            title: "Download Failed",
+            description: "Could not find the QR code to download.",
+            variant: "destructive",
+        });
+    }
+  };
+
   const colorOptions = [
     { value: 'black', className: 'bg-gray-900' },
     { value: 'white', className: 'bg-white border' },
@@ -177,11 +210,17 @@ export default function BydTagDesignPage() {
                             <CardTitle>Live Preview</CardTitle>
                         </CardHeader>
                         <CardContent>
-                             <TagPreview values={watchedValues} user={user} side={side} />
-                             <Button type="button" variant="outline" className="w-full mt-4" onClick={() => setSide(s => s === 'front' ? 'back' : 'front')}>
-                                <RefreshCw className="mr-2 h-4 w-4" />
-                                Flip Card
-                            </Button>
+                             <TagPreview values={watchedValues} user={user} side={side} qrCodeRef={qrCodeRef} />
+                             <div className="grid grid-cols-2 gap-2 mt-4">
+                                <Button type="button" variant="outline" className="w-full" onClick={() => setSide(s => s === 'front' ? 'back' : 'front')}>
+                                    <RefreshCw className="mr-2 h-4 w-4" />
+                                    Flip Card
+                                </Button>
+                                <Button type="button" variant="outline" className="w-full" onClick={handleDownloadQr}>
+                                    <Download className="mr-2 h-4 w-4" />
+                                    Download QR
+                                </Button>
+                             </div>
                         </CardContent>
                     </Card>
                 </div>
