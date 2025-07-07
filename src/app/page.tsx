@@ -90,8 +90,10 @@ function Dashboard() {
   }, [user?.uid]);
 
   useEffect(() => {
-    fetchDashboardData();
-  }, [fetchDashboardData]);
+    if (user?.uid) {
+        fetchDashboardData();
+    }
+  }, [user?.uid, fetchDashboardData]);
 
   const { totalContent, profileCompletion } = useMemo(() => {
     if (!user) {
@@ -174,7 +176,7 @@ function Dashboard() {
                 <DropdownMenuItem asChild>
                 <Link href="/opportunities/create" className="cursor-pointer">
                     <Briefcase className="mr-2 h-4 w-4" />
-                    <span>New Job</span>
+                    <span>New Opportunity</span>
                 </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
@@ -300,6 +302,11 @@ function Dashboard() {
 
 export default function HomePage() {
   const { user, loading } = useAuth();
+
+  useEffect(() => {
+    // This effect handles the initial authentication check.
+    // The main logic for redirection is handled within the AuthProvider.
+  }, [loading, user]);
 
   if (loading) {
     return <DashboardSkeleton />;

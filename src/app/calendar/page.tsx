@@ -71,6 +71,7 @@ export default function CalendarPage() {
     new Set(['Event', 'Offer', 'Job', 'Listing', 'Promo Page'])
   );
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [selectedItem, setSelectedItem] = useState<CalendarItem | null>(null);
   const { toast } = useToast();
   const [allItems, setAllItems] = useState<CalendarItem[]>([]);
@@ -149,6 +150,7 @@ export default function CalendarPage() {
 
   const handleDelete = async () => {
     if (!selectedItem || !user) return;
+    setIsDeleting(true);
 
     const previousItems = [...allItems];
     // Optimistic UI update
@@ -188,6 +190,7 @@ export default function CalendarPage() {
         // Rollback on error
         setAllItems(previousItems);
     } finally {
+        setIsDeleting(false);
         setIsDeleteDialogOpen(false);
         setSelectedItem(null);
     }
@@ -298,6 +301,7 @@ export default function CalendarPage() {
         open={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}
         onConfirm={handleDelete}
+        isLoading={isDeleting}
         itemName={selectedItem?.type.toLowerCase() ?? 'item'}
         itemDescription={selectedItem?.isExternal ? "This will only remove it from your calendar, not delete the event itself." : `This action cannot be undone. To confirm, please type "DELETE" below.`}
         confirmationText={selectedItem?.isExternal ? undefined : "DELETE"}

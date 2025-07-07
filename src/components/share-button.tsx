@@ -15,19 +15,24 @@ import { Share2, Copy, QrCode } from 'lucide-react';
 import QRCode from 'qrcode.react';
 
 
-interface ShareButtonProps extends Omit<ButtonProps, 'children' | 'onClick'> {}
+interface ShareButtonProps extends Omit<ButtonProps, 'children' | 'onClick'> {
+    url?: string;
+}
 
-export default function ShareButton({ ...props }: ShareButtonProps) {
+export default function ShareButton({ url: propUrl, ...props }: ShareButtonProps) {
   const { toast } = useToast();
   const [url, setUrl] = useState('');
   const [isQrDialogOpen, setIsQrDialogOpen] = useState(false);
 
   useEffect(() => {
-    // Ensure this runs only on the client to get the full URL
-    if (typeof window !== 'undefined') {
+    // Use the provided URL prop if it exists, otherwise default to the window's current location.
+    // This makes the component more flexible and testable.
+    if (propUrl) {
+      setUrl(propUrl);
+    } else if (typeof window !== 'undefined') {
       setUrl(window.location.href);
     }
-  }, []);
+  }, [propUrl]);
 
   const handleCopyLink = () => {
     if (!url) return;
@@ -56,7 +61,7 @@ export default function ShareButton({ ...props }: ShareButtonProps) {
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="outline" {...props}>
-            <Share2 />
+            <Share2 className="mr-2 h-4 w-4" />
             {props.size !== 'icon' && <span>Share</span>}
           </Button>
         </DropdownMenuTrigger>
@@ -85,4 +90,3 @@ export default function ShareButton({ ...props }: ShareButtonProps) {
     </Dialog>
   );
 }
-

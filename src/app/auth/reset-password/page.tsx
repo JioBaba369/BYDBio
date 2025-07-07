@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useForm } from "react-hook-form";
@@ -45,7 +46,7 @@ export default function ResetPasswordPage() {
       console.error("Password reset error:", error);
       toast({
         title: "Error Sending Link",
-        description: error.message || "An unexpected error occurred.",
+        description: error.message || "An unexpected error occurred while sending the reset link.",
         variant: "destructive",
       });
     } finally {

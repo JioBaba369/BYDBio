@@ -59,7 +59,7 @@ export default function SignInPage() {
           description = "Too many failed login attempts. Please reset your password or try again later.";
           break;
         default:
-          description = error.message || "An unexpected error occurred. Please try again.";
+          description = "An unexpected error occurred. Please try again.";
       }
       
       toast({

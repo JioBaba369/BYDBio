@@ -64,6 +64,7 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
   const { toast } = useToast();
   
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [postToDelete, setPostToDelete] = useState<PostWithAuthor | null>(null);
   const [loadingAction, setLoadingAction] = useState<{ postId: string; action: 'like' | 'repost' } | null>(null);
 
@@ -152,6 +153,7 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
   
   const handleConfirmDelete = async () => {
     if (!postToDelete) return;
+    setIsDeleting(true);
 
     const originalPosts = [...localPosts];
     // Optimistic delete
@@ -166,6 +168,7 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
     } finally {
       setIsDeleteDialogOpen(false);
       setPostToDelete(null);
+      setIsDeleting(false);
     }
   };
 
@@ -220,6 +223,7 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
   const { name, username, avatarUrl, avatarFallback, bio, links, businessCard } = userProfileData;
   const { listings, jobs, events, offers, promoPages } = content;
   const isOwner = currentUser?.uid === userProfileData.uid;
+  const canonicalUrl = typeof window !== 'undefined' ? `${window.location.origin}/u/${username}` : '';
 
   const vCardData = `BEGIN:VCARD
 VERSION:3.0
@@ -254,6 +258,7 @@ END:VCARD`;
         open={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}
         onConfirm={handleConfirmDelete}
+        isLoading={isDeleting}
         itemName="post"
     />
     <div className="flex justify-center bg-dot py-8 px-4">
@@ -268,7 +273,7 @@ END:VCARD`;
             <h1 className="font-headline text-3xl font-bold text-foreground">{name}</h1>
             <p className="mt-2 text-muted-foreground font-body">{bio}</p>
              <div className="mt-4 flex items-center justify-center gap-2">
-                <ShareButton />
+                <ShareButton url={canonicalUrl} />
                 <Dialog>
                     <DialogTrigger asChild>
                         <Button variant="outline">
@@ -301,7 +306,7 @@ END:VCARD`;
                       onClick={handleFollowToggle}
                       disabled={isFollowLoading}
                   >
-                      {isFollowing ? <UserCheck className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
+                      {isFollowLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : isFollowing ? <UserCheck className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
                       {isFollowing ? 'Following' : 'Follow'}
                   </Button>
               )}

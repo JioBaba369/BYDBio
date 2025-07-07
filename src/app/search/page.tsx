@@ -216,11 +216,23 @@ export default function SearchPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl sm:text-3xl font-bold font-headline flex items-center gap-2">
-            <SearchIcon className="h-8 w-8" />
-            Search Results
-        </h1>
-        <p className="text-muted-foreground">Showing results for: <span className="text-foreground font-semibold">"{queryParam}"</span></p>
+        {queryParam ? (
+            <>
+            <h1 className="text-2xl sm:text-3xl font-bold font-headline flex items-center gap-2">
+                <SearchIcon className="h-8 w-8" />
+                Search Results
+            </h1>
+            <p className="text-muted-foreground">Showing results for: <span className="text-foreground font-semibold">"{queryParam}"</span></p>
+            </>
+        ) : (
+            <>
+            <h1 className="text-2xl sm:text-3xl font-bold font-headline flex items-center gap-2">
+                <SearchIcon className="h-8 w-8" />
+                Search
+            </h1>
+            <p className="text-muted-foreground">Start a search to find users, content, and more.</p>
+            </>
+        )}
       </div>
 
       <Tabs defaultValue="users" className="w-full">

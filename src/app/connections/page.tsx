@@ -94,32 +94,35 @@ export default function ConnectionsPage() {
         if (!user || togglingFollowId) return;
         setTogglingFollowId(targetUser.uid);
         
+        // Optimistic Updates
+        if (isCurrentlyFollowing) {
+            setFollowingList(prev => prev.filter(u => u.uid !== targetUser.uid));
+            if (!suggestedList.some(s => s.uid === targetUser.uid)) {
+                setSuggestedList(prev => [...prev, targetUser]);
+            }
+        } else {
+            setFollowingList(prev => [...prev, targetUser]);
+            setSuggestedList(prev => prev.filter(u => u.uid !== targetUser.uid));
+        }
+
         try {
             if (isCurrentlyFollowing) {
                 await unfollowUser(user.uid, targetUser.uid);
                 toast({ title: `Unfollowed ${targetUser.name}` });
-                setFollowingList(prev => prev.filter(u => u.uid !== targetUser.uid));
-                setSuggestedList(prev => {
-                    if (prev.find(p => p.uid === targetUser.uid)) return prev;
-                    return [...prev, targetUser]
-                });
             } else {
                 await followUser(user.uid, targetUser.uid);
                 toast({ title: `You are now following ${targetUser.name}` });
-                setFollowingList(prev => [...prev, targetUser]);
-                setSuggestedList(prev => prev.filter(u => u.uid !== targetUser.uid));
             }
-             // Refresh followers list if the followed/unfollowed user was in it
-            if (followersList.some(f => f.uid === targetUser.uid)) {
-                const newFollowersList = await getFollowers(user.uid);
-                setFollowersList(newFollowersList);
-            }
-
         } catch (error) {
             console.error("Error following/unfollowing user:", error);
             toast({ title: "Something went wrong", variant: "destructive" });
-            // Note: No explicit rollback here as we refetch for consistency.
-            // A more complex implementation could store previous state.
+            // Revert optimistic updates on failure
+            if (isCurrentlyFollowing) {
+                setFollowingList(prev => [...prev, targetUser]);
+                setSuggestedList(prev => prev.filter(u => u.uid !== targetUser.uid));
+            } else {
+                setFollowingList(prev => prev.filter(u => u.uid !== targetUser.uid));
+            }
         } finally {
             setTogglingFollowId(null);
         }

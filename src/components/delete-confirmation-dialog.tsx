@@ -1,3 +1,4 @@
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -14,11 +15,13 @@ import { useState } from "react"
 import { Button } from "./ui/button"
 import { buttonVariants } from "./ui/button"
 import { cn } from "@/lib/utils"
+import { Loader2 } from "lucide-react"
 
 interface DeleteConfirmationDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onConfirm: () => void;
+  isLoading?: boolean;
   itemName?: string;
   itemDescription?: string;
   confirmationText?: string;
@@ -28,7 +31,8 @@ interface DeleteConfirmationDialogProps {
 export function DeleteConfirmationDialog({ 
   open, 
   onOpenChange, 
-  onConfirm, 
+  onConfirm,
+  isLoading = false, 
   itemName = 'item', 
   itemDescription, 
   confirmationText, 
@@ -38,9 +42,8 @@ export function DeleteConfirmationDialog({
   const isConfirmed = !confirmationText || input === confirmationText;
 
   const handleConfirm = () => {
-      if (isConfirmed) {
+      if (isConfirmed && !isLoading) {
           onConfirm();
-          setInput(""); // Reset for next time
       }
   }
 
@@ -74,13 +77,14 @@ export function DeleteConfirmationDialog({
             </div>
         )}
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogCancel disabled={isLoading}>Cancel</AlertDialogCancel>
           <AlertDialogAction 
             onClick={handleConfirm} 
-            disabled={!isConfirmed}
+            disabled={!isConfirmed || isLoading}
             className={cn(buttonVariants({ variant: "destructive" }))}
           >
-            Continue
+            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {isLoading ? "Deleting..." : "Continue"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

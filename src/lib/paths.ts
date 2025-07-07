@@ -49,8 +49,9 @@ export const isPublicPath = (path: string) => {
         return false;
     }
     
-    // Creation and editing pages are NOT public. This check is more specific to avoid false positives.
-    if (path.endsWith('/create') || path.endsWith('/edit')) {
+    // Creation and editing pages are NOT public. This is a more specific check to avoid false positives.
+    // e.g. /listings/create, /events/[id]/edit
+    if (path.endsWith('/create') || /\/edit$/.test(path)) {
         return false;
     }
     
