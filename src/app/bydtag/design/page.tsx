@@ -58,8 +58,8 @@ const TagPreview = ({ values, user, side }: { values: DesignFormValues; user: an
     }
 
     return (
-        <div className={cn("aspect-[85.6/53.98] w-full rounded-xl flex flex-row items-center justify-start p-6 transition-colors gap-6", cardBg)}>
-            {/* Avatar/Logo on the left */}
+        <div className={cn("aspect-[85.6/53.98] w-full rounded-xl flex flex-col items-center justify-center p-6 transition-colors gap-4", cardBg)}>
+            {/* Avatar/Logo on top */}
             <div>
                 {values.logoUrl ? (
                     <Image src={values.logoUrl} alt="Logo" width={80} height={80} className="h-20 w-20 rounded-full object-cover" data-ai-hint="logo" />
@@ -73,8 +73,8 @@ const TagPreview = ({ values, user, side }: { values: DesignFormValues; user: an
                 )}
             </div>
 
-            {/* Text on the right */}
-            <div className="text-left">
+            {/* Text below */}
+            <div className="text-center">
                 <h3 className={cn("font-bold text-2xl", textColor)}>{values.name || 'Your Name'}</h3>
                 <p className={cn("text-md", subtitleColor)}>{values.title || 'Your Title'}</p>
             </div>
