@@ -1,7 +1,7 @@
 
 import type { Metadata } from 'next';
 import { getJobAndAuthor } from '@/lib/jobs';
-import JobDetailClient from './job-detail-client';
+import JobDetailClient from './opportunity-detail-client';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import type { User } from '@/lib/users';
