@@ -75,10 +75,10 @@ const TagPreview = ({ values, user, side }: { values: DesignFormValues; user: an
                                     renderAs="svg"
                                 />
                             </div>
-                            <p className={cn("text-xs font-mono", subtitleColor)}>{`byd.bio/u/${user.username}`}</p>
+                            <p className={cn("text-xs font-mono leading-tight", subtitleColor)}>{`byd.bio/u/${user.username}`}</p>
                         </div>
                     ) : <div />}
-                    <p className={cn("text-xs font-semibold", subtitleColor)}>Tap or Scan to Connect</p>
+                    <p className={cn("text-xs font-semibold leading-tight", subtitleColor)}>Tap or Scan to Connect</p>
                 </div>
             </div>
         )
@@ -102,19 +102,19 @@ const TagPreview = ({ values, user, side }: { values: DesignFormValues; user: an
         </div>
     );
     
-    // Default Card (Horizontal)
+    // Horizontal Card
     if (layout === 'horizontal-left' || layout === 'horizontal-right') {
         const textElement = (
-            <div className={cn("flex-grow space-y-0.5", layout === 'horizontal-left' ? "text-left" : "text-right")}>
+            <div className={cn("flex-grow space-y-0", layout === 'horizontal-left' ? "text-left" : "text-right")}>
                 <h3 className={cn("font-bold text-xl leading-tight", textColor)}>{values.name || 'Your Name'}</h3>
-                <p className={cn("text-sm", subtitleColor)}>{values.title || 'Your Title'}</p>
-                {values.company && <p className={cn("text-xs opacity-80", subtitleColor)}>{values.company}</p>}
+                <p className={cn("text-sm leading-tight", subtitleColor)}>{values.title || 'Your Title'}</p>
+                {values.company && <p className={cn("text-xs leading-tight opacity-80", subtitleColor)}>{values.company}</p>}
             </div>
         );
 
         return (
              <div className={cn("aspect-[85.6/53.98] w-full rounded-xl p-4 transition-colors relative flex", cardBgClass)} style={cardStyle}>
-                {values.backgroundImageUrl && <div className="absolute inset-0 bg-black/40 rounded-xl" />}
+                {values.backgroundImageUrl && <div className="absolute inset-0 bg-black/50 rounded-xl" />}
                 <div className={cn("relative z-10 flex w-full items-center gap-4", layout === 'horizontal-right' ? 'flex-row-reverse' : '')}>
                     {renderAvatar("h-16 w-16", "text-2xl")}
                     {textElement}
@@ -127,14 +127,14 @@ const TagPreview = ({ values, user, side }: { values: DesignFormValues; user: an
     if (layout === 'lanyard') {
          return (
             <div className={cn("aspect-[85.6/53.98] w-full rounded-xl p-6 transition-colors relative flex items-center gap-6", cardBgClass)} style={cardStyle}>
-                {values.backgroundImageUrl && <div className="absolute inset-0 bg-black/40 rounded-xl" />}
+                {values.backgroundImageUrl && <div className="absolute inset-0 bg-black/50 rounded-xl" />}
                 <div className="absolute top-3 left-1/2 -translate-x-1/2 w-4 h-4 rounded-full bg-white/50 border border-white/80" />
                 <div className="relative z-10 flex w-full items-center gap-6">
                     {renderAvatar("h-24 w-24", "text-4xl")}
                      <div className="flex-grow space-y-1 text-left">
-                        <h3 className={cn("font-bold text-3xl", textColor)}>{values.name || 'Your Name'}</h3>
-                        <p className={cn("text-lg", subtitleColor)}>{values.title || 'Your Title'}</p>
-                        {values.company && <p className={cn("text-md opacity-80", subtitleColor)}>{values.company}</p>}
+                        <h3 className={cn("font-bold text-3xl leading-tight", textColor)}>{values.name || 'Your Name'}</h3>
+                        <p className={cn("text-lg leading-tight", subtitleColor)}>{values.title || 'Your Title'}</p>
+                        {values.company && <p className={cn("text-md leading-tight opacity-80", subtitleColor)}>{values.company}</p>}
                     </div>
                 </div>
             </div>
@@ -144,7 +144,7 @@ const TagPreview = ({ values, user, side }: { values: DesignFormValues; user: an
     // Vertical Card (Default)
     return (
         <div className={cn("aspect-[53.98/85.6] w-full rounded-xl transition-colors relative flex flex-col justify-end overflow-hidden", cardBgClass)} style={cardStyle}>
-            {values.backgroundImageUrl && <div className="absolute inset-0 bg-black/40 rounded-xl" />}
+            {values.backgroundImageUrl && <div className="absolute inset-0 bg-black/50 rounded-xl" />}
             
             <div className="absolute top-[45%] left-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
                  {renderAvatar("h-20 w-20 shadow-lg border-4 border-background", "text-3xl")}
@@ -153,8 +153,8 @@ const TagPreview = ({ values, user, side }: { values: DesignFormValues; user: an
             <div className="pt-12 pb-4 px-4 text-center">
                  <div className="relative z-0 space-y-1">
                     <h3 className={cn("font-bold text-xl leading-tight", textColor)}>{values.name || 'Your Name'}</h3>
-                    <p className={cn("text-sm", subtitleColor)}>{values.title || 'Your Title'}</p>
-                    {values.company && <p className={cn("text-xs opacity-90", subtitleColor)}>{values.company}</p>}
+                    <p className={cn("text-sm leading-tight", subtitleColor)}>{values.title || 'Your Title'}</p>
+                    {values.company && <p className={cn("text-xs leading-tight opacity-90", subtitleColor)}>{values.company}</p>}
                 </div>
             </div>
         </div>
