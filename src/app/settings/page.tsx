@@ -79,7 +79,7 @@ export default function SettingsPage() {
         setIsSavingNotifications(true);
         try {
             await updateUser(user.uid, { notificationSettings });
-            toast({ title: "Settings saved", description: "Your notification preferences have been updated." });
+            toast({ title: "Notification settings saved", description: "Your notification preferences have been updated." });
         } catch (error) {
             console.error("Failed to update notification settings:", error);
             toast({ title: "Error saving settings", variant: "destructive" });

@@ -18,7 +18,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import QrScanner from "@/components/qr-scanner";
 import Link from "next/link";
@@ -47,6 +47,13 @@ const ConnectionCardSkeleton = () => (
 
 export default function ConnectionsPage() {
     const { user, loading: authLoading } = useAuth();
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const tabParam = searchParams.get('tab');
+    const validTabs = ['followers', 'following', 'suggestions'];
+    const defaultTab = tabParam && validTabs.includes(tabParam) ? tabParam : 'followers';
+    
+    const [activeTab, setActiveTab] = useState(defaultTab);
     const [followersList, setFollowersList] = useState<User[]>([]);
     const [followingList, setFollowingList] = useState<User[]>([]);
     const [suggestedList, setSuggestedList] = useState<User[]>([]);
@@ -55,7 +62,6 @@ export default function ConnectionsPage() {
 
     const [isScannerOpen, setIsScannerOpen] = useState(false);
     const [scannedVCardData, setScannedVCardData] = useState<string | null>(null);
-    const router = useRouter();
     const { toast } = useToast();
 
     const fetchConnections = useCallback(async () => {
@@ -159,6 +165,11 @@ export default function ConnectionsPage() {
             variant: "destructive",
         });
     };
+    
+    const handleTabChange = (value: string) => {
+        setActiveTab(value);
+        router.push(`/connections?tab=${value}`, { scroll: false });
+    };
 
     if (authLoading || isLoading) {
       return (
@@ -228,7 +239,7 @@ export default function ConnectionsPage() {
           </Dialog>
         </div>
 
-        <Tabs defaultValue="followers" className="w-full">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="followers">Followers ({followersList.length})</TabsTrigger>
             <TabsTrigger value="following">Following ({followingList.length})</TabsTrigger>

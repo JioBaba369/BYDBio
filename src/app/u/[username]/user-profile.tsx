@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import type { User } from '@/lib/users';
-import type { PostWithAuthor } from '@/lib/posts';
+import type { PostWithAuthor, Post } from '@/lib/posts';
 import type { Listing } from '@/lib/listings';
 import type { Offer } from '@/lib/offers';
 import type { Job } from '@/lib/jobs';
@@ -176,14 +176,11 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
     }
     setLoadingAction({ postId, action: 'repost' });
     try {
-        await repostPost(postId, currentUser.uid);
+        const newPostData = await repostPost(postId, currentUser.uid);
+        if (isOwner) {
+            setLocalPosts(prev => [{ ...newPostData, isLiked: false }, ...prev]);
+        }
         toast({ title: "Reposted!", description: "It will appear on your feed." });
-        setLocalPosts(prev => prev.map(p => {
-            if (p.id === postId) {
-                return { ...p, repostCount: (p.repostCount || 0) + 1 };
-            }
-            return p;
-        }))
     } catch (error: any) {
         toast({ title: "Failed to repost", description: error.message, variant: 'destructive' });
     } finally {

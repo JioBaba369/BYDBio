@@ -12,13 +12,14 @@ import { useAuth } from "@/components/auth-provider"
 import { useToast } from "@/hooks/use-toast"
 import Link from "next/link"
 import ImageCropper from "@/components/image-cropper"
-import { getFeedPosts, createPost, toggleLikePost, deletePost, getDiscoveryPosts, type PostWithAuthor, repostPost, type EmbeddedPostInfo } from "@/lib/posts"
+import { getFeedPosts, createPost, toggleLikePost, deletePost, getDiscoveryPosts, type PostWithAuthor, repostPost, type EmbeddedPostInfo, type Post } from "@/lib/posts"
 import { Skeleton } from "@/components/ui/skeleton"
 import { uploadImage } from "@/lib/storage"
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { PostCard } from "@/components/post-card";
 import Image from "next/image";
+import type { Timestamp } from "firebase/firestore";
 
 type FeedItem = PostWithAuthor & { isLiked: boolean; };
 
@@ -209,16 +210,19 @@ export default function FeedPage() {
             };
         }
 
-        await createPost(user.uid, { content: postContent, imageUrl: imageUrlToPost, quotedPost: quotedPostData });
+        const newPostData = await createPost(user.uid, { content: postContent, imageUrl: imageUrlToPost, quotedPost: quotedPostData });
+        
+        // Optimistic update
+        setFollowingFeed(prev => [{ ...newPostData, isLiked: false }, ...prev]);
         
         setPostContent('');
         setCroppedImageUrl(null);
         setPostToQuote(null);
         toast({ title: "Update Posted!" });
-        await fetchFeeds(true, false); // Refresh following feed only
     } catch(error) {
         console.error("Error posting update:", error);
         toast({ title: "Failed to post update", variant: "destructive" });
+        await fetchFeeds(true, false); // Refetch on error
     } finally {
         setIsPosting(false);
     }
@@ -273,9 +277,9 @@ export default function FeedPage() {
 
     setLoadingAction({ postId, action: 'repost' });
     try {
-      await repostPost(postId, user.uid);
+      const newPostData = await repostPost(postId, user.uid);
+      setFollowingFeed(prev => [{ ...newPostData, isLiked: false }, ...prev]);
       toast({ title: "Reposted!" });
-      await fetchFeeds(true, false); // Refresh following feed only
     } catch (error: any) {
       console.error("Error reposting:", error);
       toast({ title: error.message || "Failed to repost", variant: "destructive" });

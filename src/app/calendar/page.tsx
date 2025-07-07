@@ -299,7 +299,9 @@ export default function CalendarPage() {
         onOpenChange={setIsDeleteDialogOpen}
         onConfirm={handleDelete}
         itemName={selectedItem?.type.toLowerCase() ?? 'item'}
-        itemDescription={selectedItem?.isExternal ? "This will only remove it from your calendar, not delete the event itself." : undefined}
+        itemDescription={selectedItem?.isExternal ? "This will only remove it from your calendar, not delete the event itself." : `This action cannot be undone. To confirm, please type "DELETE" below.`}
+        confirmationText={selectedItem?.isExternal ? undefined : "DELETE"}
+        confirmationLabel={`This will permanently delete this ${selectedItem?.type.toLowerCase()}.`}
       />
       <div className="space-y-6">
         <div className="flex items-center justify-between">
@@ -332,7 +334,7 @@ export default function CalendarPage() {
                 <DropdownMenuItem asChild>
                 <Link href="/opportunities/create" className="cursor-pointer">
                     <Briefcase className="mr-2 h-4 w-4" />
-                    <span>New Job</span>
+                    <span>New Opportunity</span>
                 </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
@@ -390,14 +392,14 @@ export default function CalendarPage() {
                                     onClick={() => handleTypeFilterChange(name)}
                                     onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleTypeFilterChange(name); }}
                                     className={cn(
-                                        'cursor-pointer transition-all py-1.5 px-3 text-sm capitalize',
+                                        'cursor-pointer transition-all py-1.5 px-3 text-sm',
                                         !isSelected && 'hover:bg-accent/50',
                                         variant === 'outline' && isSelected && 'bg-foreground text-background border-transparent hover:bg-foreground/90',
                                     )}
                                     role="button"
                                     tabIndex={0}
                                 >
-                                    <Icon className="mr-2 h-4 w-4" /> {name}s
+                                    <Icon className="mr-2 h-4 w-4" /> {name === 'Promo Page' ? name + 's' : name + 's'}
                                 </Badge>
                             )
                         })}
