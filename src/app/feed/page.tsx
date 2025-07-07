@@ -208,24 +208,40 @@ export default function FeedPage() {
   const handleLike = async (postId: string) => {
     if (!user) return;
 
-    const updateFeed = (feed: FeedItem[]) => feed.map(item => {
-        if (item.id === postId) {
-            const isLiked = !item.isLiked;
-            const likes = isLiked ? item.likes + 1 : item.likes - 1;
-            return { ...item, isLiked, likes };
-        }
-        return item;
-    });
+    // A helper function to perform the optimistic update on a feed
+    const optimisticUpdate = (setFeed: React.Dispatch<React.SetStateAction<FeedItem[]>>) => {
+        setFeed(prevFeed => {
+            const newFeed = [...prevFeed];
+            const postIndex = newFeed.findIndex(p => p.id === postId);
+            if (postIndex === -1) return prevFeed;
 
-    setFollowingFeed(updateFeed);
-    setDiscoveryFeed(updateFeed);
+            const originalPost = newFeed[postIndex];
+            const updatedPost = {
+                ...originalPost,
+                isLiked: !originalPost.isLiked,
+                likes: originalPost.likes + (originalPost.isLiked ? -1 : 1),
+            };
+            newFeed[postIndex] = updatedPost;
+            return newFeed;
+        });
+    };
+
+    // Store the original state of both feeds
+    const originalFollowingFeed = [...followingFeed];
+    const originalDiscoveryFeed = [...discoveryFeed];
+    
+    // Perform optimistic updates
+    optimisticUpdate(setFollowingFeed);
+    optimisticUpdate(setDiscoveryFeed);
 
     try {
         await toggleLikePost(postId, user.uid);
     } catch (error) {
         console.error("Error liking post:", error);
         toast({ title: "Something went wrong", variant: "destructive" });
-        await fetchFeeds(true, true); // Revert on error
+        // Revert on error
+        setFollowingFeed(originalFollowingFeed);
+        setDiscoveryFeed(originalDiscoveryFeed);
     }
   };
   

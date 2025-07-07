@@ -106,27 +106,31 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
         toast({ title: "Please sign in to like posts.", variant: "destructive" });
         return;
     }
+
+    const originalPosts = [...localPosts];
+    const postIndex = originalPosts.findIndex(p => p.id === postId);
+    if (postIndex === -1) return;
+
+    const originalPost = { ...originalPosts[postIndex] };
+
     // Optimistic update
-    setLocalPosts(prev => prev.map(p => {
-        if (p.id === postId) {
-            return {
-                ...p,
-                isLiked: !p.isLiked,
-                likes: p.likes + (p.isLiked ? -1 : 1),
-            }
-        }
-        return p;
-    }));
+    const updatedPost = {
+        ...originalPost,
+        isLiked: !originalPost.isLiked,
+        likes: originalPost.likes + (originalPost.isLiked ? -1 : 1),
+    };
+
+    const newPosts = [...originalPosts];
+    newPosts[postIndex] = updatedPost;
+    setLocalPosts(newPosts);
+
     // API call
     try {
         await toggleLikePost(postId, currentUser.uid);
     } catch (error) {
         toast({ title: "Something went wrong", variant: "destructive" });
         // Revert on error
-         setLocalPosts(content.posts.map(p => ({
-            ...p,
-            isLiked: currentUser ? p.likedBy.includes(currentUser.uid) : false
-        })));
+        setLocalPosts(originalPosts);
     }
   };
 
