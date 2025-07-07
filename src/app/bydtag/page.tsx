@@ -56,7 +56,7 @@ export default function BydTagPage() {
             </p>
             <div className="mt-8">
               <Button asChild size="lg" variant="secondary">
-                <a href="#order">Order Your BYDTAG Today <ArrowRight className="ml-2 h-5 w-5" /></a>
+                <Link href="/bydtag/design">Order Your BYDTAG Today <ArrowRight className="ml-2 h-5 w-5" /></Link>
               </Button>
             </div>
           </div>
@@ -173,7 +173,9 @@ export default function BydTagPage() {
                     <p className="mt-4 text-muted-foreground">
                         Connect your BYDTAG to your profile and start sharing your brand with the world. Shipping is on us.
                     </p>
-                    <Button size="lg" className="w-full md:w-auto mt-6">Order Now</Button>
+                    <Button asChild size="lg" className="w-full md:w-auto mt-6">
+                        <Link href="/bydtag/design">Order Now</Link>
+                    </Button>
                 </div>
             </div>
           </div>
