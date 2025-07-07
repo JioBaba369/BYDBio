@@ -7,8 +7,6 @@ import Link from 'next/link';
 import type { User } from '@/lib/users';
 import type { Job } from '@/lib/jobs';
 import type { Timestamp } from 'firebase/firestore';
-import { doc, increment, updateDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 
 export async function generateMetadata({ params }: { params: { opportunityId: string } }): Promise<Metadata> {
   const data = await getJobAndAuthor(params.opportunityId);
@@ -45,11 +43,6 @@ export async function generateMetadata({ params }: { params: { opportunityId: st
 
 export default async function PublicJobPage({ params }: { params: { opportunityId: string } }) {
     const data = await getJobAndAuthor(params.opportunityId);
-
-    if (data) {
-        const jobRef = doc(db, 'jobs', params.opportunityId);
-        await updateDoc(jobRef, { views: increment(1) });
-    }
 
     if (!data) {
         return (

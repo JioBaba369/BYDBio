@@ -5,8 +5,6 @@ import EventDetailClient from './event-detail-client';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import type { Timestamp } from 'firebase/firestore';
-import { doc, increment, updateDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
   const data = await getEventAndAuthor(params.id);
@@ -43,11 +41,6 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
 
 export default async function EventDetailPage({ params }: { params: { id: string } }) {
     const data = await getEventAndAuthor(params.id);
-
-    if (data) {
-        const eventRef = doc(db, 'events', params.id);
-        await updateDoc(eventRef, { views: increment(1) });
-    }
 
     if (!data) {
         return (
