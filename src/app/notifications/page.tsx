@@ -49,14 +49,15 @@ export default function NotificationsPage() {
 
     const handleMarkAllAsRead = async () => {
         if (!user || unreadCount === 0) return;
-
+        const originalNotifications = [...notifications];
+        // Optimistic UI update
+        setNotifications(prev => prev.map(n => ({ ...n, read: true })));
         try {
             await markNotificationsAsRead(user.uid);
-            // Optimistic UI update
-            setNotifications(prev => prev.map(n => ({ ...n, read: true })));
             toast({ title: "All notifications marked as read." });
         } catch (error) {
             console.error("Failed to mark notifications as read:", error);
+            setNotifications(originalNotifications); // Revert on error
             toast({ title: "Error", description: "Could not mark notifications as read.", variant: "destructive" });
         }
     };
@@ -67,10 +68,15 @@ export default function NotificationsPage() {
         let icon, message, link;
         
         const handleClick = () => {
+            const originalNotifications = [...notifications];
             if (!notification.read) {
                 // Optimistic update
                 setNotifications(prev => prev.map(n => n.id === notification.id ? { ...n, read: true } : n));
-                markSingleNotificationAsRead(notification.id).catch(err => console.error("Failed to mark as read:", err));
+                markSingleNotificationAsRead(notification.id).catch(err => {
+                    console.error("Failed to mark as read:", err);
+                    setNotifications(originalNotifications); // Revert on error
+                    toast({ title: "Error", description: "Could not update notification status.", variant: "destructive" });
+                });
             }
             
             if (notification.type === 'contact_form_submission') {

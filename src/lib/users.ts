@@ -126,8 +126,21 @@ export const createUserProfileIfNotExists = async (user: FirebaseUser, additiona
  */
 export const updateUser = async (uid: string, data: Partial<User>) => {
     const userDocRef = doc(db, "users", uid);
-    const dataToUpdate = { ...data };
+    const dataToUpdate: { [key: string]: any } = { ...data };
 
+    // If username is being updated, check for uniqueness first
+    if (data.username) {
+        const userDoc = await getDoc(userDocRef);
+        if (userDoc.exists() && data.username !== userDoc.data().username) {
+            const usersRef = collection(db, "users");
+            const q = query(usersRef, where("username", "==", data.username), limit(1));
+            const querySnapshot = await getDocs(q);
+            if (!querySnapshot.empty) {
+                throw new Error("Username is already taken.");
+            }
+        }
+    }
+    
     // If name or username is being updated, also update searchableKeywords
     if (data.name || data.username) {
         const userDoc = await getDoc(userDocRef);

@@ -78,12 +78,17 @@ export default function InboxPage() {
     }, [user, toast]);
     
     const handleRowClick = (message: NotificationWithActor) => {
+        const originalMessages = [...messages];
         setSelectedMessage(message);
         if (!message.read) {
             // Optimistic update
             setMessages(prev => prev.map(m => m.id === message.id ? { ...m, read: true } : m));
             // Mark as read in the backend
-            markSingleNotificationAsRead(message.id).catch(err => console.error("Failed to mark as read:", err));
+            markSingleNotificationAsRead(message.id).catch(err => {
+                console.error("Failed to mark as read:", err)
+                setMessages(originalMessages); // Revert on error
+                toast({ title: "Error", description: "Could not update message status.", variant: "destructive" });
+            });
         }
     }
 

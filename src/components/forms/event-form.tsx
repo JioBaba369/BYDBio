@@ -338,7 +338,7 @@ export function EventForm({ defaultValues, onSubmit, isSaving }: EventFormProps)
                                             render={({ field }) => (
                                                 <FormItem>
                                                     <FormLabel>Time</FormLabel>
-                                                    <FormControl><Input placeholder="09:00 AM" {...field} /></FormControl>
+                                                    <FormControl><Input type="time" placeholder="09:00" {...field} /></FormControl>
                                                     <FormMessage />
                                                 </FormItem>
                                             )}

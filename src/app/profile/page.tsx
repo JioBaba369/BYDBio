@@ -317,25 +317,36 @@ export default function ProfilePage() {
     try {
         const publicData = publicProfileForm.getValues();
         const cardData = businessCardForm.getValues();
-
-        await updateUser(firebaseUser.uid, {
+        
+        let dataToUpdate: Partial<User> = {
             name: publicData.name,
-            username: publicData.username,
             bio: publicData.bio,
             businessCard: cardData,
-        });
+        };
+
+        // Only include username if it has changed, to avoid unnecessary uniqueness checks
+        if (publicData.username !== user?.username) {
+            dataToUpdate.username = publicData.username;
+        }
+
+        await updateUser(firebaseUser.uid, dataToUpdate);
 
         // Reset dirty state after successful save
-        publicProfileForm.reset(publicData);
-        businessCardForm.reset(cardData);
+        publicProfileForm.reset({ ...publicData });
+        businessCardForm.reset({ ...cardData });
 
         toast({
             title: "Profile Saved",
             description: "Your information has been successfully updated.",
         });
 
-    } catch(error) {
-       toast({ title: "Error saving profile", variant: 'destructive'});
+    } catch(error: any) {
+       if (error.message === "Username is already taken.") {
+           publicProfileForm.setError("username", { type: "manual", message: error.message });
+           toast({ title: "Update Failed", description: error.message, variant: 'destructive'});
+       } else {
+           toast({ title: "Error saving profile", description: error.message, variant: 'destructive'});
+       }
     } finally {
         setIsSavingProfile(false);
     }

@@ -38,6 +38,44 @@ type SearchResults = {
     promoPages: ItemWithAuthor<PromoPage>[];
 }
 
+const SearchPageSkeleton = () => (
+    <div className="space-y-6 animate-pulse">
+        <div className="space-y-2">
+            <Skeleton className="h-9 w-64" />
+            <Skeleton className="h-4 w-80" />
+        </div>
+        <Tabs defaultValue="users" className="w-full">
+            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-6">
+                <TabsTrigger value="users" disabled><Skeleton className="h-5 w-20" /></TabsTrigger>
+                <TabsTrigger value="promoPages" disabled><Skeleton className="h-5 w-24" /></TabsTrigger>
+                <TabsTrigger value="listings" disabled><Skeleton className="h-5 w-20" /></TabsTrigger>
+                <TabsTrigger value="jobs" disabled><Skeleton className="h-5 w-16" /></TabsTrigger>
+                <TabsTrigger value="events" disabled><Skeleton className="h-5 w-20" /></TabsTrigger>
+                <TabsTrigger value="offers" disabled><Skeleton className="h-5 w-20" /></TabsTrigger>
+            </TabsList>
+            <TabsContent value="users" className="pt-4">
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    {[...Array(3)].map((_, i) => (
+                        <Card key={i}>
+                            <CardContent className="p-4 flex items-center justify-between gap-4">
+                                <div className="flex items-center gap-4">
+                                    <Skeleton className="h-10 w-10 rounded-full" />
+                                    <div className="space-y-1">
+                                        <Skeleton className="h-4 w-24" />
+                                        <Skeleton className="h-3 w-16" />
+                                    </div>
+                                </div>
+                                <Skeleton className="h-9 w-24 rounded-md" />
+                            </CardContent>
+                        </Card>
+                    ))}
+                </div>
+            </TabsContent>
+        </Tabs>
+    </div>
+);
+
+
 export default function SearchPage() {
   const searchParams = useSearchParams();
   const queryParam = searchParams.get('q');
@@ -112,7 +150,7 @@ export default function SearchPage() {
     if (!authLoading && queryParam) {
         performSearch();
     }
-  }, [queryParam, authLoading, user?.uid]);
+  }, [queryParam, authLoading, user?.uid, toast]);
 
   const handleToggleFollow = async (targetUser: User) => {
     if (!user || togglingFollowId) return;
@@ -172,18 +210,7 @@ export default function SearchPage() {
   }
 
   if (isLoading || authLoading) {
-    return (
-        <div className="space-y-6">
-            <Skeleton className="h-9 w-64" />
-            <Skeleton className="h-4 w-80" />
-            <div className="flex gap-2">
-                <Skeleton className="h-10 w-24" />
-                <Skeleton className="h-10 w-24" />
-                <Skeleton className="h-10 w-24" />
-            </div>
-            <Card><CardContent className="p-4"><Skeleton className="h-10 w-full" /></CardContent></Card>
-        </div>
-    )
+    return <SearchPageSkeleton />;
   }
 
   return (
