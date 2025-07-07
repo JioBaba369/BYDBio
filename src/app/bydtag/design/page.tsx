@@ -136,13 +136,40 @@ const TagPreview = ({ values, user, side }: { values: DesignFormValues; user: an
 
 
     if (layout === 'vertical') {
+        const VerticalAvatar = (
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
+                {values.logoUrl ? (
+                    <Image src={values.logoUrl} alt="Logo" width={96} height={96} className="h-24 w-24 rounded-full object-cover shadow-lg border-4 border-background" data-ai-hint="logo" />
+                ) : user ? (
+                    <Avatar className="h-24 w-24 shadow-lg border-4 border-background">
+                        <AvatarImage src={user.avatarUrl} alt={user.name} data-ai-hint="person portrait"/>
+                        <AvatarFallback className="text-4xl">{user.name.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                ) : (
+                    <div className="h-24 w-24 rounded-full bg-muted flex items-center justify-center shadow-lg border-4 border-background" />
+                )}
+            </div>
+        );
+        
+        const VerticalText = () => (
+            <div className="text-center mt-14 w-full">
+                <h3 className={cn("font-bold text-3xl truncate", textColor)}>{values.name || 'Your Name'}</h3>
+                <p className={cn("text-lg truncate", subtitleColor)}>{values.title || 'Your Title'}</p>
+                {values.company && <p className={cn("text-md truncate opacity-80", subtitleColor)}>{values.company}</p>}
+            </div>
+        );
+        
         return (
-             <CardContentWrapper className="flex items-center justify-center">
-                 <div className="flex flex-col items-center justify-center gap-4">
-                    {AvatarElement}
-                    <TextElement />
-                 </div>
-            </CardContentWrapper>
+             <div className={cn("aspect-[85.6/53.98] w-full rounded-xl transition-colors relative p-0 overflow-hidden flex flex-col", cardBgClass)} style={cardStyle}>
+                {values.backgroundImageUrl && <div className="absolute inset-0 bg-black/30 rounded-xl" />}
+                <div className="h-1/2 w-full relative" />
+                <div className="h-1/2 w-full flex flex-col justify-center items-center p-6 relative">
+                    <div className="relative z-10 w-full">
+                        <VerticalText />
+                    </div>
+                </div>
+                {VerticalAvatar}
+            </div>
         );
     }
     
