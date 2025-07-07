@@ -39,6 +39,8 @@ export type Event = {
   endDate?: Timestamp | Date | string | null;
   location: string;
   imageUrl: string | null;
+  couponCode?: string;
+  ctaLink?: string;
   status: 'active' | 'archived';
   views: number;
   rsvps: string[]; // Array of user UIDs who have RSVP'd
@@ -119,6 +121,7 @@ export const createEvent = async (userId: string, data: Omit<Event, 'id' | 'auth
     ...data.title.toLowerCase().split(' ').filter(Boolean),
     ...data.description.toLowerCase().split(' ').filter(Boolean),
     ...data.location.toLowerCase().split(' ').filter(Boolean),
+    ...(data.couponCode ? data.couponCode.toLowerCase().split(' ') : [])
   ];
   await addDoc(eventsRef, {
     ...data,
@@ -136,17 +139,19 @@ export const updateEvent = async (id: string, data: Partial<Omit<Event, 'id' | '
   const eventDocRef = doc(db, 'events', id);
   const dataToUpdate = { ...data };
 
-  if (data.title || data.description || data.location) {
+  if (data.title || data.description || data.location || data.couponCode) {
     const eventDoc = await getDoc(eventDocRef);
     const existingData = eventDoc.data() as Event;
     const newTitle = data.title ?? existingData.title;
     const newDescription = data.description ?? existingData.description;
     const newLocation = data.location ?? existingData.location;
+    const newCouponCode = data.couponCode ?? existingData.couponCode;
 
     const keywords = [
       ...newTitle.toLowerCase().split(' ').filter(Boolean),
       ...newDescription.toLowerCase().split(' ').filter(Boolean),
       ...newLocation.toLowerCase().split(' ').filter(Boolean),
+      ...(newCouponCode ? newCouponCode.toLowerCase().split(' ') : [])
     ];
     dataToUpdate.searchableKeywords = [...new Set(keywords)];
   }

@@ -28,6 +28,8 @@ const offerFormSchema = z.object({
   }),
   endDate: z.date().optional().nullable(),
   imageUrl: z.string().optional().nullable(),
+  couponCode: z.string().optional(),
+  ctaLink: z.string().url({ message: "Please enter a valid URL." }).optional().or(z.literal('')),
 }).refine(data => {
     if (data.startDate && data.endDate) {
         return data.endDate >= data.startDate;
@@ -61,6 +63,8 @@ export function OfferForm({ defaultValues, onSubmit, isSaving }: OfferFormProps)
       startDate: undefined,
       endDate: null,
       imageUrl: null,
+      couponCode: "",
+      ctaLink: "",
       ...defaultValues,
       startDate: defaultValues?.startDate ? new Date(defaultValues.startDate) : undefined,
       endDate: defaultValues?.endDate ? new Date(defaultValues.endDate) : null,
@@ -238,6 +242,38 @@ export function OfferForm({ defaultValues, onSubmit, isSaving }: OfferFormProps)
                                 )}
                                 />
                             </div>
+                            <FormField
+                                control={form.control}
+                                name="ctaLink"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Call to Action Link (Optional)</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="https://example.com/claim" {...field} />
+                                        </FormControl>
+                                        <FormDescription>
+                                            Link to an external page where the user can claim this offer.
+                                        </FormDescription>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="couponCode"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Coupon Code (Optional)</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="e.g. SPECIALOFFER" {...field} />
+                                        </FormControl>
+                                        <FormDescription>
+                                            A coupon code for users to apply.
+                                        </FormDescription>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
                         </CardContent>
                     </Card>
                 </div>

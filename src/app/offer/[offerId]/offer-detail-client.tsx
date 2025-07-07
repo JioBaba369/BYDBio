@@ -6,13 +6,14 @@ import type { Offer } from '@/lib/offers';
 import Image from 'next/image';
 import { Card, CardContent, CardTitle, CardDescription, CardHeader, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Tag, Calendar, Edit, User as UserIcon } from 'lucide-react';
+import { ArrowLeft, Tag, Calendar, Edit, User as UserIcon, Gift } from 'lucide-react';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import ShareButton from '@/components/share-button';
 import { ClientFormattedDate } from '@/components/client-formatted-date';
 import { useAuth } from '@/components/auth-provider';
 import { AuthorCard } from '@/components/author-card';
+import { CouponDisplay } from '@/components/coupon-display';
 
 
 interface OfferDetailClientProps {
@@ -79,14 +80,24 @@ export default function OfferDetailClient({ offer, author }: OfferDetailClientPr
                             <CardContent>
                                 <h3 className="font-semibold text-lg mb-2">About this offer</h3>
                                 <p className="text-muted-foreground whitespace-pre-wrap">{offer.description}</p>
+                                {offer.couponCode && <CouponDisplay code={offer.couponCode} />}
                             </CardContent>
                             <CardFooter>
-                                <Button asChild size="lg" className="w-full">
-                                    <Link href={`/u/${author.username}`}>
-                                        <UserIcon className="mr-2 h-4 w-4" />
-                                        View Provider's Profile
-                                    </Link>
-                                </Button>
+                                {offer.ctaLink ? (
+                                    <Button asChild size="lg" className="w-full">
+                                        <a href={offer.ctaLink} target="_blank" rel="noopener noreferrer">
+                                            <Gift className="mr-2 h-4 w-4" />
+                                            Claim Offer
+                                        </a>
+                                    </Button>
+                                ) : (
+                                    <Button asChild size="lg" className="w-full">
+                                        <Link href={`/u/${author.username}`}>
+                                            <UserIcon className="mr-2 h-4 w-4" />
+                                            View Provider's Profile
+                                        </Link>
+                                    </Button>
+                                )}
                             </CardFooter>
                         </Card>
                     </div>

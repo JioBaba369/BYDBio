@@ -29,6 +29,8 @@ const eventFormSchema = z.object({
   }),
   endDate: z.date().optional().nullable(),
   imageUrl: z.string().optional().nullable(),
+  couponCode: z.string().optional(),
+  ctaLink: z.string().url({ message: "Please enter a valid URL." }).optional().or(z.literal('')),
   itinerary: z.array(z.object({
     time: z.string().min(1, "Time is required. (e.g., 09:00 AM)"),
     title: z.string().min(2, "Title is required."),
@@ -70,6 +72,8 @@ export function EventForm({ defaultValues, onSubmit, isSaving }: EventFormProps)
       startDate: undefined,
       endDate: null,
       imageUrl: null,
+      couponCode: "",
+      ctaLink: "",
       itinerary: [],
       ...defaultValues,
       startDate: defaultValues?.startDate ? new Date(defaultValues.startDate) : undefined,
@@ -282,6 +286,38 @@ export function EventForm({ defaultValues, onSubmit, isSaving }: EventFormProps)
                                 )}
                                 />
                             </div>
+                            <FormField
+                                control={form.control}
+                                name="ctaLink"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Call to Action Link (Optional)</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="https://example.com/register" {...field} />
+                                        </FormControl>
+                                        <FormDescription>
+                                            Link to an external registration or information page.
+                                        </FormDescription>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="couponCode"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Coupon Code (Optional)</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="e.g. SAVE20" {...field} />
+                                        </FormControl>
+                                        <FormDescription>
+                                            A coupon code for attendees.
+                                        </FormDescription>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
                         </CardContent>
                     </Card>
                     <Card>

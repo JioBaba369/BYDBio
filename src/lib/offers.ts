@@ -25,6 +25,8 @@ export type Offer = {
   startDate: Timestamp | Date | string;
   endDate?: Timestamp | Date | string | null;
   imageUrl: string | null;
+  couponCode?: string;
+  ctaLink?: string;
   status: 'active' | 'archived';
   views: number;
   claims: number;
@@ -81,6 +83,7 @@ export const createOffer = async (userId: string, data: Omit<Offer, 'id' | 'auth
     ...data.title.toLowerCase().split(' ').filter(Boolean),
     ...data.description.toLowerCase().split(' ').filter(Boolean),
     ...data.category.toLowerCase().split(' ').filter(Boolean),
+    ...(data.couponCode ? data.couponCode.toLowerCase().split(' ') : [])
   ];
   await addDoc(offersRef, {
     ...data,
@@ -98,17 +101,19 @@ export const updateOffer = async (id: string, data: Partial<Omit<Offer, 'id' | '
   const offerDocRef = doc(db, 'offers', id);
   const dataToUpdate = { ...data };
 
-  if (data.title || data.description || data.category) {
+  if (data.title || data.description || data.category || data.couponCode) {
     const offerDoc = await getDoc(offerDocRef);
     const existingData = offerDoc.data() as Offer;
     const newTitle = data.title ?? existingData.title;
     const newDescription = data.description ?? existingData.description;
     const newCategory = data.category ?? existingData.category;
+    const newCouponCode = data.couponCode ?? existingData.couponCode;
 
     const keywords = [
         ...newTitle.toLowerCase().split(' ').filter(Boolean),
         ...newDescription.toLowerCase().split(' ').filter(Boolean),
         ...newCategory.toLowerCase().split(' ').filter(Boolean),
+        ...(newCouponCode ? newCouponCode.toLowerCase().split(' ') : [])
     ];
     dataToUpdate.searchableKeywords = [...new Set(keywords)];
   }

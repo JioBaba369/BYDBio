@@ -6,7 +6,7 @@ import type { Event } from '@/lib/events';
 import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MapPin, Calendar, Clock, ArrowLeft, Users, Ticket, User as UserIcon, CalendarPlus, Edit } from 'lucide-react';
+import { MapPin, Calendar, Clock, ArrowLeft, Users, Ticket, User as UserIcon, CalendarPlus, Edit, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
@@ -19,6 +19,7 @@ import { ClientFormattedDate } from '@/components/client-formatted-date';
 import { parseISO } from 'date-fns';
 import { useAuth } from '@/components/auth-provider';
 import { AuthorCard } from '@/components/author-card';
+import { CouponDisplay } from '@/components/coupon-display';
 
 
 interface EventDetailClientProps {
@@ -154,6 +155,7 @@ export default function EventDetailClient({ event, author }: EventDetailClientPr
                                 <div>
                                     <h3 className="font-semibold text-lg mb-2">About this event</h3>
                                     <p className="text-muted-foreground whitespace-pre-wrap">{event.description}</p>
+                                    {event.couponCode && <CouponDisplay code={event.couponCode} />}
                                 </div>
                                 
                                 {event.itinerary && event.itinerary.length > 0 && (
@@ -216,12 +218,21 @@ export default function EventDetailClient({ event, author }: EventDetailClientPr
                                         Add to Calendar
                                     </Button>
                                     {!isOwner && (
-                                        <Button asChild size="lg">
-                                            <Link href={`/events/${event.id}/register`}>
-                                                <Ticket className="mr-2 h-5 w-5"/>
-                                                Register Now
-                                            </Link>
-                                        </Button>
+                                        event.ctaLink ? (
+                                            <Button asChild size="lg">
+                                                <a href={event.ctaLink} target="_blank" rel="noopener noreferrer">
+                                                    <ExternalLink className="mr-2 h-5 w-5"/>
+                                                    Register Now
+                                                </a>
+                                            </Button>
+                                        ) : (
+                                            <Button asChild size="lg">
+                                                <Link href={`/events/${event.id}/register`}>
+                                                    <Ticket className="mr-2 h-5 w-5"/>
+                                                    Register Now
+                                                </Link>
+                                            </Button>
+                                        )
                                     )}
                                 </div>
                             </CardFooter>
