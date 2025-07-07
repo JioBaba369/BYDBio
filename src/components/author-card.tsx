@@ -11,6 +11,7 @@ import { useAuth } from '@/components/auth-provider';
 import { useToast } from '@/hooks/use-toast';
 import { followUser, unfollowUser } from '@/lib/connections';
 import { Loader2, UserCheck, UserPlus } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 interface AuthorCardProps {
   author: User;
@@ -21,6 +22,7 @@ interface AuthorCardProps {
 export function AuthorCard({ author, isOwner, authorTypeLabel }: AuthorCardProps) {
   const { user: currentUser } = useAuth();
   const { toast } = useToast();
+  const router = useRouter();
   
   const [isFollowing, setIsFollowing] = useState(currentUser?.following?.includes(author.uid) || false);
   const [isFollowLoading, setIsFollowLoading] = useState(false);
@@ -34,22 +36,28 @@ export function AuthorCard({ author, isOwner, authorTypeLabel }: AuthorCardProps
   const handleFollowToggle = async () => {
     if (!currentUser) {
       toast({ title: "Please sign in to follow users.", variant: "destructive" });
+      router.push('/auth/sign-in');
       return;
     }
     if (isOwner) return;
 
     setIsFollowLoading(true);
+    const currentlyFollowing = isFollowing;
+
+    // Optimistic UI update
+    setIsFollowing(!currentlyFollowing);
+
     try {
-      if (isFollowing) {
+      if (currentlyFollowing) {
         await unfollowUser(currentUser.uid, author.uid);
         toast({ title: `Unfollowed ${author.name}` });
       } else {
         await followUser(currentUser.uid, author.uid);
         toast({ title: `You are now following ${author.name}` });
       }
-      // The local `isFollowing` state will be updated via the useEffect hook
-      // when the `currentUser.following` array changes in the AuthProvider.
     } catch (error) {
+      // Rollback on error
+      setIsFollowing(currentlyFollowing);
       toast({ title: "Something went wrong", variant: "destructive" });
     } finally {
       setIsFollowLoading(false);
