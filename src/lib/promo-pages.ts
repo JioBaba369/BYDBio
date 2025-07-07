@@ -86,7 +86,12 @@ export const updatePromoPage = async (id: string, data: Partial<Omit<PromoPage, 
   const promoPageDocRef = doc(db, 'promoPages', id);
   const dataToUpdate = { ...data };
 
-  if (data.name || data.description || data.email || data.address) {
+  if (
+    data.name !== undefined ||
+    data.description !== undefined ||
+    data.email !== undefined ||
+    data.address !== undefined
+  ) {
     const promoPageDoc = await getDoc(promoPageDocRef);
     const existingData = promoPageDoc.data() as PromoPage;
     const newName = data.name ?? existingData.name;

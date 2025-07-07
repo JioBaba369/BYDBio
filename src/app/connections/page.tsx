@@ -80,28 +80,28 @@ export default function ConnectionsPage() {
             };
             fetchData();
         }
-    }, [user, toast]);
+    }, [user]);
 
     const handleToggleFollow = async (targetUser: User, isCurrentlyFollowing: boolean) => {
         if (!user || togglingFollowId) return;
         setTogglingFollowId(targetUser.uid);
         
-        // Store previous state for potential rollback
+        const previousFollowersList = [...followersList];
         const previousFollowingList = [...followingList];
         const previousSuggestedList = [...suggestedList];
 
         // Optimistic UI Update
         if (isCurrentlyFollowing) {
             setFollowingList(prev => prev.filter(u => u.uid !== targetUser.uid));
-            // Add the unfollowed user back to suggestions if they're not there already
             setSuggestedList(prev => {
                 if (prev.find(p => p.uid === targetUser.uid)) return prev;
                 return [...prev, targetUser]
             });
+             setFollowersList(prev => prev.map(f => f.uid === targetUser.uid ? { ...f, followerCount: (f.followerCount || 0) -1 } : f));
         } else {
             setFollowingList(prev => [...prev, targetUser]);
-            // Also remove from suggestions if they were followed from there
             setSuggestedList(prev => prev.filter(u => u.uid !== targetUser.uid));
+            setFollowersList(prev => prev.map(f => f.uid === targetUser.uid ? { ...f, followerCount: (f.followerCount || 0) + 1 } : f));
         }
         
         try {
@@ -118,6 +118,7 @@ export default function ConnectionsPage() {
             // Rollback UI on error
             setFollowingList(previousFollowingList);
             setSuggestedList(previousSuggestedList);
+            setFollowersList(previousFollowersList);
         } finally {
             setTogglingFollowId(null);
         }

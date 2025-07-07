@@ -11,8 +11,8 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useTheme } from "next-themes";
 import Link from "next/link";
-import { Monitor, Moon, Sun } from "lucide-react";
-import { useState } from "react";
+import { Monitor, Moon, Sun, Loader2 } from "lucide-react";
+import { useState, useEffect } from "react";
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/components/auth-provider";
@@ -59,22 +59,32 @@ export default function SettingsPage() {
     
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
+    const [notificationSettings, setNotificationSettings] = useState<NotificationSettings | null>(null);
+    const [isSavingNotifications, setIsSavingNotifications] = useState(false);
 
     const searchParams = useSearchParams();
     const tabParam = searchParams.get('tab');
     const validTabs = ['profile', 'appearance', 'notifications', 'security'];
     const defaultTab = tabParam && validTabs.includes(tabParam) ? tabParam : 'profile';
     
-    const handleNotificationSettingChange = async (key: keyof NotificationSettings, value: boolean) => {
-        if (!user) return;
-        
+    useEffect(() => {
+        if (user) {
+            setNotificationSettings(user.notificationSettings);
+        }
+    }, [user]);
+
+    const handleSaveNotificationSettings = async () => {
+        if (!user || !notificationSettings) return;
+
+        setIsSavingNotifications(true);
         try {
-            // This uses dot notation to update a single field in the 'notificationSettings' map in Firestore.
-            await updateUser(user.uid, { [`notificationSettings.${key}`]: value });
-            toast({ title: "Settings saved" });
+            await updateUser(user.uid, { notificationSettings });
+            toast({ title: "Settings saved", description: "Your notification preferences have been updated." });
         } catch (error) {
             console.error("Failed to update notification settings:", error);
             toast({ title: "Error saving settings", variant: "destructive" });
+        } finally {
+            setIsSavingNotifications(false);
         }
     };
 
@@ -113,7 +123,7 @@ export default function SettingsPage() {
         }
     };
 
-    if (loading || !user) {
+    if (loading || !user || !notificationSettings) {
         return <SettingsPageSkeleton />;
     }
     
@@ -231,8 +241,8 @@ export default function SettingsPage() {
                                     </div>
                                     <Switch
                                         id="new-follower"
-                                        checked={user.notificationSettings?.newFollowers ?? true}
-                                        onCheckedChange={(checked) => handleNotificationSettingChange('newFollowers', checked)}
+                                        checked={notificationSettings.newFollowers}
+                                        onCheckedChange={(checked) => setNotificationSettings(prev => ({...prev!, newFollowers: checked}))}
                                     />
                                 </div>
                                 <Separator />
@@ -245,8 +255,8 @@ export default function SettingsPage() {
                                     </div>
                                     <Switch
                                         id="post-likes"
-                                        checked={user.notificationSettings?.newLikes ?? true}
-                                        onCheckedChange={(checked) => handleNotificationSettingChange('newLikes', checked)}
+                                        checked={notificationSettings.newLikes}
+                                        onCheckedChange={(checked) => setNotificationSettings(prev => ({...prev!, newLikes: checked}))}
                                     />
                                 </div>
                                 <Separator />
@@ -259,8 +269,8 @@ export default function SettingsPage() {
                                     </div>
                                     <Switch
                                         id="event-rsvps"
-                                        checked={user.notificationSettings?.eventRsvps ?? true}
-                                        onCheckedChange={(checked) => handleNotificationSettingChange('eventRsvps', checked)}
+                                        checked={notificationSettings.eventRsvps}
+                                        onCheckedChange={(checked) => setNotificationSettings(prev => ({...prev!, eventRsvps: checked}))}
                                     />
                                 </div>
                                 <Separator />
@@ -273,11 +283,17 @@ export default function SettingsPage() {
                                     </div>
                                     <Switch
                                         id="offers-updates"
-                                        checked={user.notificationSettings?.offersAndUpdates ?? true}
-                                        onCheckedChange={(checked) => handleNotificationSettingChange('offersAndUpdates', checked)}
+                                        checked={notificationSettings.offersAndUpdates}
+                                        onCheckedChange={(checked) => setNotificationSettings(prev => ({...prev!, offersAndUpdates: checked}))}
                                     />
                                 </div>
                             </CardContent>
+                             <CardFooter>
+                                <Button onClick={handleSaveNotificationSettings} disabled={isSavingNotifications}>
+                                    {isSavingNotifications && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                    Save Settings
+                                </Button>
+                            </CardFooter>
                         </Card>
                     </TabsContent>
 

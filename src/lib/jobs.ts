@@ -114,7 +114,14 @@ export const updateJob = async (id: string, data: Partial<Omit<Job, 'id' | 'auth
   const jobDocRef = doc(db, 'jobs', id);
   const dataToUpdate = { ...data };
 
-  if (data.title || data.company || data.location || data.type || data.description || data.contactInfo) {
+  if (
+    data.title !== undefined ||
+    data.company !== undefined ||
+    data.location !== undefined ||
+    data.type !== undefined ||
+    data.description !== undefined ||
+    data.contactInfo !== undefined
+  ) {
     const jobDoc = await getDoc(jobDocRef);
     const existingData = jobDoc.data() as Job;
     const newTitle = data.title ?? existingData.title;

@@ -46,13 +46,19 @@ export default function ImageCropper({
         onCropComplete(croppedImage)
       }
       onOpenChange(false)
-      // Reset zoom and crop after completion
-      setZoom(1);
-      setCrop({ x: 0, y: 0 });
     } catch (e) {
       console.error(e)
     }
   }, [imageSrc, croppedAreaPixels, onCropComplete, onOpenChange])
+  
+  const handleOpenChange = (isOpen: boolean) => {
+    if (!isOpen) {
+        // Reset state when closing the dialog
+        setZoom(1);
+        setCrop({ x: 0, y: 0 });
+    }
+    onOpenChange(isOpen);
+  }
 
 
   if (!imageSrc) {
@@ -60,7 +66,7 @@ export default function ImageCropper({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Crop Your Image</DialogTitle>

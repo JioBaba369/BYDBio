@@ -101,7 +101,12 @@ export const updateOffer = async (id: string, data: Partial<Omit<Offer, 'id' | '
   const offerDocRef = doc(db, 'offers', id);
   const dataToUpdate = { ...data };
 
-  if (data.title || data.description || data.category || data.couponCode) {
+  if (
+    data.title !== undefined ||
+    data.description !== undefined ||
+    data.category !== undefined ||
+    data.couponCode !== undefined
+  ) {
     const offerDoc = await getDoc(offerDocRef);
     const existingData = offerDoc.data() as Offer;
     const newTitle = data.title ?? existingData.title;

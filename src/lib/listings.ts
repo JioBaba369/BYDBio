@@ -95,7 +95,11 @@ export const updateListing = async (id: string, data: Partial<Omit<Listing, 'id'
   const listingDocRef = doc(db, 'listings', id);
   const dataToUpdate = { ...data };
 
-  if (data.title || data.description || data.category) {
+  if (
+    data.title !== undefined ||
+    data.description !== undefined ||
+    data.category !== undefined
+  ) {
     const listingDoc = await getDoc(listingDocRef);
     const existingData = listingDoc.data() as Listing;
     const newTitle = data.title ?? existingData.title;

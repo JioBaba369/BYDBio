@@ -133,7 +133,7 @@ export default function EventsClient({ initialEvents }: { initialEvents: EventWi
         view === 'grid' ? (
           <div className="grid gap-6 md:grid-cols-2">
             {allEvents.map((event) => {
-              const isOwner = user && event.author.id === user.uid;
+              const isOwner = user && event.author.uid === user.uid;
               const isRsvped = user && event.rsvps?.includes(user.uid);
               const isProcessing = rsvpingEventId === event.id;
 
@@ -212,7 +212,7 @@ export default function EventsClient({ initialEvents }: { initialEvents: EventWi
               </TableHeader>
               <TableBody>
                 {allEvents.map((event) => {
-                  const isOwner = user && event.author.id === user.uid;
+                  const isOwner = user && event.author.uid === user.uid;
                   const isRsvped = user && event.rsvps?.includes(user.uid);
                   const isProcessing = rsvpingEventId === event.id;
 

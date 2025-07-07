@@ -82,7 +82,7 @@ export const getSuggestedUsers = async (userId: string, followingIds: string[]):
     // Fetch a batch of users, ideally not the current user or those they follow.
     // Firestore's 'not-in' is limited to 10, so we can't reliably exclude all followed users.
     // A pragmatic approach is to fetch a limited number of users and filter them.
-    const q = query(usersRef, limit(20));
+    const q = query(usersRef, limit(50));
     const querySnapshot = await getDocs(q);
     
     const users = querySnapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() } as User));

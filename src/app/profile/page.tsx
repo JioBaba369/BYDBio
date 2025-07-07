@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { PlusCircle, Trash2, User, CreditCard, Link2 as LinkIcon, Upload, GripVertical, Save, Building, Linkedin, Phone, Mail, Globe, ExternalLink, Loader2 } from "lucide-react"
 import HashtagSuggester from "@/components/ai/hashtag-suggester"
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import QRCode from 'qrcode.react';
 import { useForm, useFieldArray, FormProvider, useFormContext } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -222,7 +222,6 @@ const ProfilePageSkeleton = () => (
 
 export default function ProfilePage() {
   const { user, firebaseUser, loading } = useAuth();
-  const [qrCodeUrl, setQrCodeUrl] = useState('');
   const [imageToCrop, setImageToCrop] = useState<string | null>(null);
   const [isCropperOpen, setIsCropperOpen] = useState(false);
   const [croppedImageUrl, setCroppedImageUrl] = useState<string | null>(null);
@@ -418,10 +417,10 @@ export default function ProfilePage() {
     
     setIsCropperOpen(false);
   }
-
-  useEffect(() => {
-    if (!user) return;
-    const vCardData = `BEGIN:VCARD
+  
+  const vCardData = useMemo(() => {
+    if (!user) return '';
+    return `BEGIN:VCARD
 VERSION:3.0
 FN:${escapeVCard(watchedPublicProfile.name || user.name)}
 ORG:${escapeVCard(watchedBusinessCard.company)}
@@ -432,8 +431,17 @@ URL:${watchedBusinessCard.website || ''}
 X-SOCIALPROFILE;type=linkedin:${watchedBusinessCard.linkedin || ''}
 ADR;TYPE=WORK:;;${escapeVCard(watchedBusinessCard.location)}
 END:VCARD`;
-    setQrCodeUrl(vCardData);
-  }, [watchedBusinessCard, watchedPublicProfile, user]);
+  }, [
+    user,
+    watchedPublicProfile.name,
+    watchedBusinessCard.company,
+    watchedBusinessCard.title,
+    watchedBusinessCard.phone,
+    watchedBusinessCard.email,
+    watchedBusinessCard.website,
+    watchedBusinessCard.linkedin,
+    watchedBusinessCard.location,
+  ]);
 
   if (loading || !user) {
     return <ProfilePageSkeleton />;
@@ -644,8 +652,8 @@ END:VCARD`;
                                 <p className="text-muted-foreground text-xs flex items-center justify-center gap-1.5 mt-1"><Building className="h-3 w-3"/>{watchedBusinessCard.company || 'Your Company'}</p>
                                 </div>
                                 <div className="flex justify-center mt-4">
-                                {qrCodeUrl ? (
-                                    <QRCode value={qrCodeUrl} size={150} bgColor="transparent" fgColor="hsl(var(--foreground))" level="Q" />
+                                {vCardData ? (
+                                    <QRCode value={vCardData} size={150} bgColor="transparent" fgColor="hsl(var(--foreground))" level="Q" />
                                 ) : (
                                     <div className="w-[150px] h-[150px] bg-gray-200 animate-pulse mx-auto rounded-md" />
                                 )}

@@ -139,7 +139,13 @@ export const updateEvent = async (id: string, data: Partial<Omit<Event, 'id' | '
   const eventDocRef = doc(db, 'events', id);
   const dataToUpdate = { ...data };
 
-  if (data.title || data.description || data.location || data.couponCode) {
+  // Check if any keyword-related fields are being updated
+  if (
+    data.title !== undefined ||
+    data.description !== undefined ||
+    data.location !== undefined ||
+    data.couponCode !== undefined
+  ) {
     const eventDoc = await getDoc(eventDocRef);
     const existingData = eventDoc.data() as Event;
     const newTitle = data.title ?? existingData.title;
@@ -280,7 +286,7 @@ export const getCalendarItems = async (userId: string): Promise<CalendarItem[]> 
         promoPagesSnapshot,
     ] = await Promise.all([
         getDocs(eventsQuery),
-        getDocs(rsvpedEventsQuery),
+        getDocs(rsvpedEventsSnapshot),
         getDocs(offersQuery),
         getDocs(jobsQuery),
         getDocs(listingsQuery),
