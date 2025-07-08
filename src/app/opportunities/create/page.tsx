@@ -6,7 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useAuth } from "@/components/auth-provider";
-import { createJob } from "@/lib/jobs";
+import { createJob, type Job } from "@/lib/jobs";
 import { uploadImage } from "@/lib/storage";
 
 export default function CreateJobPage() {
@@ -22,22 +22,12 @@ export default function CreateJobPage() {
         }
         setIsSaving(true);
         try {
-            const dataToSave: Partial<OpportunityFormValues> = {
-                title: data.title,
-                company: data.company,
-                description: data.description,
-                location: data.location,
-                type: data.type,
-                category: data.category,
-                subCategory: data.subCategory,
+            const dataToSave: Partial<Omit<Job, 'id' | 'authorId' | 'createdAt' | 'status' | 'views' | 'applicants' | 'postingDate' | 'searchableKeywords' | 'followerCount'>> = {
+                ...data,
+                closingDate: data.closingDate ? data.closingDate.toISOString() : undefined,
+                startDate: data.startDate ? data.startDate.toISOString() : undefined,
+                endDate: data.endDate ? data.endDate.toISOString() : undefined,
             };
-
-            if (data.remuneration) dataToSave.remuneration = data.remuneration;
-            if (data.closingDate) dataToSave.closingDate = data.closingDate;
-            if (data.startDate) dataToSave.startDate = data.startDate;
-            if (data.endDate) dataToSave.endDate = data.endDate;
-            if (data.applicationUrl) dataToSave.applicationUrl = data.applicationUrl;
-            if (data.contactInfo) dataToSave.contactInfo = data.contactInfo;
 
             if (data.imageUrl && data.imageUrl.startsWith('data:image')) {
                 const newImageUrl = await uploadImage(data.imageUrl, `jobs/${user.uid}/${Date.now()}`);

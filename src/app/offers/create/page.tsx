@@ -6,7 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useAuth } from "@/components/auth-provider";
-import { createOffer } from "@/lib/offers";
+import { createOffer, type Offer } from "@/lib/offers";
 import { uploadImage } from "@/lib/storage";
 
 export default function CreateOfferPage() {
@@ -22,17 +22,11 @@ export default function CreateOfferPage() {
         }
         setIsSaving(true);
         try {
-            const dataToSave: Partial<OfferFormValues> = {
-                title: data.title,
-                description: data.description,
-                category: data.category,
-                subCategory: data.subCategory,
-                startDate: data.startDate,
+            const dataToSave: Partial<Omit<Offer, 'id' | 'authorId' | 'createdAt' | 'status' | 'views' | 'claims' | 'searchableKeywords' | 'followerCount'>> = {
+                ...data,
+                startDate: data.startDate.toISOString(),
+                endDate: data.endDate ? data.endDate.toISOString() : undefined,
             };
-
-            if (data.endDate) dataToSave.endDate = data.endDate;
-            if (data.couponCode) dataToSave.couponCode = data.couponCode;
-            if (data.ctaLink) dataToSave.ctaLink = data.ctaLink;
 
             if (data.imageUrl && data.imageUrl.startsWith('data:image')) {
                 const newImageUrl = await uploadImage(data.imageUrl, `offers/${user.uid}/${Date.now()}`);

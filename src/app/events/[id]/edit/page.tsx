@@ -88,7 +88,11 @@ export default function EditEventPage() {
         }
         setIsSaving(true);
         try {
-            const dataToSave: Partial<EventFormValues> = { ...data };
+            const dataToSave: Partial<Omit<Event, 'id' | 'authorId' | 'createdAt'>> = {
+                ...data,
+                startDate: data.startDate.toISOString(),
+                endDate: data.endDate ? data.endDate.toISOString() : null,
+            };
 
             if (data.imageUrl && data.imageUrl.startsWith('data:image')) {
                 const newImageUrl = await uploadImage(data.imageUrl, `events/${user.uid}/${eventId}/image`);

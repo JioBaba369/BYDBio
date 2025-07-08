@@ -75,7 +75,12 @@ export default function EditListingPage() {
         }
         setIsSaving(true);
         try {
-            const dataToSave = { ...data };
+            const dataToSave: Partial<Omit<Listing, 'id' | 'authorId' | 'createdAt'>> = {
+                ...data,
+                startDate: data.startDate ? data.startDate.toISOString() : null,
+                endDate: data.endDate ? data.endDate.toISOString() : null,
+            };
+
             if (dataToSave.imageUrl && dataToSave.imageUrl.startsWith('data:image')) {
                 const newImageUrl = await uploadImage(dataToSave.imageUrl, `listings/${user.uid}/${listingId}/image`);
                 dataToSave.imageUrl = newImageUrl;

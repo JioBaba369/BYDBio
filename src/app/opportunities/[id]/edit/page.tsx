@@ -76,7 +76,12 @@ export default function EditJobPage() {
         }
         setIsSaving(true);
         try {
-            const dataToSave: Partial<OpportunityFormValues> = { ...data };
+            const dataToSave: Partial<Omit<Job, 'id' | 'authorId' | 'createdAt'>> = {
+                ...data,
+                closingDate: data.closingDate ? data.closingDate.toISOString() : null,
+                startDate: data.startDate ? data.startDate.toISOString() : null,
+                endDate: data.endDate ? data.endDate.toISOString() : null,
+            };
 
             if (data.imageUrl && data.imageUrl.startsWith('data:image')) {
                 const newImageUrl = await uploadImage(data.imageUrl, `jobs/${user.uid}/${jobId}/image`);

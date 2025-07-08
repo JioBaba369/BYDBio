@@ -76,7 +76,11 @@ export default function EditOfferPage() {
         }
         setIsSaving(true);
         try {
-            const dataToSave: Partial<OfferFormValues> = { ...data };
+            const dataToSave: Partial<Omit<Offer, 'id' | 'authorId' | 'createdAt'>> = {
+                ...data,
+                startDate: data.startDate.toISOString(),
+                endDate: data.endDate ? data.endDate.toISOString() : null,
+            };
 
             if (data.imageUrl && data.imageUrl.startsWith('data:image')) {
                 const newImageUrl = await uploadImage(data.imageUrl, `offers/${user.uid}/${offerId}/image`);

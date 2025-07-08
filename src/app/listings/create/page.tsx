@@ -4,7 +4,7 @@
 import { ListingForm, ListingFormValues } from "@/components/forms/listing-form";
 import { useAuth } from "@/components/auth-provider";
 import { useToast } from "@/hooks/use-toast";
-import { createListing } from "@/lib/listings";
+import { createListing, type Listing } from "@/lib/listings";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { uploadImage } from "@/lib/storage";
@@ -22,17 +22,11 @@ export default function CreateListingPage() {
         }
         setIsSaving(true);
         try {
-            const dataToSave: Partial<ListingFormValues> = {
-                title: data.title,
-                description: data.description,
-                price: data.price,
-                category: data.category,
-                subCategory: data.subCategory,
-                listingType: data.listingType || 'sale',
+            const dataToSave: Partial<Omit<Listing, 'id' | 'authorId' | 'createdAt' | 'status' | 'views' | 'clicks' | 'searchableKeywords' | 'followerCount'>> = {
+                ...data,
+                startDate: data.startDate ? data.startDate.toISOString() : undefined,
+                endDate: data.endDate ? data.endDate.toISOString() : undefined,
             };
-
-            if (data.startDate) dataToSave.startDate = data.startDate;
-            if (data.endDate) dataToSave.endDate = data.endDate;
 
             if (data.imageUrl && data.imageUrl.startsWith('data:image')) {
                 const newImageUrl = await uploadImage(data.imageUrl, `listings/${user.uid}/${Date.now()}`);

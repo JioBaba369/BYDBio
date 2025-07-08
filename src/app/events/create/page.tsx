@@ -6,7 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useAuth } from "@/components/auth-provider";
-import { createEvent } from "@/lib/events";
+import { createEvent, type Event } from "@/lib/events";
 import { uploadImage } from "@/lib/storage";
 
 export default function CreateEventPage() {
@@ -22,7 +22,11 @@ export default function CreateEventPage() {
         }
         setIsSaving(true);
         try {
-            const dataToSave: Partial<EventFormValues> = { ...data };
+            const dataToSave: Partial<Omit<Event, 'id' | 'authorId' | 'createdAt' | 'status' | 'views' | 'rsvps' | 'searchableKeywords' | 'followerCount'>> = {
+                ...data,
+                startDate: data.startDate.toISOString(),
+                endDate: data.endDate ? data.endDate.toISOString() : null,
+            };
 
             if (data.imageUrl && data.imageUrl.startsWith('data:image')) {
                 const newImageUrl = await uploadImage(data.imageUrl, `events/${user.uid}/${Date.now()}`);
