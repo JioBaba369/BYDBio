@@ -1,40 +1,60 @@
+
 rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
-  
+    
+    // Helper function to check if the user is authenticated
     function isAuthenticated() {
       return request.auth != null;
     }
     
-    // Public read for all files. This is common for profile pictures and content images.
-    match /{allPaths=**} {
-      allow read: if true;
-    }
-
-    // User can only write to their own avatar path.
-    match /avatars/{userId}/{fileName} {
-      allow write: if isAuthenticated() 
-                   && request.auth.uid == userId
-                   && request.resource.size < 5 * 1024 * 1024 // Max 5MB
-                   && request.resource.contentType.matches('image/.*');
+    // Helper function to check if the user owns the resource
+    function isOwner(userId) {
+      return request.auth.uid == userId;
     }
     
-    // Users can only write to their own content paths (posts, events, etc.)
-    match /{collection}/{userId}/{docId}/{fileName} {
-       allow write: if isAuthenticated()
-                    && request.auth.uid == userId
-                    && request.resource.size < 5 * 1024 * 1024 // Max 5MB
-                    && request.resource.contentType.matches('image/.*');
+    // Helper function to validate file type and size
+    function isValidImage() {
+      return request.resource.size < 5 * 1024 * 1024 // Max 5 MB
+             && request.resource.contentType.matches('image/.*'); // Only allow images
     }
 
-    // A separate rule for promo page logos, as the path structure is slightly different
-     match /promoPages/{userId}/{docId}/{subfolder}/{fileName} {
-       allow write: if isAuthenticated()
-                    && request.auth.uid == userId
-                    && (subfolder == 'header' || subfolder == 'logo')
-                    && request.resource.size < 5 * 1024 * 1024
-                    && request.resource.contentType.matches('image/.*');
+    // Avatars: Users can only upload their own avatar.
+    match /avatars/{userId} {
+      allow write: if isAuthenticated() && isOwner(userId) && isValidImage();
+    }
+
+    // Content Images (Events, Jobs, Listings, etc.)
+    // Users can only upload images into their own folder within a content type.
+    match /events/{userId}/{eventId}/{fileName} {
+      allow write: if isAuthenticated() && isOwner(userId) && isValidImage();
+    }
+
+    match /jobs/{userId}/{jobId}/{fileName} {
+      allow write: if isAuthenticated() && isOwner(userId) && isValidImage();
+    }
+
+    match /listings/{userId}/{listingId}/{fileName} {
+      allow write: if isAuthenticated() && isOwner(userId) && isValidImage();
+    }
+
+    match /offers/{userId}/{offerId}/{fileName} {
+      allow write: if isAuthenticated() && isOwner(userId) && isValidImage();
+    }
+
+    match /posts/{userId}/{postId}/{fileName} {
+      allow write: if isAuthenticated() && isOwner(userId) && isValidImage();
+    }
+    
+    match /promoPages/{userId}/{promoPageId}/{fileName} {
+       allow write: if isAuthenticated() && isOwner(userId) && isValidImage();
+    }
+    
+    // All files are publicly readable by default to allow easy display in the app.
+    // If you have private files, you would need more specific read rules.
+    match /{allPaths=**} {
+      allow read: if true;
     }
   }
 }

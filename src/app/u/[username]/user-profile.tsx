@@ -12,7 +12,7 @@ import type { PromoPage } from "@/lib/promo-pages";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ExternalLink, UserCheck, UserPlus, QrCode, Edit, Loader2 } from "lucide-react";
+import { ExternalLink, UserCheck, UserPlus, QrCode, Edit, Loader2, Rss, Info } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
@@ -34,6 +34,7 @@ import { JobFeedItem } from "@/components/feed/job-feed-item";
 import { EventFeedItem } from "@/components/feed/event-feed-item";
 import { OfferFeedItem } from "@/components/feed/offer-feed-item";
 import { ContactForm } from "@/components/contact-form";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 
 interface UserProfilePageProps {
@@ -220,20 +221,8 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
   const { name, username, avatarUrl, avatarFallback, bio, links, businessCard } = userProfileData;
   const { listings, jobs, events, offers, promoPages } = content;
   const isOwner = currentUser?.uid === userProfileData.uid;
-  const canonicalUrl = typeof window !== 'undefined' ? `${window.location.origin}/u/${username}` : '';
+  const businessCardUrl = typeof window !== 'undefined' ? `${window.location.origin}/u/${username}/card` : '';
 
-  const vCardData = `BEGIN:VCARD
-VERSION:3.0
-FN:${name}
-ORG:${businessCard?.company || ''}
-TITLE:${businessCard?.title || ''}
-TEL;TYPE=WORK,VOICE:${businessCard?.phone || ''}
-EMAIL:${businessCard?.email || ''}
-URL:${businessCard?.website || ''}
-X-SOCIALPROFILE;type=linkedin:${businessCard?.linkedin || ''}
-ADR;TYPE=WORK:;;${businessCard?.location || ''}
-END:VCARD`;
-  
   const allContent = useMemo(() => {
     const combined = [
       ...localPosts.map(item => ({ ...item, type: 'post' as const, date: item.createdAt })),
@@ -248,6 +237,7 @@ END:VCARD`;
   }, [localPosts, promoPages, listings, jobs, events, offers]);
   
   const hasContent = allContent.length > 0;
+  const hasLinks = links.length > 0;
 
   return (
     <>
@@ -268,9 +258,9 @@ END:VCARD`;
               <AvatarFallback>{avatarFallback}</AvatarFallback>
             </Avatar>
             <h1 className="font-headline text-3xl font-bold text-foreground">{name}</h1>
-            <p className="mt-2 text-muted-foreground font-body">{bio}</p>
-             <div className="mt-4 flex items-center justify-center gap-2">
-                <ShareButton url={canonicalUrl} />
+            <p className="text-muted-foreground">@{username}</p>
+            <div className="mt-6 flex items-center justify-center gap-2">
+                <ShareButton url={businessCardUrl} />
                 <Dialog>
                     <DialogTrigger asChild>
                         <Button variant="outline">
@@ -280,16 +270,16 @@ END:VCARD`;
                     </DialogTrigger>
                     <DialogContent>
                         <DialogHeader>
-                            <DialogTitle>Scan to save contact</DialogTitle>
+                            <DialogTitle>Scan to View Digital Business Card</DialogTitle>
                         </DialogHeader>
                         <div className="flex flex-col items-center justify-center p-4 gap-4">
-                            <QRCode value={vCardData} size={256} bgColor="#ffffff" fgColor="#000000" level="Q" />
-                            <p className="text-sm text-muted-foreground text-center">Scan this code with your phone's camera to save {name}'s contact details.</p>
+                            <QRCode value={businessCardUrl} size={256} bgColor="#ffffff" fgColor="#000000" level="Q" />
+                            <p className="text-sm text-muted-foreground text-center break-all">{businessCardUrl}</p>
                         </div>
                     </DialogContent>
                 </Dialog>
             </div>
-            <div className="mt-6 flex w-full flex-col sm:flex-row items-center gap-4">
+             <div className="mt-6 flex w-full flex-col sm:flex-row items-center gap-4">
               {isOwner ? (
                   <Button asChild className="flex-1 font-bold w-full sm:w-auto">
                       <Link href="/profile">
@@ -313,33 +303,16 @@ END:VCARD`;
               </div>
             </div>
           </div>
-
-          <div className="relative z-10 mt-8 flex flex-col space-y-4">
-            {links.map((link, index) => {
-                const Icon = linkIcons[link.icon as keyof typeof linkIcons];
-                return (
-                  <a key={index} href={link.url} target="_blank" rel="noopener noreferrer" className="w-full group">
-                    <div className="w-full h-14 text-lg font-semibold flex items-center p-4 rounded-lg bg-background/70 shadow-sm border hover:bg-background transition-all hover:scale-[1.02] hover:shadow-lg ease-out duration-200">
-                      {Icon && <Icon className="h-5 w-5" />}
-                      <span className="flex-1 text-center">{link.title}</span>
-                      <ExternalLink className="h-5 w-5 text-muted-foreground/50 opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </div>
-                  </a>
-                )
-            })}
-          </div>
         </Card>
-        
-        {!isOwner && (
-            <ContactForm recipientId={userProfileData.uid} />
-        )}
 
-        {hasContent && (
-            <Card id="content" className="bg-card/80 backdrop-blur-sm shadow-2xl rounded-2xl border-primary/10">
-                <CardHeader>
-                    <CardTitle>Content Feed</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
+        <Tabs defaultValue="feed" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="feed"><Rss className="mr-2 h-4 w-4"/>Feed</TabsTrigger>
+                <TabsTrigger value="about"><Info className="mr-2 h-4 w-4"/>About</TabsTrigger>
+            </TabsList>
+            <TabsContent value="feed" className="mt-6">
+                {hasContent ? (
+                <div className="space-y-6">
                     {allContent.map(item => {
                         const uniqueKey = `${item.type}-${item.id}`;
                         if (item.type === 'post') {
@@ -376,10 +349,49 @@ END:VCARD`;
                             </ContentFeedCard>
                         );
                     })}
-                </CardContent>
-            </Card>
-        )}
+                </div>
+                ) : (
+                    <Card className="text-center text-muted-foreground p-10">
+                        This user hasn't posted any content yet.
+                    </Card>
+                )}
+            </TabsContent>
+            <TabsContent value="about" className="mt-6 space-y-6">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>About</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <p className="text-foreground/90 max-w-prose whitespace-pre-wrap">{bio || "This user hasn't written a bio yet."}</p>
+                    </CardContent>
+                </Card>
 
+                {hasLinks && (
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Links</CardTitle>
+                    </CardHeader>
+                    <CardContent className="flex flex-col space-y-4">
+                        {links.map((link, index) => {
+                            const Icon = linkIcons[link.icon as keyof typeof linkIcons];
+                            return (
+                            <a key={index} href={link.url} target="_blank" rel="noopener noreferrer" className="w-full group">
+                                <div className="w-full h-14 text-lg font-semibold flex items-center p-4 rounded-lg bg-background/70 shadow-sm border hover:bg-muted transition-all hover:scale-[1.02] ease-out duration-200">
+                                {Icon && <Icon className="h-5 w-5" />}
+                                <span className="flex-1 text-center">{link.title}</span>
+                                <ExternalLink className="h-5 w-5 text-muted-foreground/50 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                </div>
+                            </a>
+                            )
+                        })}
+                    </CardContent>
+                </Card>
+                )}
+
+                {!isOwner && <ContactForm recipientId={userProfileData.uid} />}
+            </TabsContent>
+        </Tabs>
+        
         <Card className="bg-card/80 backdrop-blur-sm p-6 sm:p-8 shadow-2xl rounded-2xl border-primary/10 text-center">
             <div className="flex flex-col items-center gap-2">
                 <Link href={`/u/${username}/card`} className="text-sm text-primary hover:underline font-semibold">View Digital Business Card</Link>
