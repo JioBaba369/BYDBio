@@ -17,7 +17,7 @@ import {
 import { db } from '@/lib/firebase';
 import { getUsersByIds, type User } from './users';
 
-export type NotificationType = 'new_follower' | 'new_like' | 'event_rsvp' | 'contact_form_submission';
+export type NotificationType = 'new_follower' | 'new_like' | 'event_rsvp' | 'contact_form_submission' | 'new_content_follower';
 
 export type Notification = {
   id: string; // Document ID
@@ -25,6 +25,7 @@ export type Notification = {
   actorId: string | null; // The user who performed the action. Null for system or anonymous actions.
   type: NotificationType;
   entityId?: string; // e.g., postId, eventId
+  entityType?: 'promoPages' | 'listings' | 'jobs' | 'events' | 'offers';
   entityTitle?: string; // A title or snippet for context
   read: boolean;
   createdAt: Timestamp;
@@ -44,6 +45,7 @@ export const createNotification = async (
   notificationData: {
     entityId?: string;
     entityTitle?: string;
+    entityType?: 'promoPages' | 'listings' | 'jobs' | 'events' | 'offers';
     senderName?: string;
     senderEmail?: string;
     messageBody?: string;
@@ -67,6 +69,7 @@ export const createNotification = async (
     if (type === 'new_follower' && settings?.newFollowers === false) return;
     if (type === 'new_like' && settings?.newLikes === false) return;
     if (type === 'event_rsvp' && settings?.eventRsvps === false) return;
+    if (type === 'new_content_follower' && settings?.newFollowers === false) return; // Reuse follower setting
   }
   
   // Proceed to create notification for system messages or if user settings allow

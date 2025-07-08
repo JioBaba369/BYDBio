@@ -29,6 +29,7 @@ export type Listing = {
   listingType?: 'sale' | 'rental';
   views?: number;
   clicks?: number;
+  followerCount: number;
   startDate?: Timestamp | Date | string | null;
   endDate?: Timestamp | Date | string | null;
   createdAt: Timestamp | string;
@@ -71,7 +72,7 @@ export const getListingsByUser = async (userId: string): Promise<Listing[]> => {
 };
 
 // Function to create a new listing
-export const createListing = async (userId: string, data: Partial<Omit<Listing, 'id' | 'authorId' | 'createdAt' | 'status' | 'views' | 'clicks' | 'searchableKeywords'>>) => {
+export const createListing = async (userId: string, data: Partial<Omit<Listing, 'id' | 'authorId' | 'createdAt' | 'status' | 'views' | 'clicks' | 'searchableKeywords' | 'followerCount'>>) => {
   const listingsRef = collection(db, 'listings');
   const keywords = [
     ...(data.title?.toLowerCase().split(' ').filter(Boolean) || []),
@@ -86,6 +87,7 @@ export const createListing = async (userId: string, data: Partial<Omit<Listing, 
     status: 'active' as const,
     views: 0,
     clicks: 0,
+    followerCount: 0,
     searchableKeywords: [...new Set(keywords)],
   };
   
@@ -95,7 +97,7 @@ export const createListing = async (userId: string, data: Partial<Omit<Listing, 
 // Function to update an existing listing
 export const updateListing = async (id: string, data: Partial<Omit<Listing, 'id' | 'authorId' | 'createdAt'>>) => {
   const listingDocRef = doc(db, 'listings', id);
-  const dataToUpdate = { ...data };
+  const dataToUpdate: {[key: string]: any} = { ...data };
 
   if (
     data.title !== undefined ||

@@ -45,6 +45,7 @@ export type Event = {
   status: 'active' | 'archived';
   views: number;
   rsvps: string[]; // Array of user UIDs who have RSVP'd
+  followerCount: number;
   itinerary: ItineraryItem[];
   createdAt: Timestamp | string;
   searchableKeywords: string[];
@@ -116,7 +117,7 @@ export const getEventsByUser = async (userId: string): Promise<Event[]> => {
 };
 
 // Function to create a new event
-export const createEvent = async (userId: string, data: Partial<Omit<Event, 'id' | 'authorId' | 'createdAt' | 'status' | 'views' | 'rsvps' | 'searchableKeywords'>>) => {
+export const createEvent = async (userId: string, data: Partial<Omit<Event, 'id' | 'authorId' | 'createdAt' | 'status' | 'views' | 'rsvps' | 'searchableKeywords' | 'followerCount'>>) => {
   const eventsRef = collection(db, 'events');
   
   const keywords = [
@@ -133,6 +134,7 @@ export const createEvent = async (userId: string, data: Partial<Omit<Event, 'id'
     status: 'active' as const,
     views: 0,
     rsvps: [],
+    followerCount: 0,
     searchableKeywords: [...new Set(keywords)],
   };
 
@@ -142,7 +144,7 @@ export const createEvent = async (userId: string, data: Partial<Omit<Event, 'id'
 // Function to update an existing event
 export const updateEvent = async (id: string, data: Partial<Omit<Event, 'id' | 'authorId' | 'createdAt'>>) => {
   const eventDocRef = doc(db, 'events', id);
-  const dataToUpdate = { ...data };
+  const dataToUpdate: {[key: string]: any} = { ...data };
 
   // Check if any keyword-related fields are being updated
   if (

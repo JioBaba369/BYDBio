@@ -34,6 +34,7 @@ export type Job = {
   status: 'active' | 'archived';
   views: number;
   applicants: number;
+  followerCount: number;
   createdAt: Timestamp | string;
   searchableKeywords: string[];
   applicationUrl?: string;
@@ -87,7 +88,7 @@ export const getJobsByUser = async (userId: string): Promise<Job[]> => {
 };
 
 // Function to create a new job
-export const createJob = async (userId: string, data: Partial<Omit<Job, 'id' | 'authorId' | 'createdAt' | 'status' | 'views' | 'applicants' | 'postingDate' | 'searchableKeywords'>>) => {
+export const createJob = async (userId: string, data: Partial<Omit<Job, 'id' | 'authorId' | 'createdAt' | 'status' | 'views' | 'applicants' | 'postingDate' | 'searchableKeywords' | 'followerCount'>>) => {
   const jobsRef = collection(db, 'jobs');
   const keywords = [
     ...(data.title?.toLowerCase().split(' ').filter(Boolean) || []),
@@ -106,6 +107,7 @@ export const createJob = async (userId: string, data: Partial<Omit<Job, 'id' | '
     status: 'active' as const,
     views: 0,
     applicants: 0,
+    followerCount: 0,
     searchableKeywords: [...new Set(keywords)],
   };
 
@@ -115,7 +117,7 @@ export const createJob = async (userId: string, data: Partial<Omit<Job, 'id' | '
 // Function to update an existing job
 export const updateJob = async (id: string, data: Partial<Omit<Job, 'id' | 'authorId' | 'createdAt'>>) => {
   const jobDocRef = doc(db, 'jobs', id);
-  const dataToUpdate = { ...data };
+  const dataToUpdate: {[key: string]: any} = { ...data };
 
   if (
     data.title !== undefined ||

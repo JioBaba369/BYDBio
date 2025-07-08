@@ -14,6 +14,7 @@ import { ClientFormattedDate } from '@/components/client-formatted-date';
 import { useAuth } from '@/components/auth-provider';
 import { formatCurrency } from '@/lib/utils';
 import { AuthorCard } from '@/components/author-card';
+import { FollowButton } from '@/components/follow-button';
 
 
 interface OpportunityDetailClientProps {
@@ -24,6 +25,7 @@ interface OpportunityDetailClientProps {
 export default function OpportunityDetailClient({ job, author }: OpportunityDetailClientProps) {
     const { user: currentUser } = useAuth();
     const isOwner = currentUser && currentUser.uid === author.uid;
+    const isFollowing = currentUser?.subscriptions?.jobs?.includes(job.id) || false;
     
     return (
         <div className="bg-dot min-h-screen py-8 px-4">
@@ -112,14 +114,26 @@ export default function OpportunityDetailClient({ job, author }: OpportunityDeta
                                 )}
                             </CardContent>
                             <CardFooter>
-                                {!isOwner && job.applicationUrl && (
-                                    <Button asChild size="lg" className="w-full">
-                                        <a href={job.applicationUrl} target="_blank" rel="noopener noreferrer">
-                                            <ExternalLink className="mr-2 h-4 w-4" />
-                                            Apply Online
-                                        </a>
-                                    </Button>
-                                )}
+                                <div className="flex w-full items-center gap-2">
+                                    {!isOwner && job.applicationUrl && (
+                                        <Button asChild size="lg" className="flex-1">
+                                            <a href={job.applicationUrl} target="_blank" rel="noopener noreferrer">
+                                                <ExternalLink className="mr-2 h-4 w-4" />
+                                                Apply Online
+                                            </a>
+                                        </Button>
+                                    )}
+                                     {!isOwner && currentUser && (
+                                        <FollowButton
+                                            contentId={job.id}
+                                            contentType="jobs"
+                                            authorId={author.uid}
+                                            entityTitle={`${job.title} at ${job.company}`}
+                                            initialIsFollowing={isFollowing}
+                                            initialFollowerCount={job.followerCount || 0}
+                                        />
+                                    )}
+                                </div>
                             </CardFooter>
                         </Card>
                     </div>

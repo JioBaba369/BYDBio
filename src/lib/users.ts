@@ -27,6 +27,14 @@ export type NotificationSettings = {
     offersAndUpdates: boolean;
 };
 
+export type Subscriptions = {
+  promoPages: string[];
+  listings: string[];
+  jobs: string[];
+  events: string[];
+  offers: string[];
+}
+
 export type User = {
   uid: string; // Firebase Auth UID and Document ID
   name: string;
@@ -40,6 +48,7 @@ export type User = {
   links: UserLink[];
   businessCard?: BusinessCard;
   notificationSettings: NotificationSettings;
+  subscriptions: Subscriptions;
   searchableKeywords: string[];
   isFollowedByCurrentUser?: boolean; // Client-side state
 };
@@ -117,6 +126,13 @@ export const createUserProfileIfNotExists = async (user: FirebaseUser, additiona
             newLikes: true,
             eventRsvps: true,
             offersAndUpdates: true,
+        },
+        subscriptions: {
+            promoPages: [],
+            listings: [],
+            jobs: [],
+            events: [],
+            offers: [],
         },
         searchableKeywords: searchableKeywords,
     });

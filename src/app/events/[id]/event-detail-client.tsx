@@ -20,6 +20,7 @@ import { parseISO } from 'date-fns';
 import { useAuth } from '@/components/auth-provider';
 import { AuthorCard } from '@/components/author-card';
 import { CouponDisplay } from '@/components/coupon-display';
+import { FollowButton } from '@/components/follow-button';
 
 
 interface EventDetailClientProps {
@@ -32,6 +33,7 @@ export default function EventDetailClient({ event, author }: EventDetailClientPr
     const { toast } = useToast();
     const attendeeCount = event.rsvps?.length || 0;
     const isOwner = currentUser && currentUser.uid === author.uid;
+    const isFollowing = currentUser?.subscriptions?.events?.includes(event.id) || false;
 
     const handleAddToCalendar = () => {
         const date = parseISO(event.startDate as string);
@@ -110,6 +112,16 @@ export default function EventDetailClient({ event, author }: EventDetailClientPr
                                                     Edit Event
                                                 </Link>
                                             </Button>
+                                        )}
+                                        {!isOwner && currentUser && (
+                                            <FollowButton
+                                            contentId={event.id}
+                                            contentType="events"
+                                            authorId={author.uid}
+                                            entityTitle={event.title}
+                                            initialIsFollowing={isFollowing}
+                                            initialFollowerCount={event.followerCount || 0}
+                                            />
                                         )}
                                         <ShareButton variant="outline" />
                                     </div>

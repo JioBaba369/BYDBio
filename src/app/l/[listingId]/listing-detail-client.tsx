@@ -14,6 +14,7 @@ import { ClientFormattedDate } from '@/components/client-formatted-date';
 import { useAuth } from '@/components/auth-provider';
 import { formatCurrency } from '@/lib/utils';
 import { AuthorCard } from '@/components/author-card';
+import { FollowButton } from '@/components/follow-button';
 
 
 interface ListingDetailClientProps {
@@ -24,6 +25,7 @@ interface ListingDetailClientProps {
 export default function ListingDetailClient({ listing, author }: ListingDetailClientProps) {
     const { user: currentUser } = useAuth();
     const isOwner = currentUser && currentUser.uid === author.uid;
+    const isFollowing = currentUser?.subscriptions?.listings?.includes(listing.id) || false;
     
     return (
         <div className="bg-dot min-h-screen py-8 px-4">
@@ -84,12 +86,24 @@ export default function ListingDetailClient({ listing, author }: ListingDetailCl
                                 <p className="text-muted-foreground whitespace-pre-wrap">{listing.description}</p>
                             </CardContent>
                             <CardFooter>
-                                <Button asChild size="lg" className="w-full">
-                                    <Link href={`/u/${author.username}`}>
-                                        <UserIcon className="mr-2 h-4 w-4" />
-                                        View Seller's Profile
-                                    </Link>
-                                </Button>
+                                <div className="flex w-full items-center gap-2">
+                                    <Button asChild size="lg" className="w-full">
+                                        <Link href={`/u/${author.username}`}>
+                                            <UserIcon className="mr-2 h-4 w-4" />
+                                            View Seller's Profile
+                                        </Link>
+                                    </Button>
+                                     {!isOwner && currentUser && (
+                                        <FollowButton
+                                            contentId={listing.id}
+                                            contentType="listings"
+                                            authorId={author.uid}
+                                            entityTitle={listing.title}
+                                            initialIsFollowing={isFollowing}
+                                            initialFollowerCount={listing.followerCount || 0}
+                                        />
+                                    )}
+                                </div>
                             </CardFooter>
                         </Card>
                     </div>

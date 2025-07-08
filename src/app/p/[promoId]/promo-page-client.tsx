@@ -11,6 +11,7 @@ import Link from 'next/link';
 import ShareButton from '@/components/share-button';
 import { useAuth } from '@/components/auth-provider';
 import { AuthorCard } from '@/components/author-card';
+import { FollowButton } from '@/components/follow-button';
 
 interface PromoPageClientProps {
     promoPage: PromoPage;
@@ -20,6 +21,7 @@ interface PromoPageClientProps {
 export default function PromoPageClient({ promoPage, author }: PromoPageClientProps) {
     const { user: currentUser } = useAuth();
     const isOwner = currentUser && currentUser.uid === author.uid;
+    const isFollowing = currentUser?.subscriptions?.promoPages?.includes(promoPage.id) || false;
     
     return (
         <div className="bg-dot min-h-screen py-8 px-4">
@@ -67,6 +69,16 @@ export default function PromoPageClient({ promoPage, author }: PromoPageClientPr
                                                             Edit
                                                         </Link>
                                                     </Button>
+                                                )}
+                                                {!isOwner && currentUser && (
+                                                    <FollowButton
+                                                        contentId={promoPage.id}
+                                                        contentType="promoPages"
+                                                        authorId={author.uid}
+                                                        entityTitle={promoPage.name}
+                                                        initialIsFollowing={isFollowing}
+                                                        initialFollowerCount={promoPage.followerCount || 0}
+                                                    />
                                                 )}
                                                 <ShareButton variant="outline" />
                                             </div>

@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Calendar, MapPin, PlusCircle, Eye, Users, CheckCircle2, LayoutGrid, List, Loader2, ExternalLink } from "lucide-react"
+import { Calendar, MapPin, PlusCircle, Eye, Users, CheckCircle2, LayoutGrid, List, Loader2, ExternalLink, Bell } from "lucide-react"
 import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect } from "react";
@@ -170,15 +170,10 @@ export default function EventsClient({ initialEvents }: { initialEvents: EventWi
                 </CardContent>
                 <Separator/>
                 <CardFooter className="flex-col items-start gap-4 pt-4">
-                    <div className="flex justify-between w-full">
-                        <div className="flex items-center text-sm font-medium">
-                            <Eye className="mr-2 h-4 w-4 text-primary" />
-                            <span>{event.views?.toLocaleString() ?? 0} views</span>
-                        </div>
-                        <div className="flex items-center text-sm font-medium">
-                            <Users className="mr-2 h-4 w-4 text-primary" />
-                            <span>{event.rsvps?.length.toLocaleString() ?? 0} RSVPs</span>
-                        </div>
+                    <div className="flex justify-between w-full text-xs text-muted-foreground">
+                        <div className="flex items-center gap-1.5"><Eye className="h-3.5 w-3.5" />{event.views?.toLocaleString() ?? 0} Views</div>
+                        <div className="flex items-center gap-1.5"><Users className="h-3.5 w-3.5" />{event.rsvps?.length.toLocaleString() ?? 0} RSVPs</div>
+                        <div className="flex items-center gap-1.5"><Bell className="h-3.5 w-3.5" />{event.followerCount?.toLocaleString() ?? 0} Following</div>
                     </div>
                     <div className="w-full flex gap-2">
                       <Button asChild variant="outline" className="flex-1">

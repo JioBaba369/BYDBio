@@ -31,6 +31,7 @@ export type PromoPage = {
   status: 'active' | 'archived';
   views?: number;
   clicks?: number;
+  followerCount: number;
   createdAt: Timestamp | string;
   searchableKeywords: string[];
 };
@@ -62,7 +63,7 @@ export const getPromoPagesByUser = async (userId: string): Promise<PromoPage[]> 
 };
 
 // Function to create a new promo page
-export const createPromoPage = async (userId: string, data: Partial<Omit<PromoPage, 'id' | 'authorId' | 'createdAt' | 'status' | 'views' | 'clicks' | 'searchableKeywords'>>) => {
+export const createPromoPage = async (userId: string, data: Partial<Omit<PromoPage, 'id' | 'authorId' | 'createdAt' | 'status' | 'views' | 'clicks' | 'searchableKeywords' | 'followerCount'>>) => {
   const promoPagesRef = collection(db, 'promoPages');
   const keywords = [
     ...(data.name?.toLowerCase().split(' ').filter(Boolean) || []),
@@ -78,6 +79,7 @@ export const createPromoPage = async (userId: string, data: Partial<Omit<PromoPa
     status: 'active' as const,
     views: 0,
     clicks: 0,
+    followerCount: 0,
     searchableKeywords: [...new Set(keywords)],
   };
 
@@ -87,7 +89,7 @@ export const createPromoPage = async (userId: string, data: Partial<Omit<PromoPa
 // Function to update an existing promo page
 export const updatePromoPage = async (id: string, data: Partial<Omit<PromoPage, 'id' | 'authorId' | 'createdAt'>>) => {
   const promoPageDocRef = doc(db, 'promoPages', id);
-  const dataToUpdate = { ...data };
+  const dataToUpdate: {[key: string]: any} = { ...data };
 
   if (
     data.name !== undefined ||

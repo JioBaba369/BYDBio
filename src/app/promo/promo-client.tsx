@@ -2,7 +2,7 @@
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import Image from "next/image";
-import { PlusCircle, Globe, Mail, Phone, MapPin, Eye, MousePointerClick, ExternalLink, Building2, List, LayoutGrid, Megaphone, MoreHorizontal, Edit, Trash2 } from "lucide-react";
+import { PlusCircle, Globe, Mail, Phone, MapPin, Eye, MousePointerClick, ExternalLink, Building2, List, LayoutGrid, Megaphone, MoreHorizontal, Edit, Trash2, Bell } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { Separator } from "@/components/ui/separator";
@@ -181,15 +181,10 @@ export default function PromoClient({ initialPromoPages }: { initialPromoPages: 
                 </CardContent>
                 <Separator className="my-4" />
                 <CardFooter className="flex-col items-start gap-4">
-                    <div className="flex justify-between w-full">
-                        <div className="flex items-center text-sm font-medium">
-                            <Eye className="mr-2 h-4 w-4 text-primary" />
-                            <span>{item.views?.toLocaleString() ?? 0} views</span>
-                        </div>
-                        <div className="flex items-center text-sm font-medium">
-                            <MousePointerClick className="mr-2 h-4 w-4 text-primary" />
-                            <span>{item.clicks?.toLocaleString() ?? 0} clicks</span>
-                        </div>
+                    <div className="flex justify-between w-full text-xs text-muted-foreground">
+                        <div className="flex items-center gap-1.5"><Eye className="h-3.5 w-3.5" />{item.views?.toLocaleString() ?? 0} Views</div>
+                        <div className="flex items-center gap-1.5"><MousePointerClick className="h-3.5 w-3.5" />{item.clicks?.toLocaleString() ?? 0} Clicks</div>
+                        <div className="flex items-center gap-1.5"><Bell className="h-3.5 w-3.5" />{item.followerCount?.toLocaleString() ?? 0} Following</div>
                     </div>
                     <Button asChild variant="outline" className="w-full">
                         <Link href={`/p/${item.id}`}>

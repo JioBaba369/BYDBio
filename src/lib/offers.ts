@@ -31,6 +31,7 @@ export type Offer = {
   status: 'active' | 'archived';
   views: number;
   claims: number;
+  followerCount: number;
   createdAt: Timestamp | string;
   searchableKeywords: string[];
 };
@@ -78,7 +79,7 @@ export const getOffersByUser = async (userId: string): Promise<Offer[]> => {
 };
 
 // Function to create a new offer
-export const createOffer = async (userId: string, data: Partial<Omit<Offer, 'id' | 'authorId' | 'createdAt' | 'status' | 'views' | 'claims' | 'searchableKeywords'>>) => {
+export const createOffer = async (userId: string, data: Partial<Omit<Offer, 'id' | 'authorId' | 'createdAt' | 'status' | 'views' | 'claims' | 'searchableKeywords' | 'followerCount'>>) => {
   const offersRef = collection(db, 'offers');
   const keywords = [
     ...(data.title?.toLowerCase().split(' ').filter(Boolean) || []),
@@ -94,6 +95,7 @@ export const createOffer = async (userId: string, data: Partial<Omit<Offer, 'id'
     status: 'active' as const,
     views: 0,
     claims: 0,
+    followerCount: 0,
     searchableKeywords: [...new Set(keywords)],
   };
 
@@ -103,7 +105,7 @@ export const createOffer = async (userId: string, data: Partial<Omit<Offer, 'id'
 // Function to update an existing offer
 export const updateOffer = async (id: string, data: Partial<Omit<Offer, 'id' | 'authorId' | 'createdAt'>>) => {
   const offerDocRef = doc(db, 'offers', id);
-  const dataToUpdate = { ...data };
+  const dataToUpdate: {[key: string]: any} = { ...data };
 
   if (
     data.title !== undefined ||

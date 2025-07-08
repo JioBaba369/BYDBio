@@ -14,6 +14,7 @@ import { ClientFormattedDate } from '@/components/client-formatted-date';
 import { useAuth } from '@/components/auth-provider';
 import { AuthorCard } from '@/components/author-card';
 import { CouponDisplay } from '@/components/coupon-display';
+import { FollowButton } from '@/components/follow-button';
 
 
 interface OfferDetailClientProps {
@@ -24,6 +25,7 @@ interface OfferDetailClientProps {
 export default function OfferDetailClient({ offer, author }: OfferDetailClientProps) {
     const { user: currentUser } = useAuth();
     const isOwner = currentUser && currentUser.uid === author.uid;
+    const isFollowing = currentUser?.subscriptions?.offers?.includes(offer.id) || false;
 
     return (
         <div className="bg-dot min-h-screen py-8 px-4">
@@ -83,21 +85,33 @@ export default function OfferDetailClient({ offer, author }: OfferDetailClientPr
                                 {offer.couponCode && <CouponDisplay code={offer.couponCode} />}
                             </CardContent>
                             <CardFooter>
-                                {offer.ctaLink ? (
-                                    <Button asChild size="lg" className="w-full">
-                                        <a href={offer.ctaLink} target="_blank" rel="noopener noreferrer">
-                                            <Gift className="mr-2 h-4 w-4" />
-                                            Claim Offer
-                                        </a>
-                                    </Button>
-                                ) : (
-                                    <Button asChild size="lg" className="w-full">
-                                        <Link href={`/u/${author.username}`}>
-                                            <UserIcon className="mr-2 h-4 w-4" />
-                                            View Provider's Profile
-                                        </Link>
-                                    </Button>
-                                )}
+                                <div className="flex w-full items-center gap-2">
+                                    {offer.ctaLink ? (
+                                        <Button asChild size="lg" className="flex-1">
+                                            <a href={offer.ctaLink} target="_blank" rel="noopener noreferrer">
+                                                <Gift className="mr-2 h-4 w-4" />
+                                                Claim Offer
+                                            </a>
+                                        </Button>
+                                    ) : (
+                                        <Button asChild size="lg" className="flex-1">
+                                            <Link href={`/u/${author.username}`}>
+                                                <UserIcon className="mr-2 h-4 w-4" />
+                                                View Provider's Profile
+                                            </Link>
+                                        </Button>
+                                    )}
+                                     {!isOwner && currentUser && (
+                                        <FollowButton
+                                            contentId={offer.id}
+                                            contentType="offers"
+                                            authorId={author.uid}
+                                            entityTitle={offer.title}
+                                            initialIsFollowing={isFollowing}
+                                            initialFollowerCount={offer.followerCount || 0}
+                                        />
+                                    )}
+                                </div>
                             </CardFooter>
                         </Card>
                     </div>

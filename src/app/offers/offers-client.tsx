@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Tag, Calendar, PlusCircle, DollarSign, Eye, Gift, ExternalLink, List, LayoutGrid } from "lucide-react"
+import { Tag, Calendar, PlusCircle, DollarSign, Eye, Gift, ExternalLink, List, LayoutGrid, Bell } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import Image from "next/image";
 import Link from "next/link";
@@ -119,15 +119,10 @@ export default function OffersClient({ initialOffers }: { initialOffers: OfferWi
               </CardContent>
               <Separator />
               <CardFooter className="flex-col items-start gap-4 pt-4">
-                  <div className="flex justify-between w-full">
-                      <div className="flex items-center text-sm font-medium">
-                          <Eye className="mr-2 h-4 w-4 text-primary" />
-                          <span>{offer.views?.toLocaleString() ?? 0} views</span>
-                      </div>
-                      <div className="flex items-center text-sm font-medium">
-                          <Gift className="mr-2 h-4 w-4 text-primary" />
-                          <span>{offer.claims?.toLocaleString() ?? 0} claims</span>
-                      </div>
+                  <div className="flex justify-between w-full text-xs text-muted-foreground">
+                      <div className="flex items-center gap-1.5"><Eye className="h-3.5 w-3.5" />{offer.views?.toLocaleString() ?? 0} Views</div>
+                      <div className="flex items-center gap-1.5"><Gift className="h-3.5 w-3.5" />{offer.claims?.toLocaleString() ?? 0} Claims</div>
+                      <div className="flex items-center gap-1.5"><Bell className="h-3.5 w-3.5" />{offer.followerCount?.toLocaleString() ?? 0} Following</div>
                   </div>
                   <Button asChild variant="outline" className="w-full">
                       <Link href={`/offer/${offer.id}`}>
