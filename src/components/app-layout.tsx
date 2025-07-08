@@ -143,7 +143,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             <MainSidebar />
             <SidebarInset className="flex flex-col flex-1">
                 {!onAuthPage && <Header />}
-                <main className="p-4 sm:p-6 flex-1 overflow-y-auto relative">
+                <main className="p-4 sm:p-6 flex-1 overflow-y-auto relative animate-fade-in">
                     {children}
                 </main>
             </SidebarInset>
