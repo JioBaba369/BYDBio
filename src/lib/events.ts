@@ -35,6 +35,7 @@ export type Event = {
   id: string; // Document ID from Firestore
   authorId: string; // UID of the user who created it
   title: string;
+  subTitle?: string;
   description: string;
   startDate: Timestamp | Date | string;
   endDate?: Timestamp | Date | string | null;
@@ -124,6 +125,7 @@ export const createEvent = async (userId: string, data: Partial<Omit<Event, 'id'
   
   const keywords = [
     ...(data.title?.toLowerCase().split(' ').filter(Boolean) || []),
+    ...(data.subTitle?.toLowerCase().split(' ').filter(Boolean) || []),
     ...(data.description?.toLowerCase().split(' ').filter(Boolean) || []),
     ...(data.location?.toLowerCase().split(' ').filter(Boolean) || []),
     ...(data.category?.toLowerCase().split(' ').filter(Boolean) || []),
@@ -153,6 +155,7 @@ export const updateEvent = async (id: string, data: Partial<Omit<Event, 'id' | '
   // Check if any keyword-related fields are being updated
   if (
     data.title !== undefined ||
+    data.subTitle !== undefined ||
     data.description !== undefined ||
     data.location !== undefined ||
     data.category !== undefined ||
@@ -162,6 +165,7 @@ export const updateEvent = async (id: string, data: Partial<Omit<Event, 'id' | '
     const eventDoc = await getDoc(eventDocRef);
     const existingData = eventDoc.data() as Event;
     const newTitle = data.title ?? existingData.title;
+    const newSubTitle = data.subTitle ?? existingData.subTitle;
     const newDescription = data.description ?? existingData.description;
     const newLocation = data.location ?? existingData.location;
     const newCategory = data.category ?? existingData.category;
@@ -170,6 +174,7 @@ export const updateEvent = async (id: string, data: Partial<Omit<Event, 'id' | '
 
     const keywords = [
       ...newTitle.toLowerCase().split(' ').filter(Boolean),
+      ...(newSubTitle ? newSubTitle.toLowerCase().split(' ').filter(Boolean) : []),
       ...newDescription.toLowerCase().split(' ').filter(Boolean),
       ...newLocation.toLowerCase().split(' ').filter(Boolean),
       ...(newCategory ? newCategory.toLowerCase().split(' ') : []),

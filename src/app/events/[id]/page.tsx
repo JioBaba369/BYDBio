@@ -18,13 +18,14 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
 
   const { event } = data;
   const imageUrl = event.imageUrl || 'https://placehold.co/1200x630.png';
+  const description = event.subTitle ? `${event.subTitle} - ${event.description}` : event.description;
 
   return {
     title: `${event.title} | BYD.Bio`,
-    description: event.description,
+    description: description,
     openGraph: {
       title: `${event.title} | BYD.Bio`,
-      description: event.description,
+      description: description,
       images: [ { url: imageUrl, width: 1200, height: 630, alt: event.title } ],
       url: `/events/${event.id}`,
       type: 'article',
@@ -32,7 +33,7 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
      twitter: {
       card: 'summary_large_image',
       title: `${event.title} | BYD.Bio`,
-      description: event.description,
+      description: description,
       images: [imageUrl],
     },
   };
@@ -59,6 +60,7 @@ export default async function EventDetailPage({ params }: { params: { id: string
         startDate: (data.event.startDate as Date).toISOString(),
         endDate: data.event.endDate ? (data.event.endDate as Date).toISOString() : null,
         createdAt: (data.event.createdAt as Timestamp).toDate().toISOString(),
+        subTitle: data.event.subTitle || null,
     };
 
     return <EventDetailClient event={serializableEvent} author={data.author} />;

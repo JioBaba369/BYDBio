@@ -107,6 +107,7 @@ export default function EventDetailClient({ event, author }: EventDetailClientPr
                                             {event.subCategory && <Badge variant="outline">{event.subCategory}</Badge>}
                                         </div>
                                         <CardTitle className="text-3xl font-bold font-headline mt-2">{event.title}</CardTitle>
+                                        {event.subTitle && <p className="text-lg text-muted-foreground mt-1">{event.subTitle}</p>}
                                         <CardDescription className="text-base pt-2 flex items-center gap-2">Hosted by <Link href={`/u/${author.username}`} className="font-semibold text-primary hover:underline">{author.name}</Link></CardDescription>
                                     </div>
                                     <div className='flex items-center gap-2 flex-wrap justify-end'>

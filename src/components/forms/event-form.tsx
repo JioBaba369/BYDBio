@@ -21,6 +21,7 @@ import { Textarea } from "../ui/textarea"
 
 const eventFormSchema = z.object({
   title: z.string().min(2, "Title must be at least 2 characters.").max(100, "Title must not be longer than 100 characters."),
+  subTitle: z.string().max(150, "Subtitle must not be longer than 150 characters.").optional(),
   description: z.string().min(10, "A description of at least 10 characters is required.").max(2000, "Description must be less than 2000 characters."),
   location: z.string().min(2, "Location is required."),
   category: z.string().optional(),
@@ -67,6 +68,7 @@ export function EventForm({ defaultValues, onSubmit, isSaving }: EventFormProps)
     resolver: zodResolver(eventFormSchema),
     defaultValues: {
       title: "",
+      subTitle: "",
       description: "",
       location: "",
       category: "",
@@ -140,6 +142,19 @@ export function EventForm({ defaultValues, onSubmit, isSaving }: EventFormProps)
                                     <FormLabel>Event Title</FormLabel>
                                     <FormControl>
                                         <Input placeholder="e.g. Design Thinking Workshop" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                             <FormField
+                                control={form.control}
+                                name="subTitle"
+                                render={({ field }) => (
+                                    <FormItem>
+                                    <FormLabel>Subtitle (Optional)</FormLabel>
+                                    <FormControl>
+                                        <Input placeholder="e.g. A Deep Dive into Modern UI/UX" {...field} />
                                     </FormControl>
                                     <FormMessage />
                                     </FormItem>
@@ -319,8 +334,8 @@ export function EventForm({ defaultValues, onSubmit, isSaving }: EventFormProps)
                     </Card>
                     <Card>
                         <CardHeader>
-                            <CardTitle>Event Itinerary</CardTitle>
-                            <CardDescription>Add a schedule for your event.</CardDescription>
+                            <CardTitle>Event Schedule / Itinerary</CardTitle>
+                            <CardDescription>Add a schedule, tour dates, or movie showtimes for your event.</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             {fields.map((item, index) => (
@@ -334,8 +349,8 @@ export function EventForm({ defaultValues, onSubmit, isSaving }: EventFormProps)
                                             name={`itinerary.${index}.time`}
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel>Time</FormLabel>
-                                                    <FormControl><Input type="time" placeholder="09:00" {...field} /></FormControl>
+                                                    <FormLabel>Time / Date</FormLabel>
+                                                    <FormControl><Input placeholder="e.g., 09:00 AM or July 14" {...field} /></FormControl>
                                                     <FormMessage />
                                                 </FormItem>
                                             )}
