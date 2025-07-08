@@ -28,7 +28,7 @@ import { updateUser, type User as AppUser } from "@/lib/users";
 import { Label } from "@/components/ui/label";
 import { uploadImage } from "@/lib/storage";
 import Link from "next/link";
-import { Separator } from "../ui/separator"
+import { Separator } from "@/components/ui/separator";
 
 const publicProfileSchema = z.object({
   name: z.string().min(1, "Name cannot be empty.").max(50, "Name cannot be longer than 50 characters."),
