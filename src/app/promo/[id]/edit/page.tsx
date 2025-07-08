@@ -50,7 +50,7 @@ export default function EditPromoPage() {
         getPromoPage(promoPageId)
             .then((promoPageData) => {
                 if (!promoPageData) {
-                    toast({ title: "Not Found", description: "This promo page does not exist.", variant: "destructive" });
+                    toast({ title: "Not Found", description: "This business page does not exist.", variant: "destructive" });
                     router.push('/calendar');
                     return;
                 }
@@ -90,14 +90,14 @@ export default function EditPromoPage() {
 
             await updatePromoPage(promoPageId, dataToSave);
             toast({
-                title: "Promo Page Updated!",
-                description: "Your promo page has been updated successfully.",
+                title: "Business Page Updated!",
+                description: "Your business page has been updated successfully.",
             });
             router.push('/calendar');
         } catch (error) {
             toast({
                 title: "Error",
-                description: "Failed to update promo page. Please try again.",
+                description: "Failed to update business page. Please try again.",
                 variant: "destructive",
             });
         } finally {
@@ -113,8 +113,8 @@ export default function EditPromoPage() {
         <div className="space-y-6">
             <div className="flex items-start justify-between">
                 <div>
-                    <h1 className="text-2xl sm:text-3xl font-bold font-headline">Edit Promo Page</h1>
-                    <p className="text-muted-foreground">Modify the details of your promo page below.</p>
+                    <h1 className="text-2xl sm:text-3xl font-bold font-headline">Edit Business Page</h1>
+                    <p className="text-muted-foreground">Modify the details of your business page below.</p>
                 </div>
                 <Button asChild variant="outline">
                     <Link href="/calendar">

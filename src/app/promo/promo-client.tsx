@@ -83,9 +83,9 @@ export default function PromoClient({ initialPromoPages }: { initialPromoPages: 
     try {
       await deletePromoPage(promoPageToDelete.id);
       setPromoPages(prev => prev.filter(p => p.id !== promoPageToDelete.id));
-      toast({ title: "Promo Page Deleted" });
+      toast({ title: "Business Page Deleted" });
     } catch (error) {
-      toast({ title: "Failed to delete promo page", variant: "destructive" });
+      toast({ title: "Failed to delete business page", variant: "destructive" });
     } finally {
       setIsDeleteDialogOpen(false);
       setPromoPageToDelete(null);
@@ -102,13 +102,13 @@ export default function PromoClient({ initialPromoPages }: { initialPromoPages: 
         open={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}
         onConfirm={handleConfirmDelete}
-        itemName="promo page"
-        itemDescription="This action cannot be undone. This will permanently delete this promo page."
+        itemName="business page"
+        itemDescription="This action cannot be undone. This will permanently delete this business page."
       />
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold font-headline">Business Pages</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold font-headline">Community Business Pages</h1>
             <p className="text-muted-foreground">Discover business pages and company profiles from the community.</p>
           </div>
           <div className="flex items-center gap-2">

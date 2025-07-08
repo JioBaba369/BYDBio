@@ -17,7 +17,7 @@ export default function CreatePromoPage() {
     
     const onSubmit = async (data: PromoPageFormValues) => {
         if (!user) {
-            toast({ title: "Authentication Error", description: "You must be logged in to create a promo page.", variant: "destructive" });
+            toast({ title: "Authentication Error", description: "You must be logged in to create a business page.", variant: "destructive" });
             return;
         }
         setIsSaving(true);
@@ -45,14 +45,14 @@ export default function CreatePromoPage() {
 
             await createPromoPage(user.uid, dataToSave);
             toast({
-                title: "Promo Page Created!",
-                description: "Your new promo page has been created successfully.",
+                title: "Business Page Created!",
+                description: "Your new business page has been created successfully.",
             });
             router.push('/calendar');
         } catch (error) {
             toast({
                 title: "Error",
-                description: "Failed to create promo page. Please try again.",
+                description: "Failed to create business page. Please try again.",
                 variant: "destructive",
             });
         } finally {
@@ -63,8 +63,8 @@ export default function CreatePromoPage() {
     return (
         <div className="space-y-6">
             <div>
-                <h1 className="text-2xl sm:text-3xl font-bold font-headline">Create New Promo Page</h1>
-                <p className="text-muted-foreground">Fill out the form below to add a new promo page to your profile.</p>
+                <h1 className="text-2xl sm:text-3xl font-bold font-headline">Create New Business Page</h1>
+                <p className="text-muted-foreground">Fill out the form below to add a new business page to your profile.</p>
             </div>
             <PromoPageForm onSubmit={onSubmit} isSaving={isSaving} />
         </div>

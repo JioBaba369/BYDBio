@@ -181,10 +181,10 @@ export function MainSidebar() {
               </SidebarMenuButton>
             </SidebarMenuItem>
              <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Promo Pages" isActive={isActive('/promo')}>
+              <SidebarMenuButton asChild tooltip="Business Pages" isActive={isActive('/promo')}>
                 <Link href="/promo">
                   <Megaphone />
-                  <span>Promo Pages</span>
+                  <span>Business Pages</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>

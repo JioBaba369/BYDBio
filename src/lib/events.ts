@@ -58,7 +58,7 @@ export type EventWithAuthor = Event & { author: Pick<User, 'uid' | 'name' | 'use
 
 export type CalendarItem = {
   id: string;
-  type: 'Event' | 'Offer' | 'Job' | 'Listing' | 'Promo Page';
+  type: 'Event' | 'Offer' | 'Job' | 'Listing' | 'Business Page';
   date: string;
   title: string;
   description?: string;
@@ -299,6 +299,14 @@ export const getCalendarItems = async (userId: string): Promise<CalendarItem[]> 
         let primaryDate = serializedItem.startDate || serializedItem.postingDate || serializedItem.createdAt;
         if (!primaryDate) return null;
 
+        const typeMap: { [key: string]: CalendarItem['type'] } = {
+            'event': 'Event',
+            'offer': 'Offer',
+            'job': 'Job',
+            'listing': 'Listing',
+            'promoPage': 'Business Page',
+        };
+
         const getEditPath = (itemType: string, id: string): string => {
             const pathMap: { [key: string]: string } = {
                 'event': `/events/${id}/edit`,
@@ -312,7 +320,7 @@ export const getCalendarItems = async (userId: string): Promise<CalendarItem[]> 
 
         return {
             id: serializedItem.id,
-            type: (item.type.charAt(0).toUpperCase() + item.type.slice(1)) as CalendarItem['type'],
+            type: typeMap[item.type],
             date: primaryDate,
             title: serializedItem.title || serializedItem.name,
             description: serializedItem.description,

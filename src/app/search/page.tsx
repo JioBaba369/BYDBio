@@ -255,7 +255,7 @@ export default function SearchPage() {
         <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-7">
             <TabsTrigger value="users">Users ({results.users.length})</TabsTrigger>
             <TabsTrigger value="posts">Posts ({results.posts.length})</TabsTrigger>
-            <TabsTrigger value="promoPages">Promo Pages ({results.promoPages.length})</TabsTrigger>
+            <TabsTrigger value="promoPages">Business Pages ({results.promoPages.length})</TabsTrigger>
             <TabsTrigger value="listings">Listings ({results.listings.length})</TabsTrigger>
             <TabsTrigger value="jobs">Jobs ({results.jobs.length})</TabsTrigger>
             <TabsTrigger value="events">Events ({results.events.length})</TabsTrigger>
@@ -387,8 +387,8 @@ export default function SearchPage() {
                  <Card>
                     <CardContent className="p-10 text-center text-muted-foreground">
                         <Megaphone className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                        <h3 className="text-lg font-semibold text-foreground">No Promo Pages Found</h3>
-                        <p>We couldn't find any promo pages matching "{queryParam}". Try a different search.</p>
+                        <h3 className="text-lg font-semibold text-foreground">No Business Pages Found</h3>
+                        <p>We couldn't find any business pages matching "{queryParam}". Try a different search.</p>
                     </CardContent>
                 </Card>
              )}

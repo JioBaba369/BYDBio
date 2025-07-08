@@ -109,7 +109,7 @@ export default function ExploreClient({ initialItems }: { initialItems: PublicCo
     { name: 'offer', label: 'Offers', icon: Gift, variant: 'secondary' },
     { name: 'job', label: 'Jobs', icon: Briefcase, variant: 'destructive' },
     { name: 'listing', label: 'Listings', icon: Tags, variant: 'outline' },
-    { name: 'promoPage', label: 'Promo Pages', icon: Megaphone, variant: 'default' },
+    { name: 'promoPage', label: 'Business Pages', icon: Megaphone, variant: 'default' },
   ];
 
   const getLink = (item: PublicContentItem) => {
@@ -221,7 +221,7 @@ export default function ExploreClient({ initialItems }: { initialItems: PublicCo
                       {sortedItems.map((item) => {
                           const title = (item as any).title;
                           const primaryStat = getPrimaryStat(item);
-                          const itemTypeLabel = item.type === 'promoPage' ? 'Promo Page' : item.type;
+                          const itemTypeLabel = item.type === 'promoPage' ? 'Business Page' : item.type;
                           
                           return (
                             <Card key={`${item.type}-${item.id}`} className="shadow-sm flex flex-col hover:shadow-lg transition-shadow duration-200">
@@ -284,7 +284,7 @@ export default function ExploreClient({ initialItems }: { initialItems: PublicCo
                             <TableBody>
                                 {sortedItems.map(item => {
                                     const title = (item as any).title;
-                                    const itemTypeLabel = item.type === 'promoPage' ? 'Promo Page' : item.type;
+                                    const itemTypeLabel = item.type === 'promoPage' ? 'Business Page' : item.type;
                                     return (
                                     <TableRow key={`${item.type}-${item.id}`}>
                                         <TableCell>

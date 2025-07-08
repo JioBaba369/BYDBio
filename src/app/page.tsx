@@ -131,7 +131,7 @@ function Dashboard() {
         case 'Job': return `/job/${item.id}`;
         case 'Event': return `/events/${item.id}`;
         case 'Offer': return `/offer/${item.id}`;
-        case 'Promo Page': return `/p/${item.id}`;
+        case 'Business Page': return `/p/${item.id}`;
         case 'Post': return `/feed`;
         default: return '/';
     }
@@ -164,7 +164,7 @@ function Dashboard() {
                  <DropdownMenuItem asChild>
                 <Link href="/promo/create" className="cursor-pointer">
                     <Megaphone className="mr-2 h-4 w-4" />
-                    <span>New Promo Page</span>
+                    <span>New Business Page</span>
                 </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>

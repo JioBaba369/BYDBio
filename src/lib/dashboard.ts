@@ -14,7 +14,7 @@ export type ActivityItem = (
     | (Offer & { type: 'Offer' })
     | (Job & { type: 'Job' })
     | (Event & { type: 'Event' })
-    | (PromoPage & { type: 'Promo Page' })
+    | (PromoPage & { type: 'Business Page' })
     | (Post & { type: 'Post' })
 ) & {
     id: string;
@@ -29,7 +29,7 @@ export const getRecentActivity = async (userId: string): Promise<ActivityItem[]>
         'jobs': 'Job',
         'events': 'Event',
         'offers': 'Offer',
-        'promoPages': 'Promo Page',
+        'promoPages': 'Business Page',
         'posts': 'Post',
     };
 
@@ -94,7 +94,7 @@ const getActivityLink = (item: ActivityItem) => {
         case 'Job': return `/job/${item.id}`;
         case 'Event': return `/events/${item.id}`;
         case 'Offer': return `/offer/${item.id}`;
-        case 'Promo Page': return `/p/${item.id}`;
+        case 'Business Page': return `/p/${item.id}`;
         case 'Post': return `/feed`;
         default: return '/';
     }

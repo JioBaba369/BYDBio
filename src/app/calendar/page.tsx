@@ -68,7 +68,7 @@ export default function CalendarPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [locationFilter, setLocationFilter] = useState('');
   const [typeFilters, setTypeFilters] = useState<Set<string>>(
-    new Set(['Event', 'Offer', 'Job', 'Listing', 'Promo Page'])
+    new Set(['Event', 'Offer', 'Job', 'Listing', 'Business Page'])
   );
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -127,7 +127,7 @@ export default function CalendarPage() {
   const handleClearFilters = () => {
     setSearchTerm('');
     setLocationFilter('');
-    setTypeFilters(new Set(['Event', 'Offer', 'Job', 'Listing', 'Promo Page']));
+    setTypeFilters(new Set(['Event', 'Offer', 'Job', 'Listing', 'Business Page']));
   }
   
   const handleTypeFilterChange = (type: string) => {
@@ -178,9 +178,9 @@ export default function CalendarPage() {
                 await deleteListing(selectedItem.id);
                 toast({ title: 'Listing deleted!' });
                 break;
-            case 'Promo Page':
+            case 'Business Page':
                 await deletePromoPage(selectedItem.id);
-                toast({ title: 'Promo Page deleted!' });
+                toast({ title: 'Business Page deleted!' });
                 break;
         }
     } catch (error) {
@@ -200,7 +200,7 @@ export default function CalendarPage() {
         case 'Offer': return 'secondary';
         case 'Job': return 'destructive';
         case 'Listing': return 'outline';
-        case 'Promo Page': return 'default';
+        case 'Business Page': return 'default';
         default: return 'default';
     }
   }
@@ -210,7 +210,7 @@ export default function CalendarPage() {
     { name: 'Offer', icon: Gift, variant: 'secondary' },
     { name: 'Job', icon: Briefcase, variant: 'destructive' },
     { name: 'Listing', icon: Tags, variant: 'outline' },
-    { name: 'Promo Page', icon: Megaphone, variant: 'default' },
+    { name: 'Business Page', icon: Megaphone, variant: 'default' },
   ];
   
   const getStatsValue = (item: CalendarItem): number => {
@@ -219,7 +219,7 @@ export default function CalendarPage() {
         case 'Offer': return item.claims ?? 0;
         case 'Job': return item.applicants ?? 0;
         case 'Listing': return item.clicks ?? 0;
-        case 'Promo Page': return item.clicks ?? 0;
+        case 'Business Page': return item.clicks ?? 0;
         default: return 0;
     }
   }
@@ -230,7 +230,7 @@ export default function CalendarPage() {
         case 'Offer': return 'Claims';
         case 'Job': return 'Applicants';
         case 'Listing': return 'Clicks';
-        case 'Promo Page': return 'Clicks';
+        case 'Business Page': return 'Clicks';
         default: return 'Interactions';
     }
   }
@@ -324,7 +324,7 @@ export default function CalendarPage() {
                  <DropdownMenuItem asChild>
                 <Link href="/promo/create" className="cursor-pointer">
                     <Megaphone className="mr-2 h-4 w-4" />
-                    <span>New Promo Page</span>
+                    <span>New Business Page</span>
                 </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
@@ -401,7 +401,7 @@ export default function CalendarPage() {
                                     role="button"
                                     tabIndex={0}
                                 >
-                                    <Icon className="mr-2 h-4 w-4" /> {name + 's'}
+                                    <Icon className="mr-2 h-4 w-4" /> {name}s
                                 </Badge>
                             )
                         })}
