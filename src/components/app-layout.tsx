@@ -7,7 +7,7 @@ import { useAuth } from './auth-provider';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from './ui/dropdown-menu';
 import { Button } from './ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar';
-import { ChevronDown, LogOut, Settings, User, Palette, ArrowLeft } from 'lucide-react';
+import { ChevronDown, LogOut, Settings, User, Palette, ArrowLeft, Bell } from 'lucide-react';
 import Link from 'next/link';
 import { signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
@@ -18,7 +18,7 @@ import React from 'react';
 import { Skeleton } from './ui/skeleton';
 
 function Header() {
-    const { user, loading } = useAuth();
+    const { user, loading, unreadNotificationCount } = useAuth();
     const { toast } = useToast();
     const router = useRouter();
     const pathname = usePathname();
@@ -71,6 +71,19 @@ function Header() {
             <div className="w-full flex-1">
                 {/* We can add a search bar here later if needed */}
             </div>
+
+            <Button asChild variant="ghost" size="icon" className="relative">
+              <Link href="/notifications">
+                <Bell className="h-5 w-5" />
+                {unreadNotificationCount > 0 && (
+                  <span className="absolute top-1.5 right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-destructive-foreground">
+                    {unreadNotificationCount > 9 ? '9+' : unreadNotificationCount}
+                  </span>
+                )}
+                <span className="sr-only">View Notifications</span>
+              </Link>
+            </Button>
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="secondary" className="flex items-center gap-2 rounded-full h-9 px-3">
