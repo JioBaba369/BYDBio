@@ -66,7 +66,7 @@ END:VCARD`;
     <div className="bg-dot min-h-screen py-8 px-4 antialiased">
       <div className="w-full max-w-sm mx-auto space-y-4">
         <Card className="shadow-xl rounded-2xl w-full border-2 border-primary/10 overflow-hidden">
-          <div className="h-24 bg-gradient-to-br from-primary via-blue-500 to-teal-400" />
+          <div className="h-24 bg-gradient-to-br from-primary via-secondary to-accent" />
           <CardContent className="p-6 pt-0">
             <div className="flex flex-col items-center text-center -mt-16">
               <Avatar className="h-28 w-28 border-4 border-background bg-background shadow-lg">

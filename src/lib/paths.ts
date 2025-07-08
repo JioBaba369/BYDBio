@@ -16,7 +16,6 @@ const PROTECTED_ROUTE_BASES = [
     '/feed',
     '/notifications',
     '/inbox',
-    '/holiday-scheduler',
 ];
 
 // Explicit public paths that aren't dynamic
