@@ -12,7 +12,7 @@ import type { PromoPage } from "@/lib/promo-pages";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ExternalLink, UserCheck, UserPlus, QrCode, Edit, Loader2, Rss, Info, Compass, MessageSquare } from "lucide-react";
+import { ExternalLink, UserCheck, UserPlus, QrCode, Edit, Loader2, Rss, Info, MessageSquare, Package } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
@@ -313,13 +313,13 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
           </div>
         </Card>
 
-        <Tabs defaultValue="discover" className="w-full">
+        <Tabs defaultValue="creations" className="w-full">
             <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="discover"><Compass className="mr-2 h-4 w-4"/>Discover</TabsTrigger>
+                <TabsTrigger value="creations"><Package className="mr-2 h-4 w-4"/>Creations</TabsTrigger>
                 <TabsTrigger value="feed"><Rss className="mr-2 h-4 w-4"/>Feed</TabsTrigger>
                 <TabsTrigger value="about"><Info className="mr-2 h-4 w-4"/>About</TabsTrigger>
             </TabsList>
-            <TabsContent value="discover" className="mt-6">
+            <TabsContent value="creations" className="mt-6">
                  {allOtherContent.length > 0 ? (
                     <div className="space-y-6">
                         {allOtherContent.map(item => {
