@@ -2,8 +2,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
-import { formatCurrency } from "@/lib/utils";
 import type { Listing } from "@/lib/listings";
+import { ClientFormattedCurrency } from "../client-formatted-currency";
 
 export function ListingFeedItem({ item }: { item: Listing }) {
   return (
@@ -21,7 +21,9 @@ export function ListingFeedItem({ item }: { item: Listing }) {
         )}
         <div className="flex-1">
           <p className="font-semibold">{item.title}</p>
-          <p className="text-primary font-bold">{formatCurrency(item.price)}</p>
+          <p className="text-primary font-bold">
+            <ClientFormattedCurrency value={item.price} />
+          </p>
           <Badge variant="secondary" className="mt-1">{item.category}</Badge>
         </div>
       </div>
