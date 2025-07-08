@@ -219,22 +219,31 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
 
 
   const { name, username, avatarUrl, avatarFallback, bio, links, businessCard } = userProfileData;
-  const { listings, jobs, events, offers, promoPages } = content;
   const isOwner = currentUser?.uid === userProfileData.uid;
   const businessCardUrl = typeof window !== 'undefined' ? `${window.location.origin}/u/${username}/card` : '';
 
+  const canViewPrivateContent = useMemo(() => isOwner || isFollowing, [isOwner, isFollowing]);
+
+  const visiblePosts = useMemo(() => {
+      return localPosts.filter(post => {
+          if (post.privacy === 'public') return true;
+          return canViewPrivateContent;
+      });
+  }, [localPosts, canViewPrivateContent]);
+
+
   const allContent = useMemo(() => {
     const combined = [
-      ...localPosts.map(item => ({ ...item, type: 'post' as const, date: item.createdAt })),
-      ...promoPages.map(item => ({ ...item, type: 'promoPage' as const, date: item.createdAt })),
-      ...listings.map(item => ({ ...item, type: 'listing' as const, date: item.createdAt })),
-      ...jobs.map(item => ({ ...item, type: 'job' as const, date: item.postingDate })),
-      ...events.map(item => ({ ...item, type: 'event' as const, date: item.startDate })),
-      ...offers.map(item => ({ ...item, type: 'offer' as const, date: item.startDate })),
+      ...visiblePosts.map(item => ({ ...item, type: 'post' as const, date: item.createdAt })),
+      ...content.promoPages.map(item => ({ ...item, type: 'promoPage' as const, date: item.createdAt })),
+      ...content.listings.map(item => ({ ...item, type: 'listing' as const, date: item.createdAt })),
+      ...content.jobs.map(item => ({ ...item, type: 'job' as const, date: item.postingDate })),
+      ...content.events.map(item => ({ ...item, type: 'event' as const, date: item.startDate })),
+      ...content.offers.map(item => ({ ...item, type: 'offer' as const, date: item.startDate })),
     ];
     combined.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     return combined;
-  }, [localPosts, promoPages, listings, jobs, events, offers]);
+  }, [visiblePosts, content]);
   
   const hasLinks = links.length > 0;
 
@@ -362,9 +371,9 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
                         )}
                     </TabsContent>
                     <TabsContent value="posts" className="mt-6">
-                        {localPosts.length > 0 ? (
+                        {visiblePosts.length > 0 ? (
                             <div className="space-y-6">
-                                {localPosts.map(post => (
+                                {visiblePosts.map(post => (
                                     <PostCard
                                         key={post.id}
                                         item={post}

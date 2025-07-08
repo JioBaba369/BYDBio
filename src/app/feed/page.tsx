@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
-import { Image as ImageIcon, Send, X, Users, Compass, Loader2 } from "lucide-react"
+import { Image as ImageIcon, Send, X, Users, Compass, Loader2, Globe } from "lucide-react"
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useAuth } from "@/components/auth-provider"
 import { useToast } from "@/hooks/use-toast"
@@ -19,6 +19,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { PostCard } from "@/components/post-card";
 import Image from "next/image";
 import type { Timestamp } from "firebase/firestore";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 type FeedItem = PostWithAuthor & { isLiked: boolean; };
 
@@ -86,6 +87,7 @@ export default function FeedPage() {
   const { toast } = useToast();
 
   const [postContent, setPostContent] = useState('');
+  const [postPrivacy, setPostPrivacy] = useState<'public' | 'followers'>('public');
   const [followingFeed, setFollowingFeed] = useState<FeedItem[]>([]);
   const [discoveryFeed, setDiscoveryFeed] = useState<FeedItem[]>([]);
   
@@ -209,7 +211,7 @@ export default function FeedPage() {
             };
         }
 
-        const newPost = await createPost(user.uid, { content: postContent, imageUrl: imageUrlToPost, quotedPost: quotedPostData });
+        const newPost = await createPost(user.uid, { content: postContent, imageUrl: imageUrlToPost, quotedPost: quotedPostData, privacy: postPrivacy });
         
         const newPostForFeed: FeedItem = {
             ...newPost,
@@ -231,6 +233,7 @@ export default function FeedPage() {
         setPostContent('');
         setCroppedImageUrl(null);
         setPostToQuote(null);
+        setPostPrivacy('public');
         toast({ title: "Update Posted!" });
     } catch(error) {
         console.error("Error posting update:", error);
@@ -438,21 +441,44 @@ export default function FeedPage() {
               </div>
             </div>
           </CardContent>
-          <CardFooter className="flex justify-between p-4 border-t">
-            <Button variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()}>
-              <ImageIcon className="h-5 w-5 text-muted-foreground" />
-            </Button>
-            <input
-              type="file"
-              ref={fileInputRef}
-              className="hidden"
-              accept="image/png, image/jpeg"
-              onChange={onFileChange}
-            />
-            <Button onClick={handlePost} disabled={(!postContent.trim() && !croppedImageUrl && !postToQuote) || isPosting}>
-              {isPosting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4"/>}
-              {isPosting ? "Posting..." : "Post Update"}
-            </Button>
+          <CardFooter className="flex justify-between items-center p-4 border-t">
+            <div className="flex items-center gap-2">
+                <Button variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()}>
+                <ImageIcon className="h-5 w-5 text-muted-foreground" />
+                </Button>
+                <input
+                type="file"
+                ref={fileInputRef}
+                className="hidden"
+                accept="image/png, image/jpeg"
+                onChange={onFileChange}
+                />
+            </div>
+            <div className="flex items-center gap-2">
+                <Select value={postPrivacy} onValueChange={(value: 'public' | 'followers') => setPostPrivacy(value)}>
+                    <SelectTrigger className="w-auto h-9 text-xs sm:text-sm">
+                        <SelectValue placeholder="Privacy" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="public">
+                            <div className="flex items-center gap-2">
+                                <Globe className="h-4 w-4" />
+                                <span>Public</span>
+                            </div>
+                        </SelectItem>
+                        <SelectItem value="followers">
+                             <div className="flex items-center gap-2">
+                                <Users className="h-4 w-4" />
+                                <span>Followers only</span>
+                            </div>
+                        </SelectItem>
+                    </SelectContent>
+                </Select>
+                <Button onClick={handlePost} disabled={(!postContent.trim() && !croppedImageUrl && !postToQuote) || isPosting}>
+                    {isPosting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4"/>}
+                    {isPosting ? "Posting..." : "Post"}
+                </Button>
+            </div>
           </CardFooter>
         </Card>
 

@@ -9,10 +9,11 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { ClientFormattedDate } from "@/components/client-formatted-date";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, Trash2, Heart, Share2, Repeat, Quote as QuoteIcon, MessageCircle, Loader2 } from "lucide-react";
+import { MoreHorizontal, Trash2, Heart, Share2, Repeat, Quote as QuoteIcon, MessageCircle, Loader2, Users } from "lucide-react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { useToast } from '@/hooks/use-toast';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 type FeedItem = PostWithAuthor & { isLiked: boolean; };
 
@@ -111,20 +112,34 @@ export function PostCard({ item, onLike, onDelete, onRepost, onQuote, isLoading 
                             <p className="text-sm text-muted-foreground">@{item.author.username} · <ClientFormattedDate date={item.createdAt} relative /></p>
                         </div>
                     </Link>
-                    {isOwner && (
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-8 w-8">
-                                    <MoreHorizontal className="h-5 w-5" />
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => onDelete(item)} className="text-destructive cursor-pointer">
-                                    <Trash2 className="mr-2 h-4 w-4" /> Delete Post
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    )}
+                     <div className="flex items-center gap-2">
+                        {isOwner && item.privacy === 'followers' && (
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger>
+                                        <Users className="h-4 w-4 text-muted-foreground" />
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>Visible to followers only</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                        )}
+                        {isOwner && (
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                                        <MoreHorizontal className="h-5 w-5" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                    <DropdownMenuItem onClick={() => onDelete(item)} className="text-destructive cursor-pointer">
+                                        <Trash2 className="mr-2 h-4 w-4" /> Delete Post
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        )}
+                    </div>
                 </div>
             </CardHeader>
             <CardContent className="p-4 pt-0">

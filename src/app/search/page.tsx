@@ -106,7 +106,13 @@ export default function SearchPage() {
         
         // Search content collections
         const collectionsToSearch = ['listings', 'jobs', 'events', 'offers', 'promoPages', 'posts'];
-        const contentPromises = collectionsToSearch.map(col => getDocs(query(collection(db, col), where('searchableKeywords', 'array-contains-any', searchKeywords))));
+        const contentPromises = collectionsToSearch.map(col => {
+            const baseQuery = query(collection(db, col), where('searchableKeywords', 'array-contains-any', searchKeywords));
+            if (col === 'posts') {
+                return getDocs(query(baseQuery, where('privacy', '==', 'public')));
+            }
+            return getDocs(baseQuery);
+        });
         
         const [listingsSnap, jobsSnap, eventsSnap, offersSnap, promoPagesSnap, postsSnap] = await Promise.all(contentPromises);
 

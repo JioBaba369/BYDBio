@@ -51,6 +51,7 @@ export type Post = {
   comments: number;
   createdAt: Timestamp;
   repostCount?: number;
+  privacy: 'public' | 'followers';
   quotedPost?: EmbeddedPostInfo;
   repostedPost?: EmbeddedPostInfo;
   searchableKeywords?: string[];
@@ -88,7 +89,7 @@ export const getPostsByUser = async (userId: string): Promise<Post[]> => {
 };
 
 // Function to create a new post
-export const createPost = async (userId: string, data: Pick<Post, 'content' | 'imageUrl'> & { quotedPost?: EmbeddedPostInfo }): Promise<Post> => {
+export const createPost = async (userId: string, data: Pick<Post, 'content' | 'imageUrl' | 'privacy'> & { quotedPost?: EmbeddedPostInfo }): Promise<Post> => {
   const postsRef = collection(db, 'posts');
   const keywords = [...new Set(data.content.toLowerCase().split(' ').filter(Boolean))];
 
@@ -96,6 +97,7 @@ export const createPost = async (userId: string, data: Pick<Post, 'content' | 'i
     authorId: userId,
     content: data.content,
     imageUrl: data.imageUrl,
+    privacy: data.privacy || 'public',
     createdAt: serverTimestamp(),
     likes: 0,
     likedBy: [],
@@ -192,6 +194,7 @@ export const repostPost = async (originalPostId: string, reposterId: string): Pr
         content: '', // Reposts have no original content of their own
         imageUrl: null,
         repostedPost: repostedPostData, // Embed the original post data
+        privacy: originalPostData.privacy, // Inherit privacy from original post
         createdAt: serverTimestamp(),
         likes: 0,
         likedBy: [],
@@ -295,7 +298,7 @@ export const getFeedPosts = async (followingIds: string[]): Promise<PostWithAuth
  */
 export const getDiscoveryPosts = async (userId: string, followingIds: string[]): Promise<PostWithAuthor[]> => {
     const postsRef = collection(db, 'posts');
-    const q = query(postsRef, orderBy('createdAt', 'desc'), limit(100));
+    const q = query(postsRef, where('privacy', '==', 'public'), orderBy('createdAt', 'desc'), limit(100));
     const querySnapshot = await getDocs(q);
 
     const discoveryDocs = querySnapshot.docs.filter(doc => {
