@@ -26,8 +26,8 @@ export default function CreateListingPage() {
 
             const dataToSave: Partial<Omit<Listing, 'id' | 'authorId' | 'createdAt' | 'status' | 'views' | 'clicks' | 'searchableKeywords' | 'followerCount'>> = {
                 ...restOfData,
-                startDate: startDate ? startDate.toISOString() : null,
-                endDate: endDate ? endDate.toISOString() : null,
+                startDate: startDate ? (startDate as any) : null,
+                endDate: endDate ? (endDate as any) : null,
             };
 
             if (dataToSave.imageUrl && dataToSave.imageUrl.startsWith('data:image')) {

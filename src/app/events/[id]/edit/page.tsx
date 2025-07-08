@@ -104,8 +104,8 @@ export default function EditEventPage() {
             
             const dataToSave: Partial<Omit<Event, 'id' | 'authorId' | 'createdAt'>> = {
                 ...restOfData,
-                startDate: combinedStartDate.toISOString(),
-                endDate: combinedEndDate ? combinedEndDate.toISOString() : null,
+                startDate: combinedStartDate as any,
+                endDate: combinedEndDate ? (combinedEndDate as any) : null,
             };
 
             if (dataToSave.imageUrl && dataToSave.imageUrl.startsWith('data:image')) {

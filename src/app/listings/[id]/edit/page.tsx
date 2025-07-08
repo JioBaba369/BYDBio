@@ -89,8 +89,8 @@ export default function EditListingPage() {
             const { startDate, endDate, ...restOfData } = data;
             const dataToSave: Partial<Omit<Listing, 'id' | 'authorId' | 'createdAt'>> = {
                 ...restOfData,
-                startDate: startDate ? startDate.toISOString() : null,
-                endDate: endDate ? endDate.toISOString() : null,
+                startDate: startDate ? (startDate as any) : null,
+                endDate: endDate ? (endDate as any) : null,
             };
 
             if (dataToSave.imageUrl && dataToSave.imageUrl.startsWith('data:image')) {

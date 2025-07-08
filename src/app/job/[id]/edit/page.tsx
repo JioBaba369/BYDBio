@@ -104,9 +104,9 @@ export default function EditJobPage() {
 
             const dataToSave: Partial<Omit<Job, 'id' | 'authorId' | 'createdAt'>> = {
                 ...restOfData,
-                closingDate: closingDate ? closingDate.toISOString() : null,
-                startDate: combinedStartDate ? combinedStartDate.toISOString() : null,
-                endDate: combinedEndDate ? combinedEndDate.toISOString() : null,
+                closingDate: closingDate ? (closingDate as any) : null,
+                startDate: combinedStartDate ? (combinedStartDate as any) : null,
+                endDate: combinedEndDate ? (combinedEndDate as any) : null,
             };
 
             if (dataToSave.imageUrl && dataToSave.imageUrl.startsWith('data:image')) {

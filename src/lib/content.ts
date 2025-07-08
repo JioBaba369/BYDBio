@@ -79,6 +79,12 @@ export const getAllPublicContent = async (): Promise<PublicContentItem[]> => {
             return null;
         }
 
+        // Robustly handle date serialization, as old data might be a string
+        const dateString = primaryDate instanceof Timestamp
+            ? primaryDate.toDate().toISOString()
+            : String(primaryDate);
+
+
         const serializedItem: any = { ...item };
         // Manually serialize all potential date fields in the item
         for (const key in serializedItem) {
@@ -101,7 +107,7 @@ export const getAllPublicContent = async (): Promise<PublicContentItem[]> => {
                 avatarUrl: author.avatarUrl,
                 avatarFallback: author.avatarFallback,
             },
-            date: (primaryDate as Timestamp).toDate().toISOString()
+            date: dateString
         };
     }).filter((item): item is PublicContentItem => item !== null && !!item.title);
 

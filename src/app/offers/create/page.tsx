@@ -39,8 +39,8 @@ export default function CreateOfferPage() {
             
             const dataToSave: Partial<Omit<Offer, 'id' | 'authorId' | 'createdAt' | 'status' | 'views' | 'claims' | 'searchableKeywords' | 'followerCount'>> = {
                 ...restOfData,
-                startDate: combinedStartDate.toISOString(),
-                endDate: combinedEndDate ? combinedEndDate.toISOString() : null,
+                startDate: combinedStartDate as any,
+                endDate: combinedEndDate ? (combinedEndDate as any) : null,
             };
 
             if (dataToSave.imageUrl && dataToSave.imageUrl.startsWith('data:image')) {
