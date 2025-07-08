@@ -1,6 +1,6 @@
 
 import { getAllJobs } from "@/lib/jobs";
-import JobsClient from "./opportunities-client";
+import JobsClient from "./jobs-client";
 
 export default async function JobsPage() {
   const jobs = await getAllJobs();

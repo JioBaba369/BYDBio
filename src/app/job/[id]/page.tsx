@@ -1,7 +1,7 @@
 
 import type { Metadata } from 'next';
 import { getJobAndAuthor } from '@/lib/jobs';
-import OpportunityDetailClient from './client';
+import JobDetailClient from './client';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 
@@ -53,5 +53,5 @@ export default async function PublicJobPage({ params }: { params: { id: string }
         )
     }
 
-    return <OpportunityDetailClient job={data.job} author={data.author} />;
+    return <JobDetailClient job={data.job} author={data.author} />;
 }

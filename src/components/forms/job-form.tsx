@@ -20,7 +20,7 @@ import { format } from "date-fns"
 import { Calendar } from "../ui/calendar"
 import { Textarea } from "../ui/textarea"
 
-const opportunityFormSchema = z.object({
+const jobFormSchema = z.object({
   title: z.string().min(2, "Title must be at least 2 characters.").max(100, "Title must not be longer than 100 characters."),
   company: z.string().min(2, "Company name is required."),
   description: z.string().min(10, "A detailed description is required.").max(5000, "Description is too long."),
@@ -57,22 +57,22 @@ const opportunityFormSchema = z.object({
     path: ["endDate"],
 });
 
-export type OpportunityFormValues = z.infer<typeof opportunityFormSchema>
+export type JobFormValues = z.infer<typeof jobFormSchema>
 
-interface OpportunityFormProps {
-  defaultValues?: Partial<OpportunityFormValues>
-  onSubmit: (values: OpportunityFormValues) => void;
+interface JobFormProps {
+  defaultValues?: Partial<JobFormValues>
+  onSubmit: (values: JobFormValues) => void;
   isSaving: boolean;
 }
 
-export function OpportunityForm({ defaultValues, onSubmit, isSaving }: OpportunityFormProps) {
+export function JobForm({ defaultValues, onSubmit, isSaving }: JobFormProps) {
   const [imageToCrop, setImageToCrop] = useState<string | null>(null);
   const [isCropperOpen, setIsCropperOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   
-  const form = useForm<OpportunityFormValues>({
-    resolver: zodResolver(opportunityFormSchema),
+  const form = useForm<JobFormValues>({
+    resolver: zodResolver(jobFormSchema),
     defaultValues: {
       title: "",
       company: "",
@@ -105,7 +105,7 @@ export function OpportunityForm({ defaultValues, onSubmit, isSaving }: Opportuni
         endTime: defaultValues.endDate ? format(new Date(defaultValues.endDate), 'HH:mm') : '17:00',
         closingDate: defaultValues.closingDate ? new Date(defaultValues.closingDate) : null,
       };
-      form.reset(valuesToSet as OpportunityFormValues);
+      form.reset(valuesToSet as JobFormValues);
     }
   }, [defaultValues, form.reset]);
   

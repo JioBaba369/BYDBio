@@ -1,7 +1,7 @@
 
 'use client';
 
-import { OpportunityForm, OpportunityFormValues } from "@/components/forms/opportunity-form";
+import { JobForm, JobFormValues } from "@/components/forms/job-form";
 import { useToast } from "@/hooks/use-toast";
 import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect, useMemo } from "react";
@@ -90,7 +90,7 @@ export default function EditJobPage() {
         };
     }, [jobToEdit]);
 
-    const onSubmit = async (data: OpportunityFormValues) => {
+    const onSubmit = async (data: JobFormValues) => {
         if (!user) {
             toast({ title: "Authentication Error", description: "You must be logged in.", variant: "destructive" });
             return;
@@ -149,7 +149,7 @@ export default function EditJobPage() {
                     </Link>
                 </Button>
             </div>
-            <OpportunityForm defaultValues={formDefaultValues} onSubmit={onSubmit} isSaving={isSaving} />
+            <JobForm defaultValues={formDefaultValues} onSubmit={onSubmit} isSaving={isSaving} />
         </div>
     )
 }

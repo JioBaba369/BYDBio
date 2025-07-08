@@ -22,7 +22,7 @@ interface JobDetailClientProps {
     author: User;
 }
 
-export default function OpportunityDetailClient({ job, author }: JobDetailClientProps) {
+export default function JobDetailClient({ job, author }: JobDetailClientProps) {
     const { user: currentUser } = useAuth();
     const isOwner = currentUser && currentUser.uid === author.uid;
     const isFollowing = currentUser?.subscriptions?.jobs?.includes(job.id) || false;

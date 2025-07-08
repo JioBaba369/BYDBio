@@ -334,9 +334,9 @@ export default function CalendarPage() {
                 </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                <Link href="/opportunities/create" className="cursor-pointer">
+                <Link href="/job/create" className="cursor-pointer">
                     <Briefcase className="mr-2 h-4 w-4" />
-                    <span>New Opportunity</span>
+                    <span>New Job</span>
                 </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
