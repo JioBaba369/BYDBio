@@ -74,11 +74,8 @@ export function PostCard({ item, onLike, onDelete, onRepost, onQuote, isLoading 
                     text: shareText,
                     url: shareUrl,
                 });
-                toast({ title: "Post shared!" });
             } catch (error) {
-                // This error is thrown if the user cancels the share.
-                // We can safely ignore it.
-                console.log('Share was cancelled or failed', error);
+                // This error is thrown if the user cancels the share. We can safely ignore it.
             }
         } else {
             // Fallback for browsers that don't support the Web Share API

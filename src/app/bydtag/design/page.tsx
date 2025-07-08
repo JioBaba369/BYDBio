@@ -229,7 +229,6 @@ export default function BydTagDesignPage() {
       router.push('/auth/sign-up');
       return;
     }
-    console.log(data);
     // In a real app, this would trigger an order flow.
     toast({
         title: "Order Placed! (Demo)",

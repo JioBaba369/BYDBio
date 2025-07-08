@@ -313,13 +313,13 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
           </div>
         </Card>
 
-        <Tabs defaultValue="explore" className="w-full">
+        <Tabs defaultValue="creations" className="w-full">
             <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="explore"><Grid className="mr-2 h-4 w-4"/>Explore</TabsTrigger>
+                <TabsTrigger value="creations"><Grid className="mr-2 h-4 w-4"/>Creations</TabsTrigger>
                 <TabsTrigger value="feed"><Rss className="mr-2 h-4 w-4"/>Feed</TabsTrigger>
                 <TabsTrigger value="about"><Info className="mr-2 h-4 w-4"/>About</TabsTrigger>
             </TabsList>
-            <TabsContent value="explore" className="mt-6">
+            <TabsContent value="creations" className="mt-6">
                  {allOtherContent.length > 0 ? (
                     <div className="space-y-6">
                         {allOtherContent.map(item => {
