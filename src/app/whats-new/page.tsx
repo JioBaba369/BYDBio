@@ -18,6 +18,13 @@ type UpdateItem = {
 };
 
 const updates: UpdateItem[] = [
+  {
+    date: '2024-07-05T10:00:00Z',
+    version: 'v2.0.0',
+    title: 'AI-Powered Content Creation',
+    description: 'Supercharge your content with our new AI assistant. Generate professional bios, suggest event titles, and brainstorm ideas for your next post, all with the power of generative AI. Look for the ✨ sparkle icon to get started!',
+    badge: { text: 'New Feature', icon: Rocket },
+  },
    {
     date: '2024-06-28T12:00:00Z',
     version: 'v1.9.0',
