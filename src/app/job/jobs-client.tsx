@@ -11,7 +11,7 @@ import { useAuth } from "@/components/auth-provider";
 import { type JobWithAuthor } from "@/lib/jobs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ClientFormattedDate } from "@/components/client-formatted-date";
-import { formatCurrency } from "@/lib/utils";
+import { ClientFormattedCurrency } from "@/components/client-formatted-currency";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 
@@ -113,7 +113,7 @@ export default function JobsClient({ initialJobs }: { initialJobs: JobWithAuthor
                 </div>
                 {job.remuneration && (
                   <div className="flex items-center text-sm text-muted-foreground">
-                    <DollarSign className="mr-2 h-4 w-4" /> {formatCurrency(job.remuneration)}
+                    <DollarSign className="mr-2 h-4 w-4" /> <ClientFormattedCurrency value={job.remuneration} />
                   </div>
                 )}
               </CardContent>

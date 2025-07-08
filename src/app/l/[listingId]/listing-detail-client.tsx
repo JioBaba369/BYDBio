@@ -11,8 +11,8 @@ import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import ShareButton from '@/components/share-button';
 import { ClientFormattedDate } from '@/components/client-formatted-date';
+import { ClientFormattedCurrency } from '@/components/client-formatted-currency';
 import { useAuth } from '@/components/auth-provider';
-import { formatCurrency } from '@/lib/utils';
 import { AuthorCard } from '@/components/author-card';
 import { FollowButton } from '@/components/follow-button';
 
@@ -57,7 +57,7 @@ export default function ListingDetailClient({ listing, author }: ListingDetailCl
                                         <div className="flex flex-wrap items-center gap-2 pt-2">
                                             <Badge variant="secondary"><Tag className="mr-1 h-3 w-3" />{listing.category}</Badge>
                                             {listing.subCategory && <Badge variant="outline">{listing.subCategory}</Badge>}
-                                            <p className="font-bold text-2xl text-primary flex items-center"><DollarSign className="mr-1 h-6 w-6" />{formatCurrency(listing.price)}</p>
+                                            <p className="font-bold text-2xl text-primary flex items-center"><DollarSign className="mr-1 h-6 w-6" /><ClientFormattedCurrency value={listing.price} /></p>
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-2">

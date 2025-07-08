@@ -25,7 +25,7 @@ import { deletePromoPage } from '@/lib/promo-pages';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ClientFormattedDate } from '@/components/client-formatted-date';
-import { formatCurrency } from '@/lib/utils';
+import { ClientFormattedCurrency } from '@/components/client-formatted-currency';
 import { DayPicker } from 'react-day-picker';
 import 'react-day-picker/dist/style.css';
 import { format } from 'date-fns';
@@ -284,7 +284,7 @@ export default function CalendarPage() {
         <CardContent className="p-3 pt-0 space-y-1 text-xs text-muted-foreground">
             {item.location && <div className="flex items-center gap-2"><MapPin className="h-3 w-3" /><span>{item.location}</span></div>}
             {item.company && <div className="flex items-center gap-2"><Briefcase className="h-3 w-3" /><span>{item.company}</span></div>}
-            {item.price && <div className="flex items-center gap-2"><DollarSign className="h-3 w-3" /><span className="font-semibold">{formatCurrency(item.price)}</span></div>}
+            {item.price && <div className="flex items-center gap-2"><DollarSign className="h-3 w-3" /><span className="font-semibold"><ClientFormattedCurrency value={item.price} /></span></div>}
         </CardContent>
     </Card>
   )
@@ -499,7 +499,7 @@ export default function CalendarPage() {
                                   {item.location && <div className="flex items-center gap-2"><MapPin className="h-4 w-4" /><span>{item.location}</span></div>}
                                   {item.category && <div className="flex items-center gap-2"><Tag className="h-4 w-4" /><span>{item.category}</span></div>}
                                   {item.company && <div className="flex items-center gap-2"><Briefcase className="h-4 w-4" /><span>{item.company}</span></div>}
-                                  {item.price && <div className="flex items-center gap-2"><DollarSign className="h-4 w-4" /><span className="font-semibold">{formatCurrency(item.price)}</span></div>}
+                                  {item.price && <div className="flex items-center gap-2"><DollarSign className="h-4 w-4" /><span className="font-semibold"><ClientFormattedCurrency value={item.price} /></span></div>}
                               </CardContent>
                               <CardFooter className="border-t pt-3 px-4 pb-3">
                                 <KillChainTracker 

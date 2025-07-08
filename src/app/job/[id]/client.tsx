@@ -11,8 +11,8 @@ import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import ShareButton from '@/components/share-button';
 import { ClientFormattedDate } from '@/components/client-formatted-date';
+import { ClientFormattedCurrency } from '@/components/client-formatted-currency';
 import { useAuth } from '@/components/auth-provider';
-import { formatCurrency } from '@/lib/utils';
 import { AuthorCard } from '@/components/author-card';
 import { FollowButton } from '@/components/follow-button';
 
@@ -90,7 +90,7 @@ export default function JobDetailClient({ job, author }: JobDetailClientProps) {
                                             <DollarSign className="h-5 w-5 text-primary flex-shrink-0" />
                                             <div>
                                                 <p className="font-semibold">Salary</p>
-                                                <p className="text-muted-foreground">{formatCurrency(job.remuneration)}</p>
+                                                <p className="text-muted-foreground"><ClientFormattedCurrency value={job.remuneration} /></p>
                                             </div>
                                         </div>
                                     )}

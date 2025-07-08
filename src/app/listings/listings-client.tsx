@@ -11,7 +11,7 @@ import { useAuth } from "@/components/auth-provider";
 import { type ListingWithAuthor } from "@/lib/listings";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ClientFormattedDate } from "@/components/client-formatted-date";
-import { formatCurrency } from "@/lib/utils";
+import { ClientFormattedCurrency } from "@/components/client-formatted-currency";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
@@ -102,7 +102,7 @@ export default function ListingsClient({ initialListings }: { initialListings: L
                 <CardTitle className="text-lg pt-1"><Link href={`/l/${item.id}`} className="hover:underline">{item.title}</Link></CardTitle>
               </CardHeader>
               <CardContent className="px-4 pb-4 space-y-2 flex-grow">
-                <p className="font-bold text-lg text-primary flex items-center gap-1"><DollarSign className="h-5 w-5" />{formatCurrency(item.price)}</p>
+                <p className="font-bold text-lg text-primary flex items-center gap-1"><DollarSign className="h-5 w-5" /><ClientFormattedCurrency value={item.price} /></p>
                 {(item.startDate || item.endDate) && (
                   <div className="flex items-center pt-1 text-xs text-muted-foreground">
                       <Calendar className="mr-2 h-4 w-4" /> 
@@ -161,7 +161,7 @@ export default function ListingsClient({ initialListings }: { initialListings: L
                         </div>
                       </TableCell>
                       <TableCell className="hidden md:table-cell"><Badge variant="secondary">{item.category}</Badge></TableCell>
-                      <TableCell className="font-medium">{formatCurrency(item.price)}</TableCell>
+                      <TableCell className="font-medium"><ClientFormattedCurrency value={item.price} /></TableCell>
                       <TableCell className="hidden lg:table-cell">
                           <div className="flex flex-col items-center gap-1 text-xs text-muted-foreground">
                           <div className="flex items-center gap-1"><Eye className="h-3 w-3" />{item.views?.toLocaleString() ?? 0}</div>

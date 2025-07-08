@@ -2,21 +2,36 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { format, formatDistanceToNow, parseISO } from 'date-fns';
+import { formatDistanceToNow, parseISO } from 'date-fns';
 import type { Timestamp } from 'firebase/firestore';
 
 interface ClientFormattedDateProps {
   date: Date | string | Timestamp;
-  formatStr?: string;
+  formatStr?: 'PPP' | 'p' | 'PPP p' | 'MMM d' | 'MMM d, yyyy';
   relative?: boolean;
   className?: string;
+}
+
+const getFormatOptions = (formatStr: ClientFormattedDateProps['formatStr']): Intl.DateTimeFormatOptions => {
+    switch (formatStr) {
+        case 'p': // time only
+            return { hour: 'numeric', minute: 'numeric' };
+        case 'PPP p': // full date and time
+            return { dateStyle: 'medium', timeStyle: 'short' };
+        case 'MMM d':
+            return { month: 'short', day: 'numeric' };
+        case 'MMM d, yyyy':
+             return { month: 'short', day: 'numeric', year: 'numeric' };
+        case 'PPP': // full date
+        default:
+            return { dateStyle: 'medium' };
+    }
 }
 
 export function ClientFormattedDate({ date, formatStr = "PPP", relative = false, className }: ClientFormattedDateProps) {
   const [formattedDate, setFormattedDate] = useState('...');
   
   useEffect(() => {
-    // This effect runs only on the client, after the initial render, to prevent hydration errors.
     try {
       if (!date) {
         setFormattedDate('...');
@@ -28,13 +43,11 @@ export function ClientFormattedDate({ date, formatStr = "PPP", relative = false,
       if (typeof date === 'string') {
         dateObj = parseISO(date);
       } else if (date && typeof (date as Timestamp).toDate === 'function') {
-        // Duck-typing for Firestore Timestamp to avoid runtime import issues.
         dateObj = (date as Timestamp).toDate();
       } else {
         dateObj = date as Date;
       }
 
-      // Final check for a valid Date object before formatting
       if (isNaN(dateObj.getTime())) {
         throw new Error(`Invalid date created from input: ${date}`);
       }
@@ -42,7 +55,8 @@ export function ClientFormattedDate({ date, formatStr = "PPP", relative = false,
       if (relative) {
         setFormattedDate(formatDistanceToNow(dateObj, { addSuffix: true }));
       } else {
-        setFormattedDate(format(dateObj, formatStr));
+        const options = getFormatOptions(formatStr);
+        setFormattedDate(new Intl.DateTimeFormat(navigator.language, options).format(dateObj));
       }
     } catch (error) {
         console.error("Error formatting date:", error);
