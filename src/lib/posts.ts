@@ -10,7 +10,7 @@ import {
   updateDoc,
   deleteDoc,
   serverTimestamp,
-  type Timestamp,
+  Timestamp,
   orderBy,
   limit,
   arrayUnion,
