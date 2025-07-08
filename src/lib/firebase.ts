@@ -15,11 +15,6 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
-// Validate that all necessary environment variables are set.
-if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
-  throw new Error("Firebase config is not set. Please create a .env.local file with your Firebase project's configuration keys.");
-}
-
 // Initialize Firebase App (Singleton Pattern for Next.js)
 const app: FirebaseApp = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
