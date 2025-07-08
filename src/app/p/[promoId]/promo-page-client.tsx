@@ -12,6 +12,7 @@ import ShareButton from '@/components/share-button';
 import { useAuth } from '@/components/auth-provider';
 import { AuthorCard } from '@/components/author-card';
 import { FollowButton } from '@/components/follow-button';
+import { Badge } from '@/components/ui/badge';
 
 interface PromoPageClientProps {
     promoPage: PromoPage;
@@ -82,6 +83,10 @@ export default function PromoPageClient({ promoPage, author }: PromoPageClientPr
                                                 )}
                                                 <ShareButton variant="outline" />
                                             </div>
+                                        </div>
+                                         <div className="flex flex-wrap items-center gap-2 mt-2">
+                                            {promoPage.category && <Badge variant="secondary">{promoPage.category}</Badge>}
+                                            {promoPage.subCategory && <Badge variant="outline">{promoPage.subCategory}</Badge>}
                                         </div>
                                         <CardDescription className="text-base pt-2">{promoPage.description}</CardDescription>
                                     </div>

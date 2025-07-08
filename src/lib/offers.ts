@@ -23,6 +23,7 @@ export type Offer = {
   title: string;
   description: string;
   category: string;
+  subCategory?: string;
   startDate: Timestamp | Date | string;
   endDate?: Timestamp | Date | string | null;
   imageUrl: string | null;
@@ -85,6 +86,7 @@ export const createOffer = async (userId: string, data: Partial<Omit<Offer, 'id'
     ...(data.title?.toLowerCase().split(' ').filter(Boolean) || []),
     ...(data.description?.toLowerCase().split(' ').filter(Boolean) || []),
     ...(data.category?.toLowerCase().split(' ').filter(Boolean) || []),
+    ...(data.subCategory?.toLowerCase().split(' ').filter(Boolean) || []),
     ...(data.couponCode ? data.couponCode.toLowerCase().split(' ') : [])
   ];
 
@@ -111,6 +113,7 @@ export const updateOffer = async (id: string, data: Partial<Omit<Offer, 'id' | '
     data.title !== undefined ||
     data.description !== undefined ||
     data.category !== undefined ||
+    data.subCategory !== undefined ||
     data.couponCode !== undefined
   ) {
     const offerDoc = await getDoc(offerDocRef);
@@ -118,12 +121,14 @@ export const updateOffer = async (id: string, data: Partial<Omit<Offer, 'id' | '
     const newTitle = data.title ?? existingData.title;
     const newDescription = data.description ?? existingData.description;
     const newCategory = data.category ?? existingData.category;
+    const newSubCategory = data.subCategory ?? existingData.subCategory;
     const newCouponCode = data.couponCode ?? existingData.couponCode;
 
     const keywords = [
         ...newTitle.toLowerCase().split(' ').filter(Boolean),
         ...newDescription.toLowerCase().split(' ').filter(Boolean),
         ...newCategory.toLowerCase().split(' ').filter(Boolean),
+        ...(newSubCategory ? newSubCategory.toLowerCase().split(' ').filter(Boolean) : []),
         ...(newCouponCode ? newCouponCode.toLowerCase().split(' ') : [])
     ];
     dataToUpdate.searchableKeywords = [...new Set(keywords)];

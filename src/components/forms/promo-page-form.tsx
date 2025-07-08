@@ -18,6 +18,8 @@ import ImageCropper from "../image-cropper"
 const promoPageFormSchema = z.object({
   name: z.string().min(2, "Page name must be at least 2 characters.").max(100, "Name must not be longer than 100 characters."),
   description: z.string().min(10, "Description must be at least 10 characters.").max(500, "Description must not be longer than 500 characters."),
+  category: z.string().optional(),
+  subCategory: z.string().optional(),
   email: z.string().email({ message: "Please enter a valid email." }),
   phone: z.string().optional(),
   website: z.string().url({ message: "Please enter a valid URL." }).optional().or(z.literal('')),
@@ -48,6 +50,8 @@ export function PromoPageForm({ defaultValues, onSubmit, isSaving }: PromoPageFo
     defaultValues: {
       name: "",
       description: "",
+      category: "",
+      subCategory: "",
       email: "",
       phone: "",
       website: "",
@@ -166,6 +170,34 @@ export function PromoPageForm({ defaultValues, onSubmit, isSaving }: PromoPageFo
                                     </FormItem>
                                 )}
                             />
+                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <FormField
+                                    control={form.control}
+                                    name="category"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                        <FormLabel>Category (Optional)</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="e.g. SaaS" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="subCategory"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                        <FormLabel>Sub-Category (Optional)</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="e.g. Developer Tools" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
                         </CardContent>
                     </Card>
                     <Card>

@@ -21,6 +21,7 @@ import { useAuth } from '@/components/auth-provider';
 import { AuthorCard } from '@/components/author-card';
 import { CouponDisplay } from '@/components/coupon-display';
 import { FollowButton } from '@/components/follow-button';
+import { Badge } from '@/components/ui/badge';
 
 
 interface EventDetailClientProps {
@@ -101,7 +102,11 @@ export default function EventDetailClient({ event, author }: EventDetailClientPr
                             <CardContent className="p-6 space-y-8">
                                 <div className="flex flex-col sm:flex-row justify-between sm:items-start gap-4">
                                     <div className='flex-1'>
-                                        <CardTitle className="text-3xl font-bold font-headline">{event.title}</CardTitle>
+                                        <div className="flex flex-wrap items-center gap-2">
+                                            {event.category && <Badge variant="secondary">{event.category}</Badge>}
+                                            {event.subCategory && <Badge variant="outline">{event.subCategory}</Badge>}
+                                        </div>
+                                        <CardTitle className="text-3xl font-bold font-headline mt-2">{event.title}</CardTitle>
                                         <CardDescription className="text-base pt-2 flex items-center gap-2">Hosted by <Link href={`/u/${author.username}`} className="font-semibold text-primary hover:underline">{author.name}</Link></CardDescription>
                                     </div>
                                     <div className='flex items-center gap-2 flex-wrap justify-end'>

@@ -1,3 +1,4 @@
+
 'use client'
 
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -22,6 +23,7 @@ const offerFormSchema = z.object({
   title: z.string().min(2, "Title must be at least 2 characters.").max(100, "Title must not be longer than 100 characters."),
   description: z.string().min(10, "Description must be at least 10 characters.").max(500, "Description must not be longer than 500 characters."),
   category: z.string().min(2, "Category is required."),
+  subCategory: z.string().optional(),
   startDate: z.date({
     required_error: "A start date is required.",
   }),
@@ -59,6 +61,7 @@ export function OfferForm({ defaultValues, onSubmit, isSaving }: OfferFormProps)
       title: "",
       description: "",
       category: "",
+      subCategory: "",
       startDate: undefined,
       endDate: null,
       imageUrl: null,
@@ -144,19 +147,34 @@ export function OfferForm({ defaultValues, onSubmit, isSaving }: OfferFormProps)
                                     </FormItem>
                                 )}
                             />
-                             <FormField
-                                control={form.control}
-                                name="category"
-                                render={({ field }) => (
-                                    <FormItem>
-                                    <FormLabel>Category</FormLabel>
-                                    <FormControl>
-                                        <Input placeholder="e.g. Consulting" {...field} />
-                                    </FormControl>
-                                    <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
+                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <FormField
+                                    control={form.control}
+                                    name="category"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                        <FormLabel>Category</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="e.g. Consulting" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="subCategory"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                        <FormLabel>Sub-Category (Optional)</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="e.g. Design" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <FormField
                                 control={form.control}

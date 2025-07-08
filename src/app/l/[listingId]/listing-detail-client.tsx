@@ -54,8 +54,9 @@ export default function ListingDetailClient({ listing, author }: ListingDetailCl
                                 <div className="flex justify-between items-start gap-4">
                                     <div>
                                         <CardTitle className="text-3xl font-bold font-headline">{listing.title}</CardTitle>
-                                        <div className="flex items-center gap-4 pt-2">
+                                        <div className="flex flex-wrap items-center gap-2 pt-2">
                                             <Badge variant="secondary"><Tag className="mr-1 h-3 w-3" />{listing.category}</Badge>
+                                            {listing.subCategory && <Badge variant="outline">{listing.subCategory}</Badge>}
                                             <p className="font-bold text-2xl text-primary flex items-center"><DollarSign className="mr-1 h-6 w-6" />{formatCurrency(listing.price)}</p>
                                         </div>
                                     </div>

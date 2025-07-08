@@ -25,6 +25,7 @@ export type Listing = {
   price: string;
   imageUrl: string | null;
   category: string;
+  subCategory?: string;
   status: 'active' | 'archived';
   listingType?: 'sale' | 'rental';
   views?: number;
@@ -78,6 +79,7 @@ export const createListing = async (userId: string, data: Partial<Omit<Listing, 
     ...(data.title?.toLowerCase().split(' ').filter(Boolean) || []),
     ...(data.description?.toLowerCase().split(' ').filter(Boolean) || []),
     ...(data.category?.toLowerCase().split(' ').filter(Boolean) || []),
+    ...(data.subCategory?.toLowerCase().split(' ').filter(Boolean) || []),
   ];
 
   const docData = {
@@ -102,18 +104,21 @@ export const updateListing = async (id: string, data: Partial<Omit<Listing, 'id'
   if (
     data.title !== undefined ||
     data.description !== undefined ||
-    data.category !== undefined
+    data.category !== undefined ||
+    data.subCategory !== undefined
   ) {
     const listingDoc = await getDoc(listingDocRef);
     const existingData = listingDoc.data() as Listing;
     const newTitle = data.title ?? existingData.title;
     const newDescription = data.description ?? existingData.description;
     const newCategory = data.category ?? existingData.category;
+    const newSubCategory = data.subCategory ?? existingData.subCategory;
 
     const keywords = [
         ...newTitle.toLowerCase().split(' ').filter(Boolean),
         ...newDescription.toLowerCase().split(' ').filter(Boolean),
         ...newCategory.toLowerCase().split(' ').filter(Boolean),
+        ...(newSubCategory ? newSubCategory.toLowerCase().split(' ').filter(Boolean) : []),
     ];
     dataToUpdate.searchableKeywords = [...new Set(keywords)];
   }

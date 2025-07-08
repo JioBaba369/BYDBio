@@ -25,6 +25,8 @@ export type Job = {
   description: string;
   location: string;
   type: 'Full-time' | 'Part-time' | 'Contract' | 'Internship';
+  category?: string;
+  subCategory?: string;
   remuneration?: string;
   postingDate: Timestamp | Date | string;
   closingDate?: Timestamp | Date | string | null;
@@ -96,6 +98,8 @@ export const createJob = async (userId: string, data: Partial<Omit<Job, 'id' | '
     ...(data.description?.toLowerCase().split(' ').filter(Boolean) || []),
     ...(data.location?.toLowerCase().split(' ').filter(Boolean) || []),
     ...(data.type?.toLowerCase() ? [data.type.toLowerCase()] : []),
+    ...(data.category?.toLowerCase().split(' ').filter(Boolean) || []),
+    ...(data.subCategory?.toLowerCase().split(' ').filter(Boolean) || []),
     ...(data.contactInfo ? data.contactInfo.toLowerCase().split(' ').filter(Boolean) : [])
   ];
 
@@ -125,6 +129,8 @@ export const updateJob = async (id: string, data: Partial<Omit<Job, 'id' | 'auth
     data.location !== undefined ||
     data.type !== undefined ||
     data.description !== undefined ||
+    data.category !== undefined ||
+    data.subCategory !== undefined ||
     data.contactInfo !== undefined
   ) {
     const jobDoc = await getDoc(jobDocRef);
@@ -134,6 +140,8 @@ export const updateJob = async (id: string, data: Partial<Omit<Job, 'id' | 'auth
     const newLocation = data.location ?? existingData.location;
     const newType = data.type ?? existingData.type;
     const newDescription = data.description ?? existingData.description;
+    const newCategory = data.category ?? existingData.category;
+    const newSubCategory = data.subCategory ?? existingData.subCategory;
     const newContactInfo = data.contactInfo ?? existingData.contactInfo;
 
     const keywords = [
@@ -142,6 +150,8 @@ export const updateJob = async (id: string, data: Partial<Omit<Job, 'id' | 'auth
         ...newDescription.toLowerCase().split(' ').filter(Boolean),
         ...newLocation.toLowerCase().split(' ').filter(Boolean),
         newType.toLowerCase(),
+        ...(newCategory ? newCategory.toLowerCase().split(' ').filter(Boolean) : []),
+        ...(newSubCategory ? newSubCategory.toLowerCase().split(' ').filter(Boolean) : []),
         ...(newContactInfo ? newContactInfo.toLowerCase().split(' ').filter(Boolean) : [])
     ];
     dataToUpdate.searchableKeywords = [...new Set(keywords)];

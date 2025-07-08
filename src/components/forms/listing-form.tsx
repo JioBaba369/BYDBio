@@ -1,3 +1,4 @@
+
 'use client'
 
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -24,6 +25,7 @@ const listingFormSchema = z.object({
   description: z.string().min(10, "Description must be at least 10 characters.").max(500, "Description must not be longer than 500 characters."),
   price: z.string().min(1, "Price is required."),
   category: z.string().min(2, "Category is required."),
+  subCategory: z.string().optional(),
   listingType: z.enum(['sale', 'rental']).default('sale'),
   imageUrl: z.string().optional().nullable(),
   startDate: z.date().optional().nullable(),
@@ -60,6 +62,7 @@ export function ListingForm({ defaultValues, onSubmit, isSaving }: ListingFormPr
       description: "",
       price: "",
       category: "",
+      subCategory: "",
       listingType: 'sale',
       imageUrl: null,
       startDate: null,
@@ -178,15 +181,15 @@ export function ListingForm({ defaultValues, onSubmit, isSaving }: ListingFormPr
                                     </FormItem>
                                 )}
                                 />
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                 <FormField
                                     control={form.control}
                                     name="price"
                                     render={({ field }) => (
-                                        <FormItem>
+                                        <FormItem className="sm:col-span-1">
                                         <FormLabel>Price</FormLabel>
                                         <FormControl>
-                                            <Input placeholder="$25 or $100/day" {...field} />
+                                            <Input placeholder="$25" {...field} />
                                         </FormControl>
                                         <FormMessage />
                                         </FormItem>
@@ -196,10 +199,23 @@ export function ListingForm({ defaultValues, onSubmit, isSaving }: ListingFormPr
                                     control={form.control}
                                     name="category"
                                     render={({ field }) => (
-                                        <FormItem>
+                                        <FormItem className="sm:col-span-1">
                                         <FormLabel>Category</FormLabel>
                                         <FormControl>
-                                            <Input placeholder="e.g. Digital Asset" {...field} />
+                                            <Input placeholder="Digital Asset" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                 <FormField
+                                    control={form.control}
+                                    name="subCategory"
+                                    render={({ field }) => (
+                                        <FormItem className="sm:col-span-1">
+                                        <FormLabel>Sub-Category (Optional)</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="UI Kit" {...field} />
                                         </FormControl>
                                         <FormMessage />
                                         </FormItem>

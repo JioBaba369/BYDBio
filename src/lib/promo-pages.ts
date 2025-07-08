@@ -22,6 +22,8 @@ export type PromoPage = {
   authorId: string; // UID of the user who created it
   name: string;
   description: string;
+  category?: string;
+  subCategory?: string;
   email: string;
   phone?: string;
   website?: string;
@@ -68,6 +70,8 @@ export const createPromoPage = async (userId: string, data: Partial<Omit<PromoPa
   const keywords = [
     ...(data.name?.toLowerCase().split(' ').filter(Boolean) || []),
     ...(data.description?.toLowerCase().split(' ').filter(Boolean) || []),
+    ...(data.category?.toLowerCase().split(' ').filter(Boolean) || []),
+    ...(data.subCategory?.toLowerCase().split(' ').filter(Boolean) || []),
     ...(data.email?.toLowerCase() ? [data.email.toLowerCase()] : []),
     ...(data.address ? data.address.toLowerCase().split(' ') : [])
   ];
@@ -95,6 +99,8 @@ export const updatePromoPage = async (id: string, data: Partial<Omit<PromoPage, 
     data.name !== undefined ||
     data.description !== undefined ||
     data.email !== undefined ||
+    data.category !== undefined ||
+    data.subCategory !== undefined ||
     data.address !== undefined
   ) {
     const promoPageDoc = await getDoc(promoPageDocRef);
@@ -102,12 +108,16 @@ export const updatePromoPage = async (id: string, data: Partial<Omit<PromoPage, 
     const newName = data.name ?? existingData.name;
     const newDescription = data.description ?? existingData.description;
     const newEmail = data.email ?? existingData.email;
+    const newCategory = data.category ?? existingData.category;
+    const newSubCategory = data.subCategory ?? existingData.subCategory;
     const newAddress = data.address ?? existingData.address;
 
     const keywords = [
       ...newName.toLowerCase().split(' ').filter(Boolean),
       ...newDescription.toLowerCase().split(' ').filter(Boolean),
       newEmail.toLowerCase(),
+      ...(newCategory ? newCategory.toLowerCase().split(' ').filter(Boolean) : []),
+      ...(newSubCategory ? newSubCategory.toLowerCase().split(' ').filter(Boolean) : []),
       ...(newAddress ? newAddress.toLowerCase().split(' ') : []),
     ];
     dataToUpdate.searchableKeywords = [...new Set(keywords)];

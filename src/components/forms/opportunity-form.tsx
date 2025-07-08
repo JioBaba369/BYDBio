@@ -1,3 +1,4 @@
+
 'use client'
 
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -25,6 +26,8 @@ const opportunityFormSchema = z.object({
   description: z.string().min(10, "A detailed description is required.").max(5000, "Description is too long."),
   location: z.string().min(2, "Location is required."),
   type: z.enum(['Full-time', 'Part-time', 'Contract', 'Internship']),
+  category: z.string().optional(),
+  subCategory: z.string().optional(),
   remuneration: z.string().optional(),
   closingDate: z.date().optional().nullable(),
   imageUrl: z.string().optional().nullable(),
@@ -64,6 +67,8 @@ export function OpportunityForm({ defaultValues, onSubmit, isSaving }: Opportuni
       description: "",
       location: "",
       type: "Full-time",
+      category: "",
+      subCategory: "",
       remuneration: "",
       applicationUrl: "",
       contactInfo: "",
@@ -208,6 +213,34 @@ export function OpportunityForm({ defaultValues, onSubmit, isSaving }: Opportuni
                                         <FormLabel>Remuneration (Optional)</FormLabel>
                                         <FormControl>
                                             <Input placeholder="e.g. $120,000 per year" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <FormField
+                                    control={form.control}
+                                    name="category"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                        <FormLabel>Category (Optional)</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="e.g. Engineering" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="subCategory"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                        <FormLabel>Sub-Category (Optional)</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="e.g. Frontend" {...field} />
                                         </FormControl>
                                         <FormMessage />
                                         </FormItem>

@@ -1,3 +1,4 @@
+
 'use client'
 
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -22,6 +23,8 @@ const eventFormSchema = z.object({
   title: z.string().min(2, "Title must be at least 2 characters.").max(100, "Title must not be longer than 100 characters."),
   description: z.string().min(10, "A description of at least 10 characters is required.").max(2000, "Description must be less than 2000 characters."),
   location: z.string().min(2, "Location is required."),
+  category: z.string().optional(),
+  subCategory: z.string().optional(),
   startDate: z.date({
     required_error: "A start date is required.",
   }),
@@ -66,6 +69,8 @@ export function EventForm({ defaultValues, onSubmit, isSaving }: EventFormProps)
       title: "",
       description: "",
       location: "",
+      category: "",
+      subCategory: "",
       startDate: undefined,
       endDate: null,
       imageUrl: null,
@@ -166,6 +171,34 @@ export function EventForm({ defaultValues, onSubmit, isSaving }: EventFormProps)
                                     </FormItem>
                                 )}
                             />
+                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <FormField
+                                    control={form.control}
+                                    name="category"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                        <FormLabel>Category (Optional)</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="e.g. Technology" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="subCategory"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                        <FormLabel>Sub-Category (Optional)</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="e.g. AI/ML" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <FormField
                                 control={form.control}

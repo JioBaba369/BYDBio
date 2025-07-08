@@ -54,7 +54,10 @@ export default function OfferDetailClient({ offer, author }: OfferDetailClientPr
                             <CardHeader>
                                 <div className="flex justify-between items-start gap-4">
                                     <div className="flex-1">
-                                        <Badge variant="secondary" className="w-fit"><Tag className="mr-1 h-3 w-3" />{offer.category}</Badge>
+                                         <div className="flex flex-wrap items-center gap-2">
+                                            <Badge variant="secondary"><Tag className="mr-1 h-3 w-3" />{offer.category}</Badge>
+                                            {offer.subCategory && <Badge variant="outline">{offer.subCategory}</Badge>}
+                                        </div>
                                         <CardTitle className="text-3xl font-bold font-headline pt-2">{offer.title}</CardTitle>
                                         <CardDescription className="text-base pt-2">
                                         <div className="flex items-center text-sm text-muted-foreground">

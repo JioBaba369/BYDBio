@@ -39,6 +39,8 @@ export type Event = {
   startDate: Timestamp | Date | string;
   endDate?: Timestamp | Date | string | null;
   location: string;
+  category?: string;
+  subCategory?: string;
   imageUrl: string | null;
   couponCode?: string;
   ctaLink?: string;
@@ -124,6 +126,8 @@ export const createEvent = async (userId: string, data: Partial<Omit<Event, 'id'
     ...(data.title?.toLowerCase().split(' ').filter(Boolean) || []),
     ...(data.description?.toLowerCase().split(' ').filter(Boolean) || []),
     ...(data.location?.toLowerCase().split(' ').filter(Boolean) || []),
+    ...(data.category?.toLowerCase().split(' ').filter(Boolean) || []),
+    ...(data.subCategory?.toLowerCase().split(' ').filter(Boolean) || []),
     ...(data.couponCode ? data.couponCode.toLowerCase().split(' ') : [])
   ];
 
@@ -151,6 +155,8 @@ export const updateEvent = async (id: string, data: Partial<Omit<Event, 'id' | '
     data.title !== undefined ||
     data.description !== undefined ||
     data.location !== undefined ||
+    data.category !== undefined ||
+    data.subCategory !== undefined ||
     data.couponCode !== undefined
   ) {
     const eventDoc = await getDoc(eventDocRef);
@@ -158,12 +164,16 @@ export const updateEvent = async (id: string, data: Partial<Omit<Event, 'id' | '
     const newTitle = data.title ?? existingData.title;
     const newDescription = data.description ?? existingData.description;
     const newLocation = data.location ?? existingData.location;
+    const newCategory = data.category ?? existingData.category;
+    const newSubCategory = data.subCategory ?? existingData.subCategory;
     const newCouponCode = data.couponCode ?? existingData.couponCode;
 
     const keywords = [
       ...newTitle.toLowerCase().split(' ').filter(Boolean),
       ...newDescription.toLowerCase().split(' ').filter(Boolean),
       ...newLocation.toLowerCase().split(' ').filter(Boolean),
+      ...(newCategory ? newCategory.toLowerCase().split(' ') : []),
+      ...(newSubCategory ? newSubCategory.toLowerCase().split(' ') : []),
       ...(newCouponCode ? newCouponCode.toLowerCase().split(' ') : [])
     ];
     dataToUpdate.searchableKeywords = [...new Set(keywords)];

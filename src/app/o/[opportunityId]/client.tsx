@@ -53,7 +53,11 @@ export default function OpportunityDetailClient({ job, author }: OpportunityDeta
                             )}
                             <CardHeader className="flex flex-col sm:flex-row justify-between sm:items-start gap-4">
                                 <div>
-                                    <Badge variant="destructive" className="mb-2">{job.type}</Badge>
+                                    <div className="flex flex-wrap items-center gap-2 mb-2">
+                                        <Badge variant="destructive">{job.type}</Badge>
+                                        {job.category && <Badge variant="secondary">{job.category}</Badge>}
+                                        {job.subCategory && <Badge variant="outline">{job.subCategory}</Badge>}
+                                    </div>
                                     <CardTitle className="text-3xl font-bold font-headline">{job.title}</CardTitle>
                                     <CardDescription className="text-lg pt-1 flex items-center gap-2">
                                         <Building className="h-5 w-5" />
