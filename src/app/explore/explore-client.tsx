@@ -1,8 +1,7 @@
-
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge, badgeVariants } from '@/components/ui/badge';
@@ -12,7 +11,6 @@ import { cn } from '@/lib/utils';
 import type { VariantProps } from 'class-variance-authority';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Separator } from '@/components/ui/separator';
 import { Label } from '@/components/ui/label';
 import { ClientFormattedDate } from '@/components/client-formatted-date';
 import { formatCurrency } from '@/lib/utils';
@@ -139,47 +137,49 @@ export default function ExploreClient({ initialItems }: { initialItems: PublicCo
         </div>
 
         <Card>
-            <CardContent className="p-4 space-y-4">
-                <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
-                    <div className="relative md:col-span-1">
+            <CardHeader>
+                <CardTitle>Filter Content</CardTitle>
+                <CardDescription>Refine your search to find exactly what you're looking for.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+                <div className="grid sm:grid-cols-2 gap-4">
+                    <div className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input placeholder="Search by keyword..." className="pl-10" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
                     </div>
-                    <div className="relative md:col-span-1">
+                    <div className="relative">
                         <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input placeholder="Filter by location..." className="pl-10" value={locationFilter} onChange={(e) => setLocationFilter(e.target.value)} />
                     </div>
-                    <Button variant="outline" onClick={handleClearFilters} className="w-full md:col-span-1">
-                        <X className="mr-2 h-4 w-4" /> Clear All Filters
-                    </Button>
                 </div>
-                <Separator />
-                <div className="space-y-2">
-                    <Label className="text-sm font-medium">Filter by type</Label>
-                    <div className="flex flex-wrap gap-2">
+                <div>
+                    <Label className="text-sm font-medium">Content Type</Label>
+                    <div className="flex flex-wrap gap-2 pt-2">
                         {contentTypes.map(({ name, label, icon: Icon, variant }) => {
                             const isSelected = typeFilters.has(name);
                             return (
-                                <Badge
+                                <Button
                                     key={name}
                                     variant={isSelected ? variant : 'outline'}
+                                    size="sm"
                                     onClick={() => handleTypeFilterChange(name)}
-                                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleTypeFilterChange(name); }}
                                     className={cn(
-                                        'cursor-pointer transition-all py-1.5 px-3 text-sm',
-                                        !isSelected && 'hover:bg-accent/50',
-                                        variant === 'outline' && isSelected && 'bg-foreground text-background border-transparent hover:bg-foreground/90',
+                                        'transition-all',
+                                        variant === 'outline' && isSelected && 'bg-foreground text-background border-transparent hover:bg-foreground/90'
                                     )}
-                                    role="button"
-                                    tabIndex={0}
                                 >
                                     <Icon className="mr-2 h-4 w-4" /> {label}
-                                </Badge>
+                                </Button>
                             )
                         })}
                     </div>
                 </div>
             </CardContent>
+            <CardFooter>
+                <Button variant="ghost" onClick={handleClearFilters}>
+                    <X className="mr-2 h-4 w-4" /> Clear All Filters
+                </Button>
+            </CardFooter>
         </Card>
         
         <div className="space-y-4">
