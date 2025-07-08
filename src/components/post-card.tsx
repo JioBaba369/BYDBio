@@ -61,11 +61,11 @@ export function PostCard({ item, onLike, onDelete, onRepost, onQuote, isLoading 
     const handleShare = async () => {
         // Since posts don't have their own pages, we link to the author's profile.
         const shareUrl = `${window.location.origin}/u/${item.author.username}`;
-        
-        // Determine the most relevant content for the share text
-        const postContent = item.repostedPost?.content || item.quotedPost?.content || item.content || '';
         const shareTitle = `Post by ${item.author.name}`;
-        const shareText = postContent.substring(0, 100) + (postContent.length > 100 ? '...' : '');
+        
+        // Use reposted content for share text if it exists
+        const mainContent = item.repostedPost?.content || item.quotedPost?.content || item.content;
+        const shareText = mainContent.substring(0, 100) + (mainContent.length > 100 ? '...' : '');
 
         if (navigator.share) {
             try {
@@ -81,7 +81,7 @@ export function PostCard({ item, onLike, onDelete, onRepost, onQuote, isLoading 
             // Fallback for browsers that don't support the Web Share API
             navigator.clipboard.writeText(shareUrl);
             toast({
-                title: "Link Copied!",
+                title: "Link to author's profile copied!",
                 description: "A link to this user's profile has been copied to your clipboard.",
             });
         }
@@ -171,7 +171,7 @@ export function PostCard({ item, onLike, onDelete, onRepost, onQuote, isLoading 
                 )}
             </CardContent>
             <CardFooter className="flex justify-start p-4 border-t gap-1">
-                <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground hover:text-primary" onClick={() => onLike(item.id)} disabled={isLoading}>
+                <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground hover:text-primary" onClick={() => onLike(item.id)} disabled={isLoading || !user}>
                     {isLoading && loadingAction === 'like' ? <Loader2 className="h-5 w-5 animate-spin" /> : <Heart className={cn("h-5 w-5", item.isLiked && "fill-red-500 text-red-500")} />}
                     <span>{item.likes}</span>
                 </Button>
@@ -179,11 +179,11 @@ export function PostCard({ item, onLike, onDelete, onRepost, onQuote, isLoading 
                     <MessageCircle className="h-5 w-5" />
                     <span>{item.comments}</span>
                 </Button>
-                <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground hover:text-green-500" onClick={() => onRepost(isRepost ? item.repostedPost!.id : item.id)} disabled={isLoading}>
+                <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground hover:text-green-500" onClick={() => onRepost(isRepost ? item.repostedPost!.id : item.id)} disabled={isLoading || !user}>
                     {isLoading && loadingAction === 'repost' ? <Loader2 className="h-5 w-5 animate-spin" /> : <Repeat className="h-5 w-5" />}
                     <span>{item.repostCount || 0}</span>
                 </Button>
-                 <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground hover:text-blue-500" onClick={() => onQuote(item)} disabled={isLoading}>
+                 <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground hover:text-blue-500" onClick={() => onQuote(item)} disabled={isLoading || !user}>
                     <QuoteIcon className="h-5 w-5" />
                     <span>Quote</span>
                 </Button>
