@@ -225,11 +225,13 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
   const canViewPrivateContent = useMemo(() => isOwner || isFollowing, [isOwner, isFollowing]);
 
   const visiblePosts = useMemo(() => {
-      return localPosts.filter(post => {
-          if (post.privacy === 'public') return true;
-          return canViewPrivateContent;
-      });
-  }, [localPosts, canViewPrivateContent]);
+    return localPosts.filter(post => {
+        if (post.privacy === 'public') return true;
+        if (post.privacy === 'followers') return canViewPrivateContent;
+        if (post.privacy === 'me') return isOwner;
+        return false;
+    });
+  }, [localPosts, canViewPrivateContent, isOwner]);
 
 
   const allContent = useMemo(() => {

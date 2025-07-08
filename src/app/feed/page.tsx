@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
-import { Image as ImageIcon, Send, X, Users, Compass, Loader2, Globe } from "lucide-react"
+import { Image as ImageIcon, Send, X, Users, Compass, Loader2, Globe, Lock } from "lucide-react"
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useAuth } from "@/components/auth-provider"
 import { useToast } from "@/hooks/use-toast"
@@ -87,7 +87,7 @@ export default function FeedPage() {
   const { toast } = useToast();
 
   const [postContent, setPostContent] = useState('');
-  const [postPrivacy, setPostPrivacy] = useState<'public' | 'followers'>('public');
+  const [postPrivacy, setPostPrivacy] = useState<'followers' | 'me'>('followers');
   const [followingFeed, setFollowingFeed] = useState<FeedItem[]>([]);
   const [discoveryFeed, setDiscoveryFeed] = useState<FeedItem[]>([]);
   
@@ -233,7 +233,7 @@ export default function FeedPage() {
         setPostContent('');
         setCroppedImageUrl(null);
         setPostToQuote(null);
-        setPostPrivacy('public');
+        setPostPrivacy('followers');
         toast({ title: "Update Posted!" });
     } catch(error) {
         console.error("Error posting update:", error);
@@ -455,21 +455,21 @@ export default function FeedPage() {
                 />
             </div>
             <div className="flex items-center gap-2">
-                <Select value={postPrivacy} onValueChange={(value: 'public' | 'followers') => setPostPrivacy(value)}>
+                <Select value={postPrivacy} onValueChange={(value: 'followers' | 'me') => setPostPrivacy(value)}>
                     <SelectTrigger className="w-auto h-9 text-xs sm:text-sm">
                         <SelectValue placeholder="Privacy" />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="public">
-                            <div className="flex items-center gap-2">
-                                <Globe className="h-4 w-4" />
-                                <span>Public</span>
-                            </div>
-                        </SelectItem>
                         <SelectItem value="followers">
                              <div className="flex items-center gap-2">
                                 <Users className="h-4 w-4" />
                                 <span>Followers only</span>
+                            </div>
+                        </SelectItem>
+                        <SelectItem value="me">
+                             <div className="flex items-center gap-2">
+                                <Lock className="h-4 w-4" />
+                                <span>Me only</span>
                             </div>
                         </SelectItem>
                     </SelectContent>

@@ -51,7 +51,7 @@ export type Post = {
   comments: number;
   createdAt: Timestamp;
   repostCount?: number;
-  privacy: 'public' | 'followers';
+  privacy: 'public' | 'followers' | 'me';
   quotedPost?: EmbeddedPostInfo;
   repostedPost?: EmbeddedPostInfo;
   searchableKeywords?: string[];
@@ -97,7 +97,7 @@ export const createPost = async (userId: string, data: Pick<Post, 'content' | 'i
     authorId: userId,
     content: data.content,
     imageUrl: data.imageUrl,
-    privacy: data.privacy || 'public',
+    privacy: data.privacy || 'followers',
     createdAt: serverTimestamp(),
     likes: 0,
     likedBy: [],
