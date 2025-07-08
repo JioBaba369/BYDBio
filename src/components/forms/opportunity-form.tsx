@@ -32,16 +32,28 @@ const opportunityFormSchema = z.object({
   closingDate: z.date().optional().nullable(),
   imageUrl: z.string().optional().nullable(),
   startDate: z.date().optional().nullable(),
+  startTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Please enter a valid 24-hour time (HH:MM).").optional(),
   endDate: z.date().optional().nullable(),
+  endTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Please enter a valid 24-hour time (HH:MM).").optional(),
   applicationUrl: z.string().url({ message: "Please enter a valid URL." }).optional().or(z.literal('')),
   contactInfo: z.string().max(1000, "Contact info must be less than 1000 characters.").optional(),
 }).refine(data => {
     if (data.startDate && data.endDate) {
-        return data.endDate >= data.startDate;
+        const combineDateAndTime = (date: Date, timeString?: string): Date => {
+            const newDate = new Date(date);
+            if (timeString) {
+                const [hours, minutes] = timeString.split(':').map(Number);
+                newDate.setHours(hours, minutes, 0, 0);
+            }
+            return newDate;
+        };
+        const startDateTime = combineDateAndTime(data.startDate, data.startTime);
+        const endDateTime = combineDateAndTime(data.endDate, data.endTime);
+        return endDateTime >= startDateTime;
     }
     return true;
 }, {
-    message: "End date must be on or after the start date.",
+    message: "End date/time must be on or after the start date/time.",
     path: ["endDate"],
 });
 
@@ -49,9 +61,19 @@ export type OpportunityFormValues = z.infer<typeof opportunityFormSchema>
 
 interface OpportunityFormProps {
   defaultValues?: Partial<OpportunityFormValues>
-  onSubmit: (values: OpportunityFormValues) => void;
+  onSubmit: (values: Omit<OpportunityFormValues, 'startTime' | 'endTime'>) => void;
   isSaving: boolean;
 }
+
+const combineDateAndTime = (date: Date, timeString: string | undefined | null): Date => {
+    const newDate = new Date(date);
+    if (timeString) {
+        const [hours, minutes] = timeString.split(':').map(Number);
+        newDate.setHours(hours, minutes, 0, 0);
+    }
+    return newDate;
+};
+
 
 export function OpportunityForm({ defaultValues, onSubmit, isSaving }: OpportunityFormProps) {
   const [imageToCrop, setImageToCrop] = useState<string | null>(null);
@@ -75,16 +97,41 @@ export function OpportunityForm({ defaultValues, onSubmit, isSaving }: Opportuni
       imageUrl: null,
       closingDate: null,
       startDate: null,
+      startTime: "09:00",
       endDate: null,
+      endTime: "17:00",
       ...defaultValues,
       startDate: defaultValues?.startDate ? new Date(defaultValues.startDate) : null,
+      startTime: defaultValues?.startDate ? format(new Date(defaultValues.startDate), 'HH:mm') : '09:00',
       endDate: defaultValues?.endDate ? new Date(defaultValues.endDate) : null,
+      endTime: defaultValues?.endDate ? format(new Date(defaultValues.endDate), 'HH:mm') : '17:00',
       closingDate: defaultValues?.closingDate ? new Date(defaultValues.closingDate) : null,
     },
     mode: "onChange",
   })
   
   const watchedImageUrl = form.watch("imageUrl");
+
+  const handleFormSubmit = (data: OpportunityFormValues) => {
+    let combinedStartDate: Date | null = null;
+    if (data.startDate) {
+        combinedStartDate = combineDateAndTime(data.startDate, data.startTime);
+    }
+
+    let combinedEndDate: Date | null = null;
+    if (data.endDate) {
+        combinedEndDate = combineDateAndTime(data.endDate, data.endTime);
+    }
+
+    const dataToSubmit = {
+        ...data,
+        startDate: combinedStartDate,
+        endDate: combinedEndDate,
+    };
+
+    const { startTime, endTime, ...finalData } = dataToSubmit;
+    onSubmit(finalData);
+  }
 
   const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -119,7 +166,7 @@ export function OpportunityForm({ defaultValues, onSubmit, isSaving }: Opportuni
         isRound={false}
       />
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-8">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <div className="md:col-span-2 space-y-6">
                     <Card>
@@ -324,6 +371,19 @@ export function OpportunityForm({ defaultValues, onSubmit, isSaving }: Opportuni
                                     </FormItem>
                                 )}
                                 />
+                                <FormField
+                                    control={form.control}
+                                    name="startTime"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Start Time</FormLabel>
+                                            <FormControl><Input type="time" {...field} /></FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                  <FormField
                                 control={form.control}
                                 name="endDate"
@@ -364,6 +424,17 @@ export function OpportunityForm({ defaultValues, onSubmit, isSaving }: Opportuni
                                     <FormMessage />
                                     </FormItem>
                                 )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="endTime"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>End Time</FormLabel>
+                                            <FormControl><Input type="time" {...field} /></FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
                                 />
                             </div>
                             <FormField
