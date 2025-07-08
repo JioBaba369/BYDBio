@@ -93,35 +93,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [user, loading, pathname, router]);
 
-  useEffect(() => {
-    if (user && firebaseUser && messaging) {
-      const setupFcm = async () => {
-        if (sessionStorage.getItem('fcm_token_setup_done')) {
-          return;
-        }
-
-        try {
-          const permission = await Notification.requestPermission();
-          sessionStorage.setItem('fcm_token_setup_done', 'true');
-
-          if (permission === 'granted') {
-            const currentToken = await getToken(messaging, {
-              vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY,
-            });
-
-            if (currentToken) {
-              await addFcmTokenToUser(user.uid, currentToken);
-            }
-          }
-        } catch (err) {
-          console.error('An error occurred while setting up notifications.', err);
-        }
-      };
-
-      setupFcm();
-    }
-  }, [user, firebaseUser]);
-
 
   return (
     <AuthContext.Provider value={{ user, firebaseUser, loading, unreadNotificationCount }}>

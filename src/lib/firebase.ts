@@ -16,6 +16,14 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
+// Check for missing Firebase configuration
+if (!firebaseConfig.apiKey || firebaseConfig.apiKey.includes('YOUR_API_KEY_HERE')) {
+    throw new Error(
+        'Firebase API Key is missing or invalid. Please check your .env file and ensure that all NEXT_PUBLIC_FIREBASE_* variables are set correctly. You can find these values in your Firebase project settings.'
+    );
+}
+
+
 // Initialize Firebase App (Singleton Pattern for Next.js)
 const app: FirebaseApp = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
