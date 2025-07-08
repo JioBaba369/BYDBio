@@ -61,19 +61,9 @@ export type OpportunityFormValues = z.infer<typeof opportunityFormSchema>
 
 interface OpportunityFormProps {
   defaultValues?: Partial<OpportunityFormValues>
-  onSubmit: (values: Omit<OpportunityFormValues, 'startTime' | 'endTime'>) => void;
+  onSubmit: (values: OpportunityFormValues) => void;
   isSaving: boolean;
 }
-
-const combineDateAndTime = (date: Date, timeString: string | undefined | null): Date => {
-    const newDate = new Date(date);
-    if (timeString) {
-        const [hours, minutes] = timeString.split(':').map(Number);
-        newDate.setHours(hours, minutes, 0, 0);
-    }
-    return newDate;
-};
-
 
 export function OpportunityForm({ defaultValues, onSubmit, isSaving }: OpportunityFormProps) {
   const [imageToCrop, setImageToCrop] = useState<string | null>(null);
@@ -112,27 +102,6 @@ export function OpportunityForm({ defaultValues, onSubmit, isSaving }: Opportuni
   
   const watchedImageUrl = form.watch("imageUrl");
 
-  const handleFormSubmit = (data: OpportunityFormValues) => {
-    let combinedStartDate: Date | null = null;
-    if (data.startDate) {
-        combinedStartDate = combineDateAndTime(data.startDate, data.startTime);
-    }
-
-    let combinedEndDate: Date | null = null;
-    if (data.endDate) {
-        combinedEndDate = combineDateAndTime(data.endDate, data.endTime);
-    }
-
-    const dataToSubmit = {
-        ...data,
-        startDate: combinedStartDate,
-        endDate: combinedEndDate,
-    };
-
-    const { startTime, endTime, ...finalData } = dataToSubmit;
-    onSubmit(finalData);
-  }
-
   const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];
@@ -166,7 +135,7 @@ export function OpportunityForm({ defaultValues, onSubmit, isSaving }: Opportuni
         isRound={false}
       />
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-8">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <div className="md:col-span-2 space-y-6">
                     <Card>

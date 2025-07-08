@@ -9,6 +9,16 @@ import { useAuth } from "@/components/auth-provider";
 import { createJob, type Job } from "@/lib/jobs";
 import { uploadImage } from "@/lib/storage";
 
+const combineDateAndTime = (date: Date, timeString: string | undefined | null): Date => {
+    const newDate = new Date(date);
+    if (timeString) {
+        const [hours, minutes] = timeString.split(':').map(Number);
+        newDate.setHours(hours, minutes, 0, 0); // Set seconds and ms to 0
+    }
+    return newDate;
+};
+
+
 export default function CreateJobPage() {
     const router = useRouter();
     const { user } = useAuth();
@@ -22,11 +32,16 @@ export default function CreateJobPage() {
         }
         setIsSaving(true);
         try {
+            const combinedStartDate = data.startDate ? combineDateAndTime(data.startDate, data.startTime) : null;
+            const combinedEndDate = data.endDate ? combineDateAndTime(data.endDate, data.endTime) : null;
+
+            const { startTime, endTime, ...restOfData } = data;
+
             const dataToSave: Partial<Omit<Job, 'id' | 'authorId' | 'createdAt' | 'status' | 'views' | 'applicants' | 'postingDate' | 'searchableKeywords' | 'followerCount'>> = {
-                ...data,
+                ...restOfData,
                 closingDate: data.closingDate ? data.closingDate.toISOString() : undefined,
-                startDate: data.startDate ? data.startDate.toISOString() : undefined,
-                endDate: data.endDate ? data.endDate.toISOString() : undefined,
+                startDate: combinedStartDate ? combinedStartDate.toISOString() : undefined,
+                endDate: combinedEndDate ? combinedEndDate.toISOString() : undefined,
             };
 
             if (data.imageUrl && data.imageUrl.startsWith('data:image')) {

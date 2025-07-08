@@ -31,6 +31,15 @@ const EditOfferPageSkeleton = () => (
     </div>
 );
 
+const combineDateAndTime = (date: Date, timeString: string | undefined | null): Date => {
+    const newDate = new Date(date);
+    if (timeString) {
+        const [hours, minutes] = timeString.split(':').map(Number);
+        newDate.setHours(hours, minutes, 0, 0); // Set seconds and ms to 0
+    }
+    return newDate;
+};
+
 
 export default function EditOfferPage() {
     const router = useRouter();
@@ -87,10 +96,15 @@ export default function EditOfferPage() {
         }
         setIsSaving(true);
         try {
+            const combinedStartDate = combineDateAndTime(data.startDate, data.startTime);
+            const combinedEndDate = data.endDate ? combineDateAndTime(data.endDate, data.endTime) : null;
+            
+            const { startTime, endTime, ...restOfData } = data;
+
             const dataToSave: Partial<Omit<Offer, 'id' | 'authorId' | 'createdAt'>> = {
-                ...data,
-                startDate: data.startDate.toISOString(),
-                endDate: data.endDate ? data.endDate.toISOString() : null,
+                ...restOfData,
+                startDate: combinedStartDate.toISOString(),
+                endDate: combinedEndDate ? combinedEndDate.toISOString() : null,
             };
 
             if (data.imageUrl && data.imageUrl.startsWith('data:image')) {

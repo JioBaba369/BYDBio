@@ -31,6 +31,15 @@ const EditJobPageSkeleton = () => (
     </div>
 );
 
+const combineDateAndTime = (date: Date, timeString: string | undefined | null): Date => {
+    const newDate = new Date(date);
+    if (timeString) {
+        const [hours, minutes] = timeString.split(':').map(Number);
+        newDate.setHours(hours, minutes, 0, 0); // Set seconds and ms to 0
+    }
+    return newDate;
+};
+
 
 export default function EditJobPage() {
     const router = useRouter();
@@ -88,11 +97,16 @@ export default function EditJobPage() {
         }
         setIsSaving(true);
         try {
+            const combinedStartDate = data.startDate ? combineDateAndTime(data.startDate, data.startTime) : null;
+            const combinedEndDate = data.endDate ? combineDateAndTime(data.endDate, data.endTime) : null;
+            
+            const { startTime, endTime, ...restOfData } = data;
+
             const dataToSave: Partial<Omit<Job, 'id' | 'authorId' | 'createdAt'>> = {
-                ...data,
+                ...restOfData,
                 closingDate: data.closingDate ? data.closingDate.toISOString() : null,
-                startDate: data.startDate ? data.startDate.toISOString() : null,
-                endDate: data.endDate ? data.endDate.toISOString() : null,
+                startDate: combinedStartDate ? combinedStartDate.toISOString() : null,
+                endDate: combinedEndDate ? combinedEndDate.toISOString() : null,
             };
 
             if (data.imageUrl && data.imageUrl.startsWith('data:image')) {

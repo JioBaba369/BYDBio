@@ -9,6 +9,16 @@ import { useAuth } from "@/components/auth-provider";
 import { createOffer, type Offer } from "@/lib/offers";
 import { uploadImage } from "@/lib/storage";
 
+const combineDateAndTime = (date: Date, timeString: string | undefined | null): Date => {
+    const newDate = new Date(date);
+    if (timeString) {
+        const [hours, minutes] = timeString.split(':').map(Number);
+        newDate.setHours(hours, minutes, 0, 0); // Set seconds and ms to 0
+    }
+    return newDate;
+};
+
+
 export default function CreateOfferPage() {
     const router = useRouter();
     const { user } = useAuth();
@@ -22,10 +32,15 @@ export default function CreateOfferPage() {
         }
         setIsSaving(true);
         try {
+            const combinedStartDate = combineDateAndTime(data.startDate, data.startTime);
+            const combinedEndDate = data.endDate ? combineDateAndTime(data.endDate, data.endTime) : null;
+            
+            const { startTime, endTime, ...restOfData } = data;
+            
             const dataToSave: Partial<Omit<Offer, 'id' | 'authorId' | 'createdAt' | 'status' | 'views' | 'claims' | 'searchableKeywords' | 'followerCount'>> = {
-                ...data,
-                startDate: data.startDate.toISOString(),
-                endDate: data.endDate ? data.endDate.toISOString() : undefined,
+                ...restOfData,
+                startDate: combinedStartDate.toISOString(),
+                endDate: combinedEndDate ? combinedEndDate.toISOString() : undefined,
             };
 
             if (data.imageUrl && data.imageUrl.startsWith('data:image')) {

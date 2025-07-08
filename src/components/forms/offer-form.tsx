@@ -57,19 +57,9 @@ export type OfferFormValues = z.infer<typeof offerFormSchema>
 
 interface OfferFormProps {
   defaultValues?: Partial<OfferFormValues>
-  onSubmit: (values: Omit<OfferFormValues, 'startTime' | 'endTime'>) => void;
+  onSubmit: (values: OfferFormValues) => void;
   isSaving: boolean;
 }
-
-const combineDateAndTime = (date: Date, timeString: string | undefined | null): Date => {
-    const newDate = new Date(date);
-    if (timeString) {
-        const [hours, minutes] = timeString.split(':').map(Number);
-        newDate.setHours(hours, minutes, 0, 0); // Set seconds and ms to 0
-    }
-    return newDate;
-};
-
 
 export function OfferForm({ defaultValues, onSubmit, isSaving }: OfferFormProps) {
   const [imageToCrop, setImageToCrop] = useState<string | null>(null);
@@ -101,23 +91,6 @@ export function OfferForm({ defaultValues, onSubmit, isSaving }: OfferFormProps)
   })
   
   const watchedImageUrl = form.watch("imageUrl");
-
-  const handleFormSubmit = (data: OfferFormValues) => {
-    const combinedStartDate = combineDateAndTime(data.startDate, data.startTime);
-    let combinedEndDate: Date | null = null;
-    if (data.endDate) {
-        combinedEndDate = combineDateAndTime(data.endDate, data.endTime);
-    }
-
-    const dataToSubmit = {
-        ...data,
-        startDate: combinedStartDate,
-        endDate: combinedEndDate,
-    };
-
-    const { startTime, endTime, ...finalData } = dataToSubmit;
-    onSubmit(finalData);
-  }
 
   const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -152,7 +125,7 @@ export function OfferForm({ defaultValues, onSubmit, isSaving }: OfferFormProps)
         isRound={false}
       />
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-8">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <div className="md:col-span-2 space-y-6">
                     <Card>
