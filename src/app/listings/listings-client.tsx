@@ -1,12 +1,12 @@
+
 'use client';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import Image from "next/image";
-import { PlusCircle, Eye, MousePointerClick, ExternalLink, Calendar, Tags, List, LayoutGrid, Bell } from "lucide-react";
+import { PlusCircle, Eye, MousePointerClick, ExternalLink, Calendar, Tags, List, LayoutGrid, Bell, DollarSign } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/components/auth-provider";
 import { type ListingWithAuthor } from "@/lib/listings";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -91,31 +91,20 @@ export default function ListingsClient({ initialListings }: { initialListings: L
         view === 'grid' ? (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {listings.map((item) => (
-            <Card key={item.id} className="flex flex-col">
+            <Card key={item.id} className="flex flex-col shadow-sm hover:shadow-md transition-shadow duration-200">
               {item.imageUrl && (
                   <div className="overflow-hidden rounded-t-lg">
-                  <Image src={item.imageUrl} alt={item.title} width={600} height={400} className="w-full object-cover aspect-video" />
+                    <Link href={`/l/${item.id}`}><Image src={item.imageUrl} alt={item.title} width={600} height={400} className="w-full object-cover aspect-video" /></Link>
                   </div>
               )}
-              <CardHeader>
-                <CardTitle>{item.title}</CardTitle>
-                  <CardDescription className="pt-2">
-                      <Link href={`/u/${item.author.username}`} className="flex items-center gap-2 hover:underline">
-                          <Avatar className="h-6 w-6">
-                              <AvatarImage src={item.author.avatarUrl} />
-                              <AvatarFallback>{item.author.name.charAt(0)}</AvatarFallback>
-                          </Avatar>
-                          <span className="text-xs">by {item.author.name}</span>
-                      </Link>
-                  </CardDescription>
+              <CardHeader className="p-4">
+                <Badge variant="secondary" className="w-fit">{item.category}</Badge>
+                <CardTitle className="text-lg pt-1"><Link href={`/l/${item.id}`} className="hover:underline">{item.title}</Link></CardTitle>
               </CardHeader>
-              <CardContent className="flex-grow space-y-2">
-                <div className="flex justify-between items-center">
-                  <Badge variant="secondary">{item.category}</Badge>
-                  <p className="font-bold text-lg">{formatCurrency(item.price)}</p>
-                </div>
+              <CardContent className="px-4 pb-4 space-y-2 flex-grow">
+                <p className="font-bold text-lg text-primary flex items-center gap-1"><DollarSign className="h-5 w-5" />{formatCurrency(item.price)}</p>
                 {(item.startDate || item.endDate) && (
-                  <div className="flex items-center pt-2 text-sm text-muted-foreground">
+                  <div className="flex items-center pt-1 text-xs text-muted-foreground">
                       <Calendar className="mr-2 h-4 w-4" /> 
                       <span>
                           {item.startDate && <ClientFormattedDate date={item.startDate as string} />}
@@ -124,16 +113,14 @@ export default function ListingsClient({ initialListings }: { initialListings: L
                   </div>
                 )}
               </CardContent>
-              <Separator />
-              <CardFooter className="flex-col items-start gap-4 pt-4">
+              <CardFooter className="flex-col items-start gap-3 p-4 border-t">
                   <div className="flex justify-between w-full text-xs text-muted-foreground">
                       <div className="flex items-center gap-1.5"><Eye className="h-3.5 w-3.5" />{item.views?.toLocaleString() ?? 0} Views</div>
                       <div className="flex items-center gap-1.5"><MousePointerClick className="h-3.5 w-3.5" />{item.clicks?.toLocaleString() ?? 0} Clicks</div>
                       <div className="flex items-center gap-1.5"><Bell className="h-3.5 w-3.5" />{item.followerCount?.toLocaleString() ?? 0} Following</div>
                   </div>
-                  <Button asChild variant="outline" className="w-full">
+                  <Button asChild variant="secondary" className="w-full">
                       <Link href={`/l/${item.id}`}>
-                          <ExternalLink className="mr-2 h-4 w-4" />
                           View Details
                       </Link>
                   </Button>

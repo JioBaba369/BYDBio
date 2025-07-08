@@ -224,7 +224,7 @@ export default function ExploreClient({ initialItems }: { initialItems: PublicCo
                           const itemTypeLabel = item.type === 'promoPage' ? 'Promo Page' : item.type;
                           
                           return (
-                            <Card key={`${item.type}-${item.id}`} className="shadow-sm flex flex-col">
+                            <Card key={`${item.type}-${item.id}`} className="shadow-sm flex flex-col hover:shadow-lg transition-shadow duration-200">
                                 {item.imageUrl && (
                                     <Link href={getLink(item)} className="block overflow-hidden rounded-t-lg">
                                         <Image src={item.imageUrl} alt={title} width={600} height={400} className="w-full object-cover aspect-video transition-transform hover:scale-105" data-ai-hint="office laptop" />

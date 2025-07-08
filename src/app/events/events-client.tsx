@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
@@ -7,7 +8,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useAuth } from "@/components/auth-provider";
@@ -137,38 +137,36 @@ export default function EventsClient({ initialEvents }: { initialEvents: EventWi
               const isProcessing = rsvpingEventId === event.id;
 
               return (
-              <Card key={event.id} className="flex flex-col">
+              <Card key={event.id} className="flex flex-col shadow-sm hover:shadow-md transition-shadow duration-200">
                 {event.imageUrl && (
                   <div className="overflow-hidden rounded-t-lg">
-                    <Image src={event.imageUrl} alt={event.title} width={600} height={400} className="w-full object-cover aspect-video" />
+                    <Link href={`/events/${event.id}`}><Image src={event.imageUrl} alt={event.title} width={600} height={400} className="w-full object-cover aspect-video" /></Link>
                   </div>
                 )}
-                <CardHeader>
-                    <CardTitle>{event.title}</CardTitle>
+                <CardHeader className="p-4">
+                    <CardTitle className="text-lg"><Link href={`/events/${event.id}`} className="hover:underline">{event.title}</Link></CardTitle>
                     <CardDescription className="pt-2">
                         <Link href={`/u/${event.author.username}`} className="flex items-center gap-2 hover:underline">
                             <Avatar className="h-6 w-6">
                                 <AvatarImage src={event.author.avatarUrl} />
                                 <AvatarFallback>{event.author.name.charAt(0)}</AvatarFallback>
                             </Avatar>
-                            <span className="text-xs">Hosted by {event.author.name}</span>
+                            <span className="text-xs">by {event.author.name}</span>
                         </Link>
                     </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-2 flex-grow">
+                <CardContent className="space-y-2 px-4 pb-4 flex-grow">
                   <div className="flex items-center text-sm text-muted-foreground">
                     <Calendar className="mr-2 h-4 w-4" /> 
                     <span>
                       <ClientFormattedDate date={event.startDate as string} formatStr="PPP p" />
-                      {event.endDate && <> - <ClientFormattedDate date={event.endDate as string} formatStr="PPP" /></>}
                     </span>
                   </div>
                   <div className="flex items-center text-sm text-muted-foreground">
                     <MapPin className="mr-2 h-4 w-4" /> {event.location}
                   </div>
                 </CardContent>
-                <Separator/>
-                <CardFooter className="flex-col items-start gap-4 pt-4">
+                <CardFooter className="flex-col items-start gap-3 p-4 border-t">
                     <div className="flex justify-between w-full text-xs text-muted-foreground">
                         <div className="flex items-center gap-1.5"><Eye className="h-3.5 w-3.5" />{event.views?.toLocaleString() ?? 0} Views</div>
                         <div className="flex items-center gap-1.5"><Users className="h-3.5 w-3.5" />{event.rsvps?.length.toLocaleString() ?? 0} RSVPs</div>

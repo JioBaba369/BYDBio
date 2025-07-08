@@ -1,13 +1,13 @@
+
 'use client';
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Tag, Calendar, PlusCircle, DollarSign, Eye, Gift, ExternalLink, List, LayoutGrid, Bell } from "lucide-react"
+import { Calendar, PlusCircle, Eye, Gift, ExternalLink, List, LayoutGrid, Bell } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/components/auth-provider";
 import { type OfferWithAuthor } from "@/lib/offers";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -89,15 +89,16 @@ export default function OffersClient({ initialOffers }: { initialOffers: OfferWi
         view === 'grid' ? (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {offers.map((offer) => (
-            <Card key={offer.id} className="flex flex-col">
+            <Card key={offer.id} className="flex flex-col shadow-sm hover:shadow-md transition-shadow duration-200">
               {offer.imageUrl && (
                 <div className="overflow-hidden rounded-t-lg">
-                  <Image src={offer.imageUrl} alt={offer.title} width={600} height={400} className="w-full object-cover aspect-video" data-ai-hint="special offer" />
+                  <Link href={`/offer/${offer.id}`}><Image src={offer.imageUrl} alt={offer.title} width={600} height={400} className="w-full object-cover aspect-video" data-ai-hint="special offer" /></Link>
                 </div>
               )}
-              <CardHeader>
-                <CardTitle>{offer.title}</CardTitle>
-                <CardDescription className="pt-2">
+              <CardHeader className="p-4">
+                <Badge variant="secondary" className="w-fit">{offer.category}</Badge>
+                <CardTitle className="text-lg pt-1"><Link href={`/offer/${offer.id}`} className="hover:underline">{offer.title}</Link></CardTitle>
+                <CardDescription className="pt-1">
                     <Link href={`/u/${offer.author.username}`} className="flex items-center gap-2 hover:underline">
                         <Avatar className="h-6 w-6">
                             <AvatarImage src={offer.author.avatarUrl} data-ai-hint="person portrait" />
@@ -107,26 +108,24 @@ export default function OffersClient({ initialOffers }: { initialOffers: OfferWi
                     </Link>
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-2 flex-grow">
-                <Badge variant="secondary"><Tag className="mr-1 h-3 w-3" />{offer.category}</Badge>
-                  <div className="flex items-center pt-2 text-sm text-muted-foreground">
-                  <Calendar className="mr-2 h-4 w-4" /> 
-                  <span>
-                      Starts: <ClientFormattedDate date={offer.startDate as string} />
-                      {offer.endDate && <>, Ends: <ClientFormattedDate date={offer.endDate as string} /></>}
-                  </span>
+              <CardContent className="space-y-2 px-4 pb-4 flex-grow">
+                <p className="text-sm text-muted-foreground line-clamp-2">{offer.description}</p>
+                <div className="flex items-center pt-2 text-xs text-muted-foreground">
+                    <Calendar className="mr-2 h-4 w-4" /> 
+                    <span>
+                        <ClientFormattedDate date={offer.startDate as string} />
+                        {offer.endDate && <> - <ClientFormattedDate date={offer.endDate as string} /></>}
+                    </span>
                 </div>
               </CardContent>
-              <Separator />
-              <CardFooter className="flex-col items-start gap-4 pt-4">
+              <CardFooter className="flex-col items-start gap-3 p-4 border-t">
                   <div className="flex justify-between w-full text-xs text-muted-foreground">
                       <div className="flex items-center gap-1.5"><Eye className="h-3.5 w-3.5" />{offer.views?.toLocaleString() ?? 0} Views</div>
                       <div className="flex items-center gap-1.5"><Gift className="h-3.5 w-3.5" />{offer.claims?.toLocaleString() ?? 0} Claims</div>
                       <div className="flex items-center gap-1.5"><Bell className="h-3.5 w-3.5" />{offer.followerCount?.toLocaleString() ?? 0} Following</div>
                   </div>
-                  <Button asChild variant="outline" className="w-full">
+                  <Button asChild variant="secondary" className="w-full">
                       <Link href={`/offer/${offer.id}`}>
-                        <ExternalLink className="mr-2 h-4 w-4" />
                         View Details
                       </Link>
                   </Button>
@@ -195,7 +194,7 @@ export default function OffersClient({ initialOffers }: { initialOffers: OfferWi
               <CardDescription>No one has posted an offer yet. Be the first!</CardDescription>
           </CardHeader>
           <CardContent className="flex justify-center items-center p-10">
-              <DollarSign className="h-16 w-16 text-muted-foreground" />
+              <Gift className="h-16 w-16 text-muted-foreground" />
           </CardContent>
           {user && (
             <CardFooter>

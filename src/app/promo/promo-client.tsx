@@ -3,10 +3,9 @@
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import Image from "next/image";
-import { PlusCircle, Globe, Mail, Phone, MapPin, Eye, MousePointerClick, ExternalLink, Building2, List, LayoutGrid, Megaphone, MoreHorizontal, Edit, Trash2, Bell } from "lucide-react";
+import { PlusCircle, Globe, Mail, Phone, MapPin, Eye, MousePointerClick, ExternalLink, List, LayoutGrid, Megaphone, MoreHorizontal, Edit, Trash2, Bell } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/components/auth-provider";
 import { deletePromoPage, type PromoPageWithAuthor } from "@/lib/promo-pages";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -136,16 +135,16 @@ export default function PromoClient({ initialPromoPages }: { initialPromoPages: 
           view === 'grid' ? (
           <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
             {promoPages.map((item) => (
-              <Card key={item.id} className="flex flex-col">
+              <Card key={item.id} className="flex flex-col shadow-sm hover:shadow-md transition-shadow duration-200">
                 {item.imageUrl &&
                   <div className="overflow-hidden rounded-t-lg">
-                    <Image src={item.imageUrl} alt={item.name} width={600} height={300} className="w-full object-cover aspect-[2/1]" />
+                    <Link href={`/p/${item.id}`}><Image src={item.imageUrl} alt={item.name} width={600} height={300} className="w-full object-cover aspect-[2/1]" /></Link>
                   </div>
                 }
-                <CardHeader>
+                <CardHeader className="p-4">
                   <div className="flex justify-between items-start gap-4">
                       <div className="flex-1">
-                          <CardTitle>{item.name}</CardTitle>
+                          <CardTitle className="text-lg"><Link href={`/p/${item.id}`} className="hover:underline">{item.name}</Link></CardTitle>
                           <CardDescription className="pt-2">
                               <Link href={`/u/${item.author.username}`} className="flex items-center gap-2 hover:underline">
                                   <Avatar className="h-6 w-6">
@@ -171,24 +170,17 @@ export default function PromoClient({ initialPromoPages }: { initialPromoPages: 
                       )}
                   </div>
                 </CardHeader>
-                <CardContent className="flex-grow">
-                    <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm text-muted-foreground">
-                        {item.email && <div className="flex items-center gap-2 truncate"><Mail className="h-4 w-4 flex-shrink-0" /> <span className="truncate">{item.email}</span></div>}
-                        {item.phone && <div className="flex items-center gap-2 truncate"><Phone className="h-4 w-4 flex-shrink-0" /> <span className="truncate">{item.phone}</span></div>}
-                        {item.website && <div className="flex items-center gap-2 truncate"><Globe className="h-4 w-4 flex-shrink-0" /> <span className="truncate">{item.website}</span></div>}
-                        {item.address && <div className="flex items-center gap-2 truncate col-span-2"><MapPin className="h-4 w-4 flex-shrink-0" /> <span className="truncate">{item.address}</span></div>}
-                    </div>
+                <CardContent className="flex-grow px-4 pb-4">
+                    <p className="text-sm text-muted-foreground line-clamp-2">{item.description}</p>
                 </CardContent>
-                <Separator className="my-4" />
-                <CardFooter className="flex-col items-start gap-4">
+                <CardFooter className="flex-col items-start gap-3 p-4 border-t">
                     <div className="flex justify-between w-full text-xs text-muted-foreground">
                         <div className="flex items-center gap-1.5"><Eye className="h-3.5 w-3.5" />{item.views?.toLocaleString() ?? 0} Views</div>
                         <div className="flex items-center gap-1.5"><MousePointerClick className="h-3.5 w-3.5" />{item.clicks?.toLocaleString() ?? 0} Clicks</div>
                         <div className="flex items-center gap-1.5"><Bell className="h-3.5 w-3.5" />{item.followerCount?.toLocaleString() ?? 0} Following</div>
                     </div>
-                    <Button asChild variant="outline" className="w-full">
+                    <Button asChild variant="secondary" className="w-full">
                         <Link href={`/p/${item.id}`}>
-                            <ExternalLink className="mr-2 h-4 w-4" />
                             View Details
                         </Link>
                     </Button>
