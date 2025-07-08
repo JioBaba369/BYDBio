@@ -233,10 +233,8 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
     });
   }, [localPosts, canViewPrivateContent, isOwner]);
 
-
-  const allContent = useMemo(() => {
+  const allOtherContent = useMemo(() => {
     const combined = [
-      ...visiblePosts.map(item => ({ ...item, type: 'post' as const, date: item.createdAt })),
       ...content.promoPages.map(item => ({ ...item, type: 'promoPage' as const, date: item.createdAt })),
       ...content.listings.map(item => ({ ...item, type: 'listing' as const, date: item.createdAt })),
       ...content.jobs.map(item => ({ ...item, type: 'job' as const, date: item.postingDate })),
@@ -245,7 +243,7 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
     ];
     combined.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     return combined;
-  }, [visiblePosts, content]);
+  }, [content]);
   
   const hasLinks = links.length > 0;
 
@@ -315,86 +313,63 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
           </div>
         </Card>
 
-        <Tabs defaultValue="feed" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
+        <Tabs defaultValue="whats-on" className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="whats-on"><Grid className="mr-2 h-4 w-4"/>What's On</TabsTrigger>
                 <TabsTrigger value="feed"><Rss className="mr-2 h-4 w-4"/>Feed</TabsTrigger>
                 <TabsTrigger value="about"><Info className="mr-2 h-4 w-4"/>About</TabsTrigger>
             </TabsList>
+            <TabsContent value="whats-on" className="mt-6">
+                 {allOtherContent.length > 0 ? (
+                    <div className="space-y-6">
+                        {allOtherContent.map(item => {
+                            const uniqueKey = `${item.type}-${item.id}`;
+                            const componentMap = {
+                                promoPage: { title: "Created a new promo page", component: <PromoPageFeedItem item={item as PromoPage} /> },
+                                listing: { title: "Added a new listing", component: <ListingFeedItem item={item as Listing} /> },
+                                job: { title: "Posted a new job", component: <JobFeedItem item={item as Job} /> },
+                                event: { title: "Created a new event", component: <EventFeedItem item={item as Event} /> },
+                                offer: { title: "Posted a new offer", component: <OfferFeedItem item={item as Offer} /> },
+                            };
+                            
+                            const content = componentMap[item.type as keyof typeof componentMap];
+                            
+                            if (!content) return null;
+                            
+                            return (
+                                <ContentFeedCard key={uniqueKey} title={content.title} date={item.date}>
+                                    {content.component}
+                                </ContentFeedCard>
+                            );
+                        })}
+                    </div>
+                ) : (
+                     <Card className="text-center text-muted-foreground p-10">
+                        This user hasn't created any content yet.
+                    </Card>
+                )}
+            </TabsContent>
             <TabsContent value="feed" className="mt-6">
-                <Tabs defaultValue={currentUser ? 'posts' : 'creations'} className="w-full">
-                    <TabsList className="grid w-full grid-cols-2">
-                        <TabsTrigger value="creations"><Grid className="mr-2 h-4 w-4" />Creations</TabsTrigger>
-                        <TabsTrigger value="posts"><MessageSquare className="mr-2 h-4 w-4" />Posts</TabsTrigger>
-                    </TabsList>
-                    <TabsContent value="creations" className="mt-6">
-                        {allContent.length > 0 ? (
-                            <div className="space-y-6">
-                                {allContent.map(item => {
-                                    const uniqueKey = `${item.type}-${item.id}`;
-                                    if (item.type === 'post') {
-                                        const postItem = item as (PostWithAuthor & { isLiked: boolean });
-                                        return (
-                                            <PostCard
-                                                key={uniqueKey}
-                                                item={postItem}
-                                                onLike={handleLike}
-                                                onDelete={openDeleteDialog}
-                                                onRepost={handleRepost}
-                                                onQuote={handleQuote}
-                                                isLoading={loadingAction?.postId === item.id}
-                                                loadingAction={loadingAction?.postId === item.id ? loadingAction.action : null}
-                                            />
-                                        );
-                                    }
-
-                                    const componentMap = {
-                                        promoPage: { title: "Created a new promo page", component: <PromoPageFeedItem item={item as PromoPage} /> },
-                                        listing: { title: "Added a new listing", component: <ListingFeedItem item={item as Listing} /> },
-                                        job: { title: "Posted a new job", component: <JobFeedItem item={item as Job} /> },
-                                        event: { title: "Created a new event", component: <EventFeedItem item={item as Event} /> },
-                                        offer: { title: "Posted a new offer", component: <OfferFeedItem item={item as Offer} /> },
-                                    };
-                                    
-                                    const content = componentMap[item.type as keyof typeof componentMap];
-                                    
-                                    if (!content) return null;
-                                    
-                                    return (
-                                        <ContentFeedCard key={uniqueKey} title={content.title} date={item.date}>
-                                            {content.component}
-                                        </ContentFeedCard>
-                                    );
-                                })}
-                            </div>
-                        ) : (
-                             <Card className="text-center text-muted-foreground p-10">
-                                This user hasn't created any content yet.
-                            </Card>
-                        )}
-                    </TabsContent>
-                    <TabsContent value="posts" className="mt-6">
-                        {visiblePosts.length > 0 ? (
-                            <div className="space-y-6">
-                                {visiblePosts.map(post => (
-                                    <PostCard
-                                        key={post.id}
-                                        item={post}
-                                        onLike={handleLike}
-                                        onDelete={openDeleteDialog}
-                                        onRepost={handleRepost}
-                                        onQuote={handleQuote}
-                                        isLoading={loadingAction?.postId === post.id}
-                                        loadingAction={loadingAction?.postId === post.id ? loadingAction.action : null}
-                                    />
-                                ))}
-                            </div>
-                        ) : (
-                             <Card className="text-center text-muted-foreground p-10">
-                                This user hasn't made any posts yet.
-                            </Card>
-                        )}
-                    </TabsContent>
-                </Tabs>
+                {visiblePosts.length > 0 ? (
+                    <div className="space-y-6">
+                        {visiblePosts.map(post => (
+                            <PostCard
+                                key={post.id}
+                                item={post}
+                                onLike={handleLike}
+                                onDelete={openDeleteDialog}
+                                onRepost={handleRepost}
+                                onQuote={handleQuote}
+                                isLoading={loadingAction?.postId === post.id}
+                                loadingAction={loadingAction?.postId === post.id ? loadingAction.action : null}
+                            />
+                        ))}
+                    </div>
+                ) : (
+                     <Card className="text-center text-muted-foreground p-10">
+                        This user hasn't made any posts yet.
+                    </Card>
+                )}
             </TabsContent>
             <TabsContent value="about" className="mt-6 space-y-6">
                 <Card>
