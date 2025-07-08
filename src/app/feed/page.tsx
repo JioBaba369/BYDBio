@@ -134,7 +134,6 @@ export default function FeedPage() {
             })));
         } catch (error) {
             console.error("Error fetching discovery feed:", error);
-            toast({ title: "Failed to load discovery feed", variant: "destructive" });
         } finally {
             setIsDiscoveryLoading(false);
         }
