@@ -255,12 +255,18 @@ export const getAllEvents = async (): Promise<EventWithAuthor[]> => {
 export const getCalendarItems = async (userId: string): Promise<CalendarItem[]> => {
     const collectionsToFetch = ['events', 'offers', 'jobs', 'listings', 'promoPages'];
     
+    // Fetch only ACTIVE content created by the user
     const userContentPromises = collectionsToFetch.map(c => 
-        getDocs(query(collection(db, c), where('authorId', '==', userId)))
+        getDocs(query(
+            collection(db, c), 
+            where('authorId', '==', userId), 
+            where('status', '==', 'active')
+        ))
     );
     
+    // Also fetch active events the user has RSVP'd to, which might be external
     const rsvpedEventsPromise = getDocs(
-        query(collection(db, 'events'), where('rsvps', 'array-contains', userId))
+        query(collection(db, 'events'), where('rsvps', 'array-contains', userId), where('status', '==', 'active'))
     );
 
     const snapshots = await Promise.all([...userContentPromises, rsvpedEventsPromise]);
@@ -272,9 +278,12 @@ export const getCalendarItems = async (userId: string): Promise<CalendarItem[]> 
             const data = doc.data();
             const key = `${type}-${doc.id}`;
             // If it's an external event, only add it if the user isn't the author
+            // This prevents duplicating events the user both created and RSVP'd to
             if (isExternal && data.authorId === userId) {
                 return;
             }
+            // Add or overwrite item in the map. This ensures that if the user created an event
+            // and also RSVP'd, we get the authored version (not marked as external).
             allItems.set(key, { ...data, id: doc.id, type, isExternal });
         });
     };
