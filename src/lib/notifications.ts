@@ -164,7 +164,7 @@ const getNotificationLink = (notification: Notification): string => {
                 const typeMap = {
                     promoPages: 'p',
                     listings: 'l',
-                    jobs: 'opportunities',
+                    jobs: 'job',
                     offers: 'offer',
                     events: 'events',
                 };

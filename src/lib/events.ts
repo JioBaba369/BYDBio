@@ -303,7 +303,7 @@ export const getCalendarItems = async (userId: string): Promise<CalendarItem[]> 
             const pathMap: { [key: string]: string } = {
                 'event': `/events/${id}/edit`,
                 'offer': `/offers/${id}/edit`,
-                'job': `/opportunities/${id}/edit`,
+                'job': `/job/${id}/edit`,
                 'listing': `/listings/${id}/edit`,
                 'promoPage': `/promo/${id}/edit`,
             };

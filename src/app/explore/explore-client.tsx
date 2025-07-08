@@ -116,7 +116,7 @@ export default function ExploreClient({ initialItems }: { initialItems: PublicCo
       switch (item.type) {
           case 'event': return `/events/${item.id}`;
           case 'offer': return `/offer/${item.id}`;
-          case 'job': return `/opportunities/${item.id}`;
+          case 'job': return `/job/${item.id}`;
           case 'listing': return `/l/${item.id}`;
           case 'promoPage': return `/p/${item.id}`;
       }

@@ -17,12 +17,12 @@ import { AuthorCard } from '@/components/author-card';
 import { FollowButton } from '@/components/follow-button';
 
 
-interface OpportunityDetailClientProps {
+interface JobDetailClientProps {
     job: Job;
     author: User;
 }
 
-export default function OpportunityDetailClient({ job, author }: OpportunityDetailClientProps) {
+export default function OpportunityDetailClient({ job, author }: JobDetailClientProps) {
     const { user: currentUser } = useAuth();
     const isOwner = currentUser && currentUser.uid === author.uid;
     const isFollowing = currentUser?.subscriptions?.jobs?.includes(job.id) || false;
@@ -67,7 +67,7 @@ export default function OpportunityDetailClient({ job, author }: OpportunityDeta
                                 <div className="flex items-center gap-2 w-full sm:w-auto shrink-0">
                                     {isOwner && (
                                         <Button asChild variant="outline">
-                                            <Link href={`/opportunities/${job.id}/edit`}>
+                                            <Link href={`/job/${job.id}/edit`}>
                                                 <Edit className="mr-2 h-4 w-4"/>
                                                 Edit
                                             </Link>

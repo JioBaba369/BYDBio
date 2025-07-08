@@ -469,7 +469,7 @@ export default function SearchPage() {
                             </CardContent>
                             <CardFooter>
                                 <Button asChild className="w-full">
-                                    <Link href={`/opportunities/${job.id}`}>View Details</Link>
+                                    <Link href={`/job/${job.id}`}>View Details</Link>
                                 </Button>
                             </CardFooter>
                         </Card>

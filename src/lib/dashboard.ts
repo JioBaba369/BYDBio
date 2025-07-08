@@ -91,7 +91,7 @@ export const getRecentActivity = async (userId: string): Promise<ActivityItem[]>
 const getActivityLink = (item: ActivityItem) => {
     switch (item.type) {
         case 'Listing': return `/l/${item.id}`;
-        case 'Job': return `/opportunities/${item.id}`;
+        case 'Job': return `/job/${item.id}`;
         case 'Event': return `/events/${item.id}`;
         case 'Offer': return `/offer/${item.id}`;
         case 'Promo Page': return `/p/${item.id}`;
@@ -99,4 +99,3 @@ const getActivityLink = (item: ActivityItem) => {
         default: return '/';
     }
   };
-

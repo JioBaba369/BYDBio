@@ -25,7 +25,7 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
       title: `${job.title} at ${job.company} | BYD.Bio`,
       description: job.description || `Apply for the ${job.type} ${job.title} role at ${job.company}.`,
       images: [ { url: imageUrl, width: 1200, height: 630, alt: job.title } ],
-      url: `/opportunities/${job.id}`,
+      url: `/job/${job.id}`,
       type: 'article',
     },
      twitter: {

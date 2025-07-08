@@ -1,6 +1,3 @@
-import { redirect } from 'next/navigation';
-
-// This page redirects legacy /o/[jobId] URLs to the correct /opportunities/[jobId] path.
-export default function OldJobRedirectPage({ params }: { params: { jobId: string } }) {
-  redirect(`/opportunities/${params.jobId}`);
-}
+// This file is intentionally left blank to resolve a Next.js routing conflict.
+// By not exporting a default component, this directory is not registered as an active route.
+// The redirect is now handled by middleware.

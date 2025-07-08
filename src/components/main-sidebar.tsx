@@ -197,10 +197,10 @@ export function MainSidebar() {
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Opportunities" isActive={isActive('/opportunities')}>
-                <Link href="/opportunities">
+              <SidebarMenuButton asChild tooltip="Jobs" isActive={isActive('/job')}>
+                <Link href="/job">
                   <Briefcase />
-                  <span>Opportunities</span>
+                  <span>Jobs</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
