@@ -1,3 +1,4 @@
+
 import { initializeApp, getApps, getApp, type FirebaseApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
 import { getAuth, connectAuthEmulator } from "firebase/auth";
@@ -13,6 +14,11 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
+
+// Validate that all necessary environment variables are set.
+if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
+  throw new Error("Firebase config is not set. Please create a .env.local file with your Firebase project's configuration keys.");
+}
 
 // Initialize Firebase App (Singleton Pattern for Next.js)
 const app: FirebaseApp = !getApps().length ? initializeApp(firebaseConfig) : getApp();
@@ -30,12 +36,15 @@ declare global {
 }
 
 /*
+// This block is for connecting to LOCAL emulators for development.
+// It should be commented out for production deployment.
 if (process.env.NODE_ENV === 'development' && !global.__EMULATORS_CONNECTED) {
   try {
     connectAuthEmulator(auth, "http://127.0.0.1:9099", { disableRegeneration: true });
     connectFirestoreEmulator(db, "127.0.0.1", 8081);
     connectStorageEmulator(storage, "127.0.0.1", 9198);
     global.__EMULATORS_CONNECTED = true;
+    console.log("🔥 Connected to Firebase Emulators");
   } catch (error) {
     console.error("ERROR: Failed to connect to Firebase Emulators. Please ensure they are running via 'firebase emulators:start' and that the ports in firebase.json match this code.", error);
   }
