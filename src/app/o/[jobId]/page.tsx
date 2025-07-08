@@ -1,4 +1,3 @@
-
 import { redirect } from 'next/navigation';
 
 // This page redirects legacy /o/[jobId] URLs to the correct /opportunities/[jobId] path.
