@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent } from "@/components/ui/card"
 import Image from "next/image"
 import { CalendarIcon, Upload } from "lucide-react"
-import { useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useToast } from "@/hooks/use-toast"
 import ImageCropper from "../image-cropper"
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover"
@@ -68,11 +68,20 @@ export function ListingForm({ defaultValues, onSubmit, isSaving }: ListingFormPr
       startDate: null,
       endDate: null,
       ...defaultValues,
-      startDate: defaultValues?.startDate ? new Date(defaultValues.startDate) : null,
-      endDate: defaultValues?.endDate ? new Date(defaultValues.endDate) : null,
     },
     mode: "onChange",
   })
+  
+  useEffect(() => {
+    if (defaultValues) {
+      const valuesToSet = {
+        ...defaultValues,
+        startDate: defaultValues.startDate ? new Date(defaultValues.startDate) : null,
+        endDate: defaultValues.endDate ? new Date(defaultValues.endDate) : null,
+      };
+      form.reset(valuesToSet as ListingFormValues);
+    }
+  }, [defaultValues, form]);
   
   const watchedImageUrl = form.watch("imageUrl");
 

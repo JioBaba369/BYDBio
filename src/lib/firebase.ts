@@ -16,7 +16,7 @@ const firebaseConfig = {
 };
 
 // Check for missing Firebase configuration
-if (!firebaseConfig.apiKey || firebaseConfig.apiKey.includes('YOUR_API_KEY_HERE')) {
+if (!firebaseConfig.apiKey || firebaseConfig.apiKey.includes('YOUR_API_KEY')) {
     throw new Error(
         'Firebase API Key is missing or invalid. Please check your .env file and ensure that all NEXT_PUBLIC_FIREBASE_* variables are set correctly. You can find these values in your Firebase project settings.'
     );

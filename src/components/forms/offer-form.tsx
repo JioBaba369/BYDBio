@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent } from "@/components/ui/card"
 import Image from "next/image"
 import { CalendarIcon, Upload } from "lucide-react"
-import { useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useToast } from "@/hooks/use-toast"
 import ImageCropper from "../image-cropper"
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover"
@@ -82,13 +82,22 @@ export function OfferForm({ defaultValues, onSubmit, isSaving }: OfferFormProps)
       couponCode: "",
       ctaLink: "",
       ...defaultValues,
-      startDate: defaultValues?.startDate ? new Date(defaultValues.startDate) : undefined,
-      startTime: defaultValues?.startDate ? format(new Date(defaultValues.startDate), 'HH:mm') : '09:00',
-      endDate: defaultValues?.endDate ? new Date(defaultValues.endDate) : null,
-      endTime: defaultValues?.endDate ? format(new Date(defaultValues.endDate), 'HH:mm') : '17:00',
     },
     mode: "onChange",
   })
+  
+  useEffect(() => {
+    if (defaultValues) {
+      const valuesToSet = {
+        ...defaultValues,
+        startDate: defaultValues.startDate ? new Date(defaultValues.startDate) : undefined,
+        startTime: defaultValues.startDate ? format(new Date(defaultValues.startDate), 'HH:mm') : '09:00',
+        endDate: defaultValues.endDate ? new Date(defaultValues.endDate) : null,
+        endTime: defaultValues.endDate ? format(new Date(defaultValues.endDate), 'HH:mm') : '17:00',
+      };
+      form.reset(valuesToSet as OfferFormValues);
+    }
+  }, [defaultValues, form]);
   
   const watchedImageUrl = form.watch("imageUrl");
 

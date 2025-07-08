@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import Image from "next/image"
 import { CalendarIcon, Upload } from "lucide-react"
-import { useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useToast } from "@/hooks/use-toast"
 import ImageCropper from "../image-cropper"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select"
@@ -91,14 +91,23 @@ export function OpportunityForm({ defaultValues, onSubmit, isSaving }: Opportuni
       endDate: null,
       endTime: "17:00",
       ...defaultValues,
-      startDate: defaultValues?.startDate ? new Date(defaultValues.startDate) : null,
-      startTime: defaultValues?.startDate ? format(new Date(defaultValues.startDate), 'HH:mm') : '09:00',
-      endDate: defaultValues?.endDate ? new Date(defaultValues.endDate) : null,
-      endTime: defaultValues?.endDate ? format(new Date(defaultValues.endDate), 'HH:mm') : '17:00',
-      closingDate: defaultValues?.closingDate ? new Date(defaultValues.closingDate) : null,
     },
     mode: "onChange",
   })
+  
+  useEffect(() => {
+    if (defaultValues) {
+      const valuesToSet = {
+        ...defaultValues,
+        startDate: defaultValues.startDate ? new Date(defaultValues.startDate) : null,
+        startTime: defaultValues.startDate ? format(new Date(defaultValues.startDate), 'HH:mm') : '09:00',
+        endDate: defaultValues.endDate ? new Date(defaultValues.endDate) : null,
+        endTime: defaultValues.endDate ? format(new Date(defaultValues.endDate), 'HH:mm') : '17:00',
+        closingDate: defaultValues.closingDate ? new Date(defaultValues.closingDate) : null,
+      };
+      form.reset(valuesToSet as OpportunityFormValues);
+    }
+  }, [defaultValues, form]);
   
   const watchedImageUrl = form.watch("imageUrl");
 

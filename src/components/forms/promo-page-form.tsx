@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import Image from "next/image"
 import { Upload } from "lucide-react"
-import { useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useToast } from "@/hooks/use-toast"
 import ImageCropper from "../image-cropper"
 
@@ -62,6 +62,12 @@ export function PromoPageForm({ defaultValues, onSubmit, isSaving }: PromoPageFo
     },
     mode: "onChange",
   })
+  
+  useEffect(() => {
+    if (defaultValues) {
+      form.reset(defaultValues);
+    }
+  }, [defaultValues, form]);
   
   const watchedImageUrl = form.watch("imageUrl");
   const watchedLogoUrl = form.watch("logoUrl");

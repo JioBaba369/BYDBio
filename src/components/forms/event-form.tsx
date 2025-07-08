@@ -15,7 +15,7 @@ import { cn } from "@/lib/utils"
 import { format } from "date-fns"
 import Image from "next/image"
 import ImageCropper from "../image-cropper"
-import { useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useToast } from "@/hooks/use-toast"
 import { Textarea } from "../ui/textarea"
 
@@ -94,13 +94,22 @@ export function EventForm({ defaultValues, onSubmit, isSaving }: EventFormProps)
       ctaLink: "",
       itinerary: [],
       ...defaultValues,
-      startDate: defaultValues?.startDate ? new Date(defaultValues.startDate) : undefined,
-      startTime: defaultValues?.startDate ? format(new Date(defaultValues.startDate), 'HH:mm') : '09:00',
-      endDate: defaultValues?.endDate ? new Date(defaultValues.endDate) : null,
-      endTime: defaultValues?.endDate ? format(new Date(defaultValues.endDate), 'HH:mm') : '17:00',
     },
     mode: "onChange",
   })
+  
+  useEffect(() => {
+    if (defaultValues) {
+      const valuesToSet = {
+        ...defaultValues,
+        startDate: defaultValues.startDate ? new Date(defaultValues.startDate) : undefined,
+        startTime: defaultValues.startDate ? format(new Date(defaultValues.startDate), 'HH:mm') : '09:00',
+        endDate: defaultValues.endDate ? new Date(defaultValues.endDate) : null,
+        endTime: defaultValues.endDate ? format(new Date(defaultValues.endDate), 'HH:mm') : '17:00',
+      };
+      form.reset(valuesToSet as EventFormValues);
+    }
+  }, [defaultValues, form]);
   
   const { fields, append, remove } = useFieldArray({
     control: form.control,
