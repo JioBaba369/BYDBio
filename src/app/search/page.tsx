@@ -5,8 +5,8 @@ import { useSearchParams } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { UserPlus, UserCheck, Search as SearchIcon, Briefcase, MapPin, Tag, Calendar, Users, Tags, DollarSign, Gift, Eye, Building2, ExternalLink, Megaphone, Loader2, Rss } from "lucide-react";
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { UserPlus, UserCheck, Search as SearchIcon, Briefcase, MapPin, Tag, Calendar, Users, Tags, DollarSign, Gift, Eye, Building2, ExternalLink, Megaphone, Loader2, Rss, MousePointerClick } from "lucide-react";
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -24,9 +24,9 @@ import type { Offer } from '@/lib/offers';
 import type { Job } from '@/lib/jobs';
 import type { Event } from '@/lib/events';
 import type { PromoPage } from '@/lib/promo-pages';
-import type { Post } from '@/lib/posts';
+import type { Post, EmbeddedPostInfoWithAuthor } from '@/lib/posts';
 import { ClientFormattedDate } from '@/components/client-formatted-date';
-import { formatCurrency } from '@/lib/utils';
+import { ClientFormattedCurrency } from '@/components/client-formatted-currency';
 import { Separator } from '@/components/ui/separator';
 
 type ItemWithAuthor<T> = T & { author: User };
@@ -37,8 +37,32 @@ type SearchResults = {
     events: ItemWithAuthor<Event>[];
     offers: ItemWithAuthor<Offer>[];
     promoPages: ItemWithAuthor<PromoPage>[];
-    posts: ItemWithAuthor<Post>[];
+    posts: ItemWithAuthor<Post & { repostedPost?: EmbeddedPostInfoWithAuthor }>[];
 }
+
+const EmbeddedPostView = ({ post }: { post: EmbeddedPostInfoWithAuthor }) => (
+    <div className="mt-2 border rounded-lg overflow-hidden transition-colors hover:bg-muted/30">
+        <Link href={`/u/${post.author.username}`}>
+            <div className="p-4">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Avatar className="h-5 w-5">
+                        <AvatarImage src={post.author.avatarUrl} />
+                        <AvatarFallback>{post.author.name.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <span className="font-semibold text-foreground hover:underline">{post.author.name}</span>
+                    <span>@{post.author.username}</span>
+                </div>
+                <p className="mt-2 text-sm whitespace-pre-wrap">{post.content}</p>
+            </div>
+            {post.imageUrl && (
+                <div className="mt-2 aspect-video relative bg-muted">
+                    <Image src={post.imageUrl} alt="Embedded post image" layout="fill" className="object-cover" />
+                </div>
+            )}
+        </Link>
+    </div>
+);
+
 
 const SearchPageSkeleton = () => (
     <div className="space-y-6 animate-pulse">
@@ -101,10 +125,8 @@ export default function SearchPage() {
             return;
         }
 
-        // Search users
         const userResults = await searchUsers(queryParam);
         
-        // Search content collections
         const collectionsToSearch = ['listings', 'jobs', 'events', 'offers', 'promoPages', 'posts'];
         const contentPromises = collectionsToSearch.map(col => {
             const baseQuery = query(collection(db, col), where('searchableKeywords', 'array-contains-any', searchKeywords));
@@ -125,8 +147,15 @@ export default function SearchPage() {
             ...postsSnap.docs.map(doc => ({ ...doc.data(), id: doc.id, type: 'post' })),
         ];
 
-        const authorIds = [...new Set(allContent.map(item => item.authorId))];
-        const authors = await getUsersByIds(authorIds);
+        const authorIds = new Set<string>();
+        allContent.forEach(item => {
+            authorIds.add(item.authorId);
+            if (item.repostedPost?.authorId) {
+                authorIds.add(item.repostedPost.authorId);
+            }
+        });
+        
+        const authors = await getUsersByIds(Array.from(authorIds));
         const authorMap = new Map(authors.map(author => [author.uid, author]));
         
         const newResults: SearchResults = {
@@ -142,6 +171,18 @@ export default function SearchPage() {
         allContent.forEach(item => {
             const author = authorMap.get(item.authorId);
             if (author) {
+                if (item.repostedPost) {
+                    const repostedAuthor = authorMap.get(item.repostedPost.authorId);
+                    if (repostedAuthor) {
+                        item.repostedPost.author = {
+                            uid: repostedAuthor.uid,
+                            name: repostedAuthor.name,
+                            username: repostedAuthor.username,
+                            avatarUrl: repostedAuthor.avatarUrl,
+                        };
+                    }
+                }
+
                 switch (item.type) {
                     case 'listing': newResults.listings.push({ ...item, author }); break;
                     case 'job': newResults.jobs.push({ ...item, author }); break;
@@ -323,12 +364,13 @@ export default function SearchPage() {
                                                 <ClientFormattedDate date={post.createdAt} relative />
                                             </Link>
                                         </div>
-                                        <p className="mt-2 text-sm whitespace-pre-wrap line-clamp-3">{post.content}</p>
+                                        {post.content && <p className="mt-2 text-sm whitespace-pre-wrap line-clamp-3">{post.content}</p>}
                                         {post.imageUrl && (
                                             <div className="mt-2 rounded-lg overflow-hidden border">
                                                 <Image src={post.imageUrl} alt="Post image" width={500} height={281} className="object-cover" />
                                             </div>
                                         )}
+                                        {post.repostedPost && <EmbeddedPostView post={post.repostedPost} />}
                                     </div>
                                 </div>
                             </CardContent>
@@ -350,11 +392,11 @@ export default function SearchPage() {
              {results.promoPages.length > 0 ? (
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                   {results.promoPages.map((item) => (
-                    <Card key={item.id} className="flex flex-col">
+                    <Card key={item.id} className="flex flex-col shadow-sm hover:shadow-lg transition-shadow">
                       {item.imageUrl &&
-                        <div className="overflow-hidden rounded-t-lg">
+                        <Link href={`/p/${item.id}`} className="block overflow-hidden rounded-t-lg">
                           <Image src={item.imageUrl} alt={item.name} width={600} height={300} className="w-full object-cover aspect-[2/1]" data-ai-hint="office storefront"/>
-                        </div>
+                        </Link>
                       }
                       <CardHeader>
                         <CardTitle>{item.name}</CardTitle>
@@ -371,14 +413,14 @@ export default function SearchPage() {
                       <CardContent className="flex-grow">
                           <p className="text-sm text-muted-foreground line-clamp-3">{item.description}</p>
                       </CardContent>
-                      <Separator className="my-4" />
-                      <CardFooter>
-                          <Button asChild variant="outline" className="w-full">
-                              <Link href={`/p/${item.id}`}>
-                                  <ExternalLink className="mr-2 h-4 w-4" />
-                                  View Details
-                              </Link>
-                          </Button>
+                      <CardFooter className="flex-col items-start gap-4 border-t pt-4">
+                        <div className="flex justify-between w-full text-xs text-muted-foreground">
+                            <div className="flex items-center gap-1.5"><Eye className="h-3.5 w-3.5" />{item.views?.toLocaleString() ?? 0} Views</div>
+                            <div className="flex items-center gap-1.5"><MousePointerClick className="h-3.5 w-3.5" />{item.clicks?.toLocaleString() ?? 0} Clicks</div>
+                        </div>
+                        <Button asChild variant="secondary" className="w-full">
+                            <Link href={`/p/${item.id}`}>View Details</Link>
+                        </Button>
                       </CardFooter>
                     </Card>
                   ))}
@@ -400,30 +442,20 @@ export default function SearchPage() {
                     {results.listings.map((item) => (
                         <Card key={item.id} className="flex flex-col transition-all hover:shadow-md">
                             {item.imageUrl && (
-                                <div className="overflow-hidden rounded-t-lg">
-                                <Image src={item.imageUrl} alt={item.title} width={600} height={400} className="w-full object-cover aspect-video" data-ai-hint="product design"/>
-                                </div>
+                                <Link href={`/l/${item.id}`} className="block overflow-hidden rounded-t-lg">
+                                    <Image src={item.imageUrl} alt={item.title} width={600} height={400} className="w-full object-cover aspect-video" data-ai-hint="product design"/>
+                                </Link>
                             )}
                             <CardHeader>
-                                <CardTitle>{item.title}</CardTitle>
-                                <CardDescription className="pt-2">
-                                  <Link href={`/u/${item.author.username}`} className="flex items-center gap-2 hover:underline">
-                                      <Avatar className="h-6 w-6">
-                                          <AvatarImage src={item.author.avatarUrl} data-ai-hint="person portrait" />
-                                          <AvatarFallback>{item.author.name.charAt(0)}</AvatarFallback>
-                                      </Avatar>
-                                      <span className="text-xs">by {item.author.name}</span>
-                                  </Link>
-                                </CardDescription>
+                                <Badge variant="secondary" className="w-fit">{item.category}</Badge>
+                                <CardTitle className="mt-1">{item.title}</CardTitle>
                             </CardHeader>
                             <CardContent className="flex-grow space-y-2">
-                                <div className="flex justify-between items-center">
-                                  <Badge variant="secondary">{item.category}</Badge>
-                                  <p className="font-bold text-lg">{formatCurrency(item.price)}</p>
-                                </div>
+                                <p className="font-bold text-lg text-primary"><ClientFormattedCurrency value={item.price} /></p>
+                                <p className="text-sm text-muted-foreground line-clamp-2">{item.description}</p>
                             </CardContent>
                             <CardFooter>
-                                <Button asChild className="w-full">
+                                <Button asChild className="w-full" variant="secondary">
                                     <Link href={`/l/${item.id}`}>View Details</Link>
                                 </Button>
                             </CardFooter>
@@ -447,28 +479,22 @@ export default function SearchPage() {
                     {results.jobs.map((job) => (
                         <Card key={job.id} className="flex flex-col transition-all hover:shadow-md">
                             <CardHeader>
-                                <CardTitle>{job.title}</CardTitle>
-                                <CardDescription>{job.company}</CardDescription>
-                                <CardDescription className="pt-2">
-                                  <Link href={`/u/${job.author.username}`} className="flex items-center gap-2 hover:underline">
-                                      <Avatar className="h-6 w-6">
-                                          <AvatarImage src={job.author.avatarUrl} data-ai-hint="person portrait" />
-                                          <AvatarFallback>{job.author.name.charAt(0)}</AvatarFallback>
-                                      </Avatar>
-                                      <span className="text-xs">by {job.author.name}</span>
-                                  </Link>
-                                </CardDescription>
+                                <Badge variant="destructive" className="w-fit">{job.type}</Badge>
+                                <CardTitle className="mt-1">{job.title}</CardTitle>
+                                <CardDescription className="flex items-center gap-1.5"><Building2 className="h-4 w-4"/>{job.company}</CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-2 flex-grow">
                                 <div className="flex items-center text-sm text-muted-foreground">
                                     <MapPin className="mr-2 h-4 w-4" /> {job.location}
                                 </div>
-                                <div className="flex items-center text-sm text-muted-foreground">
-                                    <Briefcase className="mr-2 h-4 w-4" /> {job.type}
-                                </div>
+                                {job.remuneration && (
+                                    <div className="flex items-center text-sm text-muted-foreground">
+                                        <DollarSign className="mr-2 h-4 w-4" /> <ClientFormattedCurrency value={job.remuneration} />
+                                    </div>
+                                )}
                             </CardContent>
                             <CardFooter>
-                                <Button asChild className="w-full">
+                                <Button asChild className="w-full" variant="secondary">
                                     <Link href={`/job/${job.id}`}>View Details</Link>
                                 </Button>
                             </CardFooter>
@@ -492,21 +518,12 @@ export default function SearchPage() {
                     {results.events.map((event) => (
                         <Card key={event.id} className="flex flex-col transition-all hover:shadow-md">
                             {event.imageUrl && (
-                                <div className="overflow-hidden rounded-t-lg">
+                                <Link href={`/events/${event.id}`} className="block overflow-hidden rounded-t-lg">
                                     <Image src={event.imageUrl} alt={event.title} width={600} height={400} className="w-full object-cover aspect-video" data-ai-hint="event poster" />
-                                </div>
+                                </Link>
                             )}
                             <CardHeader>
                                 <CardTitle>{event.title}</CardTitle>
-                                <CardDescription className="pt-2">
-                                  <Link href={`/u/${event.author.username}`} className="flex items-center gap-2 hover:underline">
-                                      <Avatar className="h-6 w-6">
-                                          <AvatarImage src={event.author.avatarUrl} data-ai-hint="person portrait" />
-                                          <AvatarFallback>{event.author.name.charAt(0)}</AvatarFallback>
-                                      </Avatar>
-                                      <span className="text-xs">by {event.author.name}</span>
-                                  </Link>
-                                </CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-2 flex-grow">
                                 <div className="flex items-center text-sm text-muted-foreground">
@@ -517,7 +534,7 @@ export default function SearchPage() {
                                 </div>
                             </CardContent>
                             <CardFooter>
-                                <Button asChild className="w-full">
+                                <Button asChild className="w-full" variant="secondary">
                                     <Link href={`/events/${event.id}`}>Learn More</Link>
                                 </Button>
                             </CardFooter>
@@ -541,23 +558,14 @@ export default function SearchPage() {
                     {results.offers.map((offer) => (
                         <Card key={offer.id} className="flex flex-col transition-all hover:shadow-md">
                            <CardHeader>
-                                <CardTitle>{offer.title}</CardTitle>
-                                 <CardDescription className="pt-2">
-                                  <Link href={`/u/${offer.author.username}`} className="flex items-center gap-2 hover:underline">
-                                      <Avatar className="h-6 w-6">
-                                          <AvatarImage src={offer.author.avatarUrl} data-ai-hint="person portrait" />
-                                          <AvatarFallback>{offer.author.name.charAt(0)}</AvatarFallback>
-                                      </Avatar>
-                                      <span className="text-xs">by {offer.author.name}</span>
-                                  </Link>
-                                </CardDescription>
+                                <Badge variant="secondary" className="w-fit">{offer.category}</Badge>
+                                <CardTitle className="mt-1">{offer.title}</CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-2 flex-grow">
-                                <Badge variant="secondary"><Tag className="mr-1 h-3 w-3" />{offer.category}</Badge>
                                 <p className="text-sm text-muted-foreground line-clamp-2">{offer.description}</p>
                             </CardContent>
                             <CardFooter>
-                                <Button asChild className="w-full">
+                                <Button asChild className="w-full" variant="secondary">
                                     <Link href={`/offer/${offer.id}`}>Claim Offer</Link>
                                 </Button>
                             </CardFooter>

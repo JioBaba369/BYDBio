@@ -402,7 +402,7 @@ export default function FeedPage() {
         onOpenChange={setIsDeleteDialogOpen}
         onConfirm={handleConfirmDelete}
         itemName="post"
-        itemDescription="This will permanently delete the post. This action cannot be undone."
+        confirmationText="DELETE"
       />
       <div className="max-w-2xl mx-auto space-y-6">
         <h1 className="text-2xl sm:text-3xl font-bold font-headline">Status Feed</h1>

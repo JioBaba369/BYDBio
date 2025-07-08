@@ -66,7 +66,7 @@ export function DeleteConfirmationDialog({
         {confirmationText && (
             <div className="space-y-2">
                 <Label htmlFor="confirmation">
-                    {confirmationLabel || `To confirm, please type "${confirmationText}" below.`}
+                    {confirmationLabel || `This action is permanent. To confirm, type "${confirmationText}" below.`}
                 </Label>
                 <Input
                     id="confirmation"
