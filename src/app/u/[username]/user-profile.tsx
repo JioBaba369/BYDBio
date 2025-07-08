@@ -325,11 +325,11 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
                         {allOtherContent.map(item => {
                             const uniqueKey = `${item.type}-${item.id}`;
                             const componentMap = {
-                                promoPage: { title: "Created a new promo page", component: <PromoPageFeedItem item={item as PromoPage} /> },
-                                listing: { title: "Added a new listing", component: <ListingFeedItem item={item as Listing} /> },
-                                job: { title: "Posted a new job", component: <JobFeedItem item={item as Job} /> },
-                                event: { title: "Created a new event", component: <EventFeedItem item={item as Event} /> },
-                                offer: { title: "Posted a new offer", component: <OfferFeedItem item={item as Offer} /> },
+                                promoPage: { title: "Promo Page", component: <PromoPageFeedItem item={item as PromoPage} /> },
+                                listing: { title: "Listing", component: <ListingFeedItem item={item as Listing} /> },
+                                job: { title: "Job", component: <JobFeedItem item={item as Job} /> },
+                                event: { title: "Event", component: <EventFeedItem item={item as Event} /> },
+                                offer: { title: "Offer", component: <OfferFeedItem item={item as Offer} /> },
                             };
                             
                             const content = componentMap[item.type as keyof typeof componentMap];
