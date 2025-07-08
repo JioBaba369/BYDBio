@@ -4,7 +4,7 @@
 import { OpportunityForm, OpportunityFormValues } from "@/components/forms/opportunity-form";
 import { useToast } from "@/hooks/use-toast";
 import { useParams, useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { getJob, updateJob, type Job } from "@/lib/jobs";
 import { uploadImage } from "@/lib/storage";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -69,6 +69,18 @@ export default function EditJobPage() {
             });
     }, [jobId, user, router, toast]);
 
+    const formDefaultValues = useMemo(() => {
+        if (!jobToEdit) {
+            return undefined;
+        }
+        return {
+            ...jobToEdit,
+            closingDate: jobToEdit.closingDate ? new Date(jobToEdit.closingDate) : null,
+            startDate: jobToEdit.startDate ? new Date(jobToEdit.startDate) : null,
+            endDate: jobToEdit.endDate ? new Date(jobToEdit.endDate) : null,
+        };
+    }, [jobToEdit]);
+
     const onSubmit = async (data: OpportunityFormValues) => {
         if (!user) {
             toast({ title: "Authentication Error", description: "You must be logged in.", variant: "destructive" });
@@ -123,7 +135,7 @@ export default function EditJobPage() {
                     </Link>
                 </Button>
             </div>
-            <OpportunityForm defaultValues={jobToEdit} onSubmit={onSubmit} isSaving={isSaving} />
+            <OpportunityForm defaultValues={formDefaultValues} onSubmit={onSubmit} isSaving={isSaving} />
         </div>
     )
 }

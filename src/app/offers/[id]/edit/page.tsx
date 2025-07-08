@@ -4,7 +4,7 @@
 import { OfferForm, OfferFormValues } from "@/components/forms/offer-form";
 import { useToast } from "@/hooks/use-toast";
 import { useParams, useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { getOffer, updateOffer, type Offer } from "@/lib/offers";
 import { uploadImage } from "@/lib/storage";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -69,6 +69,17 @@ export default function EditOfferPage() {
             });
     }, [offerId, user, router, toast]);
 
+    const formDefaultValues = useMemo(() => {
+        if (!offerToEdit) {
+            return undefined;
+        }
+        return {
+            ...offerToEdit,
+            startDate: offerToEdit.startDate ? new Date(offerToEdit.startDate) : new Date(),
+            endDate: offerToEdit.endDate ? new Date(offerToEdit.endDate) : null,
+        };
+    }, [offerToEdit]);
+
     const onSubmit = async (data: OfferFormValues) => {
         if (!user) {
             toast({ title: "Authentication Error", description: "You must be logged in.", variant: "destructive" });
@@ -122,7 +133,7 @@ export default function EditOfferPage() {
                     </Link>
                 </Button>
             </div>
-            <OfferForm defaultValues={offerToEdit} onSubmit={onSubmit} isSaving={isSaving} />
+            <OfferForm defaultValues={formDefaultValues} onSubmit={onSubmit} isSaving={isSaving} />
         </div>
     )
 }

@@ -4,7 +4,7 @@
 import { ListingForm, ListingFormValues } from "@/components/forms/listing-form";
 import { useToast } from "@/hooks/use-toast";
 import { useParams, useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { getListing, updateListing, type Listing } from "@/lib/listings";
 import { Skeleton } from "@/components/ui/skeleton";
 import { uploadImage } from "@/lib/storage";
@@ -67,6 +67,17 @@ export default function EditListingPage() {
                 setIsLoading(false);
             });
     }, [listingId, user, router, toast]);
+
+    const formDefaultValues = useMemo(() => {
+        if (!listingToEdit) {
+            return undefined;
+        }
+        return {
+            ...listingToEdit,
+            startDate: listingToEdit.startDate ? new Date(listingToEdit.startDate) : null,
+            endDate: listingToEdit.endDate ? new Date(listingToEdit.endDate) : null,
+        };
+    }, [listingToEdit]);
     
     const onSubmit = async (data: ListingFormValues) => {
         if (!user) {
@@ -121,7 +132,7 @@ export default function EditListingPage() {
                     </Link>
                 </Button>
             </div>
-            <ListingForm defaultValues={listingToEdit} onSubmit={onSubmit} isSaving={isSaving} />
+            <ListingForm defaultValues={formDefaultValues} onSubmit={onSubmit} isSaving={isSaving} />
         </div>
     )
 }
