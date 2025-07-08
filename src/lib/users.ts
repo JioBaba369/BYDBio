@@ -149,29 +149,32 @@ export const updateUser = async (uid: string, data: Partial<User>) => {
     const userDocRef = doc(db, "users", uid);
     const dataToUpdate: { [key: string]: any } = { ...data };
 
-    // If username is being updated, check for uniqueness first
+    // If username is being updated, ensure it's lowercase and check for uniqueness
     if (data.username) {
+        const newUsername = data.username.toLowerCase();
+        dataToUpdate.username = newUsername;
+
         const userDoc = await getDoc(userDocRef);
-        if (userDoc.exists() && data.username !== userDoc.data().username) {
+        if (userDoc.exists() && newUsername !== userDoc.data().username) {
             const usersRef = collection(db, "users");
-            const q = query(usersRef, where("username", "==", data.username), limit(1));
+            const q = query(usersRef, where("username", "==", newUsername), limit(1));
             const querySnapshot = await getDocs(q);
             if (!querySnapshot.empty) {
                 throw new Error("Username is already taken.");
             }
         }
     }
-    
+
     // If name or username is being updated, also update searchableKeywords and avatarFallback
-    if (data.name || data.username) {
+    if (data.name || dataToUpdate.username) {
         const userDoc = await getDoc(userDocRef);
         if (userDoc.exists()) {
             const existingData = userDoc.data() as User;
             const newName = data.name ?? existingData.name;
-            const newUsername = data.username ?? existingData.username;
+            const newUsername = dataToUpdate.username ?? existingData.username;
             dataToUpdate.searchableKeywords = [...new Set([
                 ...newName.toLowerCase().split(' ').filter(Boolean),
-                newUsername.toLowerCase()
+                newUsername
             ])];
             // Only update the fallback if the name is explicitly being changed.
             if(data.name) {
@@ -184,7 +187,7 @@ export const updateUser = async (uid: string, data: Partial<User>) => {
 
 export async function getUserByUsername(username: string): Promise<User | null> {
     const usersRef = collection(db, "users");
-    const q = query(usersRef, where("username", "==", username), limit(1));
+    const q = query(usersRef, where("username", "==", username.toLowerCase()), limit(1));
     const querySnapshot = await getDocs(q);
 
     if (querySnapshot.empty) {

@@ -32,7 +32,11 @@ import { Separator } from "@/components/ui/separator";
 
 const publicProfileSchema = z.object({
   name: z.string().min(1, "Name cannot be empty.").max(50, "Name cannot be longer than 50 characters."),
-  username: z.string().min(3, "Username must be at least 3 characters long.").max(30, "Username cannot be longer than 30 characters.").regex(/^[a-zA-Z0-9_]+$/, "Username can only contain letters, numbers, and underscores."),
+  username: z.string()
+    .toLowerCase()
+    .min(3, "Username must be at least 3 characters long.")
+    .max(30, "Username cannot be longer than 30 characters.")
+    .regex(/^[a-z0-9_]+$/, "Username can only contain lowercase letters, numbers, and underscores."),
   bio: z.string().max(160, "Bio must be 160 characters or less.").optional(),
 });
 type PublicProfileFormValues = z.infer<typeof publicProfileSchema>;
