@@ -38,19 +38,21 @@ export default function ImageCropper({
       return
     }
     try {
+      const outputType = isRound ? 'image/png' : 'image/jpeg';
       const croppedImage = await getCroppedImg(
         imageSrc,
         croppedAreaPixels,
-        'image/png' // Always use PNG to support transparency
+        outputType,
+        0.9 // Specify quality for JPEG
       )
       if (croppedImage) {
         onCropComplete(croppedImage)
       }
       onOpenChange(false)
     } catch (e) {
-      //
+      console.error('Error cropping image:', e);
     }
-  }, [imageSrc, croppedAreaPixels, onCropComplete, onOpenChange])
+  }, [imageSrc, croppedAreaPixels, onCropComplete, onOpenChange, isRound])
   
   const handleOpenChange = (isOpen: boolean) => {
     if (!isOpen) {

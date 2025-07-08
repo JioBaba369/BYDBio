@@ -14,7 +14,8 @@ export const createImage = (url: string): Promise<HTMLImageElement> =>
 export default async function getCroppedImg(
   imageSrc: string,
   pixelCrop: Area,
-  outputType: 'image/jpeg' | 'image/png' = 'image/png'
+  outputType: 'image/jpeg' | 'image/png' = 'image/png',
+  quality = 0.9
 ): Promise<string | null> {
   const image = await createImage(imageSrc);
   const canvas = document.createElement('canvas');
@@ -42,5 +43,5 @@ export default async function getCroppedImg(
   );
 
   // Return as data URL
-  return canvas.toDataURL(outputType);
+  return canvas.toDataURL(outputType, quality);
 }
