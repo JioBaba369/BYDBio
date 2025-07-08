@@ -46,7 +46,6 @@ export const getOffer = async (id: string): Promise<Offer | null> => {
   if (offerDoc.exists()) {
     const data = offerDoc.data();
     if (!data.startDate) {
-        console.warn(`Offer ${id} is missing a startDate and will be skipped.`);
         return null;
     }
     return { 
@@ -67,7 +66,6 @@ export const getOffersByUser = async (userId: string): Promise<Offer[]> => {
   return querySnapshot.docs.map(doc => {
       const data = doc.data();
       if (!data.startDate || !data.createdAt) {
-          console.warn(`Offer ${doc.id} for user ${userId} is missing a required date field and will be skipped.`);
           return null;
       }
       return { 

@@ -156,7 +156,6 @@ export default function SearchPage() {
         setResults(newResults);
 
     } catch (err) {
-        console.error("Search failed:", err);
         toast({ title: "Search failed", description: "Could not perform search.", variant: "destructive" });
     } finally {
         setIsLoading(false);

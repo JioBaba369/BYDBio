@@ -52,7 +52,6 @@ export const getJob = async (id: string): Promise<Job | null> => {
   if (jobDoc.exists()) {
     const data = jobDoc.data();
     if (!data.postingDate) {
-        console.warn(`Job ${id} is missing a postingDate and will be skipped.`);
         return null;
     }
     return { 
@@ -75,7 +74,6 @@ export const getJobsByUser = async (userId: string): Promise<Job[]> => {
   return querySnapshot.docs.map(doc => {
       const data = doc.data();
        if (!data.postingDate || !data.createdAt) {
-          console.warn(`Job ${doc.id} for user ${userId} is missing a required date field and will be skipped.`);
           return null;
       }
       return { 

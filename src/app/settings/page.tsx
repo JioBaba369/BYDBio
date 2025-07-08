@@ -109,7 +109,6 @@ export default function SettingsPage() {
             setInitialNotificationSettings(notificationSettings);
             toast({ title: "Notification settings saved", description: "Your notification preferences have been updated." });
         } catch (error) {
-            console.error("Failed to update notification settings:", error);
             toast({ title: "Error saving settings", variant: "destructive" });
         } finally {
             setIsSavingNotifications(false);
@@ -132,7 +131,6 @@ export default function SettingsPage() {
             // The AuthProvider will automatically handle redirecting the user on logout.
             setIsDeleteDialogOpen(false);
         } catch(error: any) {
-            console.error("Account deletion error:", error);
             // Firebase often requires recent login for this action.
             if (error.code === 'auth/requires-recent-login') {
                  toast({

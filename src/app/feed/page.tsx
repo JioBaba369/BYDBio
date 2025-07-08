@@ -117,7 +117,6 @@ export default function FeedPage() {
                 isLiked: post.likedBy.includes(user.uid),
             })));
         } catch (error) {
-            console.error("Error fetching following feed:", error);
             toast({ title: "Failed to load your feed", variant: "destructive" });
         } finally {
             setIsFollowingLoading(false);
@@ -133,7 +132,7 @@ export default function FeedPage() {
                 isLiked: post.likedBy.includes(user.uid),
             })));
         } catch (error) {
-            console.error("Error fetching discovery feed:", error);
+            // Discovery feed is non-critical, so we don't show a toast.
         } finally {
             setIsDiscoveryLoading(false);
         }
@@ -158,7 +157,6 @@ export default function FeedPage() {
             window.scrollTo({ top: 0, behavior: 'smooth' });
             document.getElementById('new-post')?.focus();
         } catch (error) {
-            console.error("Failed to parse post to quote from sessionStorage:", error);
             sessionStorage.removeItem('postToQuote'); // Clean up bad data
         }
     }
@@ -235,7 +233,6 @@ export default function FeedPage() {
         setPostPrivacy('public');
         toast({ title: "Update Posted!" });
     } catch(error) {
-        console.error("Error posting update:", error);
         toast({ title: "Failed to post update", variant: "destructive" });
         await fetchFeeds(true, false); // Refetch on error
     } finally {
@@ -277,7 +274,6 @@ export default function FeedPage() {
     try {
         await toggleLikePost(postId, user.uid);
     } catch (error) {
-        console.error("Error liking post:", error);
         toast({ title: "Something went wrong", variant: "destructive" });
         // Revert on error
         setFollowingFeed(originalFollowingFeed);
@@ -323,7 +319,6 @@ export default function FeedPage() {
       setFollowingFeed(prev => [newPostForFeed, ...prev]);
       toast({ title: "Reposted!" });
     } catch (error: any) {
-      console.error("Error reposting:", error);
       toast({ title: error.message || "Failed to repost", variant: "destructive" });
     } finally {
       setLoadingAction(null);
@@ -352,7 +347,6 @@ export default function FeedPage() {
         await deletePost(postToDelete.id);
         toast({ title: "Post Deleted" });
     } catch (error) {
-        console.error("Error deleting post:", error);
         toast({ title: "Failed to delete post", variant: "destructive" });
         await fetchFeeds(true, true); // Revert on error
     } finally {

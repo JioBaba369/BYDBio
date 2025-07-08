@@ -89,7 +89,6 @@ export default function EventsClient({ initialEvents }: { initialEvents: EventWi
             description: `"${eventTitle}" status updated in your diary.`
         });
     } catch (error) {
-        console.error("RSVP error:", error);
         toast({ title: "Failed to update RSVP", variant: "destructive" });
         // Rollback on error
         setAllEvents(originalEvents);

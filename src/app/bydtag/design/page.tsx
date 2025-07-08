@@ -257,7 +257,6 @@ export default function BydTagDesignPage() {
           }
         }, 'image/png');
       }).catch(err => {
-        console.error("Error generating card image:", err);
         toast({ title: 'Download Failed', description: 'An unexpected error occurred.', variant: 'destructive' });
       });
   };

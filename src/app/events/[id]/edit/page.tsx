@@ -61,7 +61,6 @@ export default function EditEventPage() {
                 setEventToEdit(eventData);
             })
             .catch((err) => {
-                console.error("Error fetching event for edit:", err);
                 toast({ title: "Error", description: "Could not load item for editing.", variant: "destructive" });
                 router.push('/calendar');
             })
@@ -103,7 +102,6 @@ export default function EditEventPage() {
             });
             router.push('/calendar');
         } catch (error) {
-            console.error("Error updating event:", error);
             toast({
                 title: "Error",
                 description: "Failed to update event. Please try again.",

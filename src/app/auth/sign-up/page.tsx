@@ -55,7 +55,6 @@ export default function SignUpPage() {
       });
       router.push('/');
     } catch (error: any) {
-      console.error("Sign up error:", error);
       let description = "Could not create your account. Please try again.";
       if (error.code === 'auth/email-already-in-use') {
         description = "This email address is already in use. Please sign in or use a different email.";

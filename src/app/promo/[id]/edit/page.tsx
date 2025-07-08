@@ -62,7 +62,6 @@ export default function EditPromoPage() {
                 setPromoPageToEdit(promoPageData);
             })
             .catch((err) => {
-                console.error("Error fetching promo page for edit:", err);
                 toast({ title: "Error", description: "Could not load item for editing.", variant: "destructive" });
                 router.push('/calendar');
             })
@@ -96,7 +95,6 @@ export default function EditPromoPage() {
             });
             router.push('/calendar');
         } catch (error) {
-            console.error("Error updating promo page:", error);
             toast({
                 title: "Error",
                 description: "Failed to update promo page. Please try again.",

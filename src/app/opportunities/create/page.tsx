@@ -28,6 +28,8 @@ export default function CreateJobPage() {
                 description: data.description,
                 location: data.location,
                 type: data.type,
+                category: data.category,
+                subCategory: data.subCategory,
             };
 
             if (data.remuneration) dataToSave.remuneration = data.remuneration;
@@ -49,7 +51,6 @@ export default function CreateJobPage() {
             });
             router.push('/calendar');
         } catch (error) {
-            console.error("Error creating job:", error);
             toast({
                 title: "Error",
                 description: "Failed to create job. Please try again.",

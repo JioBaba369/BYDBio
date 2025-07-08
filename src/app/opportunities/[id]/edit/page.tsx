@@ -61,7 +61,6 @@ export default function EditJobPage() {
                 setJobToEdit(jobData);
             })
             .catch((err) => {
-                console.error("Error fetching job for edit:", err);
                 toast({ title: "Error", description: "Could not load item for editing.", variant: "destructive" });
                 router.push('/calendar');
             })
@@ -91,7 +90,6 @@ export default function EditJobPage() {
             });
             router.push('/calendar');
         } catch (error) {
-            console.error("Error updating job:", error);
             toast({
                 title: "Error",
                 description: "Failed to update job. Please try again.",

@@ -26,6 +26,7 @@ export default function CreateOfferPage() {
                 title: data.title,
                 description: data.description,
                 category: data.category,
+                subCategory: data.subCategory,
                 startDate: data.startDate,
             };
 
@@ -45,7 +46,6 @@ export default function CreateOfferPage() {
             });
             router.push('/calendar');
         } catch (error) {
-            console.error("Error creating offer:", error);
             toast({
                 title: "Error",
                 description: "Failed to create offer. Please try again.",

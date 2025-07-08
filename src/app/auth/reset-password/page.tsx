@@ -43,7 +43,6 @@ export default function ResetPasswordPage() {
       });
       setIsSubmitted(true);
     } catch (error: any) {
-      console.error("Password reset error:", error);
       toast({
         title: "Error Sending Link",
         description: error.message || "An unexpected error occurred while sending the reset link.",

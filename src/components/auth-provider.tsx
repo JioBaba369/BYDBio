@@ -47,13 +47,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 try {
                     await createUserProfileIfNotExists(fbUser);
                 } catch (creationError) {
-                    console.error("Failed to create user profile on-the-fly:", creationError);
-                    setUser(null);
+                    //
                 }
             }
             setLoading(false);
         }, (error) => {
-            console.error("Error fetching user profile:", error);
             setUser(null);
             setLoading(false);
         });

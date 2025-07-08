@@ -26,6 +26,8 @@ export default function CreatePromoPage() {
                 name: data.name,
                 description: data.description,
                 email: data.email,
+                category: data.category,
+                subCategory: data.subCategory,
             };
 
             if (data.phone) dataToSave.phone = data.phone;
@@ -48,7 +50,6 @@ export default function CreatePromoPage() {
             });
             router.push('/calendar');
         } catch (error) {
-            console.error("Error creating promo page:", error);
             toast({
                 title: "Error",
                 description: "Failed to create promo page. Please try again.",

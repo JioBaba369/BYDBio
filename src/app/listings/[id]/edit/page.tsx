@@ -60,7 +60,6 @@ export default function EditListingPage() {
                 setListingToEdit(listingData);
             })
             .catch((err) => {
-                console.error("Error fetching listing for edit:", err);
                 toast({ title: "Error", description: "Could not load item for editing.", variant: "destructive" });
                 router.push('/calendar');
             })
@@ -89,7 +88,6 @@ export default function EditListingPage() {
             });
             router.push('/calendar');
         } catch (error) {
-            console.error("Error updating listing:", error);
             toast({
                 title: "Error",
                 description: "Failed to update listing. Please try again.",

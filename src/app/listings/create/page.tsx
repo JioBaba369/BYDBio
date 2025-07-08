@@ -27,6 +27,7 @@ export default function CreateListingPage() {
                 description: data.description,
                 price: data.price,
                 category: data.category,
+                subCategory: data.subCategory,
                 listingType: data.listingType || 'sale',
             };
 
@@ -45,7 +46,6 @@ export default function CreateListingPage() {
             });
             router.push('/calendar');
         } catch (error) {
-            console.error("Error creating listing:", error);
             toast({
                 title: "Error",
                 description: "Failed to create listing. Please try again.",

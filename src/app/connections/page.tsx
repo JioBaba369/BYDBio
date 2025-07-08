@@ -77,7 +77,6 @@ export default function ConnectionsPage() {
             setFollowingList(following);
             setSuggestedList(suggested);
         } catch (error) {
-            console.error("Error fetching connections:", error);
             toast({ title: "Error fetching connections", variant: "destructive" });
         } finally {
             setIsLoading(false);
@@ -107,7 +106,6 @@ export default function ConnectionsPage() {
             // Refetch all connection data to ensure UI consistency
             await fetchConnections();
         } catch (error) {
-            console.error("Error following/unfollowing user:", error);
             toast({ title: "Something went wrong", variant: "destructive" });
         } finally {
             setTogglingFollowId(null);

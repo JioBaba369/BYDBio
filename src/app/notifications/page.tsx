@@ -55,7 +55,6 @@ export default function NotificationsPage() {
             await markNotificationsAsRead(user.uid);
             toast({ title: "All notifications marked as read." });
         } catch (error) {
-            console.error("Failed to mark notifications as read:", error);
             setNotifications(originalNotifications); // Revert on error
             toast({ title: "Error", description: "Could not mark notifications as read.", variant: "destructive" });
         }
@@ -72,7 +71,6 @@ export default function NotificationsPage() {
                 // Optimistic update
                 setNotifications(prev => prev.map(n => n.id === notification.id ? { ...n, read: true } : n));
                 markSingleNotificationAsRead(notification.id).catch(err => {
-                    console.error("Failed to mark as read:", err);
                     setNotifications(originalNotifications); // Revert on error
                     toast({ title: "Error", description: "Could not update notification status.", variant: "destructive" });
                 });

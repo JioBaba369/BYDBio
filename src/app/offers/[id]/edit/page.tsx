@@ -61,7 +61,6 @@ export default function EditOfferPage() {
                 setOfferToEdit(offerData);
             })
             .catch((err) => {
-                console.error("Error fetching offer for edit:", err);
                 toast({ title: "Error", description: "Could not load item for editing.", variant: "destructive" });
                 router.push('/calendar');
             })
@@ -91,7 +90,6 @@ export default function EditOfferPage() {
             });
             router.push('/calendar');
         } catch (error) {
-            console.error("Error updating offer:", error);
             toast({
                 title: "Error",
                 description: "Failed to update offer. Please try again.",

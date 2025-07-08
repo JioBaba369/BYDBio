@@ -1,3 +1,4 @@
+
 'use client';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -85,7 +86,6 @@ export default function PromoClient({ initialPromoPages }: { initialPromoPages: 
       setPromoPages(prev => prev.filter(p => p.id !== promoPageToDelete.id));
       toast({ title: "Promo Page Deleted" });
     } catch (error) {
-      console.error("Error deleting promo page:", error);
       toast({ title: "Failed to delete promo page", variant: "destructive" });
     } finally {
       setIsDeleteDialogOpen(false);

@@ -94,7 +94,6 @@ export default function CalendarPage() {
         getCalendarItems(user.uid)
             .then(setAllItems)
             .catch(err => {
-                console.error("Failed to fetch calendar items", err);
                 toast({ title: "Error", description: "Could not load calendar items.", variant: "destructive" });
             })
             .finally(() => setIsLoading(false));
@@ -185,7 +184,6 @@ export default function CalendarPage() {
                 break;
         }
     } catch (error) {
-        console.error(`Error deleting ${selectedItem.type}:`, error);
         toast({ title: 'Error', description: `Failed to delete ${selectedItem.type}.`, variant: 'destructive' });
         // Rollback on error
         setAllItems(previousItems);

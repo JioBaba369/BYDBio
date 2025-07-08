@@ -39,7 +39,7 @@ export function LandingPage() {
     useEffect(() => {
         getAllPublicContent()
             .then(setItems)
-            .catch(console.error)
+            .catch(() => {})
             .finally(() => setIsLoading(false));
     }, []);
 

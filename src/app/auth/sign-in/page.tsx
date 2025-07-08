@@ -45,7 +45,6 @@ export default function SignInPage() {
       });
       router.push('/');
     } catch (error: any) {
-      console.error("Sign in error:", error);
       let description = "An unexpected error occurred. Please try again.";
       
       switch (error.code) {

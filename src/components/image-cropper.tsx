@@ -48,7 +48,7 @@ export default function ImageCropper({
       }
       onOpenChange(false)
     } catch (e) {
-      console.error(e)
+      //
     }
   }, [imageSrc, croppedAreaPixels, onCropComplete, onOpenChange])
   

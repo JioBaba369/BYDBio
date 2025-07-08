@@ -60,7 +60,6 @@ export default function EventDetailClient({ event, author }: EventDetailClientPr
         const { error, value } = ics.createEvent(icsEvent);
 
         if (error) {
-            console.error(error);
             toast({
                 title: "Error creating calendar file",
                 description: "There was an issue generating the .ics file. Please try again.",

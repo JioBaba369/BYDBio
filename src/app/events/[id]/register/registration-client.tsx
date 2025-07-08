@@ -47,7 +47,6 @@ export default function EventRegistrationClient({ event, author }: EventRegistra
         });
         setIsSubmitted(true);
     } catch (error) {
-        console.error("RSVP error:", error);
         toast({ title: "Failed to RSVP", variant: "destructive" });
     } finally {
         setIsSubmitting(false);

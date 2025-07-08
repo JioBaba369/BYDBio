@@ -68,7 +68,6 @@ export function ChangePasswordDialog({ open, onOpenChange }: ChangePasswordDialo
       });
       handleOpenChange(false);
     } catch (error: any) {
-      console.error("Change password error:", error);
       let description = "An unexpected error occurred.";
       if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
           description = "The current password you entered is incorrect.";

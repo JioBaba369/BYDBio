@@ -342,7 +342,6 @@ export default function ProfilePage() {
            publicProfileForm.setError("username", { type: "manual", message: "This username is already taken. Please choose another." });
            toast({ title: "Update Failed", description: "This username is already taken.", variant: 'destructive'});
        } else {
-           console.error("Error saving profile:", error);
            toast({ title: "Error saving profile", description: "An unexpected error occurred.", variant: 'destructive'});
        }
     } finally {
@@ -407,7 +406,6 @@ export default function ProfilePage() {
         description: "Your new profile picture has been saved.",
       });
     } catch (error) {
-      console.error("Error updating avatar:", error);
       toast({
         title: "Error Uploading Avatar",
         description: "There was a problem uploading your picture. Please try again.",
