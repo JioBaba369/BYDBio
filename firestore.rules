@@ -2,105 +2,53 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // HELPER FUNCTIONS
-    function isOwner(userId) {
-      return request.auth.uid == userId;
-    }
     
-    function isAuthenticated() {
-      return request.auth != null;
-    }
-    
-    // Validates incoming user data on creation
-    function isValidUser(data) {
-        return data.name is string && data.name.size() < 50 &&
-               data.username is string && data.username.size() > 2 && data.username.size() < 30 &&
-               (!('bio' in data) || data.bio is string && data.bio.size() <= 160);
-    }
-    
-    // Validates incoming post data on creation
-    function isValidPost(data) {
-        return data.authorId == request.auth.uid &&
-               data.content is string && data.content.size() < 2000;
-    }
-    
-    // Validates incoming event data on creation
-    function isValidEvent(data) {
-        return data.authorId == request.auth.uid &&
-               data.title is string && data.title.size() > 1 && data.title.size() < 101 &&
-               data.description is string && data.description.size() > 9 && data.description.size() < 2001 &&
-               data.location is string;
+    // By default, deny all reads and writes
+    match /{document=**} {
+      allow read, write: if false;
     }
 
-    // COLLECTION-SPECIFIC RULES
-
-    // Users collection rules
+    // Users can be read by anyone, but only written to by the authenticated user
     match /users/{userId} {
       allow read: if true;
-      allow create: if isOwner(userId) && isValidUser(request.resource.data);
-      allow update: if isOwner(userId);
-      allow delete: if isOwner(userId);
+      allow create, update: if request.auth != null && request.auth.uid == userId;
+      allow delete: if false; // Deletion is a privileged operation
     }
     
-    // Notifications collection rules
+    // Notifications can only be accessed by the user they belong to
     match /notifications/{notificationId} {
-        allow read, update: if isOwner(resource.data.userId);
-        allow create: if isAuthenticated();
-        allow delete: if false; // Deleting notifications is not allowed
+      allow read, update, delete: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null; 
     }
 
-    // Posts collection
+    // Helper function to check ownership
+    function isOwner() {
+      return request.auth.uid == resource.data.authorId;
+    }
+    
+    // Helper function to check ownership on create
+    function isCreatingOwnContent() {
+      return request.auth.uid == request.resource.data.authorId;
+    }
+    
+    // Public content collections (events, jobs, etc.)
+    match /{collectionId}/{docId} where collectionId in ['events', 'jobs', 'listings', 'offers', 'promoPages'] {
+      // Anyone can read active content
+      allow read: if resource.data.status == 'active';
+      // Authenticated users can create content for themselves
+      allow create: if request.auth != null && isCreatingOwnContent();
+      // Only the author can update or delete their content
+      allow update, delete: if request.auth != null && isOwner();
+    }
+    
+    // Posts collection with specific privacy rules
     match /posts/{postId} {
-        allow read: if true;
-        allow create: if isAuthenticated() && isValidPost(request.resource.data);
-        allow update: if isAuthenticated(); // Liking/commenting is an update
-        allow delete: if isOwner(resource.data.authorId);
-    }
-    
-    // Events collection
-    match /events/{eventId} {
-        allow read: if true;
-        allow create: if isAuthenticated() && isValidEvent(request.resource.data);
-        allow update: if isAuthenticated(); // RSVPing and owner edits
-        allow delete: if isOwner(resource.data.authorId);
-    }
-
-    // Listings collection
-    match /listings/{listingId} {
-        allow read: if true;
-        allow create: if isAuthenticated() && isOwner(request.resource.data.authorId);
-        allow update: if isOwner(resource.data.authorId);
-        allow delete: if isOwner(resource.data.authorId);
-    }
-
-    // Jobs collection
-    match /jobs/{jobId} {
-        allow read: if true;
-        allow create: if isAuthenticated() && isOwner(request.resource.data.authorId);
-        allow update: if isOwner(resource.data.authorId);
-        allow delete: if isOwner(resource.data.authorId);
-    }
-
-    // Offers collection
-    match /offers/{offerId} {
-        allow read: if true;
-        allow create: if isAuthenticated() && isOwner(request.resource.data.authorId);
-        allow update: if isOwner(resource.data.authorId);
-        allow delete: if isOwner(resource.data.authorId);
-    }
-
-    // Promo Pages collection
-    match /promoPages/{promoId} {
-        allow read: if true;
-        allow create: if isAuthenticated() && isOwner(request.resource.data.authorId);
-        allow update: if isOwner(resource.data.authorId);
-        allow delete: if isOwner(resource.data.authorId);
-    }
-    
-    // Reminders collection (if used by a backend function)
-    match /reminders/{reminderId} {
-        allow read, write: if false; // Should only be accessed by backend/admin
+      allow create: if request.auth != null && isCreatingOwnContent();
+      allow update, delete: if request.auth != null && isOwner();
+      // Read access depends on the post's privacy setting
+      allow read: if resource.data.privacy == 'public'
+                  || (request.auth != null && isOwner())
+                  || (resource.data.privacy == 'followers' && request.auth != null && resource.data.authorId in get(/databases/$(database)/documents/users/$(request.auth.uid)).data.following);
     }
   }
 }

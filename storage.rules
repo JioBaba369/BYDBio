@@ -2,57 +2,27 @@ rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
-  
-    // Helper function to check if user is authenticated and the owner of the path
-    function isOwner(userId) {
-      return request.auth != null && request.auth.uid == userId;
-    }
     
-    // Helper function to check file type and size (max 5MB)
-    function isImage(sizeInMb) {
-      return request.resource.contentType.matches('image/.*') && request.resource.size < sizeInMb * 1024 * 1024;
+    // Default to denying all access
+    match /{allPaths=**} {
+      allow read, write: if false;
     }
 
-    // Avatars: only the user can upload their own avatar
-    match /avatars/{userId}/{allPaths=**} {
+    // Allow public read access to all files
+    match /{allPaths=**} {
       allow read: if true;
-      allow write: if isOwner(userId) && isImage(5);
     }
     
-    // Posts: only the author can upload images for their posts
-    match /posts/{userId}/{allPaths=**} {
-      allow read: if true;
-      allow write: if isOwner(userId) && isImage(5);
+    // Allow users to write their own avatar
+    // Path example: /avatars/someUserId
+    match /avatars/{userId} {
+      allow write: if request.auth != null && request.auth.uid == userId;
     }
     
-    // Events: only the author can upload images for their events
-    match /events/{userId}/{allPaths=**} {
-      allow read: if true;
-      allow write: if isOwner(userId) && isImage(5);
-    }
-    
-    // Listings: only the author can upload images for their listings
-    match /listings/{userId}/{allPaths=**} {
-      allow read: if true;
-      allow write: if isOwner(userId) && isImage(5);
-    }
-    
-    // Jobs: only the author can upload images for their jobs
-    match /jobs/{userId}/{allPaths=**} {
-      allow read: if true;
-      allow write: if isOwner(userId) && isImage(5);
-    }
-    
-    // Offers: only the author can upload images for their offers
-    match /offers/{userId}/{allPaths=**} {
-      allow read: if true;
-      allow write: if isOwner(userId) && isImage(5);
-    }
-    
-    // Promo Pages: only the author can upload images for their pages
-    match /promoPages/{userId}/{allPaths=**} {
-      allow read: if true;
-      allow write: if isOwner(userId) && isImage(5);
+    // Allow users to write to their own content folders
+    // Path examples: /events/someUserId/... or /posts/someUserId/...
+    match /{contentType}/{userId}/{allSubPaths=**} {
+      allow write: if request.auth != null && request.auth.uid == userId;
     }
   }
 }
