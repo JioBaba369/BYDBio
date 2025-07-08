@@ -1,34 +1,92 @@
+# BYD.Bio - Build Your Dream Bio
 
-# Firebase Studio
+Welcome to BYD.Bio, your all-in-one professional hub. This platform allows you to create a dynamic public profile, share a link-in-bio page, post content, manage events, and much more. It's designed to be the central point for your online presence.
 
-This is a NextJS starter in Firebase Studio.
+## Key Features
 
-To get started, take a look at src/app/page.tsx.
+- **Dynamic User Profiles**: Create a rich, public-facing profile with your bio, links, and contact information.
+- **Content Feeds**: Share status updates, articles, and thoughts in a "Following" and "Discovery" feed.
+- **Digital Business Card**: Generate a scannable QR code that links to a digital vCard, perfect for networking.
+- **Link-in-Bio**: Manage a customizable page of all your important links.
+- **Content Creation**: Post listings, job opportunities, events, and special offers to the community.
+- **Community Interaction**: Follow other users, like posts, and RSVP to events.
+- **BYD BioTAG**: A physical NFC tag that links directly to your digital business card.
 
----
+## Tech Stack
 
-## IMPORTANT: How to Fix the Database Index Error
+- **Framework**: [Next.js](https://nextjs.org/) (with App Router)
+- **Language**: [TypeScript](https://www.typescriptlang.org/)
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
+- **UI Components**: [shadcn/ui](https://ui.shadcn.com/)
+- **Authentication & Database**: [Firebase](https://firebase.google.com/) (Auth, Firestore, Storage)
 
-If you are seeing a `FirebaseError: The query requires an index` error when running the app, it means your live Firestore database is missing the required indexes to perform queries efficiently.
+## Getting Started
 
-Your project's `firestore.indexes.json` file already contains all the correct index definitions. You just need to deploy them to your Firebase project.
+To run this project locally, you'll need to have Node.js and the Firebase CLI installed.
 
-### Easy Deployment Steps:
+### 1. Prerequisites
 
-1.  **Install Firebase Tools:** If you haven't already, open your terminal and run:
+- [Node.js](https://nodejs.org/) (v20 or later)
+- [Firebase Tools](https://firebase.google.com/docs/cli): `npm install -g firebase-tools`
+- A Firebase project with Authentication, Firestore, and Storage enabled.
+
+### 2. Installation
+
+1.  **Clone the repository:**
     ```bash
-    npm install -g firebase-tools
+    git clone <your-repo-url>
+    cd <repo-directory>
     ```
 
-2.  **Log in to Firebase:** Connect the CLI to your Firebase account.
+2.  **Install dependencies:**
+    ```bash
+    npm install
+    ```
+
+3.  **Set up your environment variables:**
+    Create a `.env.local` file in the root of the project and add your Firebase project configuration keys. You can get these from your Firebase project settings.
+
+    ```
+    NEXT_PUBLIC_FIREBASE_API_KEY=...
+    NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=...
+    NEXT_PUBLIC_FIREBASE_PROJECT_ID=...
+    NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=...
+    NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=...
+    NEXT_PUBLIC_FIREBASE_APP_ID=...
+    NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=...
+    ```
+
+4.  **Run the development server:**
+    ```bash
+    npm run dev
+    ```
+    The application will be available at `http://127.0.0.1:9002`.
+
+### 3. Deploying Firestore Indexes
+
+The application requires specific Firestore indexes to query data efficiently. You must deploy these indexes to your live Firebase project to avoid errors.
+
+1.  **Log in to Firebase:**
     ```bash
     firebase login
     ```
-    This will open a browser window for you to sign in.
 
-3.  **Deploy ONLY the Indexes:** Run the following command in your terminal. This is a fast way to update just your database indexes without deploying the entire website.
+2.  **Deploy ONLY the indexes:**
+    This command is fast and will only update your database configuration.
     ```bash
     firebase deploy --only firestore:indexes
     ```
+    The indexing process can take a few minutes. You can monitor its status in the Firebase Console under **Firestore Database > Indexes**.
 
-After running this command, Firebase will start building the indexes. This can take a few minutes. Once it's complete, the error will be resolved. You can see the status of your indexes in the Firebase Console under **Firestore Database > Indexes**.
+## Deployment
+
+To deploy the application to Firebase Hosting, you can run the full deployment command, which includes Firestore rules, indexes, and hosting:
+
+```bash
+npm run deploy
+```
+
+Alternatively, if you only want to deploy the web application itself, use:
+```bash
+firebase deploy --only hosting
+```
