@@ -4,11 +4,10 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import { onAuthStateChanged, type User as FirebaseUser } from 'firebase/auth';
 import { doc, onSnapshot, collection, query, where } from 'firebase/firestore';
-import { auth, db, messaging } from '@/lib/firebase';
-import { createUserProfileIfNotExists, addFcmTokenToUser, type User as AppUser } from '@/lib/users';
+import { auth, db } from '@/lib/firebase';
+import { createUserProfileIfNotExists, type User as AppUser } from '@/lib/users';
 import { usePathname, useRouter } from 'next/navigation';
 import { isPublicPath, isAuthPath } from '@/lib/paths';
-import { getMessaging, getToken } from 'firebase/messaging';
 
 interface AuthContextType {
   user: AppUser | null;
