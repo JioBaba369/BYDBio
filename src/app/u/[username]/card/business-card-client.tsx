@@ -12,8 +12,6 @@ import ShareButton from "@/components/share-button";
 import type { User } from "@/lib/users";
 import { saveAs } from "file-saver";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/components/auth-provider";
-import { ContactForm } from "@/components/contact-form";
 
 const escapeVCard = (str: string | undefined | null): string => {
   if (!str) return '';
@@ -26,10 +24,8 @@ const escapeVCard = (str: string | undefined | null): string => {
 
 export default function BusinessCardClient({ user }: { user: User }) {
   const { toast } = useToast();
-  const { user: currentUser } = useAuth();
-  const isOwner = currentUser?.uid === user.uid;
   
-  const { name, avatarUrl, avatarFallback, businessCard } = user;
+  const { name, username, avatarUrl, avatarFallback, businessCard } = user;
   const { 
     title = '', 
     company = '', 
@@ -65,6 +61,12 @@ END:VCARD`;
   return (
     <div className="bg-dot min-h-screen py-8 px-4 antialiased">
       <div className="w-full max-w-sm mx-auto space-y-4">
+        <Button asChild variant="ghost" className="pl-0">
+            <Link href={`/u/${username}`} className="inline-flex items-center gap-2 text-primary hover:underline">
+                <ArrowLeft className="h-4 w-4" />
+                Back to {name}'s Profile
+            </Link>
+        </Button>
         <Card className="shadow-xl rounded-2xl w-full border-2 border-primary/10 overflow-hidden">
           <div className="h-24 bg-gradient-to-br from-primary via-secondary to-accent" />
           <CardContent className="p-6 pt-0">
@@ -102,14 +104,6 @@ END:VCARD`;
             </div>
           </CardContent>
         </Card>
-        
-        {!isOwner && <ContactForm recipientId={user.uid} />}
-
-        <div className="text-center">
-            <Link href="/" className="text-sm text-muted-foreground hover:text-primary flex items-center justify-center gap-2">
-                Powered by <Logo className="text-lg text-foreground" />
-            </Link>
-        </div>
       </div>
     </div>
   );

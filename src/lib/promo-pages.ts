@@ -67,7 +67,7 @@ export const getPromoPage = async (id: string): Promise<PromoPage | null> => {
 // Function to fetch all promo pages for a specific user
 export const getPromoPagesByUser = async (userId: string): Promise<PromoPage[]> => {
   const promoPagesRef = collection(db, 'promoPages');
-  const q = query(promoPagesRef, where('authorId', '==', userId), orderBy('createdAt', 'desc'));
+  const q = query(promoPagesRef, where('authorId', '==', userId), where('status', '==', 'active'), orderBy('createdAt', 'desc'));
   const querySnapshot = await getDocs(q);
   return querySnapshot.docs
     .map(serializePromoPage)

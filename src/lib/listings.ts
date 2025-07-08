@@ -66,7 +66,7 @@ export const getListing = async (id: string): Promise<Listing | null> => {
 // Function to fetch all listings for a specific user
 export const getListingsByUser = async (userId: string): Promise<Listing[]> => {
   const listingsRef = collection(db, 'listings');
-  const q = query(listingsRef, where('authorId', '==', userId));
+  const q = query(listingsRef, where('authorId', '==', userId), where('status', '==', 'active'), orderBy('createdAt', 'desc'));
   const querySnapshot = await getDocs(q);
   return querySnapshot.docs.map(serializeListing).filter((listing): listing is Listing => listing !== null);
 };

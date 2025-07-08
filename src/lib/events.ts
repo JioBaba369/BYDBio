@@ -105,7 +105,7 @@ export const getEvent = async (id: string): Promise<Event | null> => {
 // Function to fetch all events for a specific user
 export const getEventsByUser = async (userId: string): Promise<Event[]> => {
   const eventsRef = collection(db, 'events');
-  const q = query(eventsRef, where('authorId', '==', userId), orderBy('createdAt', 'desc'));
+  const q = query(eventsRef, where('authorId', '==', userId), where('status', '==', 'active'), orderBy('startDate', 'desc'));
   const querySnapshot = await getDocs(q);
   return querySnapshot.docs.map(serializeEvent).filter((event): event is Event => event !== null);
 };

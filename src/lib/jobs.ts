@@ -72,7 +72,7 @@ export const getJob = async (id: string): Promise<Job | null> => {
 // Function to fetch all jobs for a specific user
 export const getJobsByUser = async (userId: string): Promise<Job[]> => {
   const jobsRef = collection(db, 'jobs');
-  const q = query(jobsRef, where('authorId', '==', userId));
+  const q = query(jobsRef, where('authorId', '==', userId), where('status', '==', 'active'), orderBy('postingDate', 'desc'));
   const querySnapshot = await getDocs(q);
   return querySnapshot.docs.map(serializeJob).filter((job): job is Job => job !== null);
 };

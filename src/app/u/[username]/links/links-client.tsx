@@ -18,10 +18,17 @@ export default function LinksClientPage({ user }: { user: User }) {
   const { name, username, avatarUrl, avatarFallback, bio, links } = user;
   const { user: currentUser } = useAuth();
   const isOwner = currentUser?.uid === user.uid;
+  const publicProfileUrl = `/u/${username}`;
 
   return (
     <div className="bg-dot min-h-screen antialiased">
-      <div className="container mx-auto max-w-md p-4 sm:p-8">
+      <div className="container mx-auto max-w-md p-4 sm:p-8 space-y-8">
+        <Button asChild variant="ghost" className="pl-0">
+            <Link href={publicProfileUrl} className="inline-flex items-center gap-2 text-primary hover:underline">
+                <ArrowLeft className="h-4 w-4" />
+                Back to {name}'s Profile
+            </Link>
+        </Button>
         <div className="flex flex-col items-center text-center">
             <Avatar className="h-24 w-24 mb-4 ring-2 ring-primary/20 ring-offset-4 ring-offset-background">
                 <AvatarImage src={avatarUrl} alt={name} />
@@ -36,7 +43,7 @@ export default function LinksClientPage({ user }: { user: User }) {
         </div>
         
         {links && links.length > 0 && (
-             <div className="flex flex-col gap-4 mt-8">
+             <div className="flex flex-col gap-4">
                 {links.map((link, index) => {
                     const Icon = linkIcons[link.icon as keyof typeof linkIcons];
                     return (
@@ -56,13 +63,9 @@ export default function LinksClientPage({ user }: { user: User }) {
             </div>
         )}
 
-        {!isOwner && (
-            <div className="mt-8">
-                <ContactForm recipientId={user.uid} />
-            </div>
-        )}
+        {!isOwner && <ContactForm recipientId={user.uid} />}
 
-        <Separator className="my-12" />
+        <Separator className="my-4" />
 
         <div className="text-center">
             <Link href="/" className="text-sm text-muted-foreground hover:text-primary flex items-center justify-center gap-2">

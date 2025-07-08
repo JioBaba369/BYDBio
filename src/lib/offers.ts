@@ -66,7 +66,7 @@ export const getOffer = async (id: string): Promise<Offer | null> => {
 // Function to fetch all offers for a specific user
 export const getOffersByUser = async (userId: string): Promise<Offer[]> => {
   const offersRef = collection(db, 'offers');
-  const q = query(offersRef, where('authorId', '==', userId));
+  const q = query(offersRef, where('authorId', '==', userId), where('status', '==', 'active'), orderBy('startDate', 'desc'));
   const querySnapshot = await getDocs(q);
   return querySnapshot.docs.map(serializeOffer).filter((offer): offer is Offer => offer !== null);
 };

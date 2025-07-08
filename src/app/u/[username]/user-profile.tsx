@@ -15,19 +15,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ExternalLink, UserCheck, UserPlus, QrCode, Edit, Loader2, Rss, Info, MessageSquare, Package } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
-import { Separator } from "@/components/ui/separator";
 import { Logo } from "@/components/logo";
 import ShareButton from "@/components/share-button";
 import { linkIcons } from "@/lib/link-icons";
 import { useAuth } from "@/components/auth-provider";
 import { followUser, unfollowUser } from "@/lib/connections";
 import { useRouter } from "next/navigation";
-import QRCode from "qrcode.react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { PostCard } from "@/components/post-card";
 import { toggleLikePost, deletePost, repostPost } from '@/lib/posts';
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
-import { ContentFeedCard } from "@/components/feed/content-feed-card";
 import { PromoPageFeedItem } from "@/components/feed/promo-page-feed-item";
 import { ListingFeedItem } from "@/components/feed/listing-feed-item";
 import { JobFeedItem } from "@/components/feed/job-feed-item";
@@ -196,12 +192,11 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
         return;
     }
     try {
-        // Only store the data needed to reconstruct the quoted preview.
         const postToStore = {
             id: post.id,
             content: post.content,
             imageUrl: post.imageUrl,
-            author: { // Stripped down author
+            author: { 
                 uid: post.author.uid,
                 name: post.author.name,
                 username: post.author.username,
@@ -218,9 +213,8 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
   };
 
 
-  const { name, username, avatarUrl, avatarFallback, bio, links, businessCard } = userProfileData;
+  const { name, username, avatarUrl, avatarFallback, bio, links } = userProfileData;
   const isOwner = currentUser?.uid === userProfileData.uid;
-  const businessCardUrl = typeof window !== 'undefined' ? `${window.location.origin}/u/${username}/card` : '';
 
   const canViewPrivateContent = useMemo(() => isOwner || isFollowing, [isOwner, isFollowing]);
 
@@ -255,6 +249,7 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
         onConfirm={handleConfirmDelete}
         isLoading={isDeleting}
         itemName="post"
+        confirmationText="DELETE"
     />
     <div className="flex justify-center bg-dot py-8 px-4">
       <div className="w-full max-w-xl mx-auto space-y-8">
@@ -267,26 +262,7 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
             </Avatar>
             <h1 className="font-headline text-3xl font-bold text-foreground">{name}</h1>
             <p className="text-muted-foreground">@{username}</p>
-            <div className="mt-6 flex items-center justify-center gap-2">
-                <ShareButton url={businessCardUrl} />
-                <Dialog>
-                    <DialogTrigger asChild>
-                        <Button variant="outline">
-                            <QrCode className="mr-2 h-4 w-4" />
-                            QR Code
-                        </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>Scan to View Digital Business Card</DialogTitle>
-                        </DialogHeader>
-                        <div className="flex flex-col items-center justify-center p-4 gap-4">
-                            <QRCode value={businessCardUrl} size={256} bgColor="#ffffff" fgColor="#000000" level="Q" />
-                            <p className="text-sm text-muted-foreground text-center break-all">{businessCardUrl}</p>
-                        </div>
-                    </DialogContent>
-                </Dialog>
-            </div>
+            
              <div className="mt-6 flex w-full flex-col sm:flex-row items-center gap-4">
               {isOwner ? (
                   <Button asChild className="flex-1 font-bold w-full sm:w-auto">
@@ -325,27 +301,20 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
                         {allOtherContent.map(item => {
                             const uniqueKey = `${item.type}-${item.id}`;
                             const componentMap = {
-                                promoPage: { title: "Promo Page", component: <PromoPageFeedItem item={item as PromoPage} /> },
-                                listing: { title: "Listing", component: <ListingFeedItem item={item as Listing} /> },
-                                job: { title: "Job", component: <JobFeedItem item={item as Job} /> },
-                                event: { title: "Event", component: <EventFeedItem item={item as Event} /> },
-                                offer: { title: "Offer", component: <OfferFeedItem item={item as Offer} /> },
+                                promoPage: <PromoPageFeedItem item={item as PromoPage} />,
+                                listing: <ListingFeedItem item={item as Listing} />,
+                                job: <JobFeedItem item={item as Job} />,
+                                event: <EventFeedItem item={item as Event} />,
+                                offer: <OfferFeedItem item={item as Offer} />,
                             };
-                            
                             const content = componentMap[item.type as keyof typeof componentMap];
-                            
                             if (!content) return null;
-                            
-                            return (
-                                <ContentFeedCard key={uniqueKey} title={content.title} date={item.date}>
-                                    {content.component}
-                                </ContentFeedCard>
-                            );
+                            return <div key={uniqueKey}>{content}</div>
                         })}
                     </div>
                 ) : (
                      <Card className="text-center text-muted-foreground p-10">
-                        This user hasn't created any content yet.
+                        This user hasn't created any public content yet.
                     </Card>
                 )}
             </TabsContent>
@@ -407,18 +376,11 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
             </TabsContent>
         </Tabs>
         
-        <Card className="bg-card/80 backdrop-blur-sm p-6 sm:p-8 shadow-2xl rounded-2xl border-primary/10 text-center">
-            <div className="flex flex-col items-center gap-2">
-                <Link href={`/u/${username}/card`} className="text-sm text-primary hover:underline font-semibold">View Digital Business Card</Link>
-                <Link href={`/u/${username}/links`} className="text-sm text-primary hover:underline font-semibold">View Links Page</Link>
-            </div>
-            <Separator className="my-8" />
-            <div>
-                <Logo className="justify-center text-foreground" />
-                <p className="mt-2 text-sm text-muted-foreground">Build Your Dream Bio. Your professional hub for profiles, links, and opportunities.</p>
-                <Button asChild className="mt-4 font-bold"><Link href="/">Get Started for Free</Link></Button>
-            </div>
-        </Card>
+        <div className="text-center mt-8">
+            <Link href="/" className="text-sm text-muted-foreground hover:text-primary flex items-center justify-center gap-2">
+                Powered by <Logo className="text-lg text-foreground" />
+            </Link>
+        </div>
       </div>
     </div>
     </>
