@@ -109,7 +109,7 @@ export function EventForm({ defaultValues, onSubmit, isSaving }: EventFormProps)
       };
       form.reset(valuesToSet as EventFormValues);
     }
-  }, [defaultValues, form]);
+  }, [defaultValues, form.reset]);
   
   const { fields, append, remove } = useFieldArray({
     control: form.control,

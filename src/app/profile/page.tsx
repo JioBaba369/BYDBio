@@ -293,7 +293,7 @@ export default function ProfilePage() {
       });
       setCroppedImageUrl(user.avatarUrl || null);
     }
-  }, [user, publicProfileForm, businessCardForm, linksForm]);
+  }, [user, publicProfileForm.reset, businessCardForm.reset, linksForm.reset]);
 
   const watchedPublicProfile = publicProfileForm.watch();
   const watchedBusinessCard = businessCardForm.watch();

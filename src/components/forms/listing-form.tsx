@@ -81,7 +81,7 @@ export function ListingForm({ defaultValues, onSubmit, isSaving }: ListingFormPr
       };
       form.reset(valuesToSet as ListingFormValues);
     }
-  }, [defaultValues, form]);
+  }, [defaultValues, form.reset]);
   
   const watchedImageUrl = form.watch("imageUrl");
 

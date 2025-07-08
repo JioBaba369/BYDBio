@@ -97,7 +97,7 @@ export function OfferForm({ defaultValues, onSubmit, isSaving }: OfferFormProps)
       };
       form.reset(valuesToSet as OfferFormValues);
     }
-  }, [defaultValues, form]);
+  }, [defaultValues, form.reset]);
   
   const watchedImageUrl = form.watch("imageUrl");
 

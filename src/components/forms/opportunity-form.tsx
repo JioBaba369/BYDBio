@@ -107,7 +107,7 @@ export function OpportunityForm({ defaultValues, onSubmit, isSaving }: Opportuni
       };
       form.reset(valuesToSet as OpportunityFormValues);
     }
-  }, [defaultValues, form]);
+  }, [defaultValues, form.reset]);
   
   const watchedImageUrl = form.watch("imageUrl");
 

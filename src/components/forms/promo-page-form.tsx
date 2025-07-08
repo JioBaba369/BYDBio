@@ -67,7 +67,7 @@ export function PromoPageForm({ defaultValues, onSubmit, isSaving }: PromoPageFo
     if (defaultValues) {
       form.reset(defaultValues);
     }
-  }, [defaultValues, form]);
+  }, [defaultValues, form.reset]);
   
   const watchedImageUrl = form.watch("imageUrl");
   const watchedLogoUrl = form.watch("logoUrl");
