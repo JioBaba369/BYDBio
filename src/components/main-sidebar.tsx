@@ -174,10 +174,10 @@ export function MainSidebar() {
           <SidebarGroupLabel>Community</SidebarGroupLabel>
           <SidebarMenu>
              <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Explore All" isActive={isActive('/explore')}>
+              <SidebarMenuButton asChild tooltip="What's On" isActive={isActive('/explore')}>
                 <Link href="/explore">
                   <Compass />
-                  <span>Explore All</span>
+                  <span>What's On</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>

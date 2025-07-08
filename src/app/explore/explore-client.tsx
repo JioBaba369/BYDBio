@@ -134,7 +134,7 @@ export default function ExploreClient({ initialItems }: { initialItems: PublicCo
     <>
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold font-headline">Explore Content</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold font-headline">What's On</h1>
           <p className="text-muted-foreground">Discover what the community is creating and sharing.</p>
         </div>
 
