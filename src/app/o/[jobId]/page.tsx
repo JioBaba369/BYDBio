@@ -1,4 +1,7 @@
-// This page has been intentionally left blank to resolve a routing conflict.
-export default function BlankPage1() {
-  return null;
+
+import { redirect } from 'next/navigation';
+
+// This page redirects legacy /o/[jobId] URLs to the correct /opportunities/[jobId] path.
+export default function OldJobRedirectPage({ params }: { params: { jobId: string } }) {
+  redirect(`/opportunities/${params.jobId}`);
 }
