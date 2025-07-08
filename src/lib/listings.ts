@@ -71,31 +71,23 @@ export const getListingsByUser = async (userId: string): Promise<Listing[]> => {
 };
 
 // Function to create a new listing
-export const createListing = async (userId: string, data: Omit<Listing, 'id' | 'authorId' | 'createdAt' | 'status' | 'views' | 'clicks' | 'searchableKeywords'>) => {
+export const createListing = async (userId: string, data: Partial<Omit<Listing, 'id' | 'authorId' | 'createdAt' | 'status' | 'views' | 'clicks' | 'searchableKeywords'>>) => {
   const listingsRef = collection(db, 'listings');
   const keywords = [
-    ...data.title.toLowerCase().split(' ').filter(Boolean),
-    ...data.description.toLowerCase().split(' ').filter(Boolean),
-    ...data.category.toLowerCase().split(' ').filter(Boolean),
+    ...(data.title?.toLowerCase().split(' ').filter(Boolean) || []),
+    ...(data.description?.toLowerCase().split(' ').filter(Boolean) || []),
+    ...(data.category?.toLowerCase().split(' ').filter(Boolean) || []),
   ];
 
-  const docData: any = {
+  const docData = {
+    ...data,
     authorId: userId,
     createdAt: serverTimestamp(),
-    status: 'active',
+    status: 'active' as const,
     views: 0,
     clicks: 0,
     searchableKeywords: [...new Set(keywords)],
-    title: data.title,
-    description: data.description,
-    price: data.price,
-    category: data.category,
-    listingType: data.listingType || 'sale',
   };
-
-  if (data.imageUrl) docData.imageUrl = data.imageUrl;
-  if (data.startDate) docData.startDate = data.startDate;
-  if (data.endDate) docData.endDate = data.endDate;
   
   await addDoc(listingsRef, docData);
 };

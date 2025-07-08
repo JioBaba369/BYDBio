@@ -22,7 +22,17 @@ export default function CreateEventPage() {
         }
         setIsSaving(true);
         try {
-            const dataToSave = { ...data, imageUrl: data.imageUrl || null };
+            const dataToSave: Partial<EventFormValues> = {
+                title: data.title,
+                description: data.description,
+                location: data.location,
+                startDate: data.startDate,
+                itinerary: data.itinerary,
+            };
+
+            if (data.endDate) dataToSave.endDate = data.endDate;
+            if (data.couponCode) dataToSave.couponCode = data.couponCode;
+            if (data.ctaLink) dataToSave.ctaLink = data.ctaLink;
 
             if (data.imageUrl && data.imageUrl.startsWith('data:image')) {
                 const newImageUrl = await uploadImage(data.imageUrl, `events/${user.uid}/${Date.now()}`);

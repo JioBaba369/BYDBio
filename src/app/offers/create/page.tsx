@@ -22,7 +22,16 @@ export default function CreateOfferPage() {
         }
         setIsSaving(true);
         try {
-            const dataToSave = { ...data, imageUrl: data.imageUrl || null };
+            const dataToSave: Partial<OfferFormValues> = {
+                title: data.title,
+                description: data.description,
+                category: data.category,
+                startDate: data.startDate,
+            };
+
+            if (data.endDate) dataToSave.endDate = data.endDate;
+            if (data.couponCode) dataToSave.couponCode = data.couponCode;
+            if (data.ctaLink) dataToSave.ctaLink = data.ctaLink;
 
             if (data.imageUrl && data.imageUrl.startsWith('data:image')) {
                 const newImageUrl = await uploadImage(data.imageUrl, `offers/${user.uid}/${Date.now()}`);

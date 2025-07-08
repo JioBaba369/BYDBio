@@ -22,14 +22,22 @@ export default function CreatePromoPage() {
         }
         setIsSaving(true);
         try {
-            const dataToSave = { ...data };
+            const dataToSave: Partial<PromoPageFormValues> = {
+                name: data.name,
+                description: data.description,
+                email: data.email,
+            };
 
-            if (dataToSave.imageUrl && dataToSave.imageUrl.startsWith('data:image')) {
-                const newImageUrl = await uploadImage(dataToSave.imageUrl, `promoPages/${user.uid}/${Date.now()}_header`);
+            if (data.phone) dataToSave.phone = data.phone;
+            if (data.website) dataToSave.website = data.website;
+            if (data.address) dataToSave.address = data.address;
+
+            if (data.imageUrl && data.imageUrl.startsWith('data:image')) {
+                const newImageUrl = await uploadImage(data.imageUrl, `promoPages/${user.uid}/${Date.now()}_header`);
                 dataToSave.imageUrl = newImageUrl;
             }
-            if (dataToSave.logoUrl && dataToSave.logoUrl.startsWith('data:image')) {
-                const newLogoUrl = await uploadImage(dataToSave.logoUrl, `promoPages/${user.uid}/${Date.now()}_logo`);
+            if (data.logoUrl && data.logoUrl.startsWith('data:image')) {
+                const newLogoUrl = await uploadImage(data.logoUrl, `promoPages/${user.uid}/${Date.now()}_logo`);
                 dataToSave.logoUrl = newLogoUrl;
             }
 

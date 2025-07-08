@@ -78,32 +78,24 @@ export const getOffersByUser = async (userId: string): Promise<Offer[]> => {
 };
 
 // Function to create a new offer
-export const createOffer = async (userId: string, data: Omit<Offer, 'id' | 'authorId' | 'createdAt' | 'status' | 'views' | 'claims' | 'searchableKeywords'>) => {
+export const createOffer = async (userId: string, data: Partial<Omit<Offer, 'id' | 'authorId' | 'createdAt' | 'status' | 'views' | 'claims' | 'searchableKeywords'>>) => {
   const offersRef = collection(db, 'offers');
   const keywords = [
-    ...data.title.toLowerCase().split(' ').filter(Boolean),
-    ...data.description.toLowerCase().split(' ').filter(Boolean),
-    ...data.category.toLowerCase().split(' ').filter(Boolean),
+    ...(data.title?.toLowerCase().split(' ').filter(Boolean) || []),
+    ...(data.description?.toLowerCase().split(' ').filter(Boolean) || []),
+    ...(data.category?.toLowerCase().split(' ').filter(Boolean) || []),
     ...(data.couponCode ? data.couponCode.toLowerCase().split(' ') : [])
   ];
 
-  const docData: any = {
+  const docData = {
+    ...data,
     authorId: userId,
     createdAt: serverTimestamp(),
-    status: 'active',
+    status: 'active' as const,
     views: 0,
     claims: 0,
     searchableKeywords: [...new Set(keywords)],
-    title: data.title,
-    description: data.description,
-    category: data.category,
-    startDate: data.startDate,
   };
-
-  if (data.endDate) docData.endDate = data.endDate;
-  if (data.imageUrl) docData.imageUrl = data.imageUrl;
-  if (data.couponCode) docData.couponCode = data.couponCode;
-  if (data.ctaLink) docData.ctaLink = data.ctaLink;
 
   await addDoc(offersRef, docData);
 };

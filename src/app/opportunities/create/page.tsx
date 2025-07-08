@@ -22,7 +22,20 @@ export default function CreateJobPage() {
         }
         setIsSaving(true);
         try {
-            const dataToSave = { ...data, imageUrl: data.imageUrl || null };
+            const dataToSave: Partial<OpportunityFormValues> = {
+                title: data.title,
+                company: data.company,
+                description: data.description,
+                location: data.location,
+                type: data.type,
+            };
+
+            if (data.remuneration) dataToSave.remuneration = data.remuneration;
+            if (data.closingDate) dataToSave.closingDate = data.closingDate;
+            if (data.startDate) dataToSave.startDate = data.startDate;
+            if (data.endDate) dataToSave.endDate = data.endDate;
+            if (data.applicationUrl) dataToSave.applicationUrl = data.applicationUrl;
+            if (data.contactInfo) dataToSave.contactInfo = data.contactInfo;
 
             if (data.imageUrl && data.imageUrl.startsWith('data:image')) {
                 const newImageUrl = await uploadImage(data.imageUrl, `jobs/${user.uid}/${Date.now()}`);

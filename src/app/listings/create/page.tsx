@@ -22,9 +22,19 @@ export default function CreateListingPage() {
         }
         setIsSaving(true);
         try {
-            const dataToSave = { ...data };
-            if (dataToSave.imageUrl && dataToSave.imageUrl.startsWith('data:image')) {
-                const newImageUrl = await uploadImage(dataToSave.imageUrl, `listings/${user.uid}/${Date.now()}`);
+            const dataToSave: Partial<ListingFormValues> = {
+                title: data.title,
+                description: data.description,
+                price: data.price,
+                category: data.category,
+                listingType: data.listingType || 'sale',
+            };
+
+            if (data.startDate) dataToSave.startDate = data.startDate;
+            if (data.endDate) dataToSave.endDate = data.endDate;
+
+            if (data.imageUrl && data.imageUrl.startsWith('data:image')) {
+                const newImageUrl = await uploadImage(data.imageUrl, `listings/${user.uid}/${Date.now()}`);
                 dataToSave.imageUrl = newImageUrl;
             }
 

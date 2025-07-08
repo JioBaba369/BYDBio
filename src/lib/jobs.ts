@@ -87,39 +87,27 @@ export const getJobsByUser = async (userId: string): Promise<Job[]> => {
 };
 
 // Function to create a new job
-export const createJob = async (userId: string, data: Omit<Job, 'id' | 'authorId' | 'createdAt' | 'status' | 'views' | 'applicants' | 'postingDate' | 'searchableKeywords'>) => {
+export const createJob = async (userId: string, data: Partial<Omit<Job, 'id' | 'authorId' | 'createdAt' | 'status' | 'views' | 'applicants' | 'postingDate' | 'searchableKeywords'>>) => {
   const jobsRef = collection(db, 'jobs');
   const keywords = [
-    ...data.title.toLowerCase().split(' ').filter(Boolean),
-    ...data.company.toLowerCase().split(' ').filter(Boolean),
-    ...data.description.toLowerCase().split(' ').filter(Boolean),
-    ...data.location.toLowerCase().split(' ').filter(Boolean),
-    data.type.toLowerCase(),
+    ...(data.title?.toLowerCase().split(' ').filter(Boolean) || []),
+    ...(data.company?.toLowerCase().split(' ').filter(Boolean) || []),
+    ...(data.description?.toLowerCase().split(' ').filter(Boolean) || []),
+    ...(data.location?.toLowerCase().split(' ').filter(Boolean) || []),
+    ...(data.type?.toLowerCase() ? [data.type.toLowerCase()] : []),
     ...(data.contactInfo ? data.contactInfo.toLowerCase().split(' ').filter(Boolean) : [])
   ];
 
-  const docData: any = {
+  const docData = {
+    ...data,
     authorId: userId,
     createdAt: serverTimestamp(),
     postingDate: serverTimestamp(),
-    status: 'active',
+    status: 'active' as const,
     views: 0,
     applicants: 0,
     searchableKeywords: [...new Set(keywords)],
-    title: data.title,
-    company: data.company,
-    description: data.description,
-    location: data.location,
-    type: data.type,
   };
-
-  if (data.remuneration) docData.remuneration = data.remuneration;
-  if (data.closingDate) docData.closingDate = data.closingDate;
-  if (data.imageUrl) docData.imageUrl = data.imageUrl;
-  if (data.startDate) docData.startDate = data.startDate;
-  if (data.endDate) docData.endDate = data.endDate;
-  if (data.applicationUrl) docData.applicationUrl = data.applicationUrl;
-  if (data.contactInfo) docData.contactInfo = data.contactInfo;
 
   await addDoc(jobsRef, docData);
 };

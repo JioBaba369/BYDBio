@@ -62,32 +62,24 @@ export const getPromoPagesByUser = async (userId: string): Promise<PromoPage[]> 
 };
 
 // Function to create a new promo page
-export const createPromoPage = async (userId: string, data: Omit<PromoPage, 'id' | 'authorId' | 'createdAt' | 'status' | 'views' | 'clicks' | 'searchableKeywords'>) => {
+export const createPromoPage = async (userId: string, data: Partial<Omit<PromoPage, 'id' | 'authorId' | 'createdAt' | 'status' | 'views' | 'clicks' | 'searchableKeywords'>>) => {
   const promoPagesRef = collection(db, 'promoPages');
   const keywords = [
-    ...data.name.toLowerCase().split(' ').filter(Boolean),
-    ...data.description.toLowerCase().split(' ').filter(Boolean),
-    data.email.toLowerCase(),
+    ...(data.name?.toLowerCase().split(' ').filter(Boolean) || []),
+    ...(data.description?.toLowerCase().split(' ').filter(Boolean) || []),
+    ...(data.email?.toLowerCase() ? [data.email.toLowerCase()] : []),
     ...(data.address ? data.address.toLowerCase().split(' ') : [])
   ];
 
-  const docData: any = {
+  const docData = {
+    ...data,
     authorId: userId,
     createdAt: serverTimestamp(),
-    status: 'active',
+    status: 'active' as const,
     views: 0,
     clicks: 0,
     searchableKeywords: [...new Set(keywords)],
-    name: data.name,
-    description: data.description,
-    email: data.email,
   };
-
-  if (data.phone) docData.phone = data.phone;
-  if (data.website) docData.website = data.website;
-  if (data.address) docData.address = data.address;
-  if (data.imageUrl) docData.imageUrl = data.imageUrl;
-  if (data.logoUrl) docData.logoUrl = data.logoUrl;
 
   await addDoc(promoPagesRef, docData);
 };

@@ -116,34 +116,26 @@ export const getEventsByUser = async (userId: string): Promise<Event[]> => {
 };
 
 // Function to create a new event
-export const createEvent = async (userId: string, data: Omit<Event, 'id' | 'authorId' | 'createdAt' | 'status' | 'views' | 'rsvps' | 'searchableKeywords'>) => {
+export const createEvent = async (userId: string, data: Partial<Omit<Event, 'id' | 'authorId' | 'createdAt' | 'status' | 'views' | 'rsvps' | 'searchableKeywords'>>) => {
   const eventsRef = collection(db, 'events');
+  
   const keywords = [
-    ...data.title.toLowerCase().split(' ').filter(Boolean),
-    ...data.description.toLowerCase().split(' ').filter(Boolean),
-    ...data.location.toLowerCase().split(' ').filter(Boolean),
+    ...(data.title?.toLowerCase().split(' ').filter(Boolean) || []),
+    ...(data.description?.toLowerCase().split(' ').filter(Boolean) || []),
+    ...(data.location?.toLowerCase().split(' ').filter(Boolean) || []),
     ...(data.couponCode ? data.couponCode.toLowerCase().split(' ') : [])
   ];
 
-  const docData: any = {
+  const docData = {
+    ...data,
     authorId: userId,
     createdAt: serverTimestamp(),
-    status: 'active',
+    status: 'active' as const,
     views: 0,
     rsvps: [],
     searchableKeywords: [...new Set(keywords)],
-    title: data.title,
-    description: data.description,
-    location: data.location,
-    startDate: data.startDate,
   };
 
-  if (data.endDate) docData.endDate = data.endDate;
-  if (data.imageUrl) docData.imageUrl = data.imageUrl;
-  if (data.couponCode) docData.couponCode = data.couponCode;
-  if (data.ctaLink) docData.ctaLink = data.ctaLink;
-  if (data.itinerary) docData.itinerary = data.itinerary;
-  
   await addDoc(eventsRef, docData);
 };
 
