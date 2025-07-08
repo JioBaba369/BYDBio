@@ -42,7 +42,7 @@
     "dotenv": "^16.5.0",
     "embla-carousel-react": "^8.6.0",
     "file-saver": "^2.0.5",
-    "firebase": "^11.9.1",
+    "firebase": "^10.12.2",
     "html2canvas": "^1.4.1",
     "html5-qrcode": "^2.3.8",
     "ics": "^3.7.2",
