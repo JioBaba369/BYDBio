@@ -2,53 +2,109 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // By default, deny all reads and writes
-    match /{document=**} {
-      allow read, write: if false;
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
     }
 
-    // Users can be read by anyone, but only written to by the authenticated user
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+    
+    function isFollowing(userId) {
+      // Safely check if the current user is following the target userId.
+      return userId in get(/databases/$(database)/documents/users/$(request.auth.uid)).data.following;
+    }
+
+    // Users collection rules
     match /users/{userId} {
-      allow read: if true;
-      allow create, update: if request.auth != null && request.auth.uid == userId;
-      allow delete: if false; // Deletion is a privileged operation
-    }
-    
-    // Notifications can only be accessed by the user they belong to
-    match /notifications/{notificationId} {
-      allow read, update, delete: if request.auth != null && request.auth.uid == resource.data.userId;
-      allow create: if request.auth != null; 
+      // Anyone can view a user's public profile
+      allow get: if true;
+      // Only the user themselves can create or update their own profile
+      allow create, update: if isOwner(userId);
+      // Users cannot be deleted directly (handled by a cloud function)
+      allow delete: if false;
     }
 
-    // Helper function to check ownership
-    function isOwner() {
-      return request.auth.uid == resource.data.authorId;
+    // Generic content rules
+    function canReadContent(resource) {
+      let isPublic = resource.data.status == 'active';
+      return isPublic;
     }
     
-    // Helper function to check ownership on create
-    function isCreatingOwnContent() {
-      return request.auth.uid == request.resource.data.authorId;
-    }
-    
-    // Public content collections (events, jobs, etc.)
-    match /{collectionId}/{docId} where collectionId in ['events', 'jobs', 'listings', 'offers', 'promoPages'] {
-      // Anyone can read active content
-      allow read: if resource.data.status == 'active';
-      // Authenticated users can create content for themselves
-      allow create: if request.auth != null && isCreatingOwnContent();
-      // Only the author can update or delete their content
-      allow update, delete: if request.auth != null && isOwner();
-    }
-    
-    // Posts collection with specific privacy rules
+    // Posts have special privacy rules
     match /posts/{postId} {
-      allow create: if request.auth != null && isCreatingOwnContent();
-      allow update, delete: if request.auth != null && isOwner();
-      // Read access depends on the post's privacy setting
-      allow read: if resource.data.privacy == 'public'
-                  || (request.auth != null && isOwner())
-                  || (resource.data.privacy == 'followers' && request.auth != null && resource.data.authorId in get(/databases/$(database)/documents/users/$(request.auth.uid)).data.following);
+      allow create: if isSignedIn() && isOwner(request.resource.data.authorId);
+      allow update, delete: if isSignedIn() && isOwner(resource.data.authorId);
+      
+      function canReadPost() {
+        let isPublic = resource.data.privacy == 'public';
+        let isForFollowers = resource.data.privacy == 'followers' && (isOwner(resource.data.authorId) || isFollowing(resource.data.authorId));
+        let isOwnPrivatePost = resource.data.privacy == 'me' && isOwner(resource.data.authorId);
+        
+        return isPublic || isForFollowers || isOwnPrivatePost;
+      }
+      
+      allow get: if canReadPost();
+      allow list: if true;
+    }
+
+    // Collection Group rules for listings
+    match /{path=**}/listings/{listingId} {
+        allow get: if canReadContent(resource);
+        allow list: if true;
+        allow create: if isOwner(request.resource.data.authorId);
+        allow update: if isOwner(resource.data.authorId) || (isSignedIn() && request.resource.data.keys().diff(resource.data.keys()).hasOnly(['views', 'clicks', 'followerCount']));
+        allow delete: if isOwner(resource.data.authorId);
+    }
+
+    // Collection Group rules for promoPages
+    match /{path=**}/promoPages/{promoId} {
+        allow get: if canReadContent(resource);
+        allow list: if true;
+        allow create: if isOwner(request.resource.data.authorId);
+        allow update: if isOwner(resource.data.authorId) || (isSignedIn() && request.resource.data.keys().diff(resource.data.keys()).hasOnly(['views', 'clicks', 'followerCount']));
+        allow delete: if isOwner(resource.data.authorId);
+    }
+    
+    // Collection Group rules for jobs
+    match /{path=**}/jobs/{jobId} {
+        allow get: if canReadContent(resource);
+        allow list: if true;
+        allow create: if isOwner(request.resource.data.authorId);
+        allow update: if isOwner(resource.data.authorId) || (isSignedIn() && request.resource.data.keys().diff(resource.data.keys()).hasOnly(['views', 'applicants', 'followerCount']));
+        allow delete: if isOwner(resource.data.authorId);
+    }
+
+    // Collection Group rules for events
+    match /{path=**}/events/{eventId} {
+        allow get: if canReadContent(resource);
+        allow list: if true;
+        allow create: if isOwner(request.resource.data.authorId);
+        allow update: if isOwner(resource.data.authorId) || 
+                        (isSignedIn() && request.resource.data.keys().diff(resource.data.keys()).hasOnly(['views', 'rsvps', 'followerCount']));
+        allow delete: if isOwner(resource.data.authorId);
+    }
+    
+    // Collection Group rules for offers
+    match /{path=**}/offers/{offerId} {
+        allow get: if canReadContent(resource);
+        allow list: if true;
+        allow create: if isOwner(request.resource.data.authorId);
+        allow update: if isOwner(resource.data.authorId) || (isSignedIn() && request.resource.data.keys().diff(resource.data.keys()).hasOnly(['views', 'claims', 'followerCount']));
+        allow delete: if isOwner(resource.data.authorId);
+    }
+    
+    // Notifications can only be accessed by the recipient
+    match /notifications/{notificationId} {
+        allow read, update, delete: if isOwner(resource.data.userId);
+        allow create: if isSignedIn(); // Anyone signed in can trigger a notification creation
+    }
+    
+    // Reminders are internal
+    match /reminders/{reminderId} {
+      allow read, write: if false; // Only backend can access
     }
   }
 }
