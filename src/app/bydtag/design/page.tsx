@@ -6,13 +6,13 @@ import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useAuth } from '@/components/auth-provider';
-import { ArrowRight, ArrowLeft, RefreshCw, Download, Upload } from 'lucide-react';
+import { ArrowRight, ArrowLeft, RefreshCw, Download, Upload, Paintbrush, Text, LayoutTemplate, Settings2 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -25,6 +25,7 @@ import html2canvas from 'html2canvas';
 import { Logo } from '@/components/logo';
 import ImageCropper from '@/components/image-cropper';
 import { Label } from '@/components/ui/label';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 // Schema for the form
 const designSchema = z.object({
@@ -66,7 +67,7 @@ const TagPreview = forwardRef<HTMLDivElement, { values: DesignFormValues; user: 
     if (side === 'back') {
         const backCardBg = cardBgClass || (values.textColor === 'light' ? 'bg-gray-900' : 'bg-white');
         return (
-            <div ref={ref} className={cn("w-full rounded-xl flex flex-col items-center justify-between p-4 transition-colors relative", aspectRatioClass, backCardBg)} style={cardStyle}>
+            <div ref={ref} className={cn("w-full h-full rounded-xl flex flex-col items-center justify-between p-4 transition-colors relative", backCardBg)} style={cardStyle}>
                  {values.backgroundImageUrl && <div className="absolute inset-0 bg-black/60 rounded-xl" />}
                  <div className="relative z-10 w-full flex flex-col items-center justify-between h-full">
                     <Logo className={cn("text-lg", textColor)} />
@@ -117,7 +118,7 @@ const TagPreview = forwardRef<HTMLDivElement, { values: DesignFormValues; user: 
         );
 
         return (
-             <div ref={ref} className={cn("w-full rounded-xl p-6 transition-colors relative flex", aspectRatioClass, cardBgClass)} style={cardStyle}>
+             <div ref={ref} className={cn("w-full h-full rounded-xl p-6 transition-colors relative flex", cardBgClass)} style={cardStyle}>
                 {values.backgroundImageUrl && <div className="absolute inset-0 bg-black/50 rounded-xl" />}
                 <div className={cn("relative z-10 flex w-full items-center gap-5", layout === 'horizontal-right' ? 'flex-row-reverse' : '')}>
                     {renderAvatar("h-20 w-20", "text-3xl")}
@@ -130,7 +131,7 @@ const TagPreview = forwardRef<HTMLDivElement, { values: DesignFormValues; user: 
     // Lanyard Card
     if (layout === 'lanyard') {
          return (
-            <div ref={ref} className={cn("w-full rounded-xl p-8 transition-colors relative flex items-center gap-8", aspectRatioClass, cardBgClass)} style={cardStyle}>
+            <div ref={ref} className={cn("w-full h-full rounded-xl p-8 transition-colors relative flex items-center gap-8", cardBgClass)} style={cardStyle}>
                 {values.backgroundImageUrl && <div className="absolute inset-0 bg-black/50 rounded-xl" />}
                 <div className="absolute top-4 left-1/2 -translate-x-1/2 w-5 h-5 rounded-full bg-white/50 border-2 border-white/80" />
                 <div className="relative z-10 flex w-full items-center gap-8">
@@ -147,7 +148,7 @@ const TagPreview = forwardRef<HTMLDivElement, { values: DesignFormValues; user: 
     
     // Vertical Card (Default)
     return (
-        <div ref={ref} className={cn("w-full rounded-xl p-8 transition-colors relative flex", aspectRatioClass, cardBgClass)} style={cardStyle}>
+        <div ref={ref} className={cn("w-full h-full rounded-xl p-8 transition-colors relative flex", cardBgClass)} style={cardStyle}>
             {values.backgroundImageUrl && <div className="absolute inset-0 bg-black/50 rounded-xl" />}
             <div className="relative z-10 flex w-full flex-col items-center justify-center text-center space-y-4">
                 {renderAvatar("h-28 w-28", "text-5xl")}
@@ -167,8 +168,11 @@ export default function BydTagDesignPage() {
   const { user } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
-  const [side, setSide] = useState<'front' | 'back'>('front');
-  const previewRef = useRef<HTMLDivElement>(null);
+  const [isFlipped, setIsFlipped] = useState(false);
+  
+  const frontPreviewRef = useRef<HTMLDivElement>(null);
+  const backPreviewRef = useRef<HTMLDivElement>(null);
+
   const [bgImageToCrop, setBgImageToCrop] = useState<string | null>(null);
   const [isBgCropperOpen, setIsBgCropperOpen] = useState(false);
   const bgFileInputRef = useRef<HTMLInputElement>(null);
@@ -229,7 +233,6 @@ export default function BydTagDesignPage() {
       router.push('/auth/sign-up');
       return;
     }
-    // In a real app, this would trigger an order flow.
     toast({
         title: "Order Placed! (Demo)",
         description: "In a real app, this would redirect you to a checkout page.",
@@ -237,44 +240,27 @@ export default function BydTagDesignPage() {
   };
 
   const handleDownloadCardImage = () => {
-    if (!previewRef.current) {
-      toast({
-        title: 'Error Downloading',
-        description: 'Could not find the card preview element.',
-        variant: 'destructive',
-      });
+    const targetRef = isFlipped ? backPreviewRef : frontPreviewRef;
+    if (!targetRef.current) {
+      toast({ title: 'Error Downloading', description: 'Could not find the card preview element.', variant: 'destructive' });
       return;
     }
 
-    toast({
-        title: 'Generating Image...',
-        description: 'Please wait a moment.',
-    });
+    toast({ title: 'Generating Image...', description: 'Please wait a moment.' });
 
-    html2canvas(previewRef.current, { 
-      backgroundColor: null, // Makes background transparent for the capture
-      useCORS: true,
-      scale: 3 // Increase resolution for better quality
-    }).then((canvas) => {
-      canvas.toBlob((blob) => {
-        if (blob) {
-            saveAs(blob, `byd-biotag-${side}-design.png`);
-        } else {
-            toast({
-                title: 'Download Failed',
-                description: 'Could not create image blob.',
-                variant: 'destructive',
-            });
-        }
-      }, 'image/png');
-    }).catch(err => {
+    html2canvas(targetRef.current, { backgroundColor: null, useCORS: true, scale: 3 })
+      .then((canvas) => {
+        canvas.toBlob((blob) => {
+          if (blob) {
+              saveAs(blob, `byd-biotag-${isFlipped ? 'back' : 'front'}-design.png`);
+          } else {
+              toast({ title: 'Download Failed', description: 'Could not create image blob.', variant: 'destructive' });
+          }
+        }, 'image/png');
+      }).catch(err => {
         console.error("Error generating card image:", err);
-        toast({
-            title: 'Download Failed',
-            description: 'An unexpected error occurred while generating the image.',
-            variant: 'destructive',
-        });
-    });
+        toast({ title: 'Download Failed', description: 'An unexpected error occurred.', variant: 'destructive' });
+      });
   };
 
   const colorOptions = [
@@ -307,234 +293,198 @@ export default function BydTagDesignPage() {
               <h1 className="text-2xl sm:text-3xl font-bold font-headline">Design Your BYD BioTAG</h1>
               <p className="text-muted-foreground">Customize your physical NFC tag to match your brand.</p>
           </div>
-          <FormProvider {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="grid md:grid-cols-2 gap-8 items-start">
-                  {/* Preview Column */}
-                  <div className="space-y-4 md:sticky top-20">
-                      <Card>
-                          <CardHeader>
-                              <CardTitle>Live Preview</CardTitle>
-                          </CardHeader>
-                          <CardContent>
-                                <div className="flex items-center justify-center rounded-lg bg-muted/20 p-4 min-h-[520px]">
-                                    <div className="w-full max-w-[320px]">
-                                        <TagPreview ref={previewRef} values={watchedValues} user={user} side={side} />
-                                    </div>
-                                </div>
-                              <div className="grid grid-cols-2 gap-2 mt-4">
-                                  <Button type="button" variant="outline" className="w-full" onClick={() => setSide(s => s === 'front' ? 'back' : 'front')}>
-                                      <RefreshCw className="mr-2 h-4 w-4" />
-                                      Flip Card
-                                  </Button>
-                                  <Button type="button" variant="outline" className="w-full" onClick={handleDownloadCardImage}>
-                                      <Download className="mr-2 h-4 w-4" />
-                                      Download {side === 'front' ? 'Front' : 'Back'}
-                                  </Button>
-                              </div>
-                          </CardContent>
-                      </Card>
+          <div className="grid lg:grid-cols-3 gap-8 items-start">
+              {/* Preview Column */}
+              <div className="lg:col-span-2 space-y-4 lg:sticky top-20">
+                  <div className={cn("w-full max-w-lg mx-auto", isPortraitLayout ? 'aspect-[53.98/85.60]' : 'aspect-[85.60/53.98]')}>
+                    <div className="relative w-full h-full perspective-1000">
+                        <div className={cn("relative w-full h-full transition-transform duration-700 preserve-3d", isFlipped && "rotate-y-180")}>
+                            <div className="absolute w-full h-full backface-hidden">
+                                <TagPreview ref={frontPreviewRef} values={watchedValues} user={user} side="front" />
+                            </div>
+                            <div className="absolute w-full h-full backface-hidden rotate-y-180">
+                                <TagPreview ref={backPreviewRef} values={watchedValues} user={user} side="back" />
+                            </div>
+                        </div>
+                    </div>
                   </div>
-
-                  {/* Form Column */}
-                  <div className="space-y-6">
-                      <Card>
-                          <CardHeader>
-                              <CardTitle>Customization</CardTitle>
-                              <CardDescription>Changes will be reflected in the live preview.</CardDescription>
-                          </CardHeader>
-                          <CardContent className="space-y-6">
-                              <FormField
-                                  control={form.control}
-                                  name="cardColor"
-                                  render={({ field }) => (
-                                      <FormItem>
-                                      <FormLabel>Solid Color Background</FormLabel>
-                                      <FormControl>
-                                          <RadioGroup
-                                              onValueChange={(value) => {
-                                                  field.onChange(value);
-                                                  form.setValue('backgroundImageUrl', ''); // Clear background image
-                                                  form.setValue('textColor', (value === 'white' ? 'dark' : 'light'));
-                                              }}
-                                              defaultValue={field.value}
-                                              className="flex gap-4"
-                                          >
-                                              {colorOptions.map(opt => (
-                                                  <FormItem key={opt.value}>
-                                                      <FormControl>
-                                                          <RadioGroupItem value={opt.value} className="sr-only" />
-                                                      </FormControl>
-                                                      <FormLabel>
-                                                          <div className={cn("h-10 w-10 rounded-full cursor-pointer ring-2 ring-transparent ring-offset-2 ring-offset-background", opt.className, field.value === opt.value && !watchedValues.backgroundImageUrl && 'ring-primary')} />
-                                                      </FormLabel>
-                                                  </FormItem>
-                                              ))}
-                                          </RadioGroup>
-                                      </FormControl>
-                                      <FormMessage />
-                                      </FormItem>
-                                  )}
-                              />
-                               <div>
-                                  <Label>Custom Background</Label>
-                                  <Button type="button" variant="outline" className="w-full mt-2" onClick={() => bgFileInputRef.current?.click()}>
-                                      <Upload className="mr-2 h-4 w-4" /> Upload Background Image
-                                  </Button>
-                                  <input type="file" ref={bgFileInputRef} className="hidden" accept="image/png, image/jpeg" onChange={onBgFileChange} />
-                              </div>
-                               <FormField
-                                  control={form.control}
-                                  name="textColor"
-                                  render={({ field }) => (
-                                      <FormItem className="space-y-3">
-                                      <FormLabel>Text Color</FormLabel>
-                                      <FormControl>
-                                          <RadioGroup onValueChange={field.onChange} value={field.value} className="flex gap-x-6">
-                                              <FormItem className="flex items-center space-x-2 space-y-0">
-                                                  <FormControl><RadioGroupItem value="light" /></FormControl>
-                                                  <Label className="font-normal">Light</Label>
-                                              </FormItem>
-                                              <FormItem className="flex items-center space-x-2 space-y-0">
-                                                  <FormControl><RadioGroupItem value="dark" /></FormControl>
-                                                  <Label className="font-normal">Dark</Label>
-                                              </FormItem>
-                                          </RadioGroup>
-                                      </FormControl>
-                                      <FormDescription>Choose light text for dark cards/images, and dark text for light ones.</FormDescription>
-                                      <FormMessage />
-                                      </FormItem>
-                                  )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name="layout"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                        <FormLabel>Card Layout</FormLabel>
-                                        <FormControl>
-                                            <RadioGroup
-                                                onValueChange={field.onChange}
-                                                defaultValue={field.value}
-                                                className="grid grid-cols-2 gap-4"
-                                            >
-                                                {/* Vertical */}
-                                                <FormItem>
-                                                    <FormControl><RadioGroupItem value="vertical" className="sr-only" /></FormControl>
-                                                    <FormLabel className={cn("flex flex-col items-center justify-center rounded-md border-2 p-4 cursor-pointer hover:bg-accent hover:border-primary", field.value === 'vertical' && 'border-primary')}>
-                                                        <div className="w-12 h-[75px] bg-muted rounded-md flex flex-col items-center justify-center p-1 gap-1">
-                                                            <div className="w-5 h-5 rounded-full bg-muted-foreground/50"></div>
-                                                            <div className="w-full space-y-0.5">
-                                                                <div className="h-1.5 w-3/4 mx-auto bg-muted-foreground/50 rounded-full"></div>
-                                                                <div className="h-1.5 w-1/2 mx-auto bg-muted-foreground/50 rounded-full"></div>
-                                                            </div>
-                                                        </div>
-                                                        <span className="mt-2 font-semibold">Vertical</span>
-                                                    </FormLabel>
-                                                </FormItem>
-                                                {/* H (Left) */}
-                                                <FormItem>
-                                                    <FormControl><RadioGroupItem value="horizontal-left" className="sr-only" /></FormControl>
-                                                    <FormLabel className={cn("flex flex-col items-center justify-center rounded-md border-2 p-4 cursor-pointer hover:bg-accent hover:border-primary", field.value === 'horizontal-left' && 'border-primary')}>
-                                                        <div className="w-20 h-12 bg-muted rounded-md flex items-center p-2 gap-2">
-                                                            <div className="w-6 h-6 rounded-full bg-muted-foreground/50 flex-shrink-0"></div>
-                                                            <div className="w-full space-y-1">
-                                                                <div className="h-1.5 w-full bg-muted-foreground/50 rounded-full"></div>
-                                                                <div className="h-1.5 w-3/4 bg-muted-foreground/50 rounded-full"></div>
-                                                            </div>
-                                                        </div>
-                                                        <span className="mt-2 font-semibold">H (Left)</span>
-                                                    </FormLabel>
-                                                </FormItem>
-                                                {/* H (Right) */}
-                                                <FormItem>
-                                                    <FormControl><RadioGroupItem value="horizontal-right" className="sr-only" /></FormControl>
-                                                    <FormLabel className={cn("flex flex-col items-center justify-center rounded-md border-2 p-4 cursor-pointer hover:bg-accent hover:border-primary", field.value === 'horizontal-right' && 'border-primary')}>
-                                                        <div className="w-20 h-12 bg-muted rounded-md flex items-center p-2 gap-2">
-                                                            <div className="w-full space-y-1">
-                                                                <div className="h-1.5 w-full bg-muted-foreground/50 rounded-full"></div>
-                                                                <div className="h-1.5 w-3/4 ml-auto bg-muted-foreground/50 rounded-full"></div>
-                                                            </div>
-                                                            <div className="w-6 h-6 rounded-full bg-muted-foreground/50 flex-shrink-0"></div>
-                                                        </div>
-                                                        <span className="mt-2 font-semibold">H (Right)</span>
-                                                    </FormLabel>
-                                                </FormItem>
-                                                {/* Lanyard */}
-                                                <FormItem>
-                                                    <FormControl><RadioGroupItem value="lanyard" className="sr-only" /></FormControl>
-                                                    <FormLabel className={cn("flex flex-col items-center justify-center rounded-md border-2 p-4 cursor-pointer hover:bg-accent hover:border-primary", field.value === 'lanyard' && 'border-primary')}>
-                                                        <div className="w-20 h-12 bg-muted rounded-md flex items-center p-2 gap-2 relative">
-                                                            <div className="w-2 h-2 rounded-full bg-muted-foreground/50 absolute top-1 left-1/2 -translate-x-1/2"></div>
-                                                            <div className="w-8 h-8 rounded-full bg-muted-foreground/50 flex-shrink-0"></div>
-                                                            <div className="w-full space-y-1">
-                                                                <div className="h-1.5 w-full bg-muted-foreground/50 rounded-full"></div>
-                                                                <div className="h-1.5 w-3/4 bg-muted-foreground/50 rounded-full"></div>
-                                                            </div>
-                                                        </div>
-                                                        <span className="mt-2 font-semibold">Lanyard</span>
-                                                    </FormLabel>
-                                                </FormItem>
-                                            </RadioGroup>
-                                        </FormControl>
-                                        <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                              <FormField
-                                  control={form.control}
-                                  name="name"
-                                  render={({ field }) => (
-                                      <FormItem>
-                                      <FormLabel>Name on Card</FormLabel>
-                                      <FormControl><Input placeholder="Jane Doe" {...field} /></FormControl>
-                                      <FormMessage />
-                                      </FormItem>
-                                  )}
-                              />
-                              <FormField
-                                  control={form.control}
-                                  name="title"
-                                  render={({ field }) => (
-                                      <FormItem>
-                                      <FormLabel>Title on Card (Optional)</FormLabel>
-                                      <FormControl><Input placeholder="CEO" {...field} /></FormControl>
-                                      <FormMessage />
-                                      </FormItem>
-                                  )}
-                              />
-                              <FormField
-                                  control={form.control}
-                                  name="company"
-                                  render={({ field }) => (
-                                      <FormItem>
-                                      <FormLabel>Company on Card (Optional)</FormLabel>
-                                      <FormControl><Input placeholder="Acme Inc." {...field} /></FormControl>
-                                      <FormMessage />
-                                      </FormItem>
-                                  )}
-                              />
-                              <FormField
-                                  control={form.control}
-                                  name="showQrCode"
-                                  render={({ field }) => (
-                                      <FormItem className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
-                                      <div className="space-y-0.5">
-                                          <FormLabel>Show QR Code on Back</FormLabel>
-                                          <FormDescription>A QR code backup ensures compatibility with older phones.</FormDescription>
-                                      </div>
-                                      <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
-                                      </FormItem>
-                                  )}
-                              />
-                          </CardContent>
-                      </Card>
-                      <Button type="submit" size="lg" className="w-full">
-                          Proceed to Order <ArrowRight className="ml-2 h-5 w-5" />
+                  <div className="grid grid-cols-2 gap-2 mt-4 max-w-lg mx-auto">
+                      <Button type="button" variant="outline" className="w-full" onClick={() => setIsFlipped(f => !f)}>
+                          <RefreshCw className="mr-2 h-4 w-4" />
+                          Flip Card
+                      </Button>
+                      <Button type="button" variant="outline" className="w-full" onClick={handleDownloadCardImage}>
+                          <Download className="mr-2 h-4 w-4" />
+                          Download {isFlipped ? 'Back' : 'Front'}
                       </Button>
                   </div>
-              </form>
-          </FormProvider>
+              </div>
+
+              {/* Form Column */}
+              <div className="lg:col-span-1">
+                  <FormProvider {...form}>
+                      <form onSubmit={form.handleSubmit(onSubmit)}>
+                         <Accordion type="multiple" defaultValue={['appearance', 'layout', 'content']} className="w-full">
+                            <AccordionItem value="appearance">
+                                <AccordionTrigger className="text-base font-semibold"><Paintbrush className="mr-2 h-4 w-4"/>Appearance</AccordionTrigger>
+                                <AccordionContent className="pt-4 space-y-6">
+                                      <FormField
+                                          control={form.control}
+                                          name="cardColor"
+                                          render={({ field }) => (
+                                              <FormItem>
+                                              <FormLabel>Solid Color Background</FormLabel>
+                                              <FormControl>
+                                                  <RadioGroup
+                                                      onValueChange={(value) => {
+                                                          field.onChange(value);
+                                                          form.setValue('backgroundImageUrl', ''); // Clear background image
+                                                          form.setValue('textColor', (value === 'white' ? 'dark' : 'light'));
+                                                      }}
+                                                      defaultValue={field.value}
+                                                      className="flex gap-4"
+                                                  >
+                                                      {colorOptions.map(opt => (
+                                                          <FormItem key={opt.value}>
+                                                              <FormControl>
+                                                                  <RadioGroupItem value={opt.value} className="sr-only" />
+                                                              </FormControl>
+                                                              <FormLabel>
+                                                                  <div className={cn("h-10 w-10 rounded-full cursor-pointer ring-2 ring-transparent ring-offset-2 ring-offset-background", opt.className, field.value === opt.value && !watchedValues.backgroundImageUrl && 'ring-primary')} />
+                                                              </FormLabel>
+                                                          </FormItem>
+                                                      ))}
+                                                  </RadioGroup>
+                                              </FormControl>
+                                              <FormMessage />
+                                              </FormItem>
+                                          )}
+                                      />
+                                      <div>
+                                          <Label>Custom Background</Label>
+                                          <Button type="button" variant="outline" className="w-full mt-2" onClick={() => bgFileInputRef.current?.click()}>
+                                              <Upload className="mr-2 h-4 w-4" /> Upload Background
+                                          </Button>
+                                          <input type="file" ref={bgFileInputRef} className="hidden" accept="image/png, image/jpeg" onChange={onBgFileChange} />
+                                      </div>
+                                      <FormField
+                                          control={form.control}
+                                          name="textColor"
+                                          render={({ field }) => (
+                                              <FormItem className="space-y-3">
+                                              <FormLabel>Text Color</FormLabel>
+                                              <FormControl>
+                                                  <RadioGroup onValueChange={field.onChange} value={field.value} className="flex gap-x-6">
+                                                      <FormItem className="flex items-center space-x-2 space-y-0">
+                                                          <FormControl><RadioGroupItem value="light" /></FormControl>
+                                                          <Label className="font-normal">Light</Label>
+                                                      </FormItem>
+                                                      <FormItem className="flex items-center space-x-2 space-y-0">
+                                                          <FormControl><RadioGroupItem value="dark" /></FormControl>
+                                                          <Label className="font-normal">Dark</Label>
+                                                      </FormItem>
+                                                  </RadioGroup>
+                                              </FormControl>
+                                              <FormDescription>Light text for dark backgrounds, and vice-versa.</FormDescription>
+                                              <FormMessage />
+                                              </FormItem>
+                                          )}
+                                        />
+                                </AccordionContent>
+                            </AccordionItem>
+
+                             <AccordionItem value="layout">
+                                <AccordionTrigger className="text-base font-semibold"><LayoutTemplate className="mr-2 h-4 w-4"/>Card Layout</AccordionTrigger>
+                                <AccordionContent className="pt-4">
+                                     <FormField
+                                            control={form.control}
+                                            name="layout"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                <FormControl>
+                                                    <RadioGroup
+                                                        onValueChange={field.onChange}
+                                                        defaultValue={field.value}
+                                                        className="grid grid-cols-2 gap-4"
+                                                    >
+                                                        <FormItem><FormControl><RadioGroupItem value="vertical" className="sr-only" /></FormControl><FormLabel className={cn("flex flex-col items-center justify-center rounded-md border-2 p-4 cursor-pointer hover:bg-accent hover:border-primary", field.value === 'vertical' && 'border-primary')}><div className="w-12 h-[75px] bg-muted rounded-md flex flex-col items-center justify-center p-1 gap-1"><div className="w-5 h-5 rounded-full bg-muted-foreground/50"></div><div className="w-full space-y-0.5"><div className="h-1.5 w-3/4 mx-auto bg-muted-foreground/50 rounded-full"></div><div className="h-1.5 w-1/2 mx-auto bg-muted-foreground/50 rounded-full"></div></div></div><span className="mt-2 font-semibold">Vertical</span></FormLabel></FormItem>
+                                                        <FormItem><FormControl><RadioGroupItem value="horizontal-left" className="sr-only" /></FormControl><FormLabel className={cn("flex flex-col items-center justify-center rounded-md border-2 p-4 cursor-pointer hover:bg-accent hover:border-primary", field.value === 'horizontal-left' && 'border-primary')}><div className="w-20 h-12 bg-muted rounded-md flex items-center p-2 gap-2"><div className="w-6 h-6 rounded-full bg-muted-foreground/50 flex-shrink-0"></div><div className="w-full space-y-1"><div className="h-1.5 w-full bg-muted-foreground/50 rounded-full"></div><div className="h-1.5 w-3/4 bg-muted-foreground/50 rounded-full"></div></div></div><span className="mt-2 font-semibold">H (Left)</span></FormLabel></FormItem>
+                                                        <FormItem><FormControl><RadioGroupItem value="horizontal-right" className="sr-only" /></FormControl><FormLabel className={cn("flex flex-col items-center justify-center rounded-md border-2 p-4 cursor-pointer hover:bg-accent hover:border-primary", field.value === 'horizontal-right' && 'border-primary')}><div className="w-20 h-12 bg-muted rounded-md flex items-center p-2 gap-2"><div className="w-full space-y-1"><div className="h-1.5 w-full bg-muted-foreground/50 rounded-full"></div><div className="h-1.5 w-3/4 ml-auto bg-muted-foreground/50 rounded-full"></div></div><div className="w-6 h-6 rounded-full bg-muted-foreground/50 flex-shrink-0"></div></div><span className="mt-2 font-semibold">H (Right)</span></FormLabel></FormItem>
+                                                        <FormItem><FormControl><RadioGroupItem value="lanyard" className="sr-only" /></FormControl><FormLabel className={cn("flex flex-col items-center justify-center rounded-md border-2 p-4 cursor-pointer hover:bg-accent hover:border-primary", field.value === 'lanyard' && 'border-primary')}><div className="w-20 h-12 bg-muted rounded-md flex items-center p-2 gap-2 relative"><div className="w-2 h-2 rounded-full bg-muted-foreground/50 absolute top-1 left-1/2 -translate-x-1/2"></div><div className="w-8 h-8 rounded-full bg-muted-foreground/50 flex-shrink-0"></div><div className="w-full space-y-1"><div className="h-1.5 w-full bg-muted-foreground/50 rounded-full"></div><div className="h-1.5 w-3/4 bg-muted-foreground/50 rounded-full"></div></div></div><span className="mt-2 font-semibold">Lanyard</span></FormLabel></FormItem>
+                                                    </RadioGroup>
+                                                </FormControl>
+                                                <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                </AccordionContent>
+                            </AccordionItem>
+                             <AccordionItem value="content">
+                                <AccordionTrigger className="text-base font-semibold"><Text className="mr-2 h-4 w-4"/>Card Content</AccordionTrigger>
+                                <AccordionContent className="pt-4 space-y-6">
+                                     <FormField
+                                        control={form.control}
+                                        name="name"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                            <FormLabel>Name on Card</FormLabel>
+                                            <FormControl><Input placeholder="Jane Doe" {...field} /></FormControl>
+                                            <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name="title"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                            <FormLabel>Title on Card (Optional)</FormLabel>
+                                            <FormControl><Input placeholder="CEO" {...field} /></FormControl>
+                                            <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name="company"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                            <FormLabel>Company on Card (Optional)</FormLabel>
+                                            <FormControl><Input placeholder="Acme Inc." {...field} /></FormControl>
+                                            <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </AccordionContent>
+                            </AccordionItem>
+                            <AccordionItem value="back">
+                                <AccordionTrigger className="text-base font-semibold"><Settings2 className="mr-2 h-4 w-4"/>Back of Card</AccordionTrigger>
+                                <AccordionContent className="pt-4">
+                                     <FormField
+                                        control={form.control}
+                                        name="showQrCode"
+                                        render={({ field }) => (
+                                            <FormItem className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
+                                            <div className="space-y-0.5">
+                                                <FormLabel>Show QR Code</FormLabel>
+                                                <FormDescription>A QR code backup ensures compatibility with older phones.</FormDescription>
+                                            </div>
+                                            <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
+                                            </FormItem>
+                                        )}
+                                    />
+                                </AccordionContent>
+                            </AccordionItem>
+                         </Accordion>
+                          <Button type="submit" size="lg" className="w-full mt-6">
+                            Proceed to Order <ArrowRight className="ml-2 h-5 w-5" />
+                          </Button>
+                      </form>
+                  </FormProvider>
+              </div>
+          </div>
       </div>
     </>
   );
 }
+
