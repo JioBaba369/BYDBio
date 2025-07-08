@@ -34,20 +34,34 @@ export type PromoPage = {
   views?: number;
   clicks?: number;
   followerCount: number;
-  createdAt: Timestamp | string;
+  createdAt: string; // ISO 8601 string
   searchableKeywords: string[];
 };
 
 export type PromoPageWithAuthor = PromoPage & { author: Pick<User, 'uid' | 'name' | 'username' | 'avatarUrl'> };
 
+const serializePromoPage = (doc: any): PromoPage | null => {
+    const data = doc.data();
+    if (!data) return null;
+
+    const page: any = { id: doc.id };
+    for (const key in data) {
+        if (data[key] instanceof Timestamp) {
+            page[key] = data[key].toDate().toISOString();
+        } else {
+            page[key] = data[key];
+        }
+    }
+    return page as PromoPage;
+};
+
+
 // Function to fetch a single promo page by its ID
 export const getPromoPage = async (id: string): Promise<PromoPage | null> => {
   const promoPageDocRef = doc(db, 'promoPages', id);
   const promoPageDoc = await getDoc(promoPageDocRef);
-  if (promoPageDoc.exists()) {
-    return { id: promoPageDoc.id, ...promoPageDoc.data() } as PromoPage;
-  }
-  return null;
+  if (!promoPageDoc.exists()) return null;
+  return serializePromoPage(promoPageDoc);
 };
 
 // Function to fetch all promo pages for a specific user
@@ -56,11 +70,7 @@ export const getPromoPagesByUser = async (userId: string): Promise<PromoPage[]> 
   const q = query(promoPagesRef, where('authorId', '==', userId), orderBy('createdAt', 'desc'));
   const querySnapshot = await getDocs(q);
   return querySnapshot.docs
-    .map(doc => {
-        const data = doc.data();
-        if (!data.createdAt) return null;
-        return { id: doc.id, ...doc.data() } as PromoPage
-    })
+    .map(serializePromoPage)
     .filter((page): page is PromoPage => page !== null);
 };
 
@@ -154,7 +164,10 @@ export const getAllPromoPages = async (): Promise<PromoPageWithAuthor[]> => {
     const q = query(promoPagesRef, where('status', '==', 'active'), orderBy('createdAt', 'desc'));
     const querySnapshot = await getDocs(q);
 
-    const promoPageDocs = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const promoPageDocs = querySnapshot.docs
+        .map(serializePromoPage)
+        .filter((page): page is PromoPage => !!page);
+
     if (promoPageDocs.length === 0) return [];
     
     const authorIds = [...new Set(promoPageDocs.map(doc => doc.authorId))];
@@ -167,7 +180,6 @@ export const getAllPromoPages = async (): Promise<PromoPageWithAuthor[]> => {
 
         return {
             ...data,
-            createdAt: (data.createdAt as Timestamp).toDate().toISOString(),
             author: { uid: author.uid, name: author.name, username: author.username, avatarUrl: author.avatarUrl }
         } as PromoPageWithAuthor;
     }).filter((page): page is PromoPageWithAuthor => !!page);

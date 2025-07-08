@@ -4,7 +4,6 @@ import { getListingAndAuthor, type Listing } from '@/lib/listings';
 import ListingDetailClient from './listing-detail-client';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import type { Timestamp } from 'firebase/firestore';
 
 export async function generateMetadata({ params }: { params: { listingId: string } }): Promise<Metadata> {
   const data = await getListingAndAuthor(params.listingId);
@@ -46,7 +45,7 @@ export default async function PublicListingPage({ params }: { params: { listingI
         return (
             <div className="flex flex-col items-center justify-center min-h-screen text-center p-4">
                 <h1 className="text-4xl font-bold">Listing Not Found</h1>
-                <p className="text-muted-foreground mt-2">The listing page you're looking for doesn't exist.</p>
+                <p className="text-muted-foreground mt-2">The listing page you're looking for doesn't exist or has been moved.</p>
                 <Button asChild className="mt-6">
                     <Link href="/explore">Back to Explore</Link>
                 </Button>
@@ -54,12 +53,5 @@ export default async function PublicListingPage({ params }: { params: { listingI
         )
     }
 
-    const serializableListing = {
-        ...data.listing,
-        createdAt: (data.listing.createdAt as Timestamp).toDate().toISOString(),
-        startDate: data.listing.startDate ? (data.listing.startDate as Date).toISOString() : null,
-        endDate: data.listing.endDate ? (data.listing.endDate as Date).toISOString() : null,
-    };
-
-    return <ListingDetailClient listing={serializableListing} author={data.author} />;
+    return <ListingDetailClient listing={data.listing} author={data.author} />;
 }

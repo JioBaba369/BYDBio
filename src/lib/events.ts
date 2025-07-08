@@ -37,8 +37,8 @@ export type Event = {
   title: string;
   subTitle?: string;
   description: string;
-  startDate: Timestamp | Date | string;
-  endDate?: Timestamp | Date | string | null;
+  startDate: string; // ISO 8601 string
+  endDate?: string | null; // ISO 8601 string
   location: string;
   category?: string;
   subCategory?: string;
@@ -50,7 +50,7 @@ export type Event = {
   rsvps: string[]; // Array of user UIDs who have RSVP'd
   followerCount: number;
   itinerary: ItineraryItem[];
-  createdAt: Timestamp | string;
+  createdAt: string; // ISO 8601 string
   searchableKeywords: string[];
 };
 
@@ -78,24 +78,28 @@ export type CalendarItem = {
   rsvps?: string[];
 };
 
+const serializeEvent = (doc: any): Event | null => {
+    const data = doc.data();
+    if (!data || !data.startDate) return null;
+
+    const event: any = { id: doc.id };
+    for (const key in data) {
+        if (data[key] instanceof Timestamp) {
+            event[key] = data[key].toDate().toISOString();
+        } else {
+            event[key] = data[key];
+        }
+    }
+    return event as Event;
+};
+
 
 // Function to fetch a single event by its ID
 export const getEvent = async (id: string): Promise<Event | null> => {
   const eventDocRef = doc(db, 'events', id);
   const eventDoc = await getDoc(eventDocRef);
-  if (eventDoc.exists()) {
-    const data = eventDoc.data();
-    if (!data.startDate) {
-        return null;
-    }
-    return { 
-        id: eventDoc.id, 
-        ...data,
-        startDate: (data.startDate as Timestamp).toDate(),
-        endDate: data.endDate ? (data.endDate as Timestamp).toDate() : null
-    } as Event;
-  }
-  return null;
+  if (!eventDoc.exists()) return null;
+  return serializeEvent(eventDoc);
 };
 
 // Function to fetch all events for a specific user
@@ -103,18 +107,7 @@ export const getEventsByUser = async (userId: string): Promise<Event[]> => {
   const eventsRef = collection(db, 'events');
   const q = query(eventsRef, where('authorId', '==', userId), orderBy('createdAt', 'desc'));
   const querySnapshot = await getDocs(q);
-  return querySnapshot.docs.map(doc => {
-      const data = doc.data();
-      if (!data.startDate || !data.createdAt) {
-        return null;
-      }
-      return { 
-          id: doc.id, 
-          ...data,
-          startDate: (data.startDate as Timestamp).toDate(),
-          endDate: data.endDate ? (data.endDate as Timestamp).toDate() : null
-      } as Event
-  }).filter((event): event is Event => event !== null);
+  return querySnapshot.docs.map(serializeEvent).filter((event): event is Event => event !== null);
 };
 
 // Function to create a new event
@@ -237,8 +230,8 @@ export const getAllEvents = async (): Promise<EventWithAuthor[]> => {
     const querySnapshot = await getDocs(q);
 
     const eventDocs = querySnapshot.docs
-        .map(doc => ({ id: doc.id, ...doc.data() }))
-        .filter(data => data.startDate); // Ensure event has a start date
+        .map(serializeEvent)
+        .filter((event): event is Event => !!event);
 
     if (eventDocs.length === 0) return [];
     
@@ -252,29 +245,10 @@ export const getAllEvents = async (): Promise<EventWithAuthor[]> => {
 
         return {
             ...data,
-            createdAt: (data.createdAt as Timestamp).toDate().toISOString(),
-            startDate: (data.startDate as Timestamp).toDate().toISOString(),
-            endDate: data.endDate ? (data.endDate as Timestamp).toDate().toISOString() : null,
             author: { uid: author.uid, name: author.name, username: author.username, avatarUrl: author.avatarUrl }
         } as EventWithAuthor;
     }).filter((event): event is EventWithAuthor => !!event);
 };
-
-const serializeFirestoreTimestamps = (data: any): any => {
-    if (!data) return data;
-    const serializedData: { [key: string]: any } = {};
-    for (const key in data) {
-        if (data[key] instanceof Timestamp) {
-            serializedData[key] = data[key].toDate().toISOString();
-        } else if (data[key] && typeof data[key] === 'object' && !Array.isArray(data[key])) {
-             serializedData[key] = serializeFirestoreTimestamps(data[key]);
-        }
-        else {
-            serializedData[key] = data[key];
-        }
-    }
-    return serializedData;
-}
 
 // This function fetches ALL content types for a user for the Content Calendar.
 export const getCalendarItems = async (userId: string): Promise<CalendarItem[]> => {
@@ -284,64 +258,61 @@ export const getCalendarItems = async (userId: string): Promise<CalendarItem[]> 
         getDocs(query(collection(db, c), where('authorId', '==', userId)))
     );
     
-    // Also fetch events the user has RSVP'd to, but didn't create
     const rsvpedEventsPromise = getDocs(
         query(collection(db, 'events'), where('rsvps', 'array-contains', userId))
     );
 
-    const [
-        eventsSnapshot,
-        offersSnapshot,
-        jobsSnapshot,
-        listingsSnapshot,
-        promoPagesSnapshot,
-        rsvpedEventsSnapshot
-    ] = await Promise.all([...userContentPromises, rsvpedEventsPromise]);
+    const snapshots = await Promise.all([...userContentPromises, rsvpedEventsPromise]);
     
     const allItems = new Map<string, any>();
 
-    const processSnapshot = (snapshot: any, type: string) => {
+    const processSnapshot = (snapshot: any, type: string, isExternal = false) => {
         snapshot.forEach((doc: any) => {
             const data = doc.data();
             const key = `${type}-${doc.id}`;
-            // If it's an event, we only add it if it's not one the user created themselves (to avoid duplicates)
-            if (type === 'event_rsvped') {
-                if (data.authorId !== userId) {
-                    allItems.set(key, { ...data, id: doc.id, type: 'event', isExternal: true });
-                }
-            } else {
-                // For user-created content, always add it.
-                allItems.set(key, { ...data, id: doc.id, type });
+            // If it's an external event, only add it if the user isn't the author
+            if (isExternal && data.authorId === userId) {
+                return;
             }
+            allItems.set(key, { ...data, id: doc.id, type, isExternal });
         });
     };
 
-    processSnapshot(eventsSnapshot, 'event');
-    processSnapshot(offersSnapshot, 'offer');
-    processSnapshot(jobsSnapshot, 'job');
-    processSnapshot(listingsSnapshot, 'listing');
-    processSnapshot(promoPagesSnapshot, 'promoPage');
-    processSnapshot(rsvpedEventsSnapshot, 'event_rsvped');
+    processSnapshot(snapshots[0], 'event');
+    processSnapshot(snapshots[1], 'offer');
+    processSnapshot(snapshots[2], 'job');
+    processSnapshot(snapshots[3], 'listing');
+    processSnapshot(snapshots[4], 'promoPage');
+    processSnapshot(snapshots[5], 'event', true); // RSVP'd events are processed as external
     
-    const formattedItems: CalendarItem[] = Array.from(allItems.values()).map((item: any) => {
-        const serializedItem = serializeFirestoreTimestamps(item);
+    const formattedItems = Array.from(allItems.values()).map((item: any) => {
+        // Serialize all potential date fields in the item
+        const serializedItem: { [key: string]: any } = {};
+        for (const key in item) {
+            if (item[key] instanceof Timestamp) {
+                serializedItem[key] = item[key].toDate().toISOString();
+            } else {
+                serializedItem[key] = item[key];
+            }
+        }
+
         let primaryDate = serializedItem.startDate || serializedItem.postingDate || serializedItem.createdAt;
         if (!primaryDate) return null;
 
         const getEditPath = (itemType: string, id: string): string => {
-            switch(itemType) {
-                case 'event': return `/events/${id}/edit`;
-                case 'offer': return `/offers/${id}/edit`;
-                case 'job': return `/opportunities/${id}/edit`;
-                case 'listing': return `/listings/${id}/edit`;
-                case 'promoPage': return `/promo/${id}/edit`;
-                default: return `/calendar`;
-            }
+            const pathMap: { [key: string]: string } = {
+                'event': `/events/${id}/edit`,
+                'offer': `/offers/${id}/edit`,
+                'job': `/opportunities/${id}/edit`,
+                'listing': `/listings/${id}/edit`,
+                'promoPage': `/promo/${id}/edit`,
+            };
+            return pathMap[itemType] || '/calendar';
         };
 
         return {
             id: serializedItem.id,
-            type: (item.type.charAt(0).toUpperCase() + item.type.slice(1)).replace(/_/g, ' ') as CalendarItem['type'],
+            type: (item.type.charAt(0).toUpperCase() + item.type.slice(1)) as CalendarItem['type'],
             date: primaryDate,
             title: serializedItem.title || serializedItem.name,
             description: serializedItem.description,

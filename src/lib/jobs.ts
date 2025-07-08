@@ -28,16 +28,16 @@ export type Job = {
   category?: string;
   subCategory?: string;
   remuneration?: string;
-  postingDate: Timestamp | Date | string;
-  closingDate?: Timestamp | Date | string | null;
-  startDate?: Timestamp | Date | string | null;
-  endDate?: Timestamp | Date | string | null;
+  postingDate: string; // ISO 8601 string
+  closingDate?: string | null; // ISO 8601 string
+  startDate?: string | null; // ISO 8601 string
+  endDate?: string | null; // ISO 8601 string
   imageUrl: string | null;
   status: 'active' | 'archived';
   views: number;
   applicants: number;
   followerCount: number;
-  createdAt: Timestamp | string;
+  createdAt: string; // ISO 8601 string
   searchableKeywords: string[];
   applicationUrl?: string;
   contactInfo?: string;
@@ -45,25 +45,28 @@ export type Job = {
 
 export type JobWithAuthor = Job & { author: Pick<User, 'uid' | 'name' | 'username' | 'avatarUrl'> };
 
+const serializeJob = (doc: any): Job | null => {
+    const data = doc.data();
+    if (!data || !data.postingDate) return null;
+
+    const job: any = { id: doc.id };
+    for (const key in data) {
+        if (data[key] instanceof Timestamp) {
+            job[key] = data[key].toDate().toISOString();
+        } else {
+            job[key] = data[key];
+        }
+    }
+    return job as Job;
+};
+
+
 // Function to fetch a single job by its ID
 export const getJob = async (id: string): Promise<Job | null> => {
   const jobDocRef = doc(db, 'jobs', id);
   const jobDoc = await getDoc(jobDocRef);
-  if (jobDoc.exists()) {
-    const data = jobDoc.data();
-    if (!data.postingDate) {
-        return null;
-    }
-    return { 
-        id: jobDoc.id, 
-        ...data,
-        postingDate: (data.postingDate as Timestamp).toDate(),
-        closingDate: data.closingDate ? (data.closingDate as Timestamp).toDate() : null,
-        startDate: data.startDate ? (data.startDate as Timestamp).toDate() : null,
-        endDate: data.endDate ? (data.endDate as Timestamp).toDate() : null,
-    } as Job;
-  }
-  return null;
+  if (!jobDoc.exists()) return null;
+  return serializeJob(jobDoc);
 };
 
 // Function to fetch all jobs for a specific user
@@ -71,20 +74,7 @@ export const getJobsByUser = async (userId: string): Promise<Job[]> => {
   const jobsRef = collection(db, 'jobs');
   const q = query(jobsRef, where('authorId', '==', userId));
   const querySnapshot = await getDocs(q);
-  return querySnapshot.docs.map(doc => {
-      const data = doc.data();
-       if (!data.postingDate || !data.createdAt) {
-          return null;
-      }
-      return { 
-          id: doc.id, 
-          ...data,
-          postingDate: (data.postingDate as Timestamp).toDate(),
-          closingDate: data.closingDate ? (data.closingDate as Timestamp).toDate() : null,
-          startDate: data.startDate ? (data.startDate as Timestamp).toDate() : null,
-          endDate: data.endDate ? (data.endDate as Timestamp).toDate() : null,
-      } as Job;
-  }).filter((job): job is Job => job !== null);
+  return querySnapshot.docs.map(serializeJob).filter((job): job is Job => job !== null);
 };
 
 // Function to create a new job
@@ -187,8 +177,8 @@ export const getAllJobs = async (): Promise<JobWithAuthor[]> => {
     const querySnapshot = await getDocs(q);
 
     const jobDocs = querySnapshot.docs
-        .map(doc => ({ id: doc.id, ...doc.data() }))
-        .filter(data => data.postingDate); // Ensure job has a posting date
+        .map(serializeJob)
+        .filter((job): job is Job => !!job);
 
     if (jobDocs.length === 0) return [];
     
@@ -202,11 +192,6 @@ export const getAllJobs = async (): Promise<JobWithAuthor[]> => {
         
         return {
             ...data,
-            createdAt: (data.createdAt as Timestamp).toDate().toISOString(),
-            postingDate: (data.postingDate as Timestamp).toDate().toISOString(),
-            closingDate: data.closingDate ? (data.closingDate as Timestamp).toDate().toISOString() : null,
-            startDate: data.startDate ? (data.startDate as Timestamp).toDate().toISOString() : null,
-            endDate: data.endDate ? (data.endDate as Timestamp).toDate().toISOString() : null,
             author: { uid: author.uid, name: author.name, username: author.username, avatarUrl: author.avatarUrl }
         } as JobWithAuthor;
     }).filter((job): job is JobWithAuthor => !!job);

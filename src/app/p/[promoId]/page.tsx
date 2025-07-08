@@ -4,7 +4,6 @@ import { getPromoPageAndAuthor } from '@/lib/promo-pages';
 import PromoPageClient from './promo-page-client';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import type { Timestamp } from 'firebase/firestore';
 
 export async function generateMetadata({ params }: { params: { promoId: string } }): Promise<Metadata> {
   const data = await getPromoPageAndAuthor(params.promoId);
@@ -53,18 +52,13 @@ export default async function PublicPromoPage({ params }: { params: { promoId: s
         return (
             <div className="flex flex-col items-center justify-center min-h-screen text-center p-4">
                 <h1 className="text-4xl font-bold">Page Not Found</h1>
-                <p className="text-muted-foreground mt-2">The page you're looking for doesn't exist.</p>
+                <p className="text-muted-foreground mt-2">The page you're looking for doesn't exist or has been moved.</p>
                 <Button asChild className="mt-6">
-                    <Link href="/">Back to Home</Link>
+                    <Link href="/explore">Back to Explore</Link>
                 </Button>
             </div>
         )
     }
 
-    const serializablePromoPage = {
-      ...data.promoPage,
-      createdAt: (data.promoPage.createdAt as Timestamp).toDate().toISOString(),
-    };
-
-    return <PromoPageClient promoPage={serializablePromoPage} author={data.author} />;
+    return <PromoPageClient promoPage={data.promoPage} author={data.author} />;
 }

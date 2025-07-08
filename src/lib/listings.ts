@@ -31,28 +31,36 @@ export type Listing = {
   views?: number;
   clicks?: number;
   followerCount: number;
-  startDate?: Timestamp | Date | string | null;
-  endDate?: Timestamp | Date | string | null;
-  createdAt: Timestamp | string;
+  startDate?: string | null; // ISO 8601 string
+  endDate?: string | null; // ISO 8601 string
+  createdAt: string; // ISO 8601 string
   searchableKeywords: string[];
 };
 
 export type ListingWithAuthor = Listing & { author: Pick<User, 'uid' | 'name' | 'username' | 'avatarUrl'> };
 
+const serializeListing = (doc: any): Listing | null => {
+    const data = doc.data();
+    if (!data) return null;
+
+    const listing: any = { id: doc.id };
+    for (const key in data) {
+        if (data[key] instanceof Timestamp) {
+            listing[key] = data[key].toDate().toISOString();
+        } else {
+            listing[key] = data[key];
+        }
+    }
+    return listing as Listing;
+};
+
+
 // Function to fetch a single listing by its ID
 export const getListing = async (id: string): Promise<Listing | null> => {
   const listingDocRef = doc(db, 'listings', id);
   const listingDoc = await getDoc(listingDocRef);
-  if (listingDoc.exists()) {
-    const data = listingDoc.data();
-    return { 
-        id: listingDoc.id, 
-        ...data,
-        startDate: data.startDate ? (data.startDate as Timestamp).toDate() : null,
-        endDate: data.endDate ? (data.endDate as Timestamp).toDate() : null,
-    } as Listing;
-  }
-  return null;
+  if (!listingDoc.exists()) return null;
+  return serializeListing(listingDoc);
 };
 
 // Function to fetch all listings for a specific user
@@ -60,16 +68,7 @@ export const getListingsByUser = async (userId: string): Promise<Listing[]> => {
   const listingsRef = collection(db, 'listings');
   const q = query(listingsRef, where('authorId', '==', userId));
   const querySnapshot = await getDocs(q);
-  return querySnapshot.docs.map(doc => {
-      const data = doc.data();
-      if (!data.createdAt) return null;
-      return { 
-          id: doc.id, 
-          ...data,
-          startDate: data.startDate ? (data.startDate as Timestamp).toDate() : null,
-          endDate: data.endDate ? (data.endDate as Timestamp).toDate() : null,
-      } as Listing
-  }).filter((listing): listing is Listing => listing !== null);
+  return querySnapshot.docs.map(serializeListing).filter((listing): listing is Listing => listing !== null);
 };
 
 // Function to create a new listing
@@ -154,7 +153,10 @@ export const getAllListings = async (): Promise<ListingWithAuthor[]> => {
     const q = query(listingsRef, where('status', '==', 'active'), orderBy('createdAt', 'desc'));
     const querySnapshot = await getDocs(q);
 
-    const listingDocs = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const listingDocs = querySnapshot.docs
+      .map(serializeListing)
+      .filter((listing): listing is Listing => !!listing);
+
     if (listingDocs.length === 0) return [];
 
     const authorIds = [...new Set(listingDocs.map(doc => doc.authorId))];
@@ -167,9 +169,6 @@ export const getAllListings = async (): Promise<ListingWithAuthor[]> => {
 
         return {
             ...data,
-            createdAt: (data.createdAt as Timestamp).toDate().toISOString(),
-            startDate: data.startDate ? (data.startDate as Timestamp).toDate().toISOString() : null,
-            endDate: data.endDate ? (data.endDate as Timestamp).toDate().toISOString() : null,
             author: { uid: author.uid, name: author.name, username: author.username, avatarUrl: author.avatarUrl }
         } as ListingWithAuthor;
     }).filter((listing): listing is ListingWithAuthor => !!listing);

@@ -4,7 +4,6 @@ import { getOfferAndAuthor } from '@/lib/offers';
 import OfferDetailClient from './offer-detail-client';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import type { Timestamp } from 'firebase/firestore';
 
 export async function generateMetadata({ params }: { params: { offerId: string } }): Promise<Metadata> {
   const data = await getOfferAndAuthor(params.offerId);
@@ -46,7 +45,7 @@ export default async function PublicOfferPage({ params }: { params: { offerId: s
         return (
             <div className="flex flex-col items-center justify-center min-h-screen text-center p-4">
                 <h1 className="text-4xl font-bold">Offer Not Found</h1>
-                <p className="text-muted-foreground mt-2">The offer page you're looking for doesn't exist.</p>
+                <p className="text-muted-foreground mt-2">The offer you're looking for doesn't exist or has expired.</p>
                 <Button asChild className="mt-6">
                     <Link href="/explore">Back to Explore</Link>
                 </Button>
@@ -54,12 +53,5 @@ export default async function PublicOfferPage({ params }: { params: { offerId: s
         )
     }
 
-    const serializableOffer = {
-      ...data.offer,
-      startDate: (data.offer.startDate as Date).toISOString(),
-      endDate: data.offer.endDate ? (data.offer.endDate as Date).toISOString() : null,
-      createdAt: (data.offer.createdAt as Timestamp).toDate().toISOString(),
-    };
-
-    return <OfferDetailClient offer={serializableOffer} author={data.author} />;
+    return <OfferDetailClient offer={data.offer} author={data.author} />;
 }

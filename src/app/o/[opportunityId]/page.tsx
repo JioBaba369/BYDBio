@@ -4,9 +4,6 @@ import { getJobAndAuthor } from '@/lib/jobs';
 import OpportunityDetailClient from './client';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import type { User } from '@/lib/users';
-import type { Job } from '@/lib/jobs';
-import type { Timestamp } from 'firebase/firestore';
 
 export async function generateMetadata({ params }: { params: { opportunityId: string } }): Promise<Metadata> {
   const data = await getJobAndAuthor(params.opportunityId);
@@ -48,7 +45,7 @@ export default async function PublicJobPage({ params }: { params: { opportunityI
         return (
             <div className="flex flex-col items-center justify-center min-h-screen text-center p-4">
                 <h1 className="text-4xl font-bold">Job Not Found</h1>
-                <p className="text-muted-foreground mt-2">The job you're looking for doesn't exist.</p>
+                <p className="text-muted-foreground mt-2">The job opportunity you're looking for doesn't exist or has been filled.</p>
                 <Button asChild className="mt-6">
                     <Link href="/explore">Back to Explore</Link>
                 </Button>
@@ -56,14 +53,5 @@ export default async function PublicJobPage({ params }: { params: { opportunityI
         )
     }
 
-    const serializableJob = {
-        ...data.job,
-        postingDate: (data.job.postingDate as Date).toISOString(),
-        closingDate: data.job.closingDate ? (data.job.closingDate as Date).toISOString() : null,
-        startDate: data.job.startDate ? (data.job.startDate as Date).toISOString() : null,
-        endDate: data.job.endDate ? (data.job.endDate as Date).toISOString() : null,
-        createdAt: (data.job.createdAt as Timestamp).toDate().toISOString(),
-    };
-
-    return <OpportunityDetailClient job={serializableJob} author={data.author} />;
+    return <OpportunityDetailClient job={data.job} author={data.author} />;
 }

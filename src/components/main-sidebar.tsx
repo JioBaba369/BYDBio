@@ -52,7 +52,6 @@ export function MainSidebar() {
 
   const isActive = (path: string) => {
     if (path === '/') return pathname === '/';
-    if (path === '/explore') return pathname === '/explore';
     return pathname.startsWith(path);
   };
 

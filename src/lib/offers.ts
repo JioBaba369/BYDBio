@@ -24,8 +24,8 @@ export type Offer = {
   description: string;
   category: string;
   subCategory?: string;
-  startDate: Timestamp | Date | string;
-  endDate?: Timestamp | Date | string | null;
+  startDate: string; // ISO 8601 string
+  endDate?: string | null; // ISO 8601 string
   imageUrl: string | null;
   couponCode?: string;
   ctaLink?: string;
@@ -33,29 +33,34 @@ export type Offer = {
   views: number;
   claims: number;
   followerCount: number;
-  createdAt: Timestamp | string;
+  createdAt: string; // ISO 8601 string
   searchableKeywords: string[];
 };
 
 export type OfferWithAuthor = Offer & { author: Pick<User, 'uid' | 'name' | 'username' | 'avatarUrl'> };
 
+const serializeOffer = (doc: any): Offer | null => {
+    const data = doc.data();
+    if (!data || !data.startDate) return null;
+
+    const offer: any = { id: doc.id };
+    for (const key in data) {
+        if (data[key] instanceof Timestamp) {
+            offer[key] = data[key].toDate().toISOString();
+        } else {
+            offer[key] = data[key];
+        }
+    }
+    return offer as Offer;
+};
+
+
 // Function to fetch a single offer by its ID
 export const getOffer = async (id: string): Promise<Offer | null> => {
   const offerDocRef = doc(db, 'offers', id);
   const offerDoc = await getDoc(offerDocRef);
-  if (offerDoc.exists()) {
-    const data = offerDoc.data();
-    if (!data.startDate) {
-        return null;
-    }
-    return { 
-        id: offerDoc.id, 
-        ...data,
-        startDate: (data.startDate as Timestamp).toDate(),
-        endDate: data.endDate ? (data.endDate as Timestamp).toDate() : null,
-    } as Offer;
-  }
-  return null;
+  if (!offerDoc.exists()) return null;
+  return serializeOffer(offerDoc);
 };
 
 // Function to fetch all offers for a specific user
@@ -63,18 +68,7 @@ export const getOffersByUser = async (userId: string): Promise<Offer[]> => {
   const offersRef = collection(db, 'offers');
   const q = query(offersRef, where('authorId', '==', userId));
   const querySnapshot = await getDocs(q);
-  return querySnapshot.docs.map(doc => {
-      const data = doc.data();
-      if (!data.startDate || !data.createdAt) {
-          return null;
-      }
-      return { 
-          id: doc.id, 
-          ...data,
-          startDate: (data.startDate as Timestamp).toDate(),
-          endDate: data.endDate ? (data.endDate as Timestamp).toDate() : null,
-      } as Offer
-  }).filter((offer): offer is Offer => offer !== null);
+  return querySnapshot.docs.map(serializeOffer).filter((offer): offer is Offer => offer !== null);
 };
 
 // Function to create a new offer
@@ -164,8 +158,8 @@ export const getAllOffers = async (): Promise<OfferWithAuthor[]> => {
     const querySnapshot = await getDocs(q);
 
     const offerDocs = querySnapshot.docs
-        .map(doc => ({ id: doc.id, ...doc.data() }))
-        .filter(data => data.startDate); // Ensure offer has a start date
+        .map(serializeOffer)
+        .filter((offer): offer is Offer => !!offer);
 
     if (offerDocs.length === 0) return [];
     
@@ -179,9 +173,6 @@ export const getAllOffers = async (): Promise<OfferWithAuthor[]> => {
         
         return {
             ...data,
-            createdAt: (data.createdAt as Timestamp).toDate().toISOString(),
-            startDate: (data.startDate as Timestamp).toDate().toISOString(),
-            endDate: data.endDate ? (data.endDate as Timestamp).toDate().toISOString() : null,
             author: { uid: author.uid, name: author.name, username: author.username, avatarUrl: author.avatarUrl }
         } as OfferWithAuthor;
     }).filter((offer): offer is OfferWithAuthor => !!offer);

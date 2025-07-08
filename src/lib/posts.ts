@@ -49,7 +49,7 @@ export type Post = {
   likes: number;
   likedBy: string[]; // Array of user IDs who liked the post
   comments: number;
-  createdAt: Timestamp;
+  createdAt: string; // ISO 8601 string
   repostCount?: number;
   privacy: 'public' | 'followers' | 'me';
   quotedPost?: EmbeddedPostInfo;
@@ -57,35 +57,46 @@ export type Post = {
   searchableKeywords?: string[];
 };
 
-export type PostWithAuthor = Omit<Post, 'createdAt'> & {
+export type PostWithAuthor = Post & {
   author: User;
-  createdAt: string;
   quotedPost?: EmbeddedPostInfoWithAuthor;
   repostedPost?: EmbeddedPostInfoWithAuthor;
 };
+
+const serializePost = (doc: any): Post | null => {
+    const data = doc.data();
+    if (!data || !data.createdAt) return null;
+
+    const post: any = { id: doc.id };
+    for (const key in data) {
+        if (data[key] instanceof Timestamp) {
+            post[key] = data[key].toDate().toISOString();
+        } else {
+            post[key] = data[key];
+        }
+    }
+    return post as Post;
+}
 
 // Function to fetch a single post by its ID
 export const getPost = async (id: string): Promise<Post | null> => {
   const postDocRef = doc(db, 'posts', id);
   const postDoc = await getDoc(postDocRef);
-  if (postDoc.exists()) {
-    return { id: postDoc.id, ...postDoc.data() } as Post;
-  }
-  return null;
+  if (!postDoc.exists()) return null;
+  return serializePost(postDoc);
 };
 
 // Function to fetch all posts for a specific user
-export const getPostsByUser = async (userId: string): Promise<Post[]> => {
+export const getPostsByUser = async (userId: string): Promise<PostWithAuthor[]> => {
   const postsRef = collection(db, 'posts');
   const q = query(postsRef, where('authorId', '==', userId), orderBy('createdAt', 'desc'));
   const querySnapshot = await getDocs(q);
-  return querySnapshot.docs
-    .map(doc => {
-        const data = doc.data();
-        if (!data.createdAt) return null;
-        return { id: doc.id, ...data } as Post
-    })
+  
+  const posts = querySnapshot.docs
+    .map(serializePost)
     .filter((post): post is Post => post !== null);
+  
+  return populatePostAuthors(posts);
 };
 
 // Function to create a new post
@@ -112,7 +123,7 @@ export const createPost = async (userId: string, data: Pick<Post, 'content' | 'i
 
   const docRef = await addDoc(postsRef, postData);
   const newPostDoc = await getDoc(docRef);
-  return { id: newPostDoc.id, ...newPostDoc.data() } as Post;
+  return serializePost(newPostDoc) as Post;
 };
 
 // Function to delete a post
@@ -207,7 +218,7 @@ export const repostPost = async (originalPostId: string, reposterId: string): Pr
     await batch.commit();
 
     const newDoc = await getDoc(newPostRef);
-    return { id: newDoc.id, ...newDoc.data() } as Post;
+    return serializePost(newDoc) as Post;
 };
 
 export const populatePostAuthors = async (posts: Post[]): Promise<PostWithAuthor[]> => {
@@ -234,7 +245,6 @@ export const populatePostAuthors = async (posts: Post[]): Promise<PostWithAuthor
         const populatedPost: PostWithAuthor = {
             ...post,
             author,
-            createdAt: (post.createdAt as Timestamp).toDate().toISOString(),
         };
 
         if (post.quotedPost) {
@@ -282,10 +292,7 @@ export const getFeedPosts = async (followingIds: string[]): Promise<PostWithAuth
     const q = query(postsRef, where('authorId', 'in', followingIds), orderBy('createdAt', 'desc'), limit(50));
     const querySnapshot = await getDocs(q);
     
-    const postsData = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...(doc.data() as Omit<Post, 'id'>)
-    }));
+    const postsData = querySnapshot.docs.map(serializePost).filter((p): p is Post => !!p);
 
     return populatePostAuthors(postsData);
 };
@@ -310,10 +317,7 @@ export const getDiscoveryPosts = async (userId: string, followingIds: string[]):
         return [];
     }
 
-    const postsData = discoveryDocs.map(doc => ({
-        id: doc.id,
-        ...(doc.data() as Omit<Post, 'id'>)
-    }));
+    const postsData = discoveryDocs.map(serializePost).filter((p): p is Post => !!p);
 
     return populatePostAuthors(postsData);
 };
