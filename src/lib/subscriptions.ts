@@ -1,3 +1,4 @@
+
 'use server';
 import { doc, getDoc, writeBatch, arrayUnion, arrayRemove, increment } from 'firebase/firestore';
 import { db } from './firebase';
@@ -28,14 +29,16 @@ export const toggleSubscription = async (userId: string, contentId: string, cont
         // Unsubscribe
         batch.update(userRef, { [subscriptionPath]: arrayRemove(contentId) });
         batch.update(contentRef, { followerCount: increment(-1) });
+        await batch.commit();
     } else {
         // Subscribe
         batch.update(userRef, { [subscriptionPath]: arrayUnion(contentId) });
         batch.update(contentRef, { followerCount: increment(1) });
+        await batch.commit(); // Commit first
         
+        // Then create notification
         await createNotification(authorId, 'new_content_follower', userId, { entityId: contentId, entityTitle, entityType: contentType });
     }
 
-    await batch.commit();
     return !isSubscribed; // Return the new subscription status
 }
