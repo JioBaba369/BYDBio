@@ -124,15 +124,27 @@ export const createEvent = async (userId: string, data: Omit<Event, 'id' | 'auth
     ...data.location.toLowerCase().split(' ').filter(Boolean),
     ...(data.couponCode ? data.couponCode.toLowerCase().split(' ') : [])
   ];
-  await addDoc(eventsRef, {
-    ...data,
+
+  const docData: any = {
     authorId: userId,
     createdAt: serverTimestamp(),
     status: 'active',
     views: 0,
     rsvps: [],
     searchableKeywords: [...new Set(keywords)],
-  });
+    title: data.title,
+    description: data.description,
+    location: data.location,
+    startDate: data.startDate,
+  };
+
+  if (data.endDate) docData.endDate = data.endDate;
+  if (data.imageUrl) docData.imageUrl = data.imageUrl;
+  if (data.couponCode) docData.couponCode = data.couponCode;
+  if (data.ctaLink) docData.ctaLink = data.ctaLink;
+  if (data.itinerary) docData.itinerary = data.itinerary;
+  
+  await addDoc(eventsRef, docData);
 };
 
 // Function to update an existing event

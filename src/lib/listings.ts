@@ -79,16 +79,25 @@ export const createListing = async (userId: string, data: Omit<Listing, 'id' | '
     ...data.category.toLowerCase().split(' ').filter(Boolean),
   ];
 
-  await addDoc(listingsRef, {
-    ...data,
+  const docData: any = {
     authorId: userId,
     createdAt: serverTimestamp(),
     status: 'active',
-    listingType: data.listingType || 'sale',
     views: 0,
     clicks: 0,
     searchableKeywords: [...new Set(keywords)],
-  });
+    title: data.title,
+    description: data.description,
+    price: data.price,
+    category: data.category,
+    listingType: data.listingType || 'sale',
+  };
+
+  if (data.imageUrl) docData.imageUrl = data.imageUrl;
+  if (data.startDate) docData.startDate = data.startDate;
+  if (data.endDate) docData.endDate = data.endDate;
+  
+  await addDoc(listingsRef, docData);
 };
 
 // Function to update an existing listing

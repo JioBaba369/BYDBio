@@ -71,15 +71,25 @@ export const createPromoPage = async (userId: string, data: Omit<PromoPage, 'id'
     ...(data.address ? data.address.toLowerCase().split(' ') : [])
   ];
 
-  await addDoc(promoPagesRef, {
-    ...data,
+  const docData: any = {
     authorId: userId,
     createdAt: serverTimestamp(),
     status: 'active',
     views: 0,
     clicks: 0,
     searchableKeywords: [...new Set(keywords)],
-  });
+    name: data.name,
+    description: data.description,
+    email: data.email,
+  };
+
+  if (data.phone) docData.phone = data.phone;
+  if (data.website) docData.website = data.website;
+  if (data.address) docData.address = data.address;
+  if (data.imageUrl) docData.imageUrl = data.imageUrl;
+  if (data.logoUrl) docData.logoUrl = data.logoUrl;
+
+  await addDoc(promoPagesRef, docData);
 };
 
 // Function to update an existing promo page

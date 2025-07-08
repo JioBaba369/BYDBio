@@ -98,8 +98,7 @@ export const createJob = async (userId: string, data: Omit<Job, 'id' | 'authorId
     ...(data.contactInfo ? data.contactInfo.toLowerCase().split(' ').filter(Boolean) : [])
   ];
 
-  await addDoc(jobsRef, {
-    ...data,
+  const docData: any = {
     authorId: userId,
     createdAt: serverTimestamp(),
     postingDate: serverTimestamp(),
@@ -107,7 +106,22 @@ export const createJob = async (userId: string, data: Omit<Job, 'id' | 'authorId
     views: 0,
     applicants: 0,
     searchableKeywords: [...new Set(keywords)],
-  });
+    title: data.title,
+    company: data.company,
+    description: data.description,
+    location: data.location,
+    type: data.type,
+  };
+
+  if (data.remuneration) docData.remuneration = data.remuneration;
+  if (data.closingDate) docData.closingDate = data.closingDate;
+  if (data.imageUrl) docData.imageUrl = data.imageUrl;
+  if (data.startDate) docData.startDate = data.startDate;
+  if (data.endDate) docData.endDate = data.endDate;
+  if (data.applicationUrl) docData.applicationUrl = data.applicationUrl;
+  if (data.contactInfo) docData.contactInfo = data.contactInfo;
+
+  await addDoc(jobsRef, docData);
 };
 
 // Function to update an existing job
