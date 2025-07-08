@@ -42,13 +42,13 @@ export const isAuthPath = (path: string) => {
  * @returns `true` if the path is public, `false` otherwise.
  */
 export const isPublicPath = (path: string) => {
-    // Check for explicit public paths first.
-    if (EXPLICIT_PUBLIC_PATHS.includes(path)) {
-        return true;
-    }
-    
     // Auth pages are public.
     if (isAuthPath(path)) {
+        return true;
+    }
+
+    // Check for explicit public paths.
+    if (EXPLICIT_PUBLIC_PATHS.includes(path)) {
         return true;
     }
     

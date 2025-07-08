@@ -16,6 +16,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { isAuthPath } from '@/lib/paths';
 import React from 'react';
 import { Skeleton } from './ui/skeleton';
+import { Logo } from './logo';
 
 function Header() {
     const { user, loading, unreadNotificationCount } = useAuth();
@@ -53,7 +54,20 @@ function Header() {
         )
     }
 
-    if (!user) return null;
+    if (!user) {
+        return (
+            <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background/80 backdrop-blur-sm px-4 md:px-6">
+                <Logo />
+                <div className="flex-1" />
+                <Button asChild variant="ghost">
+                    <Link href="/auth/sign-in">Sign In</Link>
+                </Button>
+                <Button asChild>
+                    <Link href="/auth/sign-up">Get Started</Link>
+                </Button>
+            </header>
+        )
+    }
 
     const showBackButton = pathname !== '/';
 
@@ -137,10 +151,11 @@ function Header() {
 export function AppLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
     const onAuthPage = isAuthPath(pathname);
+    const { user, loading } = useAuth();
 
     return (
         <>
-            <MainSidebar />
+            {user && !loading && <MainSidebar />}
             <SidebarInset className="flex flex-col flex-1">
                 {!onAuthPage && <Header />}
                 <main className="p-4 sm:p-6 flex-1 overflow-y-auto relative animate-fade-in">
