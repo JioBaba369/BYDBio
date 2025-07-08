@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { createNotification } from '@/lib/notifications';
 
 const ContactFormSchema = z.object({
-  recipientId: z.string(),
+  recipientId: z.string().min(1, { message: "Message recipient could not be found." }),
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
   email: z.string().email({ message: 'Please enter a valid email address.' }),
   message: z.string().min(10, { message: 'Message must be at least 10 characters.' }).max(1000, { message: 'Message must be less than 1000 characters.' }),
