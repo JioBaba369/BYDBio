@@ -1,60 +1,58 @@
-
 rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
-    
-    // Helper function to check if the user is authenticated
-    function isAuthenticated() {
-      return request.auth != null;
-    }
-    
-    // Helper function to check if the user owns the resource
+  
+    // Helper function to check if user is authenticated and the owner of the path
     function isOwner(userId) {
-      return request.auth.uid == userId;
+      return request.auth != null && request.auth.uid == userId;
     }
     
-    // Helper function to validate file type and size
-    function isValidImage() {
-      return request.resource.size < 5 * 1024 * 1024 // Max 5 MB
-             && request.resource.contentType.matches('image/.*'); // Only allow images
+    // Helper function to check file type and size (max 5MB)
+    function isImage(sizeInMb) {
+      return request.resource.contentType.matches('image/.*') && request.resource.size < sizeInMb * 1024 * 1024;
     }
 
-    // Avatars: Users can only upload their own avatar.
-    match /avatars/{userId} {
-      allow write: if isAuthenticated() && isOwner(userId) && isValidImage();
-    }
-
-    // Content Images (Events, Jobs, Listings, etc.)
-    // Users can only upload images into their own folder within a content type.
-    match /events/{userId}/{eventId}/{fileName} {
-      allow write: if isAuthenticated() && isOwner(userId) && isValidImage();
-    }
-
-    match /jobs/{userId}/{jobId}/{fileName} {
-      allow write: if isAuthenticated() && isOwner(userId) && isValidImage();
-    }
-
-    match /listings/{userId}/{listingId}/{fileName} {
-      allow write: if isAuthenticated() && isOwner(userId) && isValidImage();
-    }
-
-    match /offers/{userId}/{offerId}/{fileName} {
-      allow write: if isAuthenticated() && isOwner(userId) && isValidImage();
-    }
-
-    match /posts/{userId}/{postId}/{fileName} {
-      allow write: if isAuthenticated() && isOwner(userId) && isValidImage();
-    }
-    
-    match /promoPages/{userId}/{promoPageId}/{fileName} {
-       allow write: if isAuthenticated() && isOwner(userId) && isValidImage();
-    }
-    
-    // All files are publicly readable by default to allow easy display in the app.
-    // If you have private files, you would need more specific read rules.
-    match /{allPaths=**} {
+    // Avatars: only the user can upload their own avatar
+    match /avatars/{userId}/{allPaths=**} {
       allow read: if true;
+      allow write: if isOwner(userId) && isImage(5);
+    }
+    
+    // Posts: only the author can upload images for their posts
+    match /posts/{userId}/{allPaths=**} {
+      allow read: if true;
+      allow write: if isOwner(userId) && isImage(5);
+    }
+    
+    // Events: only the author can upload images for their events
+    match /events/{userId}/{allPaths=**} {
+      allow read: if true;
+      allow write: if isOwner(userId) && isImage(5);
+    }
+    
+    // Listings: only the author can upload images for their listings
+    match /listings/{userId}/{allPaths=**} {
+      allow read: if true;
+      allow write: if isOwner(userId) && isImage(5);
+    }
+    
+    // Jobs: only the author can upload images for their jobs
+    match /jobs/{userId}/{allPaths=**} {
+      allow read: if true;
+      allow write: if isOwner(userId) && isImage(5);
+    }
+    
+    // Offers: only the author can upload images for their offers
+    match /offers/{userId}/{allPaths=**} {
+      allow read: if true;
+      allow write: if isOwner(userId) && isImage(5);
+    }
+    
+    // Promo Pages: only the author can upload images for their pages
+    match /promoPages/{userId}/{allPaths=**} {
+      allow read: if true;
+      allow write: if isOwner(userId) && isImage(5);
     }
   }
 }

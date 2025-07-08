@@ -12,6 +12,7 @@ import {
   SidebarGroupLabel,
   SidebarFooter,
   SidebarMenuButton,
+  SidebarMenuBadge,
 } from '@/components/ui/sidebar';
 import { Logo } from './logo';
 import {
@@ -35,6 +36,7 @@ import {
   Gift,
   Calendar,
   Nfc,
+  Menu,
 } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -46,11 +48,10 @@ export function MainSidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const [searchQuery, setSearchQuery] = React.useState('');
-  const { user, loading } = useAuth();
+  const { user, loading, unreadNotificationCount } = useAuth();
 
   const isActive = (path: string) => {
     if (path === '/') return pathname === '/';
-    // For explore, we want an exact match, not startsWith
     if (path === '/explore') return pathname === '/explore';
     return pathname.startsWith(path);
   };
@@ -121,7 +122,7 @@ export function MainSidebar() {
         </SidebarGroup>
         
         <SidebarGroup>
-          <SidebarGroupLabel>General</SidebarGroupLabel>
+          <SidebarGroupLabel>My Hub</SidebarGroupLabel>
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton asChild tooltip="Dashboard" isActive={isActive('/')}>
@@ -160,6 +161,9 @@ export function MainSidebar() {
                 <Link href="/notifications">
                   <Bell />
                   <span>Notifications</span>
+                   {unreadNotificationCount > 0 && (
+                    <SidebarMenuBadge>{unreadNotificationCount}</SidebarMenuBadge>
+                  )}
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -167,7 +171,7 @@ export function MainSidebar() {
         </SidebarGroup>
         
          <SidebarGroup>
-          <SidebarGroupLabel>Browse</SidebarGroupLabel>
+          <SidebarGroupLabel>Community</SidebarGroupLabel>
           <SidebarMenu>
              <SidebarMenuItem>
               <SidebarMenuButton asChild tooltip="Explore All" isActive={isActive('/explore')}>

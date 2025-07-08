@@ -1,123 +1,106 @@
-
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper functions
-    function isAuthenticated() {
-      return request.auth != null;
-    }
-
+    // HELPER FUNCTIONS
     function isOwner(userId) {
       return request.auth.uid == userId;
     }
-
-    function isNewDoc() {
-      return !exists(path);
+    
+    function isAuthenticated() {
+      return request.auth != null;
     }
     
-    function isExistingDoc() {
-      return exists(path);
+    // Validates incoming user data on creation
+    function isValidUser(data) {
+        return data.name is string && data.name.size() < 50 &&
+               data.username is string && data.username.size() > 2 && data.username.size() < 30 &&
+               (!('bio' in data) || data.bio is string && data.bio.size() <= 160);
+    }
+    
+    // Validates incoming post data on creation
+    function isValidPost(data) {
+        return data.authorId == request.auth.uid &&
+               data.content is string && data.content.size() < 2000;
+    }
+    
+    // Validates incoming event data on creation
+    function isValidEvent(data) {
+        return data.authorId == request.auth.uid &&
+               data.title is string && data.title.size() > 1 && data.title.size() < 101 &&
+               data.description is string && data.description.size() > 9 && data.description.size() < 2001 &&
+               data.location is string;
     }
 
-    // =================================
-    // Users Collection
-    // =================================
+    // COLLECTION-SPECIFIC RULES
+
+    // Users collection rules
     match /users/{userId} {
-      // Anyone can read a user's public profile data
       allow read: if true;
-
-      // Only the user themselves can create their profile document
-      allow create: if isOwner(userId);
-
-      // Users can only update their own profile
-      allow update: if isOwner(userId)
-        // Ensure critical fields are not tampered with
-        && request.resource.data.uid == userId
-        // followerCount can only be incremented/decremented by 1 (handled by backend logic)
-        && (
-            request.resource.data.followerCount == resource.data.followerCount + 1 ||
-            request.resource.data.followerCount == resource.data.followerCount - 1 ||
-            request.resource.data.followerCount == resource.data.followerCount
-           )
-        // following can only be managed by backend logic
-        && request.resource.data.following.size() >= resource.data.following.size() -1
-        && request.resource.data.following.size() <= resource.data.following.size() +1;
-      
-      // Users can delete their own account
+      allow create: if isOwner(userId) && isValidUser(request.resource.data);
+      allow update: if isOwner(userId);
       allow delete: if isOwner(userId);
     }
-
-    // =================================
-    // Content Collections (Generic Rules)
-    // =================================
-    function canCreateContent(collectionName) {
-      return isAuthenticated()
-        && isOwner(request.resource.data.authorId)
-        && request.resource.data.createdAt == request.time;
-    }
-
-    function canUpdateContent(collectionName) {
-      let existingData = resource.data;
-      let incomingData = request.resource.data;
-      return isAuthenticated()
-        && isOwner(existingData.authorId)
-        && incomingData.authorId == existingData.authorId
-        && incomingData.createdAt == existingData.createdAt;
-    }
-
-    function canDeleteContent() {
-      return isAuthenticated() && isOwner(resource.data.authorId);
-    }
-
-    // Posts
-    match /posts/{postId} {
-      allow read: if true;
-      allow create: if canCreateContent('posts')
-        && request.resource.data.likes == 0
-        && request.resource.data.comments == 0
-        && request.resource.data.repostCount == 0;
-      allow update: if canUpdateContent('posts')
-        // Likes can only be incremented by 1
-        && (
-          request.resource.data.likes == resource.data.likes + 1 ||
-          request.resource.data.likes == resource.data.likes - 1
-        );
-      allow delete: if canDeleteContent();
-    }
-
-    // Events
-    match /events/{eventId} {
-      allow read: if true;
-      allow create: if canCreateContent('events');
-      allow update: if canUpdateContent('events')
-        // RSVPs can only be managed one at a time
-        && request.resource.data.rsvps.size() >= resource.data.rsvps.size() - 1
-        && request.resource.data.rsvps.size() <= resource.data.rsvps.size() + 1;
-      allow delete: if canDeleteContent();
-    }
     
-    // Generic Content: Listings, Jobs, Offers, Promo Pages
-    match /{collectionName}/{docId} where collectionName in ['listings', 'jobs', 'offers', 'promoPages'] {
-      allow read: if true;
-      allow create: if canCreateContent(collectionName);
-      allow update: if canUpdateContent(collectionName);
-      allow delete: if canDeleteContent();
-    }
-
-    // =================================
-    // Notifications & Subscriptions
-    // =================================
+    // Notifications collection rules
     match /notifications/{notificationId} {
-      // Users can only read or update their own notifications
-      allow read, update, delete: if isAuthenticated() && isOwner(resource.data.userId);
-      // Notifications can only be created by server-side logic (backend SDK)
-      allow create: if false; 
+        allow read, update: if isOwner(resource.data.userId);
+        allow create: if isAuthenticated();
+        allow delete: if false; // Deleting notifications is not allowed
+    }
+
+    // Posts collection
+    match /posts/{postId} {
+        allow read: if true;
+        allow create: if isAuthenticated() && isValidPost(request.resource.data);
+        allow update: if isAuthenticated(); // Liking/commenting is an update
+        allow delete: if isOwner(resource.data.authorId);
     }
     
+    // Events collection
+    match /events/{eventId} {
+        allow read: if true;
+        allow create: if isAuthenticated() && isValidEvent(request.resource.data);
+        allow update: if isAuthenticated(); // RSVPing and owner edits
+        allow delete: if isOwner(resource.data.authorId);
+    }
+
+    // Listings collection
+    match /listings/{listingId} {
+        allow read: if true;
+        allow create: if isAuthenticated() && isOwner(request.resource.data.authorId);
+        allow update: if isOwner(resource.data.authorId);
+        allow delete: if isOwner(resource.data.authorId);
+    }
+
+    // Jobs collection
+    match /jobs/{jobId} {
+        allow read: if true;
+        allow create: if isAuthenticated() && isOwner(request.resource.data.authorId);
+        allow update: if isOwner(resource.data.authorId);
+        allow delete: if isOwner(resource.data.authorId);
+    }
+
+    // Offers collection
+    match /offers/{offerId} {
+        allow read: if true;
+        allow create: if isAuthenticated() && isOwner(request.resource.data.authorId);
+        allow update: if isOwner(resource.data.authorId);
+        allow delete: if isOwner(resource.data.authorId);
+    }
+
+    // Promo Pages collection
+    match /promoPages/{promoId} {
+        allow read: if true;
+        allow create: if isAuthenticated() && isOwner(request.resource.data.authorId);
+        allow update: if isOwner(resource.data.authorId);
+        allow delete: if isOwner(resource.data.authorId);
+    }
+    
+    // Reminders collection (if used by a backend function)
     match /reminders/{reminderId} {
-      allow read, write: if false; // Should only be handled by backend logic/cloud functions
+        allow read, write: if false; // Should only be accessed by backend/admin
     }
   }
 }
