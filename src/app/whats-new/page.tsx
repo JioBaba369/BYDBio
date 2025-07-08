@@ -77,7 +77,7 @@ const updates: UpdateItem[] = [
 ];
 
 const UpdateCard = ({ item }: { item: UpdateItem }) => (
-    <div className="relative pl-8 sm:pl-12 py-6 group">
+    <div className="relative pl-8 sm:pl-24 py-6 group">
         <div className="flex sm:items-center flex-col sm:flex-row mb-1">
             <div className="absolute w-px h-full bg-border -translate-x-4 sm:-translate-x-6 top-0" />
             <div className="absolute h-3 w-3 rounded-full bg-primary -translate-x-4 sm:-translate-x-6 top-8 ring-4 ring-background" />
