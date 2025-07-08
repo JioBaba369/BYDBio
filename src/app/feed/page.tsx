@@ -87,7 +87,7 @@ export default function FeedPage() {
   const { toast } = useToast();
 
   const [postContent, setPostContent] = useState('');
-  const [postPrivacy, setPostPrivacy] = useState<'followers' | 'me'>('followers');
+  const [postPrivacy, setPostPrivacy] = useState<'public' | 'followers' | 'me'>('public');
   const [followingFeed, setFollowingFeed] = useState<FeedItem[]>([]);
   const [discoveryFeed, setDiscoveryFeed] = useState<FeedItem[]>([]);
   
@@ -233,7 +233,7 @@ export default function FeedPage() {
         setPostContent('');
         setCroppedImageUrl(null);
         setPostToQuote(null);
-        setPostPrivacy('followers');
+        setPostPrivacy('public');
         toast({ title: "Update Posted!" });
     } catch(error) {
         console.error("Error posting update:", error);
@@ -455,11 +455,17 @@ export default function FeedPage() {
                 />
             </div>
             <div className="flex items-center gap-2">
-                <Select value={postPrivacy} onValueChange={(value: 'followers' | 'me') => setPostPrivacy(value)}>
+                <Select value={postPrivacy} onValueChange={(value: 'public' | 'followers' | 'me') => setPostPrivacy(value)}>
                     <SelectTrigger className="w-auto h-9 text-xs sm:text-sm">
                         <SelectValue placeholder="Privacy" />
                     </SelectTrigger>
                     <SelectContent>
+                        <SelectItem value="public">
+                             <div className="flex items-center gap-2">
+                                <Globe className="h-4 w-4" />
+                                <span>Public</span>
+                            </div>
+                        </SelectItem>
                         <SelectItem value="followers">
                              <div className="flex items-center gap-2">
                                 <Users className="h-4 w-4" />

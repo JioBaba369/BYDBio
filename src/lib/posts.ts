@@ -97,7 +97,7 @@ export const createPost = async (userId: string, data: Pick<Post, 'content' | 'i
     authorId: userId,
     content: data.content,
     imageUrl: data.imageUrl,
-    privacy: data.privacy || 'followers',
+    privacy: data.privacy || 'public',
     createdAt: serverTimestamp(),
     likes: 0,
     likedBy: [],

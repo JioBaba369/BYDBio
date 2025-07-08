@@ -9,7 +9,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { ClientFormattedDate } from "@/components/client-formatted-date";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, Trash2, Heart, Share2, Repeat, Quote as QuoteIcon, MessageCircle, Loader2, Users } from "lucide-react";
+import { MoreHorizontal, Trash2, Heart, Share2, Repeat, Quote as QuoteIcon, MessageCircle, Loader2, Users, Globe } from "lucide-react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { useToast } from '@/hooks/use-toast';
@@ -121,6 +121,18 @@ export function PostCard({ item, onLike, onDelete, onRepost, onQuote, isLoading 
                                     </TooltipTrigger>
                                     <TooltipContent>
                                         <p>Visible to followers only</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                        )}
+                        {isOwner && item.privacy === 'public' && (
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger>
+                                        <Globe className="h-4 w-4 text-muted-foreground" />
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>Visible to everyone</p>
                                     </TooltipContent>
                                 </Tooltip>
                             </TooltipProvider>
