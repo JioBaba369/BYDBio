@@ -6,7 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useAuth } from "@/components/auth-provider";
-import { createEvent, type Event } from "@/lib/events";
+import { createEvent, updateEvent, type Event } from "@/lib/events";
 import { uploadImage } from "@/lib/storage";
 
 const combineDateAndTime = (date: Date, timeString: string | undefined | null): Date => {
@@ -31,27 +31,44 @@ export default function CreateEventPage() {
             return;
         }
         setIsSaving(true);
+        
         try {
-            const combinedStartDate = combineDateAndTime(data.startDate, data.startTime);
-            const combinedEndDate = data.endDate ? combineDateAndTime(data.endDate, data.endTime) : null;
-            
-            const { startDate, endDate, startTime, endTime, ...restOfData } = data;
+            const { imageUrl, startDate, endDate, startTime, endTime, ...restOfData } = data;
+            const combinedStartDate = combineDateAndTime(startDate, startTime);
+            const combinedEndDate = endDate ? combineDateAndTime(endDate, endTime) : null;
 
-            const dataToSave: Partial<Omit<Event, 'id' | 'authorId' | 'createdAt' | 'status' | 'views' | 'rsvps' | 'searchableKeywords' | 'followerCount'>> = {
+            const dataToSave: Partial<Omit<Event, 'id' | 'authorId' | 'createdAt' | 'status' | 'views' | 'rsvps' | 'searchableKeywords' | 'followerCount' | 'imageUrl'>> = {
                 ...restOfData,
-                startDate: combinedStartDate as any,
-                endDate: combinedEndDate ? (combinedEndDate as any) : null,
+                startDate: combinedStartDate,
+                endDate: combinedEndDate,
+                imageUrl: null, // Save without image first
             };
 
-            if (dataToSave.imageUrl && dataToSave.imageUrl.startsWith('data:image')) {
-                const newImageUrl = await uploadImage(dataToSave.imageUrl, `events/${user.uid}/${Date.now()}`);
-                dataToSave.imageUrl = newImageUrl;
-            }
+            // Create the event document and get its ID
+            const eventId = await createEvent(user.uid, dataToSave);
 
-            await createEvent(user.uid, dataToSave);
+            // If there's an image, upload it in the background
+            if (imageUrl && imageUrl.startsWith('data:image')) {
+                // Don't await this, let it run in the background
+                uploadImage(imageUrl, `events/${user.uid}/${eventId}/image`)
+                    .then(newImageUrl => {
+                        // Once uploaded, update the document with the image URL
+                        updateEvent(eventId, { imageUrl: newImageUrl });
+                    })
+                    .catch(err => {
+                        console.error("Failed to upload image in background:", err);
+                        toast({
+                            title: "Image Upload Failed",
+                            description: "Your event was created, but the image failed to upload. You can edit the event to try again.",
+                            variant: "destructive",
+                            duration: 9000
+                        });
+                    });
+            }
+            
             toast({
                 title: "Event Created!",
-                description: "Your new event has been created successfully.",
+                description: "Your new event has been created. Image is processing if added.",
             });
             router.push('/calendar');
         } catch (error) {
@@ -60,7 +77,6 @@ export default function CreateEventPage() {
                 description: "Failed to create event. Please try again.",
                 variant: "destructive",
             });
-        } finally {
             setIsSaving(false);
         }
     }

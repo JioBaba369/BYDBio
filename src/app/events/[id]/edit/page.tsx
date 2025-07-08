@@ -96,37 +96,70 @@ export default function EditEventPage() {
             return;
         }
         setIsSaving(true);
+        
         try {
-            const combinedStartDate = combineDateAndTime(data.startDate, data.startTime);
-            const combinedEndDate = data.endDate ? combineDateAndTime(data.endDate, data.endTime) : null;
+            const { imageUrl, ...restOfData } = data; // Separate imageUrl from other data
             
-            const { startDate, endDate, startTime, endTime, ...restOfData } = data;
-            
-            const dataToSave: Partial<Omit<Event, 'id' | 'authorId' | 'createdAt'>> = {
-                ...restOfData,
-                startDate: combinedStartDate as any,
-                endDate: combinedEndDate ? (combinedEndDate as any) : null,
-            };
+            // If there's a new image to upload
+            if (imageUrl && imageUrl.startsWith('data:image')) {
+                const combinedStartDate = combineDateAndTime(restOfData.startDate, restOfData.startTime);
+                const combinedEndDate = restOfData.endDate ? combineDateAndTime(restOfData.endDate, restOfData.endTime) : null;
+                const { startDate, endDate, startTime, endTime, ...finalTextData } = restOfData;
 
-            if (dataToSave.imageUrl && dataToSave.imageUrl.startsWith('data:image')) {
-                const newImageUrl = await uploadImage(dataToSave.imageUrl, `events/${user.uid}/${eventId}/image`);
-                dataToSave.imageUrl = newImageUrl;
+                // First, update all the text-based data immediately
+                await updateEvent(eventId, { 
+                    ...finalTextData,
+                    startDate: combinedStartDate,
+                    endDate: combinedEndDate,
+                });
+
+                // Show success and navigate away, letting the image upload in the background
+                toast({
+                    title: "Event Updated!",
+                    description: "Your changes have been saved. Your new image is being uploaded.",
+                });
+                router.push('/calendar');
+
+                // Now, upload the image and update the doc again
+                uploadImage(imageUrl, `events/${user.uid}/${eventId}/image`)
+                    .then(newImageUrl => {
+                        updateEvent(eventId, { imageUrl: newImageUrl });
+                    })
+                    .catch(err => {
+                        console.error("Failed to upload image in background:", err);
+                        toast({
+                            title: "Image Upload Failed",
+                            description: "Your event was updated, but the new image failed to upload.",
+                            variant: "destructive",
+                            duration: 9000
+                        });
+                    });
+            } else {
+                // If no new image, just do a normal update with all data
+                const combinedStartDate = combineDateAndTime(data.startDate, data.startTime);
+                const combinedEndDate = data.endDate ? combineDateAndTime(data.endDate, data.endTime) : null;
+                const { startDate, endDate, startTime, endTime, ...finalData } = data;
+                
+                await updateEvent(eventId, {
+                    ...finalData,
+                    startDate: combinedStartDate,
+                    endDate: combinedEndDate,
+                });
+
+                toast({
+                    title: "Event Updated!",
+                    description: "Your changes have been saved.",
+                });
+                router.push('/calendar');
             }
 
-            await updateEvent(eventId, dataToSave);
-            toast({
-                title: "Event Updated!",
-                description: "Your event has been updated successfully.",
-            });
-            router.push('/calendar');
         } catch (error) {
             toast({
                 title: "Error",
                 description: "Failed to update event. Please try again.",
                 variant: "destructive",
             });
-        } finally {
-            setIsSaving(false);
+            setIsSaving(false); // Only set to false on error
         }
     }
 

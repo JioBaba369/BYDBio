@@ -111,7 +111,7 @@ export const getEventsByUser = async (userId: string): Promise<Event[]> => {
 };
 
 // Function to create a new event
-export const createEvent = async (userId: string, data: Partial<Omit<Event, 'id' | 'authorId' | 'createdAt' | 'status' | 'views' | 'rsvps' | 'searchableKeywords' | 'followerCount'>>) => {
+export const createEvent = async (userId: string, data: Partial<Omit<Event, 'id' | 'authorId' | 'createdAt' | 'status' | 'views' | 'rsvps' | 'searchableKeywords' | 'followerCount'>>): Promise<string> => {
   const eventsRef = collection(db, 'events');
   
   const keywords = [
@@ -135,7 +135,8 @@ export const createEvent = async (userId: string, data: Partial<Omit<Event, 'id'
     searchableKeywords: [...new Set(keywords)],
   };
 
-  await addDoc(eventsRef, docData);
+  const docRef = await addDoc(eventsRef, docData);
+  return docRef.id;
 };
 
 // Function to update an existing event
