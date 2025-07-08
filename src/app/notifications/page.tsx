@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { CheckCheck, Bell, UserPlus, Heart, Calendar, BellRing } from "lucide-react";
 import { useAuth } from "@/components/auth-provider";
 import { useState, useEffect } from "react";
-import { getNotificationsWithActors, markNotificationsAsRead, markSingleNotificationAsRead, type NotificationWithActor } from "@/lib/notifications";
+import { getNotificationsWithActors, markNotificationsAsRead, markSingleNotificationAsRead, getNotificationLink, type NotificationWithActor } from "@/lib/notifications";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
@@ -63,7 +63,7 @@ export default function NotificationsPage() {
     const NotificationItem = ({ notification }: { notification: NotificationWithActor }) => {
         const { actor } = notification;
 
-        let icon, message, link;
+        let icon, message;
         
         const handleClick = () => {
             const originalNotifications = [...notifications];
@@ -76,6 +76,7 @@ export default function NotificationsPage() {
                 });
             }
             
+            const link = getNotificationLink(notification);
             if (link) {
                 router.push(link);
             }
@@ -87,7 +88,6 @@ export default function NotificationsPage() {
             case 'new_follower':
                 icon = <UserPlus className="h-5 w-5 text-primary" />;
                 message = <p><span className="font-semibold">{actor.name}</span> started following you.</p>;
-                link = `/u/${actor.username}`;
                 break;
             case 'new_like':
                 icon = <Heart className="h-5 w-5 text-red-500" />;
@@ -97,31 +97,14 @@ export default function NotificationsPage() {
                         <span className="italic text-muted-foreground">"{notification.entityTitle}"</span>
                     </p>
                 );
-                link = `/feed`; // A real app would link to the post: `/posts/${notification.entityId}`
                 break;
             case 'event_rsvp':
                 icon = <Calendar className="h-5 w-5 text-purple-500" />;
                 message = <p><span className="font-semibold">{actor.name}</span> RSVP'd to your event: <span className="font-semibold">{notification.entityTitle}</span>.</p>;
-                link = `/events/${notification.entityId}`;
                 break;
             case 'new_content_follower':
                 icon = <BellRing className="h-5 w-5 text-yellow-500" />;
                 const entityTypeFormatted = notification.entityType?.replace(/([A-Z])/g, ' $1').toLowerCase() ?? 'content';
-                let entityLink = '/explore';
-                if (notification.entityType && notification.entityId) {
-                    const typeMap = {
-                        promoPages: 'p',
-                        listings: 'l',
-                        jobs: 'o',
-                        offers: 'offer',
-                        events: 'events',
-                    };
-                    const prefix = typeMap[notification.entityType as keyof typeof typeMap];
-                    if (prefix) {
-                        entityLink = `/${prefix}/${notification.entityId}`;
-                    }
-                }
-                link = entityLink;
                 message = <p><span className="font-semibold">{actor.name}</span> is now following your {entityTypeFormatted}: <span className="font-semibold">{notification.entityTitle}</span>.</p>;
                 break;
             default:

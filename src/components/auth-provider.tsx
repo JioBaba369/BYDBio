@@ -4,10 +4,11 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import { onAuthStateChanged, type User as FirebaseUser } from 'firebase/auth';
 import { doc, onSnapshot, collection, query, where } from 'firebase/firestore';
-import { auth, db } from '@/lib/firebase';
-import { createUserProfileIfNotExists, type User as AppUser } from '@/lib/users';
+import { auth, db, messaging } from '@/lib/firebase';
+import { createUserProfileIfNotExists, addFcmTokenToUser, type User as AppUser } from '@/lib/users';
 import { usePathname, useRouter } from 'next/navigation';
 import { isPublicPath, isAuthPath } from '@/lib/paths';
+import { getMessaging, getToken } from 'firebase/messaging';
 
 interface AuthContextType {
   user: AppUser | null;
@@ -91,6 +92,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       router.push('/');
     }
   }, [user, loading, pathname, router]);
+
+  useEffect(() => {
+    if (user && firebaseUser && messaging) {
+      const setupFcm = async () => {
+        if (sessionStorage.getItem('fcm_token_setup_done')) {
+          return;
+        }
+
+        try {
+          const permission = await Notification.requestPermission();
+          sessionStorage.setItem('fcm_token_setup_done', 'true');
+
+          if (permission === 'granted') {
+            const currentToken = await getToken(messaging, {
+              vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY,
+            });
+
+            if (currentToken) {
+              await addFcmTokenToUser(user.uid, currentToken);
+            }
+          }
+        } catch (err) {
+          console.error('An error occurred while setting up notifications.', err);
+        }
+      };
+
+      setupFcm();
+    }
+  }, [user, firebaseUser]);
+
 
   return (
     <AuthContext.Provider value={{ user, firebaseUser, loading, unreadNotificationCount }}>

@@ -1,5 +1,5 @@
 
-import { collection, query, where, getDocs, limit, doc, getDoc, setDoc, updateDoc, deleteDoc } from "firebase/firestore";
+import { collection, query, where, getDocs, limit, doc, getDoc, setDoc, updateDoc, deleteDoc, arrayUnion } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { deleteUser, type User as FirebaseUser } from "firebase/auth";
 import type { Timestamp } from "firebase/firestore";
@@ -49,6 +49,7 @@ export type User = {
   businessCard?: BusinessCard;
   notificationSettings: NotificationSettings;
   subscriptions: Subscriptions;
+  fcmTokens?: string[]; // Array of Firebase Cloud Messaging tokens
   searchableKeywords: string[];
   isFollowedByCurrentUser?: boolean; // Client-side state
 };
@@ -134,6 +135,7 @@ export const createUserProfileIfNotExists = async (user: FirebaseUser, additiona
             events: [],
             offers: [],
         },
+        fcmTokens: [],
         searchableKeywords: searchableKeywords,
     });
     
@@ -257,4 +259,17 @@ export const deleteUserAccount = async (fbUser: FirebaseUser) => {
     // IMPORTANT: For a full production application, you should also set up a Cloud Function
     // triggered by `functions.auth.user().onDelete()` to remove all other content 
     // created by the user (posts, events, etc.) to ensure complete data cleanup.
+};
+
+/**
+ * Adds a Firebase Cloud Messaging (FCM) token to a user's profile.
+ * Uses arrayUnion to prevent duplicate tokens.
+ * @param uid The user's unique ID.
+ * @param token The FCM token to add.
+ */
+export const addFcmTokenToUser = async (uid: string, token: string) => {
+    const userDocRef = doc(db, "users", uid);
+    await updateDoc(userDocRef, {
+        fcmTokens: arrayUnion(token)
+    });
 };

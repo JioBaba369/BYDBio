@@ -58,7 +58,7 @@ export default function UrlTreePage() {
                     </li>
                      <li><span className={leafStyle}>/p/[promoId]</span> - Public Promo Page</li>
                      <li><span className={leafStyle}>/l/[listingId]</span> - Public Listing</li>
-                     <li><span className={leafStyle}>/o/[jobId]</span> - Public Job Page</li>
+                     <li><span className={leafStyle}>/opportunities/[jobId]</span> - Public Job Page</li>
                      <li><span className={leafStyle}>/offer/[offerId]</span> - Public Offer</li>
                      <li>
                         <span className={groupStyle}>/events/[id]</span> - Public Event
@@ -92,9 +92,10 @@ export default function UrlTreePage() {
                         </ul>
                     </li>
                      <li>
-                        <span className={groupStyle}>Jobs (/opportunities)</span>
+                        <span className={groupStyle}>/opportunities</span>
                         <ul className={treeStyle}>
                             <li className={itemStyle}><span className={leafStyle}>/create</span> - Create New Job</li>
+                            <li className={itemStyle}><span className={leafStyle}>/[id]</span> - Public Job Page</li>
                             <li className={itemStyle}><span className={leafStyle}>/[id]/edit</span> - Edit Job</li>
                         </ul>
                     </li>

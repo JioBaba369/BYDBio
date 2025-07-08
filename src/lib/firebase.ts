@@ -4,6 +4,7 @@ import { getAnalytics } from "firebase/analytics";
 import { getAuth, connectAuthEmulator } from "firebase/auth";
 import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
 import { getStorage, connectStorageEmulator } from "firebase/storage";
+import { getMessaging, type Messaging } from "firebase/messaging";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -22,6 +23,7 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const storage = getStorage(app);
 const analytics = typeof window !== 'undefined' ? getAnalytics(app) : null;
+const messaging = typeof window !== 'undefined' ? getMessaging(app) : null;
 
 
 // A more robust way to guard against re-initialization in Next.js hot-reload environments.
@@ -46,4 +48,4 @@ if (process.env.NODE_ENV === 'development' && !global.__EMULATORS_CONNECTED) {
 }
 */
 
-export { app, auth, db, storage, analytics };
+export { app, auth, db, storage, analytics, messaging };

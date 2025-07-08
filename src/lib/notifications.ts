@@ -149,3 +149,36 @@ export const markNotificationsAsRead = async (userId: string) => {
 
   await batch.commit();
 };
+
+
+const getNotificationLink = (notification: Notification): string => {
+    switch (notification.type) {
+        case 'new_follower':
+            return `/u/${notification.actorId}`;
+        case 'new_like':
+            return `/feed`; // A real app would link to `/posts/${notification.entityId}`
+        case 'event_rsvp':
+            return `/events/${notification.entityId}`;
+        case 'new_content_follower':
+            if (notification.entityType && notification.entityId) {
+                const typeMap = {
+                    promoPages: 'p',
+                    listings: 'l',
+                    jobs: 'opportunities',
+                    offers: 'offer',
+                    events: 'events',
+                };
+                const prefix = typeMap[notification.entityType as keyof typeof typeMap];
+                if (prefix) {
+                    return `/${prefix}/${notification.entityId}`;
+                }
+            }
+            return '/explore';
+        case 'contact_form_submission':
+            return '/inbox';
+        default:
+            return '/notifications';
+    }
+};
+
+export { getNotificationLink };

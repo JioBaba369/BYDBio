@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -140,7 +141,7 @@ export default function OpportunitiesClient({ initialJobs }: { initialJobs: JobW
                       <div className="flex items-center gap-1.5"><Bell className="h-3.5 w-3.5" />{job.followerCount?.toLocaleString() ?? 0} Following</div>
                   </div>
                   <Button asChild className="w-full">
-                    <Link href={`/o/${job.id}`}>
+                    <Link href={`/opportunities/${job.id}`}>
                       <ExternalLink className="mr-2 h-4 w-4" />
                       View Details
                     </Link>
@@ -166,7 +167,7 @@ export default function OpportunitiesClient({ initialJobs }: { initialJobs: JobW
                     <TableRow key={job.id}>
                       <TableCell>
                         <div className="space-y-1">
-                          <Link href={`/o/${job.id}`} className="font-semibold hover:underline">{job.title}</Link>
+                          <Link href={`/opportunities/${job.id}`} className="font-semibold hover:underline">{job.title}</Link>
                             <div className="text-xs text-muted-foreground">{job.company}</div>
                         </div>
                       </TableCell>
@@ -180,7 +181,7 @@ export default function OpportunitiesClient({ initialJobs }: { initialJobs: JobW
                       </TableCell>
                       <TableCell className="text-right">
                           <Button asChild size="sm" variant="outline">
-                              <Link href={`/o/${job.id}`}>View Details</Link>
+                              <Link href={`/opportunities/${job.id}`}>View Details</Link>
                           </Button>
                       </TableCell>
                     </TableRow>
