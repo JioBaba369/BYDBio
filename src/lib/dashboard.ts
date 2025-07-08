@@ -99,3 +99,4 @@ const getActivityLink = (item: ActivityItem) => {
         default: return '/';
     }
   };
+

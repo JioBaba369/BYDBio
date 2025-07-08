@@ -128,7 +128,7 @@ function Dashboard() {
   const getActivityLink = (item: ActivityItem) => {
     switch (item.type) {
         case 'Listing': return `/l/${item.id}`;
-        case 'Job': return `/o/${item.id}`;
+        case 'Job': return `/opportunities/${item.id}`;
         case 'Event': return `/events/${item.id}`;
         case 'Offer': return `/offer/${item.id}`;
         case 'Promo Page': return `/p/${item.id}`;
