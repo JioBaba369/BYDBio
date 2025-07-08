@@ -99,7 +99,7 @@ export default function EditOfferPage() {
             const combinedStartDate = combineDateAndTime(data.startDate, data.startTime);
             const combinedEndDate = data.endDate ? combineDateAndTime(data.endDate, data.endTime) : null;
             
-            const { startTime, endTime, ...restOfData } = data;
+            const { startDate, endDate, startTime, endTime, ...restOfData } = data;
 
             const dataToSave: Partial<Omit<Offer, 'id' | 'authorId' | 'createdAt'>> = {
                 ...restOfData,
@@ -107,8 +107,8 @@ export default function EditOfferPage() {
                 endDate: combinedEndDate ? combinedEndDate.toISOString() : null,
             };
 
-            if (data.imageUrl && data.imageUrl.startsWith('data:image')) {
-                const newImageUrl = await uploadImage(data.imageUrl, `offers/${user.uid}/${offerId}/image`);
+            if (dataToSave.imageUrl && dataToSave.imageUrl.startsWith('data:image')) {
+                const newImageUrl = await uploadImage(dataToSave.imageUrl, `offers/${user.uid}/${offerId}/image`);
                 dataToSave.imageUrl = newImageUrl;
             }
 

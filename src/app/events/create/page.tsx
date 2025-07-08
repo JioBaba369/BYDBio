@@ -35,7 +35,7 @@ export default function CreateEventPage() {
             const combinedStartDate = combineDateAndTime(data.startDate, data.startTime);
             const combinedEndDate = data.endDate ? combineDateAndTime(data.endDate, data.endTime) : null;
             
-            const { startTime, endTime, ...restOfData } = data;
+            const { startDate, endDate, startTime, endTime, ...restOfData } = data;
 
             const dataToSave: Partial<Omit<Event, 'id' | 'authorId' | 'createdAt' | 'status' | 'views' | 'rsvps' | 'searchableKeywords' | 'followerCount'>> = {
                 ...restOfData,
@@ -43,8 +43,8 @@ export default function CreateEventPage() {
                 endDate: combinedEndDate ? combinedEndDate.toISOString() : null,
             };
 
-            if (data.imageUrl && data.imageUrl.startsWith('data:image')) {
-                const newImageUrl = await uploadImage(data.imageUrl, `events/${user.uid}/${Date.now()}`);
+            if (dataToSave.imageUrl && dataToSave.imageUrl.startsWith('data:image')) {
+                const newImageUrl = await uploadImage(dataToSave.imageUrl, `events/${user.uid}/${Date.now()}`);
                 dataToSave.imageUrl = newImageUrl;
             }
 

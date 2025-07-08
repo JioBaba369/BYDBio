@@ -22,14 +22,16 @@ export default function CreateListingPage() {
         }
         setIsSaving(true);
         try {
+            const { startDate, endDate, ...restOfData } = data;
+
             const dataToSave: Partial<Omit<Listing, 'id' | 'authorId' | 'createdAt' | 'status' | 'views' | 'clicks' | 'searchableKeywords' | 'followerCount'>> = {
-                ...data,
-                startDate: data.startDate ? data.startDate.toISOString() : undefined,
-                endDate: data.endDate ? data.endDate.toISOString() : undefined,
+                ...restOfData,
+                startDate: startDate ? startDate.toISOString() : null,
+                endDate: endDate ? endDate.toISOString() : null,
             };
 
-            if (data.imageUrl && data.imageUrl.startsWith('data:image')) {
-                const newImageUrl = await uploadImage(data.imageUrl, `listings/${user.uid}/${Date.now()}`);
+            if (dataToSave.imageUrl && dataToSave.imageUrl.startsWith('data:image')) {
+                const newImageUrl = await uploadImage(dataToSave.imageUrl, `listings/${user.uid}/${Date.now()}`);
                 dataToSave.imageUrl = newImageUrl;
             }
 

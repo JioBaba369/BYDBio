@@ -100,17 +100,17 @@ export default function EditJobPage() {
             const combinedStartDate = data.startDate ? combineDateAndTime(data.startDate, data.startTime) : null;
             const combinedEndDate = data.endDate ? combineDateAndTime(data.endDate, data.endTime) : null;
             
-            const { startTime, endTime, ...restOfData } = data;
+            const { closingDate, startDate, endDate, startTime, endTime, ...restOfData } = data;
 
             const dataToSave: Partial<Omit<Job, 'id' | 'authorId' | 'createdAt'>> = {
                 ...restOfData,
-                closingDate: data.closingDate ? data.closingDate.toISOString() : null,
+                closingDate: closingDate ? closingDate.toISOString() : null,
                 startDate: combinedStartDate ? combinedStartDate.toISOString() : null,
                 endDate: combinedEndDate ? combinedEndDate.toISOString() : null,
             };
 
-            if (data.imageUrl && data.imageUrl.startsWith('data:image')) {
-                const newImageUrl = await uploadImage(data.imageUrl, `jobs/${user.uid}/${jobId}/image`);
+            if (dataToSave.imageUrl && dataToSave.imageUrl.startsWith('data:image')) {
+                const newImageUrl = await uploadImage(dataToSave.imageUrl, `jobs/${user.uid}/${jobId}/image`);
                 dataToSave.imageUrl = newImageUrl;
             }
 

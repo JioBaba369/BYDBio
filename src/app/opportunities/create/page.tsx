@@ -35,17 +35,17 @@ export default function CreateJobPage() {
             const combinedStartDate = data.startDate ? combineDateAndTime(data.startDate, data.startTime) : null;
             const combinedEndDate = data.endDate ? combineDateAndTime(data.endDate, data.endTime) : null;
 
-            const { startTime, endTime, ...restOfData } = data;
+            const { closingDate, startDate, endDate, startTime, endTime, ...restOfData } = data;
 
             const dataToSave: Partial<Omit<Job, 'id' | 'authorId' | 'createdAt' | 'status' | 'views' | 'applicants' | 'postingDate' | 'searchableKeywords' | 'followerCount'>> = {
                 ...restOfData,
-                closingDate: data.closingDate ? data.closingDate.toISOString() : undefined,
-                startDate: combinedStartDate ? combinedStartDate.toISOString() : undefined,
-                endDate: combinedEndDate ? combinedEndDate.toISOString() : undefined,
+                closingDate: closingDate ? closingDate.toISOString() : null,
+                startDate: combinedStartDate ? combinedStartDate.toISOString() : null,
+                endDate: combinedEndDate ? combinedEndDate.toISOString() : null,
             };
 
-            if (data.imageUrl && data.imageUrl.startsWith('data:image')) {
-                const newImageUrl = await uploadImage(data.imageUrl, `jobs/${user.uid}/${Date.now()}`);
+            if (dataToSave.imageUrl && dataToSave.imageUrl.startsWith('data:image')) {
+                const newImageUrl = await uploadImage(dataToSave.imageUrl, `jobs/${user.uid}/${Date.now()}`);
                 dataToSave.imageUrl = newImageUrl;
             }
 
