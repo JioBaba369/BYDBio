@@ -59,30 +59,26 @@ const TagPreview = forwardRef<HTMLDivElement, { values: DesignFormValues; user: 
         backgroundPosition: 'center',
     } : {};
     
-    // Determine aspect ratio based on layout
-    const isPortrait = layout === 'vertical';
-    const aspectRatioClass = isPortrait ? 'aspect-[53.98/85.60]' : 'aspect-[85.60/53.98]';
-
     // BACK OF CARD
     if (side === 'back') {
         const backCardBg = cardBgClass || (values.textColor === 'light' ? 'bg-gray-900' : 'bg-white');
         return (
-            <div ref={ref} className={cn("w-full h-full rounded-xl flex flex-col items-center justify-between p-4 transition-colors relative", backCardBg)} style={cardStyle}>
-                 {values.backgroundImageUrl && <div className="absolute inset-0 bg-black/60 rounded-xl" />}
+            <div ref={ref} className={cn("w-full h-full rounded-2xl flex flex-col items-center justify-between p-6 transition-colors relative", backCardBg)} style={cardStyle}>
+                 {values.backgroundImageUrl && <div className="absolute inset-0 bg-black/60 rounded-2xl" />}
                  <div className="relative z-10 w-full flex flex-col items-center justify-between h-full">
-                    <Logo className={cn("text-lg", textColor)} />
+                    <Logo className={cn("text-xl", textColor)} />
                     {values.showQrCode && user ? (
                         <div className="flex flex-col items-center gap-2">
-                            <div className="bg-white p-2 rounded-lg shadow-md">
+                            <div className="bg-white p-2 rounded-md shadow-md">
                                 <QRCode
                                     value={`${window.location.origin}/u/${user.username}`}
-                                    size={isPortrait ? 120 : 90}
+                                    size={100}
                                     bgColor="#ffffff"
                                     fgColor="#000000"
                                     renderAs="svg"
                                 />
                             </div>
-                            <p className={cn("text-xs font-mono leading-tight", subtitleColor)}>{`byd.bio/u/${user.username}`}</p>
+                            <p className={cn("text-[10px] font-mono leading-tight", subtitleColor)}>{`byd.bio/u/${user.username}`}</p>
                         </div>
                     ) : <div />}
                     <p className={cn("text-xs font-semibold leading-tight", subtitleColor)}>Tap or Scan to Connect</p>
@@ -97,9 +93,9 @@ const TagPreview = forwardRef<HTMLDivElement, { values: DesignFormValues; user: 
             {values.logoUrl ? (
                 <Image src={values.logoUrl} alt="Logo" width={96} height={96} className={cn(sizeClass, "rounded-full object-cover")} />
             ) : user ? (
-                <Avatar className={sizeClass}>
+                <Avatar className={cn(sizeClass)}>
                     <AvatarImage src={user.avatarUrl} alt={user.name} />
-                    <AvatarFallback className={fallbackClass}>{user.name.charAt(0)}</AvatarFallback>
+                    <AvatarFallback className={cn("bg-transparent", fallbackClass)}>{user.name.charAt(0)}</AvatarFallback>
                 </Avatar>
             ) : (
                 <div className={cn(sizeClass, "rounded-full bg-muted flex items-center justify-center")} />
@@ -111,17 +107,17 @@ const TagPreview = forwardRef<HTMLDivElement, { values: DesignFormValues; user: 
     if (layout === 'horizontal-left' || layout === 'horizontal-right') {
         const textElement = (
             <div className={cn("flex-grow space-y-0.5", layout === 'horizontal-left' ? "text-left" : "text-right")}>
-                <h3 className={cn("font-bold text-2xl leading-tight", textColor)}>{values.name || 'Your Name'}</h3>
-                <p className={cn("text-base leading-tight", subtitleColor)}>{values.title || 'Your Title'}</p>
-                {values.company && <p className={cn("text-sm leading-tight opacity-80", subtitleColor)}>{values.company}</p>}
+                <h3 className={cn("font-bold text-xl leading-tight", textColor)}>{values.name || 'Your Name'}</h3>
+                <p className={cn("text-sm leading-tight", subtitleColor)}>{values.title || 'Your Title'}</p>
+                {values.company && <p className={cn("text-xs leading-tight opacity-80", subtitleColor)}>{values.company}</p>}
             </div>
         );
 
         return (
-             <div ref={ref} className={cn("w-full h-full rounded-xl p-6 transition-colors relative flex", cardBgClass)} style={cardStyle}>
-                {values.backgroundImageUrl && <div className="absolute inset-0 bg-black/50 rounded-xl" />}
-                <div className={cn("relative z-10 flex w-full items-center gap-5", layout === 'horizontal-right' ? 'flex-row-reverse' : '')}>
-                    {renderAvatar("h-20 w-20", "text-3xl")}
+             <div ref={ref} className={cn("w-full h-full rounded-2xl p-4 transition-colors relative flex", cardBgClass)} style={cardStyle}>
+                {values.backgroundImageUrl && <div className="absolute inset-0 bg-black/50 rounded-2xl" />}
+                <div className={cn("relative z-10 flex w-full items-center gap-4", layout === 'horizontal-right' ? 'flex-row-reverse' : '')}>
+                    {renderAvatar("h-16 w-16", "text-3xl")}
                     {textElement}
                 </div>
             </div>
@@ -131,15 +127,15 @@ const TagPreview = forwardRef<HTMLDivElement, { values: DesignFormValues; user: 
     // Lanyard Card
     if (layout === 'lanyard') {
          return (
-            <div ref={ref} className={cn("w-full h-full rounded-xl p-8 transition-colors relative flex items-center gap-8", cardBgClass)} style={cardStyle}>
-                {values.backgroundImageUrl && <div className="absolute inset-0 bg-black/50 rounded-xl" />}
-                <div className="absolute top-4 left-1/2 -translate-x-1/2 w-5 h-5 rounded-full bg-white/50 border-2 border-white/80" />
-                <div className="relative z-10 flex w-full items-center gap-8">
-                    {renderAvatar("h-28 w-28", "text-5xl")}
-                     <div className="flex-grow space-y-1 text-left">
-                        <h3 className={cn("font-bold text-4xl leading-tight", textColor)}>{values.name || 'Your Name'}</h3>
-                        <p className={cn("text-xl leading-tight", subtitleColor)}>{values.title || 'Your Title'}</p>
-                        {values.company && <p className={cn("text-lg leading-tight opacity-80", subtitleColor)}>{values.company}</p>}
+            <div ref={ref} className={cn("w-full h-full rounded-2xl p-6 transition-colors relative flex flex-col items-center justify-center text-center", cardBgClass)} style={cardStyle}>
+                {values.backgroundImageUrl && <div className="absolute inset-0 bg-black/50 rounded-2xl" />}
+                <div className="absolute top-4 left-1/2 -translate-x-1/2 w-8 h-4 rounded-full bg-white/50 border-2 border-white/80" />
+                <div className="relative z-10 flex w-full flex-col items-center justify-center gap-4">
+                    {renderAvatar("h-24 w-24", "text-5xl")}
+                     <div className="space-y-1">
+                        <h3 className={cn("font-bold text-3xl leading-tight", textColor)}>{values.name || 'Your Name'}</h3>
+                        <p className={cn("text-lg leading-tight", subtitleColor)}>{values.title || 'Your Title'}</p>
+                        {values.company && <p className={cn("text-base leading-tight opacity-80", subtitleColor)}>{values.company}</p>}
                     </div>
                 </div>
             </div>
@@ -148,14 +144,14 @@ const TagPreview = forwardRef<HTMLDivElement, { values: DesignFormValues; user: 
     
     // Vertical Card (Default)
     return (
-        <div ref={ref} className={cn("w-full h-full rounded-xl p-8 transition-colors relative flex", cardBgClass)} style={cardStyle}>
-            {values.backgroundImageUrl && <div className="absolute inset-0 bg-black/50 rounded-xl" />}
-            <div className="relative z-10 flex w-full flex-col items-center justify-center text-center space-y-4">
-                {renderAvatar("h-28 w-28", "text-5xl")}
-                <div className="space-y-1.5">
-                    <h3 className={cn("font-bold text-3xl leading-tight", textColor)}>{values.name || 'Your Name'}</h3>
-                    <p className={cn("text-lg leading-tight", subtitleColor)}>{values.title || 'Your Title'}</p>
-                    {values.company && <p className={cn("text-base leading-tight opacity-80 pt-1", subtitleColor)}>{values.company}</p>}
+        <div ref={ref} className={cn("w-full h-full rounded-2xl p-6 transition-colors relative flex", cardBgClass)} style={cardStyle}>
+            {values.backgroundImageUrl && <div className="absolute inset-0 bg-black/50 rounded-2xl" />}
+            <div className="relative z-10 flex w-full flex-col items-center justify-center text-center space-y-3">
+                {renderAvatar("h-24 w-24", "text-5xl")}
+                <div className="space-y-1">
+                    <h3 className={cn("font-bold text-2xl leading-tight", textColor)}>{values.name || 'Your Name'}</h3>
+                    <p className={cn("text-base leading-tight", subtitleColor)}>{values.title || 'Your Title'}</p>
+                    {values.company && <p className={cn("text-sm leading-tight opacity-80 pt-1", subtitleColor)}>{values.company}</p>}
                 </div>
             </div>
         </div>
@@ -248,6 +244,9 @@ export default function BydTagDesignPage() {
 
     toast({ title: 'Generating Image...', description: 'Please wait a moment.' });
 
+    // 85.60mm @ 300 DPI = 1011px
+    // The canvas scale is relative to the element's on-screen size.
+    // A scale of 3 should produce a high-quality image (~1000px wide for a ~330px element)
     html2canvas(targetRef.current, { backgroundColor: null, useCORS: true, scale: 3 })
       .then((canvas) => {
         canvas.toBlob((blob) => {
@@ -269,8 +268,8 @@ export default function BydTagDesignPage() {
     { value: 'blue', className: 'bg-blue-600' },
   ];
   
-  const isPortraitLayout = watchedValues.layout === 'vertical';
-  const cropperAspectRatio = isPortraitLayout ? 53.98 / 85.6 : 85.6 / 53.98;
+  const isPortraitLayout = watchedValues.layout === 'vertical' || watchedValues.layout === 'lanyard';
+  const cropperAspectRatio = watchedValues.layout === 'lanyard' || watchedValues.layout === 'vertical' ? 53.98 / 85.6 : 85.6 / 53.98;
 
   return (
     <>
@@ -487,4 +486,3 @@ export default function BydTagDesignPage() {
     </>
   );
 }
-
