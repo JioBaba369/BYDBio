@@ -34,7 +34,7 @@ export type PromoPage = {
   views?: number;
   clicks?: number;
   followerCount: number;
-  createdAt: string; // ISO 8601 string
+  createdAt: Date;
   searchableKeywords: string[];
 };
 
@@ -47,7 +47,7 @@ const serializePromoPage = (doc: any): PromoPage | null => {
     const page: any = { id: doc.id };
     for (const key in data) {
         if (data[key] instanceof Timestamp) {
-            page[key] = data[key].toDate().toISOString();
+            page[key] = data[key].toDate();
         } else {
             page[key] = data[key];
         }
@@ -97,7 +97,8 @@ export const createPromoPage = async (userId: string, data: Partial<Omit<PromoPa
     searchableKeywords: [...new Set(keywords)],
   };
 
-  await addDoc(promoPagesRef, docData);
+  const docRef = await addDoc(promoPagesRef, docData);
+  return docRef.id;
 };
 
 // Function to update an existing promo page

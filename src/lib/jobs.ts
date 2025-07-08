@@ -28,16 +28,16 @@ export type Job = {
   category?: string;
   subCategory?: string;
   remuneration?: string;
-  postingDate: string; // ISO 8601 string
-  closingDate?: string | null; // ISO 8601 string
-  startDate?: string | null; // ISO 8601 string
-  endDate?: string | null; // ISO 8601 string
+  postingDate: Date;
+  closingDate?: Date | null;
+  startDate?: Date | null;
+  endDate?: Date | null;
   imageUrl: string | null;
   status: 'active' | 'archived';
   views: number;
   applicants: number;
   followerCount: number;
-  createdAt: string; // ISO 8601 string
+  createdAt: Date;
   searchableKeywords: string[];
   applicationUrl?: string;
   contactInfo?: string;
@@ -52,7 +52,7 @@ const serializeJob = (doc: any): Job | null => {
     const job: any = { id: doc.id };
     for (const key in data) {
         if (data[key] instanceof Timestamp) {
-            job[key] = data[key].toDate().toISOString();
+            job[key] = data[key].toDate();
         } else {
             job[key] = data[key];
         }
@@ -103,7 +103,8 @@ export const createJob = async (userId: string, data: Partial<Omit<Job, 'id' | '
     searchableKeywords: [...new Set(keywords)],
   };
 
-  await addDoc(jobsRef, docData);
+  const docRef = await addDoc(jobsRef, docData);
+  return docRef.id;
 };
 
 // Function to update an existing job

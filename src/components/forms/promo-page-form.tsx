@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import Image from "next/image"
-import { Upload } from "lucide-react"
+import { Upload, Image as ImageIcon } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import { useToast } from "@/hooks/use-toast"
 import ImageCropper from "../image-cropper"
@@ -124,6 +124,7 @@ export function PromoPageForm({ defaultValues, onSubmit, isSaving }: PromoPageFo
         onOpenChange={setIsCropperOpen}
         onCropComplete={handleCropComplete}
         aspectRatio={2/1}
+        isRound={false}
       />
       <ImageCropper
         imageSrc={logoToCrop}
@@ -139,7 +140,7 @@ export function PromoPageForm({ defaultValues, onSubmit, isSaving }: PromoPageFo
                 <div className="md:col-span-2 space-y-6">
                     <Card>
                         <CardHeader>
-                            <CardTitle>Promo Page Details</CardTitle>
+                            <CardTitle>Business Page Details</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-6">
                             <FormField
@@ -147,7 +148,7 @@ export function PromoPageForm({ defaultValues, onSubmit, isSaving }: PromoPageFo
                                 name="name"
                                 render={({ field }) => (
                                     <FormItem>
-                                    <FormLabel>Promo Page Name</FormLabel>
+                                    <FormLabel>Page Name</FormLabel>
                                     <FormControl>
                                         <Input placeholder="e.g. My Awesome Project" {...field} />
                                     </FormControl>
@@ -272,11 +273,14 @@ export function PromoPageForm({ defaultValues, onSubmit, isSaving }: PromoPageFo
                             <CardTitle>Header Image</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                            <div className="aspect-[2/1] w-full rounded-md border border-dashed flex items-center justify-center">
+                            <div className="aspect-[2/1] w-full rounded-md border border-dashed flex items-center justify-center bg-muted/40">
                                 {watchedImageUrl ? (
                                     <Image src={watchedImageUrl} alt="Promo Page image" width={400} height={200} className="object-cover rounded-md w-full h-full" />
                                 ) : (
-                                    <p className="text-sm text-muted-foreground">No image</p>
+                                    <div className="text-center text-muted-foreground p-4">
+                                        <ImageIcon className="mx-auto h-8 w-8 mb-2" />
+                                        <p className="text-sm">No image set</p>
+                                    </div>
                                 )}
                             </div>
                             <Button type="button" variant="outline" className="w-full" onClick={() => fileInputRef.current?.click()}>
@@ -296,11 +300,14 @@ export function PromoPageForm({ defaultValues, onSubmit, isSaving }: PromoPageFo
                             <CardTitle>Logo</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                            <div className="aspect-square w-full flex items-center justify-center">
+                            <div className="aspect-square w-full flex items-center justify-center bg-muted/40 rounded-lg">
                                 {watchedLogoUrl ? (
                                     <Image src={watchedLogoUrl} alt="Promo Page logo" width={160} height={160} className="object-contain rounded-full w-40 h-40" />
                                 ) : (
-                                    <p className="text-sm text-muted-foreground">No logo</p>
+                                    <div className="text-center text-muted-foreground p-4">
+                                        <ImageIcon className="mx-auto h-8 w-8 mb-2" />
+                                        <p className="text-sm">No logo set</p>
+                                    </div>
                                 )}
                             </div>
                             <Button type="button" variant="outline" className="w-full" onClick={() => logoFileInputRef.current?.click()}>

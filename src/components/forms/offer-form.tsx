@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent } from "@/components/ui/card"
 import Image from "next/image"
-import { CalendarIcon, Upload } from "lucide-react"
+import { CalendarIcon, Upload, Image as ImageIcon } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import { useToast } from "@/hooks/use-toast"
 import ImageCropper from "../image-cropper"
@@ -348,11 +348,14 @@ export function OfferForm({ defaultValues, onSubmit, isSaving }: OfferFormProps)
                         <CardContent className="p-6 space-y-4">
                             <h3 className="text-lg font-medium">Offer Image</h3>
                             <div className="space-y-2">
-                                <div className="aspect-video w-full rounded-md border border-dashed flex items-center justify-center">
+                                <div className="aspect-video w-full rounded-md border border-dashed flex items-center justify-center bg-muted/40">
                                     {watchedImageUrl ? (
                                         <Image src={watchedImageUrl} alt="Offer image" width={300} height={169} className="object-cover rounded-md" />
                                     ) : (
-                                        <p className="text-sm text-muted-foreground">No image</p>
+                                        <div className="text-center text-muted-foreground p-4">
+                                            <ImageIcon className="mx-auto h-8 w-8 mb-2" />
+                                            <p className="text-sm">No image set</p>
+                                        </div>
                                     )}
                                 </div>
                                 <Button type="button" variant="outline" className="w-full" onClick={() => fileInputRef.current?.click()}>

@@ -47,12 +47,16 @@ export default function CreateEventPage() {
             // Create the event document and get its ID
             const eventId = await createEvent(user.uid, dataToSave);
 
+            toast({
+                title: "Event Created!",
+                description: "Your new event has been created. Image is processing if added.",
+            });
+            router.push('/calendar');
+
             // If there's an image, upload it in the background
             if (imageUrl && imageUrl.startsWith('data:image')) {
-                // Don't await this, let it run in the background
                 uploadImage(imageUrl, `events/${user.uid}/${eventId}/image`)
                     .then(newImageUrl => {
-                        // Once uploaded, update the document with the image URL
                         updateEvent(eventId, { imageUrl: newImageUrl });
                     })
                     .catch(err => {
@@ -65,12 +69,6 @@ export default function CreateEventPage() {
                         });
                     });
             }
-            
-            toast({
-                title: "Event Created!",
-                description: "Your new event has been created. Image is processing if added.",
-            });
-            router.push('/calendar');
         } catch (error) {
             toast({
                 title: "Error",

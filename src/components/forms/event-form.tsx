@@ -9,7 +9,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDes
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover"
-import { CalendarIcon, Upload, PlusCircle, Trash2 } from "lucide-react"
+import { CalendarIcon, Upload, PlusCircle, Trash2, Image as ImageIcon } from "lucide-react"
 import { Calendar } from "../ui/calendar"
 import { cn } from "@/lib/utils"
 import { format } from "date-fns"
@@ -458,11 +458,14 @@ export function EventForm({ defaultValues, onSubmit, isSaving }: EventFormProps)
                             <CardTitle>Event Image</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                            <div className="aspect-video w-full rounded-md border border-dashed flex items-center justify-center">
+                            <div className="aspect-video w-full rounded-md border border-dashed flex items-center justify-center bg-muted/40">
                                 {watchedImageUrl ? (
                                     <Image src={watchedImageUrl} alt="Event image" width={300} height={169} className="object-cover rounded-md" />
                                 ) : (
-                                    <p className="text-sm text-muted-foreground">No image</p>
+                                    <div className="text-center text-muted-foreground p-4">
+                                        <ImageIcon className="mx-auto h-8 w-8 mb-2" />
+                                        <p className="text-sm">No image set</p>
+                                    </div>
                                 )}
                             </div>
                             <Button type="button" variant="outline" className="w-full" onClick={() => fileInputRef.current?.click()}>

@@ -86,32 +86,33 @@ export default function EditListingPage() {
         }
         setIsSaving(true);
         try {
-            const { startDate, endDate, ...restOfData } = data;
-            const dataToSave: Partial<Omit<Listing, 'id' | 'authorId' | 'createdAt'>> = {
-                ...restOfData,
-                startDate: startDate ? (startDate as any) : null,
-                endDate: endDate ? (endDate as any) : null,
-            };
+            const { imageUrl, ...restOfData } = data;
+            
+            await updateListing(listingId, { ...restOfData });
+            
+            if (imageUrl && imageUrl.startsWith('data:image')) {
+                toast({ title: "Listing Updated!", description: "Your listing has been updated. Image is uploading." });
+                router.push('/calendar');
 
-            if (dataToSave.imageUrl && dataToSave.imageUrl.startsWith('data:image')) {
-                const newImageUrl = await uploadImage(dataToSave.imageUrl, `listings/${user.uid}/${listingId}/image`);
-                dataToSave.imageUrl = newImageUrl;
+                uploadImage(imageUrl, `listings/${user.uid}/${listingId}/image`)
+                    .then(newImageUrl => {
+                        updateListing(listingId, { imageUrl: newImageUrl });
+                    })
+                    .catch(err => {
+                        console.error("Failed to upload image in background:", err);
+                        toast({ title: "Image Upload Failed", description: "Your listing was updated, but the new image failed to upload.", variant: "destructive", duration: 9000 });
+                    });
+            } else {
+                 toast({ title: "Listing Updated!", description: "Your listing has been updated successfully." });
+                 router.push('/calendar');
             }
-
-            await updateListing(listingId, dataToSave);
-            toast({
-                title: "Listing Updated!",
-                description: "Your listing has been updated successfully.",
-            });
-            router.push('/calendar');
         } catch (error) {
             toast({
                 title: "Error",
                 description: "Failed to update listing. Please try again.",
                 variant: "destructive",
             });
-        } finally {
-            setIsSaving(false);
+             setIsSaving(false);
         }
     }
 

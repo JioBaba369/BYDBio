@@ -31,9 +31,9 @@ export type Listing = {
   views?: number;
   clicks?: number;
   followerCount: number;
-  startDate?: string | null; // ISO 8601 string
-  endDate?: string | null; // ISO 8601 string
-  createdAt: string; // ISO 8601 string
+  startDate?: Date | null;
+  endDate?: Date | null;
+  createdAt: Date;
   searchableKeywords: string[];
 };
 
@@ -46,7 +46,7 @@ const serializeListing = (doc: any): Listing | null => {
     const listing: any = { id: doc.id };
     for (const key in data) {
         if (data[key] instanceof Timestamp) {
-            listing[key] = data[key].toDate().toISOString();
+            listing[key] = data[key].toDate();
         } else {
             listing[key] = data[key];
         }
@@ -92,7 +92,8 @@ export const createListing = async (userId: string, data: Partial<Omit<Listing, 
     searchableKeywords: [...new Set(keywords)],
   };
   
-  await addDoc(listingsRef, docData);
+  const docRef = await addDoc(listingsRef, docData);
+  return docRef.id;
 };
 
 // Function to update an existing listing

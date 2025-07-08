@@ -6,7 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useAuth } from "@/components/auth-provider";
-import { createJob, type Job } from "@/lib/jobs";
+import { createJob, updateJob, type Job } from "@/lib/jobs";
 import { uploadImage } from "@/lib/storage";
 
 const combineDateAndTime = (date: Date, timeString: string | undefined | null): Date => {
@@ -32,36 +32,47 @@ export default function CreateJobPage() {
         }
         setIsSaving(true);
         try {
-            const combinedStartDate = data.startDate ? combineDateAndTime(data.startDate, data.startTime) : null;
-            const combinedEndDate = data.endDate ? combineDateAndTime(data.endDate, data.endTime) : null;
+            const { imageUrl, closingDate, startDate, endDate, startTime, endTime, ...restOfData } = data;
+            const combinedStartDate = startDate ? combineDateAndTime(startDate, startTime) : null;
+            const combinedEndDate = endDate ? combineDateAndTime(endDate, endTime) : null;
 
-            const { closingDate, startDate, endDate, startTime, endTime, ...restOfData } = data;
-
-            const dataToSave: Partial<Omit<Job, 'id' | 'authorId' | 'createdAt' | 'status' | 'views' | 'applicants' | 'postingDate' | 'searchableKeywords' | 'followerCount'>> = {
+            const dataToSave: Partial<Omit<Job, 'id' | 'authorId' | 'createdAt' | 'status' | 'views' | 'applicants' | 'postingDate' | 'searchableKeywords' | 'followerCount' | 'imageUrl'>> = {
                 ...restOfData,
-                closingDate: closingDate ? (closingDate as any) : null,
-                startDate: combinedStartDate ? (combinedStartDate as any) : null,
-                endDate: combinedEndDate ? (combinedEndDate as any) : null,
+                closingDate: closingDate,
+                startDate: combinedStartDate,
+                endDate: combinedEndDate,
             };
 
-            if (dataToSave.imageUrl && dataToSave.imageUrl.startsWith('data:image')) {
-                const newImageUrl = await uploadImage(dataToSave.imageUrl, `jobs/${user.uid}/${Date.now()}`);
-                dataToSave.imageUrl = newImageUrl;
-            }
-
-            await createJob(user.uid, dataToSave);
+            const jobId = await createJob(user.uid, dataToSave);
+            
             toast({
                 title: "Job Created!",
-                description: "Your new job has been created successfully.",
+                description: "Your new job has been created. Image is processing if added.",
             });
             router.push('/calendar');
+
+            if (imageUrl && imageUrl.startsWith('data:image')) {
+                uploadImage(imageUrl, `jobs/${user.uid}/${jobId}/image`)
+                    .then(newImageUrl => {
+                        updateJob(jobId, { imageUrl: newImageUrl });
+                    })
+                    .catch(err => {
+                        console.error("Failed to upload image in background:", err);
+                        toast({
+                            title: "Image Upload Failed",
+                            description: "Your job was created, but the image failed to upload.",
+                            variant: "destructive",
+                            duration: 9000
+                        });
+                    });
+            }
+
         } catch (error) {
             toast({
                 title: "Error",
                 description: "Failed to create job. Please try again.",
                 variant: "destructive",
             });
-        } finally {
             setIsSaving(false);
         }
     }

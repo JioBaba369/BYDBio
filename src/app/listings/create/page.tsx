@@ -4,7 +4,7 @@
 import { ListingForm, ListingFormValues } from "@/components/forms/listing-form";
 import { useAuth } from "@/components/auth-provider";
 import { useToast } from "@/hooks/use-toast";
-import { createListing, type Listing } from "@/lib/listings";
+import { createListing, updateListing, type Listing } from "@/lib/listings";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { uploadImage } from "@/lib/storage";
@@ -22,32 +22,35 @@ export default function CreateListingPage() {
         }
         setIsSaving(true);
         try {
-            const { startDate, endDate, ...restOfData } = data;
+            const { imageUrl, ...restOfData } = data;
 
             const dataToSave: Partial<Omit<Listing, 'id' | 'authorId' | 'createdAt' | 'status' | 'views' | 'clicks' | 'searchableKeywords' | 'followerCount'>> = {
                 ...restOfData,
-                startDate: startDate ? (startDate as any) : null,
-                endDate: endDate ? (endDate as any) : null,
+                imageUrl: null,
             };
 
-            if (dataToSave.imageUrl && dataToSave.imageUrl.startsWith('data:image')) {
-                const newImageUrl = await uploadImage(dataToSave.imageUrl, `listings/${user.uid}/${Date.now()}`);
-                dataToSave.imageUrl = newImageUrl;
+            const listingId = await createListing(user.uid, dataToSave);
+            
+            toast({ title: "Listing Created!", description: "Your new listing has been created. Image is processing." });
+            router.push('/calendar');
+
+            if (imageUrl && imageUrl.startsWith('data:image')) {
+                uploadImage(imageUrl, `listings/${user.uid}/${listingId}/image`)
+                    .then(newImageUrl => {
+                        updateListing(listingId, { imageUrl: newImageUrl });
+                    })
+                    .catch(err => {
+                        console.error("Failed to upload image in background:", err);
+                        toast({ title: "Image Upload Failed", description: "Your listing was created, but the image failed to upload.", variant: "destructive", duration: 9000 });
+                    });
             }
 
-            await createListing(user.uid, dataToSave);
-            toast({
-                title: "Listing Created!",
-                description: "Your new listing has been created successfully.",
-            });
-            router.push('/calendar');
         } catch (error) {
             toast({
                 title: "Error",
                 description: "Failed to create listing. Please try again.",
                 variant: "destructive",
             });
-        } finally {
             setIsSaving(false);
         }
     }

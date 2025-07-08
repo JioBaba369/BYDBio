@@ -100,27 +100,25 @@ export default function EditEventPage() {
         try {
             const { imageUrl, ...restOfData } = data; // Separate imageUrl from other data
             
-            // If there's a new image to upload
+            const combinedStartDate = combineDateAndTime(restOfData.startDate, restOfData.startTime);
+            const combinedEndDate = restOfData.endDate ? combineDateAndTime(restOfData.endDate, restOfData.endTime) : null;
+            const { startDate, endDate, startTime, endTime, ...finalTextData } = restOfData;
+
+            // Immediately update all text-based data
+            await updateEvent(eventId, { 
+                ...finalTextData,
+                startDate: combinedStartDate,
+                endDate: combinedEndDate,
+            });
+
+            // Handle image upload in the background if a new one is provided
             if (imageUrl && imageUrl.startsWith('data:image')) {
-                const combinedStartDate = combineDateAndTime(restOfData.startDate, restOfData.startTime);
-                const combinedEndDate = restOfData.endDate ? combineDateAndTime(restOfData.endDate, restOfData.endTime) : null;
-                const { startDate, endDate, startTime, endTime, ...finalTextData } = restOfData;
-
-                // First, update all the text-based data immediately
-                await updateEvent(eventId, { 
-                    ...finalTextData,
-                    startDate: combinedStartDate,
-                    endDate: combinedEndDate,
-                });
-
-                // Show success and navigate away, letting the image upload in the background
                 toast({
                     title: "Event Updated!",
                     description: "Your changes have been saved. Your new image is being uploaded.",
                 });
                 router.push('/calendar');
 
-                // Now, upload the image and update the doc again
                 uploadImage(imageUrl, `events/${user.uid}/${eventId}/image`)
                     .then(newImageUrl => {
                         updateEvent(eventId, { imageUrl: newImageUrl });
@@ -135,17 +133,7 @@ export default function EditEventPage() {
                         });
                     });
             } else {
-                // If no new image, just do a normal update with all data
-                const combinedStartDate = combineDateAndTime(data.startDate, data.startTime);
-                const combinedEndDate = data.endDate ? combineDateAndTime(data.endDate, data.endTime) : null;
-                const { startDate, endDate, startTime, endTime, ...finalData } = data;
-                
-                await updateEvent(eventId, {
-                    ...finalData,
-                    startDate: combinedStartDate,
-                    endDate: combinedEndDate,
-                });
-
+                // If no new image, just show success and navigate
                 toast({
                     title: "Event Updated!",
                     description: "Your changes have been saved.",

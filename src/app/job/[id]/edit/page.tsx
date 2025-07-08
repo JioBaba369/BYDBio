@@ -97,37 +97,42 @@ export default function EditJobPage() {
         }
         setIsSaving(true);
         try {
-            const combinedStartDate = data.startDate ? combineDateAndTime(data.startDate, data.startTime) : null;
-            const combinedEndDate = data.endDate ? combineDateAndTime(data.endDate, data.endTime) : null;
+            const { imageUrl, closingDate, startDate, endDate, startTime, endTime, ...restOfData } = data;
+            const combinedStartDate = startDate ? combineDateAndTime(startDate, startTime) : null;
+            const combinedEndDate = endDate ? combineDateAndTime(endDate, endTime) : null;
             
-            const { closingDate, startDate, endDate, startTime, endTime, ...restOfData } = data;
-
             const dataToSave: Partial<Omit<Job, 'id' | 'authorId' | 'createdAt'>> = {
                 ...restOfData,
-                closingDate: closingDate ? (closingDate as any) : null,
-                startDate: combinedStartDate ? (combinedStartDate as any) : null,
-                endDate: combinedEndDate ? (combinedEndDate as any) : null,
+                closingDate: closingDate || null,
+                startDate: combinedStartDate,
+                endDate: combinedEndDate,
             };
 
-            if (dataToSave.imageUrl && dataToSave.imageUrl.startsWith('data:image')) {
-                const newImageUrl = await uploadImage(dataToSave.imageUrl, `jobs/${user.uid}/${jobId}/image`);
-                dataToSave.imageUrl = newImageUrl;
-            }
-
             await updateJob(jobId, dataToSave);
-            toast({
-                title: "Job Updated!",
-                description: "The job has been updated successfully.",
-            });
-            router.push('/calendar');
+
+            if (imageUrl && imageUrl.startsWith('data:image')) {
+                toast({ title: "Job Updated!", description: "Your job posting has been saved. Your new image is being uploaded.", });
+                router.push('/calendar');
+
+                uploadImage(imageUrl, `jobs/${user.uid}/${jobId}/image`)
+                    .then(newImageUrl => {
+                        updateJob(jobId, { imageUrl: newImageUrl });
+                    })
+                    .catch(err => {
+                        console.error("Failed to upload image in background:", err);
+                        toast({ title: "Image Upload Failed", description: "Your job was updated, but the new image failed to upload.", variant: "destructive", duration: 9000 });
+                    });
+            } else {
+                 toast({ title: "Job Updated!", description: "The job has been updated successfully." });
+                 router.push('/calendar');
+            }
         } catch (error) {
             toast({
                 title: "Error",
                 description: "Failed to update job. Please try again.",
                 variant: "destructive",
             });
-        } finally {
-            setIsSaving(false);
+             setIsSaving(false);
         }
     }
 

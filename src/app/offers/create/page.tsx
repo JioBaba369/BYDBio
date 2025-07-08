@@ -6,7 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useAuth } from "@/components/auth-provider";
-import { createOffer, type Offer } from "@/lib/offers";
+import { createOffer, updateOffer, type Offer } from "@/lib/offers";
 import { uploadImage } from "@/lib/storage";
 
 const combineDateAndTime = (date: Date, timeString: string | undefined | null): Date => {
@@ -32,35 +32,38 @@ export default function CreateOfferPage() {
         }
         setIsSaving(true);
         try {
-            const combinedStartDate = combineDateAndTime(data.startDate, data.startTime);
-            const combinedEndDate = data.endDate ? combineDateAndTime(data.endDate, data.endTime) : null;
+            const { imageUrl, startDate, endDate, startTime, endTime, ...restOfData } = data;
+            const combinedStartDate = combineDateAndTime(startDate, startTime);
+            const combinedEndDate = endDate ? combineDateAndTime(endDate, endTime) : null;
             
-            const { startDate, endDate, startTime, endTime, ...restOfData } = data;
-            
-            const dataToSave: Partial<Omit<Offer, 'id' | 'authorId' | 'createdAt' | 'status' | 'views' | 'claims' | 'searchableKeywords' | 'followerCount'>> = {
+            const dataToSave: Partial<Omit<Offer, 'id' | 'authorId' | 'createdAt' | 'status' | 'views' | 'claims' | 'searchableKeywords' | 'followerCount' | 'imageUrl'>> = {
                 ...restOfData,
-                startDate: combinedStartDate as any,
-                endDate: combinedEndDate ? (combinedEndDate as any) : null,
+                startDate: combinedStartDate,
+                endDate: combinedEndDate,
+                imageUrl: null,
             };
 
-            if (dataToSave.imageUrl && dataToSave.imageUrl.startsWith('data:image')) {
-                const newImageUrl = await uploadImage(dataToSave.imageUrl, `offers/${user.uid}/${Date.now()}`);
-                dataToSave.imageUrl = newImageUrl;
-            }
-
-            await createOffer(user.uid, dataToSave);
-            toast({
-                title: "Offer Created!",
-                description: "Your new offer has been created successfully.",
-            });
+            const offerId = await createOffer(user.uid, dataToSave);
+            
+            toast({ title: "Offer Created!", description: "Your new offer has been created. Image is processing." });
             router.push('/calendar');
+
+            if (imageUrl && imageUrl.startsWith('data:image')) {
+                uploadImage(imageUrl, `offers/${user.uid}/${offerId}/image`)
+                    .then(newImageUrl => {
+                        updateOffer(offerId, { imageUrl: newImageUrl });
+                    })
+                    .catch(err => {
+                        console.error("Failed to upload image in background:", err);
+                        toast({ title: "Image Upload Failed", description: "Your offer was created, but the image failed to upload.", variant: "destructive", duration: 9000 });
+                    });
+            }
         } catch (error) {
             toast({
                 title: "Error",
                 description: "Failed to create offer. Please try again.",
                 variant: "destructive",
             });
-        } finally {
             setIsSaving(false);
         }
     }

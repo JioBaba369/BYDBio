@@ -96,35 +96,40 @@ export default function EditOfferPage() {
         }
         setIsSaving(true);
         try {
-            const combinedStartDate = combineDateAndTime(data.startDate, data.startTime);
-            const combinedEndDate = data.endDate ? combineDateAndTime(data.endDate, data.endTime) : null;
+            const { imageUrl, startDate, endDate, startTime, endTime, ...restOfData } = data;
+            const combinedStartDate = combineDateAndTime(startDate, startTime);
+            const combinedEndDate = endDate ? combineDateAndTime(endDate, endTime) : null;
             
-            const { startDate, endDate, startTime, endTime, ...restOfData } = data;
-
             const dataToSave: Partial<Omit<Offer, 'id' | 'authorId' | 'createdAt'>> = {
                 ...restOfData,
-                startDate: combinedStartDate as any,
-                endDate: combinedEndDate ? (combinedEndDate as any) : null,
+                startDate: combinedStartDate,
+                endDate: combinedEndDate,
             };
 
-            if (dataToSave.imageUrl && dataToSave.imageUrl.startsWith('data:image')) {
-                const newImageUrl = await uploadImage(dataToSave.imageUrl, `offers/${user.uid}/${offerId}/image`);
-                dataToSave.imageUrl = newImageUrl;
-            }
-
             await updateOffer(offerId, dataToSave);
-            toast({
-                title: "Offer Updated!",
-                description: "Your offer has been updated successfully.",
-            });
-            router.push('/calendar');
+            
+            if (imageUrl && imageUrl.startsWith('data:image')) {
+                toast({ title: "Offer Updated!", description: "Your offer has been updated. Image is uploading." });
+                router.push('/calendar');
+
+                uploadImage(imageUrl, `offers/${user.uid}/${offerId}/image`)
+                    .then(newImageUrl => {
+                        updateOffer(offerId, { imageUrl: newImageUrl });
+                    })
+                    .catch(err => {
+                        console.error("Failed to upload image in background:", err);
+                        toast({ title: "Image Upload Failed", description: "Your offer was updated, but the new image failed to upload.", variant: "destructive", duration: 9000 });
+                    });
+            } else {
+                toast({ title: "Offer Updated!", description: "Your offer has been updated successfully." });
+                router.push('/calendar');
+            }
         } catch (error) {
             toast({
                 title: "Error",
                 description: "Failed to update offer. Please try again.",
                 variant: "destructive",
             });
-        } finally {
             setIsSaving(false);
         }
     }

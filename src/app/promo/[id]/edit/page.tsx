@@ -77,30 +77,30 @@ export default function EditPromoPage() {
         }
         setIsSaving(true);
         try {
-            const dataToSave = { ...data };
+            const { imageUrl, logoUrl, ...restOfData } = data;
 
-            if (dataToSave.imageUrl && dataToSave.imageUrl.startsWith('data:image')) {
-                const newImageUrl = await uploadImage(dataToSave.imageUrl, `promoPages/${user.uid}/${promoPageId}/header`);
-                dataToSave.imageUrl = newImageUrl;
-            }
-            if (dataToSave.logoUrl && dataToSave.logoUrl.startsWith('data:image')) {
-                const newLogoUrl = await uploadImage(dataToSave.logoUrl, `promoPages/${user.uid}/${promoPageId}/logo`);
-                dataToSave.logoUrl = newLogoUrl;
-            }
-
-            await updatePromoPage(promoPageId, dataToSave);
-            toast({
-                title: "Business Page Updated!",
-                description: "Your business page has been updated successfully.",
-            });
+            await updatePromoPage(promoPageId, restOfData);
+            
+            toast({ title: "Business Page Updated!", description: "Your business page has been saved. Images are uploading." });
             router.push('/calendar');
+
+            if (imageUrl && imageUrl.startsWith('data:image')) {
+                uploadImage(imageUrl, `promoPages/${user.uid}/${promoPageId}/header`)
+                    .then(newImageUrl => updatePromoPage(promoPageId, { imageUrl: newImageUrl }))
+                    .catch(err => toast({ title: "Header Image Upload Failed", variant: "destructive" }));
+            }
+            if (logoUrl && logoUrl.startsWith('data:image')) {
+                uploadImage(logoUrl, `promoPages/${user.uid}/${promoPageId}/logo`)
+                    .then(newLogoUrl => updatePromoPage(promoPageId, { logoUrl: newLogoUrl }))
+                    .catch(err => toast({ title: "Logo Upload Failed", variant: "destructive" }));
+            }
+
         } catch (error) {
             toast({
                 title: "Error",
                 description: "Failed to update business page. Please try again.",
                 variant: "destructive",
             });
-        } finally {
             setIsSaving(false);
         }
     }

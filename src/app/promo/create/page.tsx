@@ -4,7 +4,7 @@
 import { PromoPageForm, PromoPageFormValues } from "@/components/forms/promo-page-form";
 import { useAuth } from "@/components/auth-provider";
 import { useToast } from "@/hooks/use-toast";
-import { createPromoPage } from "@/lib/promo-pages";
+import { createPromoPage, updatePromoPage } from "@/lib/promo-pages";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { uploadImage } from "@/lib/storage";
@@ -22,40 +22,34 @@ export default function CreatePromoPage() {
         }
         setIsSaving(true);
         try {
-            const dataToSave: Partial<PromoPageFormValues> = {
-                name: data.name,
-                description: data.description,
-                email: data.email,
-                category: data.category,
-                subCategory: data.subCategory,
-            };
+            const { imageUrl, logoUrl, ...restOfData } = data;
 
-            if (data.phone) dataToSave.phone = data.phone;
-            if (data.website) dataToSave.website = data.website;
-            if (data.address) dataToSave.address = data.address;
-
-            if (data.imageUrl && data.imageUrl.startsWith('data:image')) {
-                const newImageUrl = await uploadImage(data.imageUrl, `promoPages/${user.uid}/${Date.now()}_header`);
-                dataToSave.imageUrl = newImageUrl;
-            }
-            if (data.logoUrl && data.logoUrl.startsWith('data:image')) {
-                const newLogoUrl = await uploadImage(data.logoUrl, `promoPages/${user.uid}/${Date.now()}_logo`);
-                dataToSave.logoUrl = newLogoUrl;
-            }
-
-            await createPromoPage(user.uid, dataToSave);
-            toast({
-                title: "Business Page Created!",
-                description: "Your new business page has been created successfully.",
+            const pageId = await createPromoPage(user.uid, {
+                ...restOfData,
+                imageUrl: null,
+                logoUrl: null,
             });
+
+            toast({ title: "Business Page Created!", description: "Your new business page has been created successfully. Images are processing." });
             router.push('/calendar');
+
+            if (imageUrl && imageUrl.startsWith('data:image')) {
+                uploadImage(imageUrl, `promoPages/${user.uid}/${pageId}/header`)
+                    .then(newImageUrl => updatePromoPage(pageId, { imageUrl: newImageUrl }))
+                    .catch(err => toast({ title: "Header Image Upload Failed", variant: "destructive" }));
+            }
+            if (logoUrl && logoUrl.startsWith('data:image')) {
+                uploadImage(logoUrl, `promoPages/${user.uid}/${pageId}/logo`)
+                    .then(newLogoUrl => updatePromoPage(pageId, { logoUrl: newLogoUrl }))
+                    .catch(err => toast({ title: "Logo Upload Failed", variant: "destructive" }));
+            }
+
         } catch (error) {
             toast({
                 title: "Error",
                 description: "Failed to create business page. Please try again.",
                 variant: "destructive",
             });
-        } finally {
             setIsSaving(false);
         }
     }

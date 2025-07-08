@@ -24,8 +24,8 @@ export type Offer = {
   description: string;
   category: string;
   subCategory?: string;
-  startDate: string; // ISO 8601 string
-  endDate?: string | null; // ISO 8601 string
+  startDate: Date;
+  endDate?: Date | null;
   imageUrl: string | null;
   couponCode?: string;
   ctaLink?: string;
@@ -33,7 +33,7 @@ export type Offer = {
   views: number;
   claims: number;
   followerCount: number;
-  createdAt: string; // ISO 8601 string
+  createdAt: Date;
   searchableKeywords: string[];
 };
 
@@ -46,7 +46,7 @@ const serializeOffer = (doc: any): Offer | null => {
     const offer: any = { id: doc.id };
     for (const key in data) {
         if (data[key] instanceof Timestamp) {
-            offer[key] = data[key].toDate().toISOString();
+            offer[key] = data[key].toDate();
         } else {
             offer[key] = data[key];
         }
@@ -93,7 +93,8 @@ export const createOffer = async (userId: string, data: Partial<Omit<Offer, 'id'
     searchableKeywords: [...new Set(keywords)],
   };
 
-  await addDoc(offersRef, docData);
+  const docRef = await addDoc(offersRef, docData);
+  return docRef.id;
 };
 
 // Function to update an existing offer
