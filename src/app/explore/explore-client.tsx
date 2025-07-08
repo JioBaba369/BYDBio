@@ -17,6 +17,7 @@ import { formatCurrency } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
 
 export default function ExploreClient({ initialItems }: { initialItems: PublicContentItem[] }) {
   const [searchTerm, setSearchTerm] = useState('');
@@ -137,49 +138,58 @@ export default function ExploreClient({ initialItems }: { initialItems: PublicCo
         </div>
 
         <Card>
-            <CardHeader>
-                <CardTitle>Filter Content</CardTitle>
-                <CardDescription>Refine your search to find exactly what you're looking for.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-                <div className="grid sm:grid-cols-2 gap-4">
-                    <div className="relative">
+            <CardContent className="p-4 space-y-4">
+                <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
+                    <div className="relative md:col-span-1">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input placeholder="Search by keyword..." className="pl-10" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+                        <Input 
+                            placeholder="Search by keyword..."
+                            className="pl-10"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
                     </div>
-                    <div className="relative">
+                    <div className="relative md:col-span-1">
                         <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input placeholder="Filter by location..." className="pl-10" value={locationFilter} onChange={(e) => setLocationFilter(e.target.value)} />
+                        <Input
+                            placeholder="Filter by location..."
+                            className="pl-10"
+                            value={locationFilter}
+                            onChange={(e) => setLocationFilter(e.target.value)}
+                        />
                     </div>
+                    <Button variant="outline" onClick={handleClearFilters} className="w-full md:col-span-1">
+                        <X className="mr-2 h-4 w-4" />
+                        Clear All Filters
+                    </Button>
                 </div>
-                <div>
-                    <Label className="text-sm font-medium">Content Type</Label>
-                    <div className="flex flex-wrap gap-2 pt-2">
+                <Separator />
+                <div className="space-y-2">
+                    <Label className="text-sm font-medium">Filter by type</Label>
+                    <div className="flex flex-wrap gap-2">
                         {contentTypes.map(({ name, label, icon: Icon, variant }) => {
                             const isSelected = typeFilters.has(name);
                             return (
-                                <Button
+                                <Badge
                                     key={name}
                                     variant={isSelected ? variant : 'outline'}
-                                    size="sm"
                                     onClick={() => handleTypeFilterChange(name)}
+                                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleTypeFilterChange(name); }}
                                     className={cn(
-                                        'transition-all',
+                                        'cursor-pointer transition-all py-1.5 px-3 text-sm',
+                                        !isSelected && 'hover:bg-accent/50',
                                         variant === 'outline' && isSelected && 'bg-foreground text-background border-transparent hover:bg-foreground/90'
                                     )}
+                                    role="button"
+                                    tabIndex={0}
                                 >
                                     <Icon className="mr-2 h-4 w-4" /> {label}
-                                </Button>
+                                </Badge>
                             )
                         })}
                     </div>
                 </div>
             </CardContent>
-            <CardFooter>
-                <Button variant="ghost" onClick={handleClearFilters}>
-                    <X className="mr-2 h-4 w-4" /> Clear All Filters
-                </Button>
-            </CardFooter>
         </Card>
         
         <div className="space-y-4">
