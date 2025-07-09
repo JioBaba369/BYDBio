@@ -1,68 +1,91 @@
+
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    function isOwner(uid) {
-      return request.auth.uid == uid;
-    }
-    
-    function isAuthed() {
-      return request.auth != null;
+    // Default deny all reads and writes
+    match /{document=**} {
+      allow read, write: if false;
     }
 
+    // Users: Publicly readable, but only the user can write to their own profile.
     match /users/{userId} {
       allow read: if true;
-      
-      // Allow a user to create their own doc.
-      allow create: if isOwner(userId);
-
-      // Allow a user to update their own doc, but not their followerCount.
-      // Other users can update followerCount (via increment).
-      allow update: if isOwner(userId) && !('followerCount' in request.resource.data) || 
-                      (isAuthed() && request.resource.data.followerCount == resource.data.followerCount + 1) ||
-                      (isAuthed() && request.resource.data.followerCount == resource.data.followerCount - 1);
-      
-      allow delete: if false; // Deletion should be a privileged operation
-    }
-
-    match /posts/{postId} {
-      // Readable if public, or if owner is reading.
-      allow read: if resource.data.privacy == 'public' || (isAuthed() && isOwner(resource.data.authorId));
-
-      allow create: if isAuthed() && isOwner(request.resource.data.authorId);
-      
-      // Allow owner to update. Also allow anyone to update 'likes' and 'likedBy' for the like feature.
-      allow update: if isAuthed() && 
-          (isOwner(resource.data.authorId)) ||
-          (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes', 'likedBy']));
-
-      allow delete: if isAuthed() && isOwner(resource.data.authorId);
+      allow create: if request.auth.uid == userId;
+      allow update: if request.auth.uid == userId;
+      allow delete: if request.auth.uid == userId;
     }
     
-    function genericContentRules(collection) {
-      match /$(collection)/{docId} {
-          allow read: if resource.data.status == 'active';
-          allow create: if isAuthed() && isOwner(request.resource.data.authorId);
-          allow delete: if isAuthed() && isOwner(resource.data.authorId);
-          
-          // Allow owner to update anything. Allow others to update engagement stats.
-          allow update: if isAuthed() && 
-            (isOwner(resource.data.authorId) ||
-             request.resource.data.diff(resource.data).affectedKeys().hasAny(['views', 'clicks', 'rsvps', 'applicants', 'claims', 'followerCount']));
-      }
-    }
-    
-    call genericContentRules('listings');
-    call genericContentRules('jobs');
-    call genericContentRules('events');
-    call genericContentRules('offers');
-    call genericContentRules('promoPages');
-    
+    // Notifications: Only the recipient can read/write.
     match /notifications/{notificationId} {
-      allow read, update: if isAuthed() && isOwner(resource.data.userId);
-      allow create: if isAuthed(); // Actions from other users can create notifications
-      allow delete: if false;
+      allow read, update, delete: if request.auth.uid == resource.data.userId;
+      // Allow authenticated users to create notifications (e.g., for follows, likes)
+      allow create: if request.auth.uid != null;
+    }
+    
+    // Shared rules for all user-generated content types
+    function isOwner(contentId, collectionName) {
+      return request.auth.uid == get(/databases/$(database)/documents/$(collectionName)/$(contentId)).data.authorId;
+    }
+    
+    function canUpdateContent(collectionName) {
+      return request.auth.uid == resource.data.authorId;
+    }
+    
+    // Events: Publicly readable, owner-writable.
+    match /events/{eventId} {
+      allow read: if resource.data.status == 'active';
+      allow create: if request.auth.uid == request.resource.data.authorId;
+      allow update: if canUpdateContent('events')
+                    || (request.auth.uid != null && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['rsvps']));
+      allow delete: if isOwner(eventId, 'events');
+    }
+    
+    // Jobs: Publicly readable, owner-writable.
+    match /jobs/{jobId} {
+       allow read: if resource.data.status == 'active';
+       allow create: if request.auth.uid == request.resource.data.authorId;
+       allow update: if canUpdateContent('jobs')
+                     || (request.auth.uid != null && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['applicants']));
+       allow delete: if isOwner(jobId, 'jobs');
+    }
+    
+    // Listings: Publicly readable, owner-writable.
+    match /listings/{listingId} {
+      allow read: if resource.data.status == 'active';
+      allow create: if request.auth.uid == request.resource.data.authorId;
+      allow update: if canUpdateContent('listings');
+      allow delete: if isOwner(listingId, 'listings');
+    }
+
+    // Offers: Publicly readable, owner-writable.
+    match /offers/{offerId} {
+      allow read: if resource.data.status == 'active';
+      allow create: if request.auth.uid == request.resource.data.authorId;
+      allow update: if canUpdateContent('offers')
+                     || (request.auth.uid != null && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['claims']));
+      allow delete: if isOwner(offerId, 'offers');
+    }
+    
+    // Promo Pages: Publicly readable, owner-writable.
+    match /promoPages/{promoId} {
+      allow read: if resource.data.status == 'active';
+      allow create: if request.auth.uid == request.resource.data.authorId;
+      allow update: if canUpdateContent('promoPages');
+      allow delete: if isOwner(promoId, 'promoPages');
+    }
+
+    // Posts: Readable based on privacy, owner-writable.
+    match /posts/{postId} {
+      allow read: if resource.data.privacy == 'public'
+                  || (resource.data.privacy == 'followers' && request.auth.uid in get(/databases/$(database)/documents/users/$(resource.data.authorId)).data.followers)
+                  || (resource.data.privacy == 'me' && request.auth.uid == resource.data.authorId)
+                  || request.auth.uid == resource.data.authorId; // Always let owner read
+      allow create: if request.auth.uid == request.resource.data.authorId;
+      allow update: if canUpdateContent('posts')
+                    || (request.auth.uid != null && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes', 'likedBy']));
+      allow delete: if isOwner(postId, 'posts');
     }
   }
 }

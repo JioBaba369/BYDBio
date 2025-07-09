@@ -1,32 +1,59 @@
+
 rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
     
+    // Helper function to check ownership
     function isOwner(userId) {
       return request.auth != null && request.auth.uid == userId;
     }
   
-    // Anyone can read any file. This is typical for public images.
+    // Default deny all
     match /{allPaths=**} {
-      allow read;
+      allow read, write: if false;
     }
     
-    // Users can only write to their own avatar path.
+    // Avatars: Publicly readable, only owner can write.
     match /avatars/{userId} {
+      allow read: if true;
       allow write: if isOwner(userId);
     }
     
-    // Users can only write images for content they own.
-    // This rule is generic for all content types.
-    match /{contentType}/{userId}/{contentId}/{imageName} {
-      allow write: if isOwner(userId) &&
-                   (contentType == 'posts' || 
-                    contentType == 'listings' || 
-                    contentType == 'jobs' || 
-                    contentType == 'events' || 
-                    contentType == 'offers' ||
-                    contentType == 'promoPages');
+    // Posts: Publicly readable, only owner can write.
+    match /posts/{userId}/{allPaths=**} {
+      allow read: if true;
+      allow write: if isOwner(userId);
+    }
+    
+    // Events: Publicly readable, only owner can write.
+    match /events/{userId}/{allPaths=**} {
+      allow read: if true;
+      allow write: if isOwner(userId);
+    }
+    
+    // Listings: Publicly readable, only owner can write.
+    match /listings/{userId}/{allPaths=**} {
+      allow read: if true;
+      allow write: if isOwner(userId);
+    }
+
+    // Jobs: Publicly readable, only owner can write.
+    match /jobs/{userId}/{allPaths=**} {
+      allow read: if true;
+      allow write: if isOwner(userId);
+    }
+
+    // Offers: Publicly readable, only owner can write.
+    match /offers/{userId}/{allPaths=**} {
+      allow read: if true;
+      allow write: if isOwner(userId);
+    }
+
+    // Promo Pages: Publicly readable, only owner can write.
+    match /promoPages/{userId}/{allPaths=**} {
+      allow read: if true;
+      allow write: if isOwner(userId);
     }
   }
 }
