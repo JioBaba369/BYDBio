@@ -225,19 +225,37 @@ export async function getUsersByIds(uids: string[]): Promise<User[]> {
 
 export async function searchUsers(searchText: string): Promise<User[]> {
     if (!searchText) return [];
-    
-    const searchKeywords = searchText.toLowerCase().split(' ').filter(Boolean).slice(0, 10);
-    if (searchKeywords.length === 0) return [];
 
+    const lowercasedSearchText = searchText.toLowerCase();
+    const searchKeywords = lowercasedSearchText.split(' ').filter(Boolean).slice(0, 10);
     const usersRef = collection(db, "users");
-    
-    const q = query(usersRef, where('searchableKeywords', 'array-contains-any', searchKeywords), limit(50));
-
-    const querySnapshot = await getDocs(q);
-
     const usersMap = new Map<string, User>();
-    querySnapshot.forEach(doc => usersMap.set(doc.id, { uid: doc.id, ...doc.data() } as User));
-    
+
+    // Query 1: By parts of the name (existing functionality)
+    if (searchKeywords.length > 0) {
+        const nameQuery = query(
+            usersRef,
+            where('searchableKeywords', 'array-contains-any', searchKeywords),
+            limit(25)
+        );
+        const nameQuerySnapshot = await getDocs(nameQuery);
+        nameQuerySnapshot.forEach(doc => {
+            usersMap.set(doc.id, { uid: doc.id, ...doc.data() } as User);
+        });
+    }
+
+    // Query 2: By username prefix
+    const usernameQuery = query(
+        usersRef,
+        where('username', '>=', lowercasedSearchText),
+        where('username', '<=', lowercasedSearchText + '\uf8ff'),
+        limit(25)
+    );
+    const usernameQuerySnapshot = await getDocs(usernameQuery);
+    usernameQuerySnapshot.forEach(doc => {
+        usersMap.set(doc.id, { uid: doc.id, ...doc.data() } as User);
+    });
+
     return Array.from(usersMap.values());
 }
 
