@@ -156,7 +156,7 @@ export function PostCard({ item, onLike, onDelete, onRepost, onQuote, isLoading 
                     </div>
                 )}
             </CardContent>
-            <CardFooter className="flex justify-around p-4 border-t">
+            <CardFooter className="flex justify-start p-4 border-t gap-1">
                 <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground hover:text-primary" onClick={() => onLike(item.id)} disabled={isLoading || !user}>
                     {isLoading && loadingAction === 'like' ? <Loader2 className="h-5 w-5 animate-spin" /> : <Heart className={cn("h-5 w-5", item.isLiked && "fill-red-500 text-red-500")} />}
                     <span>{item.likes || 0}</span>
@@ -173,7 +173,7 @@ export function PostCard({ item, onLike, onDelete, onRepost, onQuote, isLoading 
                     <QuoteIcon className="h-5 w-5" />
                     <span>Quote</span>
                 </Button>
-                <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground" onClick={handleShare} disabled={isLoading}>
+                <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground ml-auto" onClick={handleShare} disabled={isLoading}>
                     <Share2 className="h-5 w-5" />
                     <span>Share</span>
                 </Button>

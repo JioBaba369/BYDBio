@@ -11,7 +11,6 @@ import { useAuth } from "@/components/auth-provider"
 import { useToast } from "@/hooks/use-toast"
 import Link from "next/link"
 import ImageCropper from "@/components/image-cropper"
-import { Skeleton } from "@/components/ui/skeleton"
 import { uploadImage } from "@/lib/storage"
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog"
 import { PostCard } from "@/components/post-card";
@@ -21,32 +20,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { createPost, toggleLikePost, deletePost, repostPost, getFeedPosts, getDiscoveryPosts } from "@/lib/posts";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
-
-const FeedSkeleton = () => (
-    <div className="space-y-6">
-        <Card><CardContent className="p-4"><Skeleton className="h-32" /></CardContent></Card>
-        <Card><CardHeader className="p-4"><div className="flex items-center gap-3"><Skeleton className="h-10 w-10 rounded-full" /><div className="space-y-1"><Skeleton className="h-4 w-24" /><Skeleton className="h-3 w-16" /></div></div></CardHeader><CardContent className="p-4 pt-0 space-y-2"><Skeleton className="h-4 w-full" /><Skeleton className="h-4 w-3/4" /></CardContent><CardFooter className="p-4 border-t"><Skeleton className="h-8 w-full" /></CardFooter></Card>
-        <Card><CardHeader className="p-4"><div className="flex items-center gap-3"><Skeleton className="h-10 w-10 rounded-full" /><div className="space-y-1"><Skeleton className="h-4 w-24" /><Skeleton className="h-3 w-16" /></div></div></CardHeader><CardContent className="p-4 pt-0 space-y-2"><Skeleton className="h-4 w-full" /><Skeleton className="h-4 w-3/4" /></CardContent><CardFooter className="p-4 border-t"><Skeleton className="h-8 w-full" /></CardFooter></Card>
-    </div>
-);
-
-const QuotedPostPreview = ({ post, onRemove }: { post: any, onRemove: () => void }) => (
-    <div className="mt-2 p-3 border rounded-lg relative">
-        <Button variant="ghost" size="icon" className="absolute top-1 right-1 h-6 w-6" onClick={onRemove}>
-            <X className="h-4 w-4" />
-        </Button>
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Avatar className="h-5 w-5">
-                <AvatarImage src={post.author.avatarUrl} />
-                <AvatarFallback>{post.author.name.charAt(0)}</AvatarFallback>
-            </Avatar>
-            <span className="font-semibold">{post.author.name}</span>
-            <span>@{post.author.username}</span>
-        </div>
-        <p className="mt-2 text-sm whitespace-pre-wrap line-clamp-3">{post.content}</p>
-    </div>
-);
+import { FeedSkeleton } from "@/components/feed-skeleton";
+import { QuotedPostPreview } from "@/components/quoted-post-preview";
 
 
 export default function FeedPage() {
@@ -278,7 +253,6 @@ export default function FeedPage() {
   if (authLoading) {
       return (
          <div className="max-w-2xl mx-auto space-y-6">
-            <Skeleton className="h-9 w-48" />
             <FeedSkeleton />
         </div>
       );
