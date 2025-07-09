@@ -169,7 +169,7 @@ export default function ConnectionsPage() {
               <Skeleton className="h-10 w-40" />
             </div>
             <Tabs defaultValue="followers">
-                <TabsList className="grid w-full grid-cols-3">
+                <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3">
                     <TabsTrigger value="followers">Followers</TabsTrigger>
                     <TabsTrigger value="following">Following</TabsTrigger>
                     <TabsTrigger value="suggestions">Suggestions</TabsTrigger>
@@ -227,7 +227,7 @@ export default function ConnectionsPage() {
         </div>
 
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3">
             <TabsTrigger value="followers">Followers ({followersList.length})</TabsTrigger>
             <TabsTrigger value="following">Following ({followingList.length})</TabsTrigger>
             <TabsTrigger value="suggestions">Suggestions ({suggestedList.length})</TabsTrigger>

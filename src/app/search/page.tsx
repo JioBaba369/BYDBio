@@ -48,7 +48,7 @@ const SearchPageSkeleton = () => (
             <Skeleton className="h-4 w-80" />
         </div>
         <Tabs defaultValue="users" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-7">
+            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 lg:grid-cols-7">
                 <TabsTrigger value="users" disabled><Skeleton className="h-5 w-20" /></TabsTrigger>
                 <TabsTrigger value="posts" disabled><Skeleton className="h-5 w-20" /></TabsTrigger>
                 <TabsTrigger value="promoPages" disabled><Skeleton className="h-5 w-24" /></TabsTrigger>
@@ -280,7 +280,7 @@ export default function SearchPage() {
       </div>
 
       <Tabs defaultValue="users" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-7">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 lg:grid-cols-7">
             <TabsTrigger value="users">Users ({results.users.length})</TabsTrigger>
             <TabsTrigger value="posts">Posts ({results.posts.length})</TabsTrigger>
             <TabsTrigger value="promoPages">Business Pages ({results.promoPages.length})</TabsTrigger>

@@ -11,7 +11,7 @@ import type { Event } from '@/lib/events';
 import type { PromoPage } from "@/lib/promo-pages";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { UserCheck, UserPlus, QrCode, Edit, Loader2, Rss, Package, MessageSquare, Info, Link as LinkIcon, ExternalLink } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
@@ -315,7 +315,7 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
         </Card>
 
         <Tabs defaultValue="feed" className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4">
                 <TabsTrigger value="feed"><Rss className="mr-2 h-4 w-4"/>Feed</TabsTrigger>
                 <TabsTrigger value="showcase"><Package className="mr-2 h-4 w-4"/>Showcase</TabsTrigger>
                 <TabsTrigger value="about"><Info className="mr-2 h-4 w-4" />About &amp; Links</TabsTrigger>
