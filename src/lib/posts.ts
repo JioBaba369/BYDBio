@@ -297,19 +297,42 @@ export const populatePostAuthors = async (posts: Post[]): Promise<PostWithAuthor
 
 
 // Function to fetch posts for the user's feed
-export const getFeedPosts = async (followingIds: string[]): Promise<PostWithAuthor[]> => {
-    if (followingIds.length === 0) {
+export const getFeedPosts = async (userId: string, followingIds: string[]): Promise<PostWithAuthor[]> => {
+    const allIdsToFetch = [...new Set([userId, ...followingIds])];
+    if (allIdsToFetch.length === 0) {
         return [];
     }
-
-    const postsRef = collection(db, 'posts');
-    const q = query(postsRef, where('authorId', 'in', followingIds), orderBy('createdAt', 'desc'), limit(50));
-    const querySnapshot = await getDocs(q);
     
-    const postsData = querySnapshot.docs.map(doc => serializeDocument<Post>(doc)).filter((p): p is Post => {
+    // Firestore 'in' queries are limited to 30 items.
+    const chunkArray = <T>(array: T[], size: number): T[][] => {
+        const chunks: T[][] = [];
+        if (!array) return chunks;
+        for (let i = 0; i < array.length; i += size) {
+            chunks.push(array.slice(i, i + size));
+        }
+        return chunks;
+    };
+    const idChunks = chunkArray(allIdsToFetch, 30);
+
+    const postPromises = idChunks.map(chunk => {
+        const postsQuery = query(
+            collection(db, 'posts'), 
+            where('authorId', 'in', chunk),
+            orderBy('createdAt', 'desc'),
+            limit(50) // Limit per chunk, we'll sort and slice later
+        );
+        return getDocs(postsQuery);
+    });
+
+    const postSnapshots = await Promise.all(postPromises);
+    const allPostDocs = postSnapshots.flatMap(snap => snap.docs);
+    const uniquePostDocs = Array.from(new Map(allPostDocs.map(doc => [doc.id, doc])).values());
+
+    const postsData = uniquePostDocs.map(doc => serializeDocument<Post>(doc)).filter((p): p is Post => {
         if (!p) return false;
-        // Treat old posts without a privacy setting as public for the following feed.
-        if (p.privacy === undefined) return true;
+        // If the post belongs to the current user, show it regardless of privacy
+        if (p.authorId === userId) return true;
+        // For others, only show public or followers posts
         return p.privacy === 'public' || p.privacy === 'followers';
     });
 

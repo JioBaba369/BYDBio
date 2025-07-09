@@ -238,7 +238,6 @@ export const getAllEvents = async (): Promise<EventWithAuthor[]> => {
 export const getCalendarItems = async (userId: string): Promise<CalendarItem[]> => {
     const collectionsToFetch = ['events', 'offers', 'jobs', 'listings', 'promoPages'];
     
-    // Fetch only ACTIVE content created by the user
     const userContentPromises = collectionsToFetch.map(c => 
         getDocs(query(
             collection(db, c), 
@@ -247,7 +246,6 @@ export const getCalendarItems = async (userId: string): Promise<CalendarItem[]> 
         ))
     );
     
-    // Also fetch active events the user has RSVP'd to, which might be external
     const rsvpedEventsPromise = getDocs(
         query(collection(db, 'events'), where('rsvps', 'array-contains', userId), where('status', '==', 'active'))
     );
@@ -258,16 +256,17 @@ export const getCalendarItems = async (userId: string): Promise<CalendarItem[]> 
 
     const processSnapshot = (snapshot: any, type: string, isExternal = false) => {
         snapshot.forEach((doc: any) => {
-            const data = doc.data();
+            const serializedData = serializeDocument<any>(doc);
+            if (!serializedData) return;
+
             const key = `${type}-${doc.id}`;
             // If it's an external event, only add it if the user isn't the author
-            // This prevents duplicating events the user both created and RSVP'd to
-            if (isExternal && data.authorId === userId) {
+            if (isExternal && serializedData.authorId === userId) {
                 return;
             }
             // Add or overwrite item in the map. This ensures that if the user created an event
             // and also RSVP'd, we get the authored version (not marked as external).
-            allItems.set(key, { ...data, id: doc.id, type, isExternal });
+            allItems.set(key, { ...serializedData, type, isExternal });
         });
     };
 
@@ -279,9 +278,7 @@ export const getCalendarItems = async (userId: string): Promise<CalendarItem[]> 
     processSnapshot(snapshots[5], 'event', true); // RSVP'd events are processed as external
     
     const formattedItems = Array.from(allItems.values()).map((item: any) => {
-        // Serialize all potential date fields in the item
-        const serializedItem = serializeDocument<any>(item);
-        if (!serializedItem) return null;
+        const serializedItem = item; // Already serialized
 
         let primaryDate = serializedItem.startDate || serializedItem.postingDate || serializedItem.createdAt;
         if (!primaryDate) return null;

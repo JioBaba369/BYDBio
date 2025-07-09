@@ -78,7 +78,7 @@ export default function FeedPage() {
     if (!user) return;
     setIsLoading(true);
     try {
-        const items = await getFeedPosts([user.uid, ...user.following]);
+        const items = await getFeedPosts(user.uid, user.following);
         setFollowingPosts(items.map(p => ({ ...p, isLiked: (p.likedBy || []).includes(user.uid) })));
     } catch (error) {
         console.error("Feed fetch error:", error);
@@ -201,7 +201,7 @@ export default function FeedPage() {
     const updater = (feed: PostWithAuthor[]) => {
         return feed.map(p => {
             if (p.id === postId) {
-                const isLiked = !(p.isLiked);
+                const isLiked = !p.isLiked;
                 return {
                     ...p,
                     isLiked,
@@ -215,8 +215,8 @@ export default function FeedPage() {
     const originalFollowing = [...followingPosts];
     const originalDiscovery = [...discoveryPosts];
 
-    setFollowingPosts(feed => updater(feed));
-    setDiscoveryPosts(feed => updater(feed));
+    setFollowingPosts(prevPosts => updater(prevPosts));
+    setDiscoveryPosts(prevPosts => updater(prevPosts));
 
     try {
         await toggleLikePost(postId, user.uid);
