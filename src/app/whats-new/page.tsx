@@ -3,8 +3,19 @@
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Rocket, Zap, Bug, Calendar, Nfc, ScanLine, Sparkles, PackageSearch, Redo, PaintBrush } from "lucide-react";
+import { Rocket, Zap, Bug, Calendar, Nfc, PackageSearch, Redo, Palette, Sparkles, ScanLine } from "lucide-react";
 import { ClientFormattedDate } from "@/components/client-formatted-date";
+
+type UpdateItem = {
+  date: string; // ISO 8601 date string
+  version: string;
+  title: string;
+  description: string;
+  badge: {
+    text: 'New Feature' | 'Improvement' | 'Aesthetic' | 'Fix';
+    icon: keyof typeof iconMap;
+  };
+};
 
 const iconMap: Record<string, React.ElementType> = {
   Rocket,
@@ -16,19 +27,7 @@ const iconMap: Record<string, React.ElementType> = {
   Sparkles,
   PackageSearch,
   Redo,
-  PaintBrush,
-};
-
-
-type UpdateItem = {
-  date: string; // ISO 8601 date string
-  version: string;
-  title: string;
-  description: string;
-  badge: {
-    text: 'New Feature' | 'Improvement' | 'Aesthetic' | 'Fix';
-    icon: keyof typeof iconMap;
-  };
+  Palette,
 };
 
 const updates: UpdateItem[] = [
@@ -65,7 +64,7 @@ const updates: UpdateItem[] = [
     version: 'v1.5.0',
     title: 'Major Aesthetic Overhaul',
     description: 'Introducing a completely redesigned look and feel across the entire application. We\'ve implemented a new, sophisticated color palette and updated our typography to create a more modern, professional, and cohesive user experience.',
-    badge: { text: 'Aesthetic', icon: 'PaintBrush' },
+    badge: { text: 'Aesthetic', icon: 'Palette' },
   },
   {
     date: '2025-06-15T12:00:00Z',
