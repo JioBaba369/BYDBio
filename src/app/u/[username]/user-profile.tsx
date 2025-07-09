@@ -311,8 +311,8 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
 
         <Tabs defaultValue="feed" className="w-full">
             <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="feed"><Rss className="mr-2 h-4 w-4" />Feed</TabsTrigger>
-                <TabsTrigger value="links"><LinkIcon className="mr-2 h-4 w-4" />Links</TabsTrigger>
+                <TabsTrigger value="feed"><Rss className="mr-2 h-4 w-4"/>Feed</TabsTrigger>
+                <TabsTrigger value="links"><LinkIcon className="mr-2 h-4 w-4"/>Links</TabsTrigger>
                 <TabsTrigger value="contact"><MessageSquare className="mr-2 h-4 w-4" />Contact</TabsTrigger>
             </TabsList>
             <TabsContent value="feed" className="mt-6">
@@ -371,3 +371,5 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
     </>
   );
 }
+
+    
