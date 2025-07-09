@@ -84,26 +84,25 @@ const updates: UpdateItem[] = [
 ];
 
 const UpdateCard = ({ item }: { item: UpdateItem }) => (
-    <div className="relative pl-8 sm:pl-24 py-6 group">
-        <div className="flex sm:items-center flex-col sm:flex-row mb-1">
-            <div className="absolute w-px h-full bg-border -translate-x-4 sm:-translate-x-6 top-0" />
-            <div className="absolute h-3 w-3 rounded-full bg-primary -translate-x-4 sm:-translate-x-6 top-8 ring-4 ring-background" />
-            <time className="sm:absolute left-0 translate-y-0.5 inline-flex items-center justify-center text-xs font-semibold uppercase w-20 h-6 mb-3 sm:mb-0 text-primary-foreground bg-primary rounded-full">
-                <ClientFormattedDate date={item.date} formatStr="MMM d" />
-            </time>
-            <h3 className="text-xl font-semibold text-foreground">{item.title}</h3>
-            <Badge variant="secondary" className="ml-auto hidden sm:flex">
-                <item.badge.icon className="mr-1.5 h-3.5 w-3.5" />
-                {item.badge.text}
-            </Badge>
-        </div>
-        <p className="text-sm text-muted-foreground mt-2 sm:mt-0">{item.version}</p>
-        <p className="mt-2 text-muted-foreground">{item.description}</p>
-        <Badge variant="secondary" className="mt-2 flex sm:hidden w-fit">
-            <item.badge.icon className="mr-1.5 h-3.5 w-3.5" />
-            {item.badge.text}
-        </Badge>
-    </div>
+    <Card className="transition-shadow hover:shadow-md">
+        <CardHeader>
+            <div className="flex items-start justify-between gap-4">
+                <CardTitle>{item.title}</CardTitle>
+                <Badge variant="outline" className="shrink-0">
+                    <item.badge.icon className="mr-1.5 h-3.5 w-3.5" />
+                    {item.badge.text}
+                </Badge>
+            </div>
+            <CardDescription className="flex items-center gap-x-4 text-xs pt-2 font-mono">
+                <span><ClientFormattedDate date={item.date} formatStr="d MMMM yyyy" /></span>
+                <span className="text-muted-foreground/50">|</span>
+                <span>{item.version}</span>
+            </CardDescription>
+        </CardHeader>
+        <CardContent>
+            <p className="text-muted-foreground">{item.description}</p>
+        </CardContent>
+    </Card>
 );
 
 
@@ -123,16 +122,16 @@ export default function WhatsNewPage() {
     return (
         <div className="space-y-8 max-w-3xl mx-auto">
             <div className="text-center">
-                <h1 className="text-3xl font-bold">What's New in BYD.Bio</h1>
+                <h1 className="text-3xl font-bold font-headline">What's New in BYD.Bio</h1>
                 <p className="text-muted-foreground mt-2">Stay up-to-date with our latest features and improvements.</p>
             </div>
             <div className="space-y-12">
                 {sortedYears.map(year => (
                     <div key={year}>
-                        <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
-                            <CalendarIcon className="w-6 h-6" /> {year}
+                        <h2 className="text-2xl font-bold mb-6 flex items-center gap-2 font-headline">
+                            <CalendarIcon className="w-6 h-6 text-primary" /> {year} Updates
                         </h2>
-                        <div className="relative">
+                        <div className="space-y-6">
                             {updatesByYear[year].map((update, index) => (
                                 <UpdateCard key={index} item={update} />
                             ))}

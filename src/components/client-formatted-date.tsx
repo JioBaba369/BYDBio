@@ -7,7 +7,7 @@ import type { Timestamp } from 'firebase/firestore';
 
 interface ClientFormattedDateProps {
   date: Date | string | Timestamp;
-  formatStr?: 'PPP' | 'p' | 'PPP p' | 'MMM d' | 'MMM d, yyyy';
+  formatStr?: 'PPP' | 'p' | 'PPP p' | 'MMM d' | 'MMM d, yyyy' | 'd MMMM yyyy';
   relative?: boolean;
   className?: string;
 }
@@ -22,6 +22,8 @@ const getFormatOptions = (formatStr: ClientFormattedDateProps['formatStr']): Int
             return { month: 'short', day: 'numeric' };
         case 'MMM d, yyyy':
              return { month: 'short', day: 'numeric', year: 'numeric' };
+        case 'd MMMM yyyy':
+             return { day: 'numeric', month: 'long', year: 'numeric' };
         case 'PPP': // full date
         default:
             return { dateStyle: 'medium' };
