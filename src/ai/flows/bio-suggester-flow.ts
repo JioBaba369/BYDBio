@@ -50,7 +50,7 @@ const bioSuggesterFlow = ai.defineFlow(
     inputSchema: BioSuggestInputSchema,
     outputSchema: BioSuggestOutputSchema,
   },
-  async input => {
+  async (input: BioSuggestInput) => {
     const {output} = await prompt(input);
     return output!;
   }
