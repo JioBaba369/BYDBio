@@ -12,7 +12,7 @@ import type { PromoPage } from "@/lib/promo-pages";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ExternalLink, UserCheck, UserPlus, QrCode, Edit, Loader2, Rss, Info, Package, MessageSquare } from "lucide-react";
+import { ExternalLink, UserCheck, UserPlus, QrCode, Edit, Loader2, Rss, Info, Package, MessageSquare, Link2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { linkIcons } from "@/lib/link-icons";
@@ -266,106 +266,106 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
           itemName="post"
           confirmationText="DELETE"
       />
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
-        {/* Left Column (Sticky) */}
-        <div className="md:col-span-1 md:sticky top-20 space-y-6">
-          <Card className="bg-card/80 backdrop-blur-sm p-6 shadow-2xl rounded-2xl border-primary/10">
-              <div className="flex flex-col items-center text-center">
-                <Avatar className="w-24 h-24 mb-4 border-4 border-background shadow-lg">
+      <div className="space-y-6">
+        <Card className="bg-card/80 backdrop-blur-sm shadow-xl rounded-2xl border-primary/10">
+          <CardContent className="p-6">
+              <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
+                <Avatar className="w-24 h-24 sm:w-32 sm:h-32 mb-4 sm:mb-0 border-4 border-background shadow-lg shrink-0">
                   <AvatarImage src={avatarUrl} alt={name} />
                   <AvatarFallback>{avatarFallback}</AvatarFallback>
                 </Avatar>
-                <h1 className="font-headline text-3xl font-bold text-foreground">{name}</h1>
-                <p className="text-muted-foreground">@{username}</p>
-              
-                <div className="mt-6 grid w-full grid-cols-1 items-center gap-4">
-                     <div className="flex flex-col sm:flex-row gap-2">
-                        {isOwner ? (
-                            <Button asChild className="flex-1 font-bold">
-                                <Link href="/profile">
-                                    <Edit className="mr-2 h-4 w-4" /> Edit Profile
-                                </Link>
-                            </Button>
-                        ) : (
-                            <Button className="flex-1 font-bold" onClick={handleFollowToggle} disabled={isFollowLoading}>
-                                {isFollowLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : isFollowing ? <UserCheck className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
-                                {isFollowing ? 'Following' : 'Follow'}
-                            </Button>
-                        )}
-                        <Button asChild variant="outline" className="flex-1">
-                            <Link href={`/u/${username}/card`}>
-                                <QrCode className="mr-2 h-4 w-4" /> Digital Card
-                            </Link>
-                        </Button>
-                    </div>
+                <div className="flex-1 text-center sm:text-left">
+                  <h1 className="font-headline text-3xl font-bold text-foreground">{name}</h1>
+                  <p className="text-muted-foreground">@{username}</p>
+                  
+                  {bio && <p className="text-sm text-foreground/80 whitespace-pre-wrap mt-4">{bio}</p>}
+
+                  <div className="mt-4 flex items-center justify-center sm:justify-start gap-4 text-sm">
+                      <p><span className="font-bold">{followerCount}</span> Followers</p>
+                      <p><span className="font-bold">{userProfileData.following.length}</span> Following</p>
+                  </div>
+
+                  <div className="mt-6 flex flex-col sm:flex-row items-center gap-2">
+                      {isOwner ? (
+                          <Button asChild className="w-full sm:w-auto font-bold">
+                              <Link href="/profile">
+                                  <Edit className="mr-2 h-4 w-4" /> Edit Profile
+                              </Link>
+                          </Button>
+                      ) : (
+                          <Button className="w-full sm:w-auto font-bold" onClick={handleFollowToggle} disabled={isFollowLoading}>
+                              {isFollowLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : isFollowing ? <UserCheck className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
+                              {isFollowing ? 'Following' : 'Follow'}
+                          </Button>
+                      )}
+                      <Button asChild variant="outline" className="w-full sm:w-auto">
+                          <Link href={`/u/${username}/card`}>
+                              <QrCode className="mr-2 h-4 w-4" /> Digital Card
+                          </Link>
+                      </Button>
+                  </div>
                 </div>
-
-                {bio && (
-                  <>
-                    <Separator className="my-6" />
-                    <p className="text-sm text-muted-foreground whitespace-pre-wrap text-left">{bio}</p>
-                  </>
-                )}
               </div>
-          </Card>
-        </div>
+          </CardContent>
+        </Card>
 
-        {/* Right Column */}
-        <div className="md:col-span-2 space-y-6">
-          <Tabs defaultValue="feed" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="feed"><Rss className="mr-2 h-4 w-4"/>Feed</TabsTrigger>
-                  <TabsTrigger value="connect"><MessageSquare className="mr-2 h-4 w-4" />Connect</TabsTrigger>
-              </TabsList>
-              <TabsContent value="feed" className="mt-6">
-                  {unifiedFeed.length > 0 ? (
-                      <div className="space-y-6">
-                          {unifiedFeed.map(item => {
-                              const ContentComponent = componentMap[item.type as keyof typeof componentMap];
-                              if (!ContentComponent) return null;
-                              return <ContentComponent key={`${item.type}-${item.id}`} item={item} />;
-                          })}
-                      </div>
-                  ) : (
-                       <Card className="text-center text-muted-foreground p-10">
-                          This user hasn't posted any content yet.
-                      </Card>
-                  )}
-              </TabsContent>
-              <TabsContent value="connect" className="mt-6 space-y-6">
-                {links && links.length > 0 && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Links</CardTitle>
-                    </CardHeader>
-                    <CardContent className="flex flex-col gap-3">
-                      {links.map((link, index) => {
-                          const Icon = linkIcons[link.icon as keyof typeof linkIcons];
-                          return (
-                          <a key={index} href={link.url} target="_blank" rel="noopener noreferrer" className="w-full group">
-                              <div className="w-full h-14 text-base font-semibold flex items-center p-4 rounded-lg bg-background/70 shadow-sm border hover:bg-muted transition-all hover:scale-[1.02] ease-out duration-200">
-                              {Icon && <Icon className="h-5 w-5 text-primary" />}
-                              <span className="flex-1 text-center text-sm">{link.title}</span>
-                              <ExternalLink className="h-5 w-5 text-muted-foreground/50 opacity-0 group-hover:opacity-100 transition-opacity" />
-                              </div>
-                          </a>
-                          )
-                      })}
-                    </CardContent>
-                  </Card>
-                )}
-                {!isOwner ? (
-                    <ContactForm recipientId={userProfileData.uid} />
+        <Tabs defaultValue="feed" className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="feed"><Rss className="mr-2 h-4 w-4"/>Feed</TabsTrigger>
+                <TabsTrigger value="links"><Link2 className="mr-2 h-4 w-4" />Links</TabsTrigger>
+                <TabsTrigger value="contact"><MessageSquare className="mr-2 h-4 w-4" />Contact</TabsTrigger>
+            </TabsList>
+            <TabsContent value="feed" className="mt-6">
+                {unifiedFeed.length > 0 ? (
+                    <div className="space-y-6">
+                        {unifiedFeed.map(item => {
+                            const ContentComponent = componentMap[item.type as keyof typeof componentMap];
+                            if (!ContentComponent) return null;
+                            return <ContentComponent key={`${item.type}-${item.id}`} item={item} />;
+                        })}
+                    </div>
                 ) : (
-                    <Card>
-                        <CardContent className="p-6 text-center text-muted-foreground">
-                            This is a preview of the contact form that visitors will see on your profile.
-                        </CardContent>
+                      <Card className="text-center text-muted-foreground p-10">
+                        This user hasn't posted any content yet.
                     </Card>
                 )}
-              </TabsContent>
-          </Tabs>
-        </div>
+            </TabsContent>
+            <TabsContent value="links" className="mt-6">
+              {links && links.length > 0 ? (
+                <Card>
+                  <CardContent className="p-4 flex flex-col gap-3">
+                    {links.map((link, index) => {
+                        const Icon = linkIcons[link.icon as keyof typeof linkIcons];
+                        return (
+                        <a key={index} href={link.url} target="_blank" rel="noopener noreferrer" className="w-full group">
+                            <div className="w-full h-14 text-base font-semibold flex items-center p-4 rounded-lg bg-background/70 shadow-sm border hover:bg-muted transition-all hover:scale-[1.02] ease-out duration-200">
+                            {Icon && <Icon className="h-5 w-5 text-primary" />}
+                            <span className="flex-1 text-center text-sm">{link.title}</span>
+                            <ExternalLink className="h-5 w-5 text-muted-foreground/50 opacity-0 group-hover:opacity-100 transition-opacity" />
+                            </div>
+                        </a>
+                        )
+                    })}
+                  </CardContent>
+                </Card>
+                ) : (
+                  <Card className="text-center text-muted-foreground p-10">
+                    This user hasn't added any links yet.
+                  </Card>
+                )}
+            </TabsContent>
+            <TabsContent value="contact" className="mt-6">
+              {!isOwner ? (
+                  <ContactForm recipientId={userProfileData.uid} />
+              ) : (
+                  <Card>
+                      <CardContent className="p-6 text-center text-muted-foreground">
+                          This is a preview of the contact form that visitors will see on your profile.
+                      </CardContent>
+                  </Card>
+              )}
+            </TabsContent>
+        </Tabs>
       </div>
     </>
   );
