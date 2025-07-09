@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -83,7 +82,7 @@ export function MainSidebar() {
             <Skeleton className="h-8 w-full" />
           </SidebarGroup>
         </SidebarContent>
-         <div className="mt-auto p-2">
+         <SidebarFooter>
             <div className="flex w-full items-center gap-2 rounded-md p-2">
                 <Skeleton className="h-8 w-8 rounded-full" />
                 <div className="flex-1 space-y-1">
@@ -91,7 +90,7 @@ export function MainSidebar() {
                     <Skeleton className="h-3 w-32" />
                 </div>
             </div>
-         </div>
+         </SidebarFooter>
       </Sidebar>
     );
   }

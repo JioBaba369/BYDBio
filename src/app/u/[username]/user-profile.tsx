@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useMemo } from "react";
@@ -12,7 +11,7 @@ import type { PromoPage } from "@/lib/promo-pages";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { UserCheck, UserPlus, QrCode, Edit, Loader2, Rss, Package, MessageSquare, Info } from "lucide-react";
+import { UserCheck, UserPlus, QrCode, Edit, Loader2, Rss, Package, MessageSquare, Info, Link as LinkIcon, ExternalLink } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { Logo } from "@/components/logo";
@@ -26,6 +25,8 @@ import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialo
 import { ContactForm } from "@/components/contact-form";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PublicContentCard } from "@/components/public-content-card";
+import { Separator } from "@/components/ui/separator";
+import { linkIcons } from "@/lib/link-icons";
 
 interface UserProfilePageProps {
   userProfileData: User;
@@ -213,7 +214,7 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
     }
   };
 
-  const { name, username, avatarUrl, avatarFallback, bio } = userProfileData;
+  const { name, username, avatarUrl, avatarFallback, bio, links } = userProfileData;
   const isOwner = currentUser?.uid === userProfileData.uid;
 
   const canViewPrivateContent = useMemo(() => isOwner || isFollowing, [isOwner, isFollowing]);
@@ -267,7 +268,6 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
             </Avatar>
             <h1 className="font-headline text-3xl font-bold text-foreground">{name}</h1>
             <p className="text-muted-foreground">@{username}</p>
-            <p className="text-foreground/90 max-w-prose whitespace-pre-wrap mt-4 text-center text-base">{bio || "This user hasn't written a bio yet."}</p>
             
             <div className="flex w-full justify-center gap-2 sm:gap-4 mt-6 py-4 border-y border-border/20">
                 <div className="text-center p-2 flex-1">
@@ -314,9 +314,10 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
         </Card>
 
         <Tabs defaultValue="feed" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="feed"><Rss className="mr-2 h-4 w-4"/>Feed</TabsTrigger>
                 <TabsTrigger value="showcase"><Package className="mr-2 h-4 w-4"/>Showcase</TabsTrigger>
+                <TabsTrigger value="about"><Info className="mr-2 h-4 w-4" />About &amp; Links</TabsTrigger>
                 <TabsTrigger value="contact"><MessageSquare className="mr-2 h-4 w-4" />Contact</TabsTrigger>
             </TabsList>
             <TabsContent value="feed" className="mt-6">
@@ -350,6 +351,44 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
                     )}
                 </div>
             </TabsContent>
+            <TabsContent value="about" className="mt-6">
+              <Card>
+                <CardContent className="p-6 space-y-6">
+                  <div>
+                    <h3 className="text-lg font-semibold">About {name.split(' ')[0]}</h3>
+                    <p className="text-muted-foreground whitespace-pre-wrap mt-2">{bio || "This user hasn't written a bio yet."}</p>
+                  </div>
+                  <Separator />
+                  <div>
+                    <h3 className="text-lg font-semibold">Links</h3>
+                     <div className="flex flex-col gap-3 mt-4">
+                      {links && links.length > 0 ? (
+                        links.map((link, index) => {
+                          const Icon = linkIcons[link.icon as keyof typeof linkIcons] || LinkIcon;
+                          return (
+                            <a
+                              key={index}
+                              href={link.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="w-full group"
+                            >
+                              <div className="w-full h-14 text-base font-semibold flex items-center p-4 rounded-lg bg-secondary transition-all hover:bg-primary hover:text-primary-foreground ease-out duration-200 shadow-sm">
+                                <Icon className="h-5 w-5" />
+                                <span className="flex-1 ml-4 truncate">{link.title}</span>
+                                <ExternalLink className="h-4 w-4 opacity-0 group-hover:opacity-50 transition-opacity" />
+                              </div>
+                            </a>
+                          )
+                        })
+                      ) : (
+                        <p className="text-muted-foreground text-sm">This user hasn't added any links yet.</p>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
             <TabsContent value="contact" className="mt-6">
               {isClient && isOwner ? (
                   <Card>
@@ -373,4 +412,3 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
     </>
   );
 }
-
