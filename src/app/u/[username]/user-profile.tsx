@@ -67,6 +67,14 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
 
   const isOwner = currentUser?.uid === userProfileData.uid;
 
+  // Sync posts when navigating between profiles
+  useEffect(() => {
+    setLocalPosts(content.posts.map(p => ({
+        ...p,
+        isLiked: currentUser ? p.likedBy.includes(currentUser.uid) : false,
+    })));
+  }, [content.posts, currentUser]);
+
   useEffect(() => {
     setIsFollowing(currentUser?.following?.includes(userProfileData.uid) || false);
   }, [currentUser, userProfileData.uid]);
