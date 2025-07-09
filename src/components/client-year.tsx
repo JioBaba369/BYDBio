@@ -14,11 +14,8 @@ export function ClientYear() {
     setYear(new Date().getFullYear());
   }, []);
 
-  if (!year) {
-    // Return a placeholder or the server-rendered value if needed,
-    // though it's safer to wait for the client-side value.
-    return <span>{new Date().getFullYear()}</span>;
-  }
-
+  // On the initial server render and the first client render, 'year' will be null.
+  // We render an empty span to avoid a hydration mismatch.
+  // The correct year will be filled in by the useEffect hook on the client.
   return <span>{year}</span>;
 }
