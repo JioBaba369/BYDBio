@@ -105,13 +105,23 @@ export default function SearchPage() {
         const userResults = await searchUsers(queryParam);
         
         const collectionsToSearch = ['listings', 'jobs', 'events', 'offers', 'promoPages', 'posts'];
-        const contentPromises = collectionsToSearch.map(col => {
-            const q = query(
-                collection(db, col),
-                where('searchableKeywords', 'array-contains-any', searchKeywords),
-                limit(50)
-            );
-            return getDocs(q);
+        
+        const contentPromises = collectionsToSearch.map(colName => {
+            if (colName === 'posts') {
+                return getDocs(query(
+                    collection(db, colName),
+                    where('searchableKeywords', 'array-contains-any', searchKeywords),
+                    where('privacy', '==', 'public'),
+                    limit(50)
+                ));
+            } else {
+                return getDocs(query(
+                    collection(db, colName),
+                    where('searchableKeywords', 'array-contains-any', searchKeywords),
+                    where('status', '==', 'active'),
+                    limit(50)
+                ));
+            }
         });
         
         const [listingsSnap, jobsSnap, eventsSnap, offersSnap, promoPagesSnap, postsSnap] = await Promise.all(contentPromises);
@@ -147,11 +157,6 @@ export default function SearchPage() {
         };
 
         allContent.forEach(item => {
-            // Client-side filtering for posts privacy
-            if (item.type === 'post' && item.privacy !== 'public') {
-                return; // Skip non-public posts
-            }
-
             const author = authorMap.get(item.authorId);
             if (author) {
                 if (item.repostedPost) {
