@@ -366,7 +366,7 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
                               rel="noopener noreferrer"
                               className="w-full group"
                             >
-                              <div className="w-full h-14 text-base font-semibold flex items-center p-4 rounded-lg bg-secondary transition-all hover:bg-primary hover:text-primary-foreground ease-out duration-200 shadow-sm">
+                              <div className="w-full h-14 text-base font-semibold flex items-center p-4 rounded-lg bg-secondary transition-all hover:bg-accent hover:text-accent-foreground ease-out duration-200 shadow-sm">
                                 <Icon className="h-5 w-5" />
                                 <span className="flex-1 ml-4 truncate">{link.title}</span>
                                 <ExternalLink className="h-4 w-4 opacity-0 group-hover:opacity-50 transition-opacity" />

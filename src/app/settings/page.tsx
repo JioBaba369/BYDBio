@@ -176,14 +176,14 @@ export default function SettingsPage() {
                     </p>
                 </div>
                 <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-                    <TabsList className="flex flex-wrap h-auto justify-center gap-1">
+                    <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4">
                         <TabsTrigger value="profile">Profile</TabsTrigger>
                         <TabsTrigger value="appearance">Appearance</TabsTrigger>
                         <TabsTrigger value="notifications">Notifications</TabsTrigger>
                         <TabsTrigger value="security">Security</TabsTrigger>
                     </TabsList>
                     
-                    <TabsContent value="profile">
+                    <TabsContent value="profile" className="mt-4">
                         <Card>
                             <CardHeader>
                                 <CardTitle>Public Profile</CardTitle>
@@ -213,7 +213,7 @@ export default function SettingsPage() {
                         </Card>
                     </TabsContent>
 
-                    <TabsContent value="appearance">
+                    <TabsContent value="appearance" className="mt-4">
                         <Card>
                             <CardHeader>
                                 <CardTitle>Appearance</CardTitle>
@@ -253,7 +253,7 @@ export default function SettingsPage() {
                         </Card>
                     </TabsContent>
 
-                    <TabsContent value="notifications">
+                    <TabsContent value="notifications" className="mt-4">
                         <Card>
                             <CardHeader>
                                 <CardTitle>Notifications</CardTitle>
@@ -327,7 +327,7 @@ export default function SettingsPage() {
                         </Card>
                     </TabsContent>
 
-                    <TabsContent value="security">
+                    <TabsContent value="security" className="mt-4">
                         <Card>
                             <CardHeader>
                                 <CardTitle>Security</CardTitle>

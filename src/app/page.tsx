@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
-import { Briefcase, Calendar, DollarSign, PenSquare, PlusCircle, Tags, Users, UserCheck, Package, Sparkles, Megaphone, Rss } from "lucide-react"
+import { Briefcase, Calendar, PenSquare, PlusCircle, Tags, Users, UserCheck, Package, Sparkles, Megaphone, Rss, Gift } from "lucide-react"
 import Link from "next/link"
 import {
   DropdownMenu,
@@ -187,7 +187,7 @@ function Dashboard() {
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                 <Link href="/offers/create" className="cursor-pointer">
-                    <DollarSign className="mr-2 h-4 w-4" />
+                    <Gift className="mr-2 h-4 w-4" />
                     <span>New Offer</span>
                 </Link>
                 </DropdownMenuItem>
