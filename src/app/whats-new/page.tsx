@@ -19,6 +19,13 @@ type UpdateItem = {
 
 const updates: UpdateItem[] = [
   {
+    date: '2025-07-09T10:00:00Z',
+    version: 'v2.1.0',
+    title: 'Scan to Connect with QR Codes',
+    description: 'Networking just got even easier. Use the new in-app QR code scanner to instantly connect with other users or add their digital business cards to your contacts. Perfect for events and face-to-face meetings.',
+    badge: { text: 'New Feature', icon: Rocket },
+  },
+  {
     date: '2024-07-05T10:00:00Z',
     version: 'v2.0.0',
     title: 'AI-Powered Content Creation',
