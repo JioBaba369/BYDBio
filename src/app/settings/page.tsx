@@ -176,7 +176,7 @@ export default function SettingsPage() {
                     </p>
                 </div>
                 <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-                    <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4">
+                    <TabsList className="flex flex-wrap h-auto justify-center gap-1">
                         <TabsTrigger value="profile">Profile</TabsTrigger>
                         <TabsTrigger value="appearance">Appearance</TabsTrigger>
                         <TabsTrigger value="notifications">Notifications</TabsTrigger>

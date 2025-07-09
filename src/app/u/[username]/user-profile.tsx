@@ -285,16 +285,16 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
                 </div>
             </div>
 
-            <div className="mt-6 flex flex-wrap gap-2 justify-center">
-                 <Button asChild variant="secondary" className="font-bold flex-1 sm:flex-none">
+            <div className="mt-6 flex flex-col sm:flex-row w-full gap-2 justify-center">
+                 <Button asChild variant="secondary" className="font-bold">
                     <Link href={`/u/${username}/card`}>
                         <QrCode className="mr-2 h-4 w-4" />
                         Digital Card
                     </Link>
                 </Button>
-                <ShareButton className="font-bold flex-1 sm:flex-none" />
+                <ShareButton className="font-bold" />
                 {isClient && isOwner ? (
-                    <Button asChild className="font-bold flex-1 sm:flex-none">
+                    <Button asChild className="font-bold">
                         <Link href="/profile">
                             <Edit className="mr-2 h-4 w-4" />
                             Edit Profile
@@ -302,7 +302,7 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
                     </Button>
                 ) : (
                     <Button 
-                        className="font-bold flex-1 sm:flex-none" 
+                        className="font-bold" 
                         onClick={handleFollowToggle}
                         disabled={isFollowLoading || !isClient}
                     >
