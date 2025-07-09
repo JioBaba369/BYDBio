@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import type { User } from '@/lib/users';
 import type { PostWithAuthor } from '@/lib/posts';
 import type { Listing } from '@/lib/listings';
@@ -22,7 +22,7 @@ import { useAuth } from "@/components/auth-provider";
 import { followUser, unfollowUser } from "@/lib/connections";
 import { useRouter } from "next/navigation";
 import { PostCard } from "@/components/post-card";
-import { toggleLikePost, deletePost, repostPost } from '@/lib/posts';
+import { getPostsByUser, toggleLikePost, deletePost, repostPost } from '@/lib/posts';
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
 import { PromoPageFeedItem } from "@/components/feed/promo-page-feed-item";
 import { ListingFeedItem } from "@/components/feed/listing-feed-item";
@@ -69,6 +69,14 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
     setIsFollowing(currentUser?.following?.includes(userProfileData.uid) || false);
   }, [currentUser, userProfileData.uid]);
   
+  const fetchPosts = useCallback(async () => {
+    const freshPosts = await getPostsByUser(userProfileData.uid);
+    setLocalPosts(freshPosts.map(p => ({
+      ...p,
+      isLiked: currentUser ? p.likedBy.includes(currentUser.uid) : false,
+    })));
+  }, [userProfileData.uid, currentUser]);
+
   const handleFollowToggle = async () => {
     if (!currentUser) {
         toast({ title: "Please sign in to follow users.", variant: "destructive" });
@@ -92,6 +100,8 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
             await followUser(currentUser.uid, userProfileData.uid);
             toast({ title: `You are now following ${userProfileData.name}` });
         }
+        // After any follow/unfollow action, refetch the posts to update visibility
+        await fetchPosts();
     } catch (error) {
         // Rollback on error
         setIsFollowing(currentlyFollowing);
