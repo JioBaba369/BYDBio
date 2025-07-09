@@ -17,7 +17,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Badge } from '@/components/ui/badge';
 import { EmbeddedPostView } from './feed/embedded-post-view';
 
-type FeedItem = PostWithAuthor & { isLiked?: boolean; };
+type FeedItem = PostWithAuthor & { isLiked?: boolean; type?: string; };
 
 interface PostCardProps {
     item: FeedItem;

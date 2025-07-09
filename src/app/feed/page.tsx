@@ -46,6 +46,7 @@ export default function FeedPage() {
   
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [postToDelete, setPostToDelete] = useState<PostWithAuthor | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [postToQuote, setPostToQuote] = useState<any | null>(null);
   const [loadingAction, setLoadingAction] = useState<{ postId: string; action: 'like' | 'repost' } | null>(null);
 
@@ -231,6 +232,7 @@ export default function FeedPage() {
 
   const handleConfirmDelete = async () => {
     if (!postToDelete || !user) return;
+    setIsDeleting(true);
     const originalFollowing = [...followingPosts];
     const originalDiscovery = [...discoveryPosts];
     setFollowingPosts(prev => prev.filter(item => item.id !== postToDelete.id));
@@ -246,6 +248,7 @@ export default function FeedPage() {
     } finally {
         setIsDeleteDialogOpen(false);
         setPostToDelete(null);
+        setIsDeleting(false);
     }
   };
 
@@ -286,7 +289,14 @@ export default function FeedPage() {
   return (
     <>
       <ImageCropper imageSrc={imageToCrop} open={isCropperOpen} onOpenChange={setIsCropperOpen} onCropComplete={handleCropComplete} aspectRatio={16 / 9} isRound={false}/>
-      <DeleteConfirmationDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen} onConfirm={handleConfirmDelete} itemName="post" confirmationText="DELETE"/>
+      <DeleteConfirmationDialog 
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        onConfirm={handleConfirmDelete}
+        isLoading={isDeleting}
+        itemName="post"
+        confirmationText="DELETE"
+      />
       <div className="max-w-2xl mx-auto space-y-6">
         <h1 className="text-2xl sm:text-3xl font-bold font-headline">Status Feed</h1>
         <Card>

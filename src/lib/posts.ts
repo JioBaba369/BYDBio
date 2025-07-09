@@ -58,6 +58,7 @@ export type Post = {
   quotedPost?: EmbeddedPostInfo;
   repostedPost?: EmbeddedPostInfo;
   searchableKeywords?: string[];
+  type: 'post'; // To distinguish from other content types
 };
 
 export type PostWithAuthor = Post & {
@@ -145,6 +146,7 @@ export const createPost = async (userId: string, data: Pick<Post, 'content' | 'i
     comments: 0,
     repostCount: 0,
     searchableKeywords: keywords,
+    type: 'post',
   };
 
   if (data.quotedPost) {
@@ -250,6 +252,7 @@ export const repostPost = async (originalPostId: string, reposterId: string): Pr
         postNumber: 0, // Reposts don't get a number
         category: originalPostData.category,
         searchableKeywords: keywords,
+        type: 'post',
     };
     batch.set(newPostRef, newPostData);
     
@@ -362,7 +365,7 @@ export const getFeedPosts = async (userId: string, followingIds: string[]): Prom
     
     postsData.sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
-    return populatePostAuthors(postsData);
+    return populatePostAuthors(postsData.slice(0, 50));
 };
 
 /**
