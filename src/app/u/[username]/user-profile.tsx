@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useMemo } from "react";
@@ -11,7 +10,7 @@ import type { Event } from '@/lib/events';
 import type { PromoPage } from "@/lib/promo-pages";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { ExternalLink, UserCheck, UserPlus, QrCode, Edit, Loader2, Rss, Info, MessageSquare, Package, Link as LinkIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
@@ -239,7 +238,7 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
     return combined;
   }, [content]);
   
-  const hasLinks = links && links.length > 0;
+  const hasLinks = links.length > 0;
 
   return (
     <>
@@ -255,46 +254,29 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
       <div className="w-full max-w-xl mx-auto space-y-8">
         <Card className="bg-card/80 backdrop-blur-sm p-6 sm:p-8 shadow-2xl rounded-2xl border-primary/10 relative overflow-hidden">
           <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-primary/10 via-background to-background z-0"></div>
-          <div className="relative z-10 flex flex-col items-center text-center">
+          <CardHeader className="p-0 relative z-10 flex flex-col items-center text-center">
             <Avatar className="w-24 h-24 mb-4 border-4 border-background shadow-lg">
               <AvatarImage src={avatarUrl} alt={name} />
               <AvatarFallback>{avatarFallback}</AvatarFallback>
             </Avatar>
             <h1 className="font-headline text-3xl font-bold text-foreground">{name}</h1>
             <p className="text-muted-foreground">@{username}</p>
-            
-             <div className="mt-6 flex w-full flex-col sm:flex-row items-center gap-4">
-              {isOwner ? (
-                  <Button asChild className="flex-1 font-bold w-full sm:w-auto">
-                      <Link href="/profile">
-                          <Edit className="mr-2 h-4 w-4" />
-                          Edit Profile
-                      </Link>
-                  </Button>
-              ) : (
-                  <Button 
-                      className="flex-1 font-bold w-full sm:w-auto" 
-                      onClick={handleFollowToggle}
-                      disabled={isFollowLoading}
-                  >
-                      {isFollowLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : isFollowing ? <UserCheck className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
-                      {isFollowing ? 'Following' : 'Follow'}
-                  </Button>
-              )}
-              <div className="text-center p-2 rounded-md bg-muted/50 w-full sm:w-28">
+            <div className="flex justify-center gap-4 text-sm text-muted-foreground mt-4">
+              <div className="text-center">
                 <p className="font-bold text-lg text-foreground">{(followerCount || 0).toLocaleString()}</p>
-                <p className="text-xs text-muted-foreground tracking-wide">Followers</p>
+                <p className="text-xs tracking-wide">Followers</p>
               </div>
-               <div className="text-center p-2 rounded-md bg-muted/50 w-full sm:w-28">
+              <div className="text-center">
                 <p className="font-bold text-lg text-foreground">{(userProfileData.following?.length || 0).toLocaleString()}</p>
-                <p className="text-xs text-muted-foreground tracking-wide">Following</p>
+                <p className="text-xs tracking-wide">Following</p>
               </div>
-              <div className="text-center p-2 rounded-md bg-muted/50 w-full sm:w-28">
+              <div className="text-center">
                 <p className="font-bold text-lg text-foreground">{(userProfileData.postCount || 0).toLocaleString()}</p>
-                <p className="text-xs text-muted-foreground tracking-wide">Posts</p>
+                <p className="text-xs tracking-wide">Posts</p>
               </div>
             </div>
-          </div>
+            <p className="text-foreground/90 max-w-prose whitespace-pre-wrap mt-6 text-center text-base">{bio || "This user hasn't written a bio yet."}</p>
+          </CardHeader>
           <CardFooter className="flex-wrap gap-2 px-0 pt-6 justify-center">
              <Button asChild variant="secondary" className="font-bold flex-1 sm:flex-none">
                 <Link href={`/u/${username}/card`}>
@@ -303,92 +285,104 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
                 </Link>
             </Button>
             <ShareButton className="font-bold flex-1 sm:flex-none" />
+            {isOwner ? (
+                <Button asChild className="font-bold flex-1 sm:flex-none">
+                    <Link href="/profile">
+                        <Edit className="mr-2 h-4 w-4" />
+                        Edit Profile
+                    </Link>
+                </Button>
+            ) : (
+                <Button 
+                    className="font-bold flex-1 sm:flex-none" 
+                    onClick={handleFollowToggle}
+                    disabled={isFollowLoading}
+                >
+                    {isFollowLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : isFollowing ? <UserCheck className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
+                    {isFollowing ? 'Following' : 'Follow'}
+                </Button>
+            )}
           </CardFooter>
         </Card>
 
         <Tabs defaultValue="feed" className="w-full">
             <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="feed"><Rss className="mr-2 h-4 w-4"/>Feed</TabsTrigger>
-                <TabsTrigger value="creations"><Package className="mr-2 h-4 w-4"/>Creations</TabsTrigger>
-                <TabsTrigger value="about"><Info className="mr-2 h-4 w-4"/>About</TabsTrigger>
+                <TabsTrigger value="links"><LinkIcon className="mr-2 h-4 w-4"/>Links</TabsTrigger>
+                <TabsTrigger value="contact"><MessageSquare className="mr-2 h-4 w-4" />Contact</TabsTrigger>
             </TabsList>
             <TabsContent value="feed" className="mt-6">
-                {visiblePosts.length > 0 ? (
-                    <div className="space-y-6">
-                        {visiblePosts.map(post => (
-                            <PostCard
-                                key={post.id}
-                                item={post}
-                                onLike={handleLike}
-                                onDelete={openDeleteDialog}
-                                onRepost={handleRepost}
-                                onQuote={handleQuote}
-                                isLoading={loadingAction?.postId === post.id}
-                                loadingAction={loadingAction?.postId === post.id ? loadingAction.action : null}
-                            />
-                        ))}
-                    </div>
+                <div className="space-y-6">
+                    {visiblePosts.length > 0 ? visiblePosts.map(post => (
+                        <PostCard
+                            key={post.id}
+                            item={post}
+                            onLike={handleLike}
+                            onDelete={openDeleteDialog}
+                            onRepost={handleRepost}
+                            onQuote={handleQuote}
+                            isLoading={loadingAction?.postId === post.id}
+                            loadingAction={loadingAction?.postId === post.id ? loadingAction.action : null}
+                        />
+                    )) : (
+                        <Card className="text-center text-muted-foreground p-10">
+                            This user hasn't made any posts yet.
+                        </Card>
+                    )}
+                    {allOtherContent.length > 0 && (
+                        <>
+                            {visiblePosts.length > 0 && <div className="text-center text-xs text-muted-foreground font-semibold uppercase tracking-wider">Older Content</div>}
+                            {allOtherContent.map(item => {
+                                const uniqueKey = `${item.type}-${item.id}`;
+                                const componentMap = {
+                                    promoPage: <PromoPageFeedItem item={item as PromoPage} />,
+                                    listing: <ListingFeedItem item={item as Listing} />,
+                                    job: <JobFeedItem item={item as Job} />,
+                                    event: <EventFeedItem item={item as Event} />,
+                                    offer: <OfferFeedItem item={item as Offer} />,
+                                };
+                                const content = componentMap[item.type as keyof typeof componentMap];
+                                if (!content) return null;
+                                return <div key={uniqueKey}>{content}</div>
+                            })}
+                        </>
+                    )}
+                </div>
+            </TabsContent>
+            <TabsContent value="links" className="mt-6 space-y-6">
+                {hasLinks ? (
+                    <Card>
+                        <CardContent className="flex flex-col space-y-3 p-4">
+                            {links.map((link, index) => {
+                                const Icon = linkIcons[link.icon as keyof typeof linkIcons] || LinkIcon;
+                                return (
+                                <a key={index} href={link.url} target="_blank" rel="noopener noreferrer" className="w-full group">
+                                    <div className="w-full h-14 text-base font-semibold flex items-center gap-4 p-3 rounded-lg bg-secondary transition-colors hover:bg-secondary/80">
+                                    <Icon className="h-6 w-6 text-secondary-foreground/80" />
+                                    <span className="flex-1 text-left text-secondary-foreground truncate">{link.title}</span>
+                                    <ExternalLink className="h-5 w-5 text-secondary-foreground/50 opacity-50 group-hover:opacity-100 transition-opacity" />
+                                    </div>
+                                </a>
+                                )
+                            })}
+                        </CardContent>
+                    </Card>
                 ) : (
-                     <Card className="text-center text-muted-foreground p-10">
-                        This user hasn't made any posts yet.
+                    <Card className="text-center text-muted-foreground p-10">
+                        This user hasn't added any links yet.
                     </Card>
                 )}
             </TabsContent>
-            <TabsContent value="creations" className="mt-6">
-                 {allOtherContent.length > 0 ? (
-                    <div className="space-y-6">
-                        {allOtherContent.map(item => {
-                            const uniqueKey = `${item.type}-${item.id}`;
-                            const componentMap = {
-                                promoPage: <PromoPageFeedItem item={item as PromoPage} />,
-                                listing: <ListingFeedItem item={item as Listing} />,
-                                job: <JobFeedItem item={item as Job} />,
-                                event: <EventFeedItem item={item as Event} />,
-                                offer: <OfferFeedItem item={item as Offer} />,
-                            };
-                            const content = componentMap[item.type as keyof typeof componentMap];
-                            if (!content) return null;
-                            return <div key={uniqueKey}>{content}</div>
-                        })}
-                    </div>
-                ) : (
-                     <Card className="text-center text-muted-foreground p-10">
-                        This user hasn't created any public content yet.
-                    </Card>
-                )}
-            </TabsContent>
-            <TabsContent value="about" className="mt-6 space-y-6">
-                <Card>
-                    <CardHeader>
-                        <CardTitle>About {userProfileData.name}</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <p className="text-foreground/90 max-w-prose whitespace-pre-wrap">{bio || "This user hasn't written a bio yet."}</p>
-                    </CardContent>
-                </Card>
-
-                {hasLinks && (
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Links</CardTitle>
-                    </CardHeader>
-                    <CardContent className="flex flex-col space-y-3">
-                        {links.map((link, index) => {
-                            const Icon = linkIcons[link.icon as keyof typeof linkIcons] || LinkIcon;
-                            return (
-                            <a key={index} href={link.url} target="_blank" rel="noopener noreferrer" className="w-full group">
-                                <div className="w-full h-14 text-base font-semibold flex items-center gap-4 p-3 rounded-lg bg-secondary transition-colors hover:bg-secondary/80">
-                                <Icon className="h-6 w-6 text-secondary-foreground/80" />
-                                <span className="flex-1 text-left text-secondary-foreground truncate">{link.title}</span>
-                                <ExternalLink className="h-5 w-5 text-secondary-foreground/50 opacity-50 group-hover:opacity-100 transition-opacity" />
-                                </div>
-                            </a>
-                            )
-                        })}
-                    </CardContent>
-                </Card>
-                )}
-                {!isOwner && <ContactForm recipientId={userProfileData.uid} />}
+            <TabsContent value="contact" className="mt-6">
+              {!isOwner ? (
+                  <ContactForm recipientId={userProfileData.uid} />
+              ) : (
+                  <Card>
+                      <CardContent className="p-6 text-center text-muted-foreground">
+                          This is a preview of the contact form that visitors will see on your profile.
+                      </CardContent>
+                  </Card>
+              )}
             </TabsContent>
         </Tabs>
         
