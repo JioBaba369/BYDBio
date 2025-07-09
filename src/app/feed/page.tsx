@@ -3,68 +3,40 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
+import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 import { Image as ImageIcon, Send, X, Users, Compass, Loader2, Globe, Lock } from "lucide-react"
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useAuth } from "@/components/auth-provider"
 import { useToast } from "@/hooks/use-toast"
 import Link from "next/link"
 import ImageCropper from "@/components/image-cropper"
-import { getFeedPosts, createPost, toggleLikePost, deletePost, getDiscoveryPosts, type PostWithAuthor, repostPost, type EmbeddedPostInfo, type Post, type EmbeddedPostInfoWithAuthor } from "@/lib/posts"
 import { Skeleton } from "@/components/ui/skeleton"
 import { uploadImage } from "@/lib/storage"
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { PostCard } from "@/components/post-card";
 import Image from "next/image";
 import type { Timestamp } from "firebase/firestore";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { createPost, toggleLikePost, deletePost, repostPost, type PostWithAuthor, type EmbeddedPostInfo, type Post } from "@/lib/posts";
+import { getFollowingFeedContent, type FeedItem } from "@/lib/feed";
+import { ContentFeedCard } from "@/components/feed/content-feed-card";
+import { EventFeedItem } from "@/components/feed/event-feed-item";
+import { JobFeedItem } from "@/components/feed/job-feed-item";
+import { ListingFeedItem } from "@/components/feed/listing-feed-item";
+import { OfferFeedItem } from "@/components/feed/offer-feed-item";
+import { PromoPageFeedItem } from "@/components/feed/promo-page-feed-item";
+import { Badge } from "@/components/ui/badge";
 
-type FeedItem = PostWithAuthor & { isLiked: boolean; };
-
-const PostCardSkeleton = () => (
+const FeedSkeleton = () => (
     <div className="space-y-6">
-        <Card>
-            <CardHeader className="p-4">
-                <div className="flex items-center gap-3">
-                    <Skeleton className="h-10 w-10 rounded-full" />
-                    <div className="space-y-1">
-                        <Skeleton className="h-4 w-24" />
-                        <Skeleton className="h-3 w-16" />
-                    </div>
-                </div>
-            </CardHeader>
-            <CardContent className="p-4 pt-0 space-y-2">
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-3/4" />
-            </CardContent>
-            <CardFooter className="p-4 border-t">
-                <Skeleton className="h-8 w-full" />
-            </CardFooter>
-        </Card>
-        <Card>
-            <CardHeader className="p-4">
-                <div className="flex items-center gap-3">
-                    <Skeleton className="h-10 w-10 rounded-full" />
-                    <div className="space-y-1">
-                        <Skeleton className="h-4 w-24" />
-                        <Skeleton className="h-3 w-16" />
-                    </div>
-                </div>
-            </CardHeader>
-            <CardContent className="p-4 pt-0 space-y-2">
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-3/4" />
-            </CardContent>
-            <CardFooter className="p-4 border-t">
-                <Skeleton className="h-8 w-full" />
-            </CardFooter>
-        </Card>
+        <Card><CardContent className="p-4"><Skeleton className="h-32" /></CardContent></Card>
+        <Card><CardHeader className="p-4"><div className="flex items-center gap-3"><Skeleton className="h-10 w-10 rounded-full" /><div className="space-y-1"><Skeleton className="h-4 w-24" /><Skeleton className="h-3 w-16" /></div></div></CardHeader><CardContent className="p-4 pt-0 space-y-2"><Skeleton className="h-4 w-full" /><Skeleton className="h-4 w-3/4" /></CardContent><CardFooter className="p-4 border-t"><Skeleton className="h-8 w-full" /></CardFooter></Card>
+        <Card><CardHeader className="p-4"><div className="flex items-center gap-3"><Skeleton className="h-10 w-10 rounded-full" /><div className="space-y-1"><Skeleton className="h-4 w-24" /><Skeleton className="h-3 w-16" /></div></div></CardHeader><CardContent className="p-4 pt-0 space-y-2"><Skeleton className="h-4 w-full" /><Skeleton className="h-4 w-3/4" /></CardContent><CardFooter className="p-4 border-t"><Skeleton className="h-8 w-full" /></CardFooter></Card>
     </div>
 );
 
-const QuotedPostPreview = ({ post, onRemove }: { post: FeedItem, onRemove: () => void }) => (
+const QuotedPostPreview = ({ post, onRemove }: { post: any, onRemove: () => void }) => (
     <div className="mt-2 p-3 border rounded-lg relative">
         <Button variant="ghost" size="icon" className="absolute top-1 right-1 h-6 w-6" onClick={onRemove}>
             <X className="h-4 w-4" />
@@ -88,11 +60,9 @@ export default function FeedPage() {
 
   const [postContent, setPostContent] = useState('');
   const [postPrivacy, setPostPrivacy] = useState<'public' | 'followers' | 'me'>('public');
-  const [followingFeed, setFollowingFeed] = useState<FeedItem[]>([]);
-  const [discoveryFeed, setDiscoveryFeed] = useState<FeedItem[]>([]);
+  const [feedItems, setFeedItems] = useState<FeedItem[]>([]);
   
-  const [isFollowingLoading, setIsFollowingLoading] = useState(true);
-  const [isDiscoveryLoading, setIsDiscoveryLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [isPosting, setIsPosting] = useState(false);
   
   const [imageToCrop, setImageToCrop] = useState<string | null>(null);
@@ -101,63 +71,41 @@ export default function FeedPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [postToDelete, setPostToDelete] = useState<FeedItem | null>(null);
-  const [postToQuote, setPostToQuote] = useState<FeedItem | null>(null);
+  const [postToDelete, setPostToDelete] = useState<PostWithAuthor | null>(null);
+  const [postToQuote, setPostToQuote] = useState<any | null>(null);
   const [loadingAction, setLoadingAction] = useState<{ postId: string; action: 'like' | 'repost' } | null>(null);
 
-  const fetchFeeds = useCallback(async (refreshFollowing: boolean, refreshDiscovery: boolean) => {
+  const fetchFeed = useCallback(async () => {
     if (!user) return;
 
-    if (refreshFollowing) {
-        setIsFollowingLoading(true);
-        try {
-            const posts = await getFeedPosts([...user.following, user.uid]);
-            setFollowingFeed(posts.map(post => ({
-                ...post,
-                isLiked: post.likedBy.includes(user.uid),
-            })));
-        } catch (error) {
-            toast({ title: "Failed to load your feed", variant: "destructive" });
-        } finally {
-            setIsFollowingLoading(false);
-        }
-    }
-
-    if (refreshDiscovery) {
-        setIsDiscoveryLoading(true);
-        try {
-            const posts = await getDiscoveryPosts(user.uid, user.following);
-            setDiscoveryFeed(posts.map(post => ({
-                ...post,
-                isLiked: post.likedBy.includes(user.uid),
-            })));
-        } catch (error) {
-            // Discovery feed is non-critical, so we don't show a toast.
-        } finally {
-            setIsDiscoveryLoading(false);
-        }
+    setIsLoading(true);
+    try {
+        const items = await getFollowingFeedContent(user.uid, user.following);
+        setFeedItems(items);
+    } catch (error) {
+        toast({ title: "Failed to load your feed", variant: "destructive" });
+    } finally {
+        setIsLoading(false);
     }
   }, [user, toast]);
 
   useEffect(() => {
     if (user?.uid) {
-        fetchFeeds(true, true);
+        fetchFeed();
     }
-  }, [user?.uid, fetchFeeds]);
+  }, [user?.uid, fetchFeed]);
 
   useEffect(() => {
     const storedPostJson = sessionStorage.getItem('postToQuote');
     if (storedPostJson) {
         try {
             const post = JSON.parse(storedPostJson);
-            // We cast here because the stored object is a stripped-down version,
-            // but it has all the fields needed for the QuotedPostPreview component.
-            setPostToQuote(post as FeedItem);
+            setPostToQuote(post as any);
             sessionStorage.removeItem('postToQuote');
             window.scrollTo({ top: 0, behavior: 'smooth' });
             document.getElementById('new-post')?.focus();
         } catch (error) {
-            sessionStorage.removeItem('postToQuote'); // Clean up bad data
+            sessionStorage.removeItem('postToQuote');
         }
     }
   }, []);
@@ -212,20 +160,21 @@ export default function FeedPage() {
         
         const newPostForFeed: FeedItem = {
             ...newPost,
+            type: 'post',
             author: user,
-            createdAt: (newPost.createdAt as Timestamp).toDate().toISOString(),
+            sortDate: new Date(),
+            createdAt: (newPost.createdAt as unknown as Timestamp).toDate().toISOString(),
             isLiked: false
         };
 
         if (newPost.quotedPost && postToQuote) {
-            newPostForFeed.quotedPost = {
+            (newPostForFeed as any).quotedPost = {
                 ...newPost.quotedPost,
                 author: postToQuote.author
             };
         }
         
-        // Optimistic update
-        setFollowingFeed(prev => [newPostForFeed, ...prev]);
+        setFeedItems(prev => [newPostForFeed, ...prev]);
         
         setPostContent('');
         setCroppedImageUrl(null);
@@ -234,7 +183,7 @@ export default function FeedPage() {
         toast({ title: "Update Posted!" });
     } catch(error) {
         toast({ title: "Failed to post update", variant: "destructive" });
-        await fetchFeeds(true, false); // Refetch on error
+        await fetchFeed();
     } finally {
         setIsPosting(false);
     }
@@ -245,14 +194,13 @@ export default function FeedPage() {
     
     setLoadingAction({ postId, action: 'like' });
 
-    // A helper function to perform the optimistic update on a feed
     const optimisticUpdate = (setFeed: React.Dispatch<React.SetStateAction<FeedItem[]>>) => {
         setFeed(prevFeed => {
             const newFeed = [...prevFeed];
-            const postIndex = newFeed.findIndex(p => p.id === postId);
+            const postIndex = newFeed.findIndex(p => p.id === postId && p.type === 'post');
             if (postIndex === -1) return prevFeed;
 
-            const originalPost = newFeed[postIndex];
+            const originalPost = newFeed[postIndex] as PostWithAuthor & { isLiked: boolean };
             const updatedPost = {
                 ...originalPost,
                 isLiked: !originalPost.isLiked,
@@ -263,21 +211,14 @@ export default function FeedPage() {
         });
     };
 
-    // Store the original state of both feeds
-    const originalFollowingFeed = [...followingFeed];
-    const originalDiscoveryFeed = [...discoveryFeed];
-    
-    // Perform optimistic updates
-    optimisticUpdate(setFollowingFeed);
-    optimisticUpdate(setDiscoveryFeed);
+    const originalFeed = [...feedItems];
+    optimisticUpdate(setFeedItems);
 
     try {
         await toggleLikePost(postId, user.uid);
     } catch (error) {
         toast({ title: "Something went wrong", variant: "destructive" });
-        // Revert on error
-        setFollowingFeed(originalFollowingFeed);
-        setDiscoveryFeed(originalDiscoveryFeed);
+        setFeedItems(originalFeed);
     } finally {
         setLoadingAction(null);
     }
@@ -285,39 +226,11 @@ export default function FeedPage() {
   
   const handleRepost = async (postId: string) => {
     if (!user || loadingAction) return;
-
     setLoadingAction({ postId, action: 'repost' });
-
-    const originalPost = [...followingFeed, ...discoveryFeed].find(p => p.id === postId);
-    if (!originalPost) {
-        toast({ title: "Error", description: "Could not find the original post to repost.", variant: "destructive" });
-        setLoadingAction(null);
-        return;
-    }
-
     try {
-      const newPost = await repostPost(postId, user.uid);
-      
-      const populatedRepostedPost: EmbeddedPostInfoWithAuthor = {
-          ...newPost.repostedPost!,
-          author: {
-              uid: originalPost.author.uid,
-              name: originalPost.author.name,
-              username: originalPost.author.username,
-              avatarUrl: originalPost.author.avatarUrl,
-          }
-      };
-      
-      const newPostForFeed: FeedItem = {
-        ...newPost,
-        author: user,
-        createdAt: (newPost.createdAt as Timestamp).toDate().toISOString(),
-        isLiked: false,
-        repostedPost: populatedRepostedPost,
-      };
-
-      setFollowingFeed(prev => [newPostForFeed, ...prev]);
+      await repostPost(postId, user.uid);
       toast({ title: "Reposted!" });
+      await fetchFeed();
     } catch (error: any) {
       toast({ title: error.message || "Failed to repost", variant: "destructive" });
     } finally {
@@ -325,152 +238,101 @@ export default function FeedPage() {
     }
   };
   
-  const handleQuote = (post: FeedItem) => {
+  const handleQuote = (post: any) => {
     setPostToQuote(post);
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    const textarea = document.getElementById('new-post');
-    if (textarea) textarea.focus();
+    document.getElementById('new-post')?.focus();
   };
 
-  const openDeleteDialog = (post: FeedItem) => {
+  const openDeleteDialog = (post: any) => {
     setPostToDelete(post);
     setIsDeleteDialogOpen(true);
   };
 
   const handleConfirmDelete = async () => {
     if (!postToDelete || !user) return;
-
-    setFollowingFeed(prev => prev.filter(item => item.id !== postToDelete.id));
-    setDiscoveryFeed(prev => prev.filter(item => item.id !== postToDelete.id));
+    const originalFeed = [...feedItems];
+    setFeedItems(prev => prev.filter(item => item.id !== postToDelete.id));
     
     try {
         await deletePost(postToDelete.id);
         toast({ title: "Post Deleted" });
     } catch (error) {
         toast({ title: "Failed to delete post", variant: "destructive" });
-        await fetchFeeds(true, true); // Revert on error
+        setFeedItems(originalFeed);
     } finally {
         setIsDeleteDialogOpen(false);
         setPostToDelete(null);
     }
   };
-  
-  const FeedList = ({ isLoading, items, emptyState }: { isLoading: boolean, items: FeedItem[], emptyState: React.ReactNode }) => {
-    if (isLoading) {
-        return <PostCardSkeleton />;
-    }
-    if (items.length > 0) {
-        return <div className="space-y-6">{items.map(item => <PostCard 
-            key={item.id} 
-            item={item} 
-            onLike={handleLike} 
-            onDelete={openDeleteDialog} 
-            onRepost={handleRepost} 
-            onQuote={handleQuote} 
-            isLoading={loadingAction?.postId === item.id}
-            loadingAction={loadingAction && loadingAction.postId === item.id ? loadingAction.action : null}
-            />)}
-        </div>;
-    }
-    return <>{emptyState}</>;
-  };
+
+  const categoryCounts = useMemo(() => {
+    const counts: Record<string, number> = {
+      Posts: 0,
+      'Business Pages': 0,
+      Listings: 0,
+      Jobs: 0,
+      Events: 0,
+      Offers: 0,
+    };
+    feedItems.forEach(item => {
+        if (item.type === 'post') counts['Posts']++;
+        if (item.type === 'promoPage') counts['Business Pages']++;
+        if (item.type === 'listing') counts['Listings']++;
+        if (item.type === 'job') counts['Jobs']++;
+        if (item.type === 'event') counts['Events']++;
+        if (item.type === 'offer') counts['Offers']++;
+    });
+    return counts;
+  }, [feedItems]);
   
   if (authLoading) {
       return (
          <div className="max-w-2xl mx-auto space-y-6">
             <Skeleton className="h-9 w-48" />
-            <Skeleton className="h-40 rounded-lg" />
-            <PostCardSkeleton />
+            <FeedSkeleton />
         </div>
       );
   }
 
   if (!user) return null;
 
+  const componentMap: Record<string, React.FC<{ item: any }>> = {
+    promoPage: PromoPageFeedItem,
+    listing: ListingFeedItem,
+    job: JobFeedItem,
+    event: EventFeedItem,
+    offer: OfferFeedItem,
+  };
+
   return (
     <>
-      <ImageCropper
-        imageSrc={imageToCrop}
-        open={isCropperOpen}
-        onOpenChange={setIsCropperOpen}
-        onCropComplete={handleCropComplete}
-        aspectRatio={16 / 9}
-        isRound={false}
-      />
-      <DeleteConfirmationDialog 
-        open={isDeleteDialogOpen}
-        onOpenChange={setIsDeleteDialogOpen}
-        onConfirm={handleConfirmDelete}
-        itemName="post"
-        confirmationText="DELETE"
-      />
+      <ImageCropper imageSrc={imageToCrop} open={isCropperOpen} onOpenChange={setIsCropperOpen} onCropComplete={handleCropComplete} aspectRatio={16 / 9} isRound={false}/>
+      <DeleteConfirmationDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen} onConfirm={handleConfirmDelete} itemName="post" confirmationText="DELETE"/>
       <div className="max-w-2xl mx-auto space-y-6">
         <h1 className="text-2xl sm:text-3xl font-bold font-headline">Status Feed</h1>
-        
         <Card>
           <CardContent className="p-4">
             <div className="flex gap-4">
-              <Avatar>
-                <AvatarImage src={user.avatarUrl} />
-                <AvatarFallback>{user.avatarFallback}</AvatarFallback>
-              </Avatar>
+              <Avatar><AvatarImage src={user.avatarUrl} /><AvatarFallback>{user.avatarFallback}</AvatarFallback></Avatar>
               <div className="w-full space-y-2">
-                <Textarea
-                  id="new-post"
-                  placeholder="What's on your mind?"
-                  className="w-full text-base border-0 focus-visible:ring-0 ring-offset-0 p-0"
-                  value={postContent}
-                  onChange={(e) => setPostContent(e.target.value)}
-                />
+                <Textarea id="new-post" placeholder="What's on your mind?" className="w-full text-base border-0 focus-visible:ring-0 ring-offset-0 p-0" value={postContent} onChange={(e) => setPostContent(e.target.value)}/>
                  {postToQuote && <QuotedPostPreview post={postToQuote} onRemove={() => setPostToQuote(null)} />}
                  {croppedImageUrl && (
-                  <div className="relative">
-                    <Image src={croppedImageUrl} alt="Preview" width={500} height={281} className="rounded-lg border object-cover w-full" />
-                    <Button variant="destructive" size="icon" className="absolute top-2 right-2 h-7 w-7" onClick={handleRemoveImage}>
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
+                  <div className="relative"><Image src={croppedImageUrl} alt="Preview" width={500} height={281} className="rounded-lg border object-cover w-full" /><Button variant="destructive" size="icon" className="absolute top-2 right-2 h-7 w-7" onClick={handleRemoveImage}><X className="h-4 w-4" /></Button></div>
                 )}
               </div>
             </div>
           </CardContent>
           <CardFooter className="flex justify-between items-center p-4 border-t">
-            <div className="flex items-center gap-2">
-                <Button variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()}>
-                <ImageIcon className="h-5 w-5 text-muted-foreground" />
-                </Button>
-                <input
-                type="file"
-                ref={fileInputRef}
-                className="hidden"
-                accept="image/png, image/jpeg"
-                onChange={onFileChange}
-                />
-            </div>
+            <div className="flex items-center gap-2"><Button variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()}><ImageIcon className="h-5 w-5 text-muted-foreground" /></Button><input type="file" ref={fileInputRef} className="hidden" accept="image/png, image/jpeg" onChange={onFileChange}/></div>
             <div className="flex items-center gap-2">
                 <Select value={postPrivacy} onValueChange={(value: 'public' | 'followers' | 'me') => setPostPrivacy(value)}>
-                    <SelectTrigger className="w-auto h-9 text-xs sm:text-sm">
-                        <SelectValue placeholder="Privacy" />
-                    </SelectTrigger>
+                    <SelectTrigger className="w-auto h-9 text-xs sm:text-sm"><SelectValue placeholder="Privacy" /></SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="public">
-                             <div className="flex items-center gap-2">
-                                <Globe className="h-4 w-4" />
-                                <span>Public</span>
-                            </div>
-                        </SelectItem>
-                        <SelectItem value="followers">
-                             <div className="flex items-center gap-2">
-                                <Users className="h-4 w-4" />
-                                <span>Followers only</span>
-                            </div>
-                        </SelectItem>
-                        <SelectItem value="me">
-                             <div className="flex items-center gap-2">
-                                <Lock className="h-4 w-4" />
-                                <span>Me only</span>
-                            </div>
-                        </SelectItem>
+                        <SelectItem value="public"><div className="flex items-center gap-2"><Globe className="h-4 w-4" /><span>Public</span></div></SelectItem>
+                        <SelectItem value="followers"><div className="flex items-center gap-2"><Users className="h-4 w-4" /><span>Followers only</span></div></SelectItem>
+                        <SelectItem value="me"><div className="flex items-center gap-2"><Lock className="h-4 w-4" /><span>Me only</span></div></SelectItem>
                     </SelectContent>
                 </Select>
                 <Button onClick={handlePost} disabled={(!postContent.trim() && !croppedImageUrl && !postToQuote) || isPosting}>
@@ -480,45 +342,42 @@ export default function FeedPage() {
             </div>
           </CardFooter>
         </Card>
+        
+        <Card>
+            <CardHeader><CardTitle className="text-base">Feed Content</CardTitle><CardDescription>A summary of the latest content in your feed.</CardDescription></CardHeader>
+            <CardContent className="flex flex-wrap gap-2">
+                {Object.entries(categoryCounts).map(([category, count]) => {
+                    if (count === 0) return null;
+                    return <Badge key={category} variant="outline" className="text-sm">{category}: {count}</Badge>
+                })}
+            </CardContent>
+        </Card>
 
-        <Tabs defaultValue="following" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="following">Following</TabsTrigger>
-                <TabsTrigger value="discovery">Discovery</TabsTrigger>
-            </TabsList>
-            <TabsContent value="following" className="mt-6">
-                <FeedList 
-                    isLoading={isFollowingLoading} 
-                    items={followingFeed}
-                    emptyState={
-                        <Card>
-                            <CardContent className="p-10 text-center text-muted-foreground flex flex-col items-center gap-4">
-                                <Users className="h-12 w-12" />
-                                <h3 className="font-semibold text-foreground">Your Feed is Empty</h3>
-                                <p>Follow other users to see their status updates here.</p>
-                                <Button asChild><Link href="/connections?tab=suggestions">Find People to Follow</Link></Button>
-                            </CardContent>
-                        </Card>
-                    }
-                />
-            </TabsContent>
-            <TabsContent value="discovery" className="mt-6">
-                 <FeedList 
-                    isLoading={isDiscoveryLoading} 
-                    items={discoveryFeed}
-                    emptyState={
-                         <Card>
-                            <CardContent className="p-10 text-center text-muted-foreground flex flex-col items-center gap-4">
-                                <Compass className="h-12 w-12" />
-                                <h3 className="font-semibold text-foreground">Nothing to Discover</h3>
-                                <p>Check back later for new posts from the community.</p>
-                            </CardContent>
-                        </Card>
-                    }
-                />
-            </TabsContent>
-        </Tabs>
+        {isLoading ? ( <FeedSkeleton /> ) : feedItems.length > 0 ? (
+          <div className="space-y-6">
+            {feedItems.map(item => {
+                if (item.type === 'post') {
+                    return <PostCard key={`${item.type}-${item.id}`} item={item as PostWithAuthor & {isLiked: boolean}} onLike={handleLike} onDelete={openDeleteDialog} onRepost={handleRepost} onQuote={handleQuote} isLoading={loadingAction?.postId === item.id} loadingAction={loadingAction && loadingAction.postId === item.id ? loadingAction.action : null}/>
+                }
+                const Component = componentMap[item.type];
+                if (!Component) return null;
+
+                return <ContentFeedCard key={`${item.type}-${item.id}`} author={item.author} date={item.createdAt} category={item.type}><Component item={item} /></ContentFeedCard>
+            })}
+          </div>
+        ) : (
+          <Card>
+            <CardContent className="p-10 text-center text-muted-foreground flex flex-col items-center gap-4">
+                <Compass className="h-12 w-12" />
+                <h3 className="font-semibold text-foreground">Your Feed is Empty</h3>
+                <p>Follow other users to see their status updates and content here.</p>
+                <Button asChild><Link href="/connections?tab=suggestions">Find People to Follow</Link></Button>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </>
   )
 }
+
+    

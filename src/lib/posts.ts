@@ -308,3 +308,5 @@ export const getDiscoveryPosts = async (userId: string, followingIds: string[]):
 
     return populatePostAuthors(postsData);
 };
+
+    
