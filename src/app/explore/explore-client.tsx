@@ -159,7 +159,6 @@ export default function ExploreClient({ initialItems }: { initialItems: PublicCo
                 </div>
                 <Separator />
                 <div className="space-y-2">
-                    <Label className="text-sm font-medium">Filter by type</Label>
                     <div className="flex flex-wrap gap-2">
                         {contentTypes.map(({ name, label, icon: Icon, variant }) => {
                             const isSelected = typeFilters.has(name);
