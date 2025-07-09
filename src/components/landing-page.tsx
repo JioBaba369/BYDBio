@@ -55,21 +55,24 @@ export function LandingPage() {
 
     return (
         <div className="space-y-16">
-            <div className="text-center py-12 md:py-16 px-4">
-                <h1 className="text-4xl md:text-5xl lg:text-6xl font-headline font-bold tracking-tighter">Your All-in-One Professional Hub</h1>
-                <p className="mt-4 max-w-3xl mx-auto text-lg text-muted-foreground">
-                    Create a dynamic public profile, share a link-in-bio page, post content, manage events, and much more. It's the central point for your online presence.
-                </p>
-                <div className="mt-8">
-                    <Button asChild size="lg">
-                        <Link href="/auth/sign-up">
-                            Get Started for Free
-                        </Link>
-                    </Button>
+            <section className="relative">
+                <div className="absolute inset-0 bg-dot opacity-30 [mask-image:radial-gradient(ellipse_at_center,white,transparent_60%)]"></div>
+                <div className="relative z-10 container mx-auto text-center py-16 md:py-24 px-4">
+                    <h1 className="text-4xl md:text-5xl lg:text-6xl font-headline font-bold tracking-tighter">Your All-in-One Professional Hub</h1>
+                    <p className="mt-4 max-w-3xl mx-auto text-lg text-muted-foreground">
+                        Create a dynamic public profile, share a link-in-bio page, post content, manage events, and much more. It's the central point for your online presence.
+                    </p>
+                    <div className="mt-8">
+                        <Button asChild size="lg">
+                            <Link href="/auth/sign-up">
+                                Get Started for Free
+                            </Link>
+                        </Button>
+                    </div>
                 </div>
-            </div>
+            </section>
             
-            <div className="space-y-8">
+            <div className="space-y-8 container mx-auto px-4">
                 <div className="text-center">
                     <h2 className="text-3xl font-headline font-bold">Latest from the Community</h2>
                     <p className="mt-2 text-muted-foreground">See what others are creating and sharing right now.</p>

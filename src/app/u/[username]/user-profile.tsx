@@ -11,7 +11,7 @@ import type { Event } from '@/lib/events';
 import type { PromoPage } from "@/lib/promo-pages";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ExternalLink, UserCheck, UserPlus, QrCode, Edit, Loader2, Rss, Info, MessageSquare, Package } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
@@ -225,7 +225,16 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
 
   const { name, username, avatarUrl, avatarFallback, bio, links } = userProfileData;
   
-  const allCreations = useMemo(() => {
+  const visiblePosts = useMemo(() => {
+    return localPosts.filter(post => {
+        if (post.privacy === 'public') return true;
+        if (post.privacy === 'followers') return canViewPrivateContent;
+        if (post.privacy === 'me') return isOwner;
+        return false;
+    });
+  }, [localPosts, canViewPrivateContent, isOwner]);
+
+  const allOtherContent = useMemo(() => {
     const combined = [
       ...content.promoPages.map(item => ({ ...item, type: 'promoPage' as const, date: item.createdAt })),
       ...content.listings.map(item => ({ ...item, type: 'listing' as const, date: item.createdAt })),
@@ -236,58 +245,75 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
     combined.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     return combined;
   }, [content]);
+  
+  const hasLinks = links.length > 0;
 
   return (
     <>
-    <DeleteConfirmationDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen} onConfirm={handleConfirmDelete} isLoading={isDeleting} itemName="post" confirmationText="DELETE" />
+    <DeleteConfirmationDialog 
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        onConfirm={handleConfirmDelete}
+        isLoading={isDeleting}
+        itemName="post"
+        confirmationText="DELETE"
+    />
     <div className="flex justify-center bg-dot py-8 px-4">
       <div className="w-full max-w-xl mx-auto space-y-8">
-        <Card className="bg-card/80 backdrop-blur-sm shadow-2xl rounded-2xl border-primary/10 overflow-hidden">
-            <CardHeader className="p-6">
-                <div className="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-6">
-                    <Avatar className="w-24 h-24 sm:w-28 sm:h-28 border-4 border-background shadow-lg shrink-0">
-                    <AvatarImage src={avatarUrl} alt={name} />
-                    <AvatarFallback>{avatarFallback}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1">
-                        <h1 className="font-headline text-3xl font-bold text-foreground">{name}</h1>
-                        <p className="text-muted-foreground">@{username}</p>
-                        <p className="mt-2 text-foreground/90 max-w-prose text-sm">{bio || "This user hasn't written a bio yet."}</p>
-                        <div className="flex justify-center sm:justify-start gap-4 mt-4">
-                            <div>
-                                <p className="font-bold text-lg">{followerCount.toLocaleString()}</p>
-                                <p className="text-xs text-muted-foreground">Followers</p>
-                            </div>
-                            <div>
-                                <p className="font-bold text-lg">{userProfileData.following.length.toLocaleString()}</p>
-                                <p className="text-xs text-muted-foreground">Following</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </CardHeader>
-            <CardFooter className="flex-wrap gap-2 px-6 pb-6 bg-muted/30 border-t">
-                 {isOwner ? (
-                    <Button asChild className="font-bold flex-1 sm:flex-none">
-                        <Link href="/profile">
-                            <Edit className="mr-2 h-4 w-4" />
-                            Edit Profile
+        <Card className="bg-card p-6 sm:p-8 shadow-xl rounded-2xl border relative overflow-hidden">
+          <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-primary/5 via-background to-background z-0"></div>
+          <div className="relative z-10 flex flex-col items-center text-center">
+            <Avatar className="w-24 h-24 mb-4 border-4 border-background shadow-lg">
+              <AvatarImage src={avatarUrl} alt={name} />
+              <AvatarFallback>{avatarFallback}</AvatarFallback>
+            </Avatar>
+            <h1 className="font-headline text-3xl font-bold text-foreground">{name}</h1>
+            <p className="text-muted-foreground">@{username}</p>
+            <p className="mt-4 text-foreground/90 max-w-prose text-sm">{bio || "This user hasn't written a bio yet."}</p>
+            
+            <div className="mt-6 w-full space-y-4">
+                <div className="flex w-full flex-col sm:flex-row gap-4">
+                    {isOwner ? (
+                        <Button asChild className="flex-1 font-bold">
+                            <Link href="/profile">
+                                <Edit className="mr-2 h-4 w-4" />
+                                Edit Profile
+                            </Link>
+                        </Button>
+                    ) : (
+                        <Button 
+                            className="flex-1 font-bold" 
+                            onClick={handleFollowToggle}
+                            disabled={isFollowLoading}
+                        >
+                            {isFollowLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : isFollowing ? <UserCheck className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
+                            {isFollowing ? 'Following' : 'Follow'}
+                        </Button>
+                    )}
+                     <Button asChild variant="secondary" className="flex-1 font-bold">
+                        <Link href={`/u/${username}/card`}>
+                            <QrCode className="mr-2 h-4 w-4" />
+                            Digital Card
                         </Link>
                     </Button>
-                ) : (
-                    <Button className="font-bold flex-1 sm:flex-none" onClick={handleFollowToggle} disabled={isFollowLoading}>
-                        {isFollowLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : isFollowing ? <UserCheck className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
-                        {isFollowing ? 'Following' : 'Follow'}
-                    </Button>
-                )}
-                <Button asChild variant="outline" className="flex-1 sm:flex-none">
-                    <Link href={`/u/${username}/card`}>
-                        <QrCode className="mr-2 h-4 w-4" />
-                        Digital Card
-                    </Link>
-                </Button>
-                <ShareButton className="flex-1 sm:flex-none" />
-            </CardFooter>
+                    <ShareButton className="flex-1 font-bold" />
+                </div>
+                <div className="flex w-full gap-4">
+                    <div className="flex-1 text-center p-3 rounded-lg bg-muted/50 border">
+                        <p className="font-bold text-lg text-foreground">{followerCount.toLocaleString()}</p>
+                        <p className="text-xs text-muted-foreground tracking-wide">Followers</p>
+                    </div>
+                    <div className="flex-1 text-center p-3 rounded-lg bg-muted/50 border">
+                        <p className="font-bold text-lg text-foreground">{userProfileData.following.length.toLocaleString()}</p>
+                        <p className="text-xs text-muted-foreground tracking-wide">Following</p>
+                    </div>
+                    <div className="flex-1 text-center p-3 rounded-lg bg-muted/50 border">
+                        <p className="font-bold text-lg text-foreground">{userProfileData.postCount.toLocaleString()}</p>
+                        <p className="text-xs text-muted-foreground tracking-wide">Posts</p>
+                    </div>
+                </div>
+            </div>
+          </div>
         </Card>
 
         <Tabs defaultValue="feed" className="w-full">
@@ -297,21 +323,32 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
                 <TabsTrigger value="links"><ExternalLink className="mr-2 h-4 w-4"/>Links</TabsTrigger>
                 <TabsTrigger value="contact"><MessageSquare className="mr-2 h-4 w-4" />Contact</TabsTrigger>
             </TabsList>
-            <TabsContent value="feed" className="mt-6">
-                {localPosts.length > 0 ? (
+             <TabsContent value="feed" className="mt-6">
+                {visiblePosts.length > 0 ? (
                     <div className="space-y-6">
-                        {localPosts.map(post => (
-                            <PostCard key={post.id} item={post} onLike={handleLike} onDelete={openDeleteDialog} onRepost={handleRepost} onQuote={handleQuote} isLoading={loadingAction?.postId === post.id} loadingAction={loadingAction?.postId === post.id ? loadingAction.action : null} />
+                        {visiblePosts.map(post => (
+                            <PostCard
+                                key={post.id}
+                                item={post}
+                                onLike={handleLike}
+                                onDelete={openDeleteDialog}
+                                onRepost={handleRepost}
+                                onQuote={handleQuote}
+                                isLoading={loadingAction?.postId === post.id}
+                                loadingAction={loadingAction?.postId === post.id ? loadingAction.action : null}
+                            />
                         ))}
                     </div>
                 ) : (
-                     <Card className="text-center text-muted-foreground p-10">This user hasn't made any posts yet.</Card>
+                     <Card className="text-center text-muted-foreground p-10">
+                        This user hasn't made any posts yet.
+                    </Card>
                 )}
             </TabsContent>
             <TabsContent value="creations" className="mt-6">
-                 {allCreations.length > 0 ? (
+                 {allOtherContent.length > 0 ? (
                     <div className="space-y-6">
-                        {allCreations.map(item => {
+                        {allOtherContent.map(item => {
                             const uniqueKey = `${item.type}-${item.id}`;
                             const componentMap = {
                                 promoPage: <PromoPageFeedItem item={item as PromoPage} />,
@@ -326,11 +363,13 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
                         })}
                     </div>
                 ) : (
-                     <Card className="text-center text-muted-foreground p-10">This user hasn't created any public content yet.</Card>
+                     <Card className="text-center text-muted-foreground p-10">
+                        This user hasn't created any public content yet.
+                    </Card>
                 )}
             </TabsContent>
-             <TabsContent value="links" className="mt-6">
-                 {links.length > 0 ? (
+            <TabsContent value="links" className="mt-6">
+                 {hasLinks ? (
                     <div className="flex flex-col space-y-4">
                         {links.map((link, index) => {
                             const Icon = linkIcons[link.icon as keyof typeof linkIcons];
@@ -353,7 +392,11 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
               {!isOwner ? (
                   <ContactForm recipientId={userProfileData.uid} />
               ) : (
-                  <Card><CardContent className="p-6 text-center text-muted-foreground">This is a preview of the contact form that visitors will see on your profile.</CardContent></Card>
+                  <Card>
+                      <CardContent className="p-6 text-center text-muted-foreground">
+                          This is a preview of the contact form that visitors will see on your profile.
+                      </CardContent>
+                  </Card>
               )}
             </TabsContent>
         </Tabs>
