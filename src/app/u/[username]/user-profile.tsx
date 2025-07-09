@@ -12,7 +12,7 @@ import type { PromoPage } from "@/lib/promo-pages";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { UserCheck, UserPlus, QrCode, Edit, Loader2, Rss, Package, MessageSquare } from "lucide-react";
+import { UserCheck, UserPlus, QrCode, Edit, Loader2, Rss, Info, MessageSquare, Package } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { Logo } from "@/components/logo";
@@ -25,6 +25,8 @@ import { toggleLikePost, deletePost, repostPost } from '@/lib/posts';
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
 import { ContactForm } from "@/components/contact-form";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { linkIcons } from "@/lib/link-icons";
+import { ExternalLink, Link as LinkIcon } from 'lucide-react';
 import { PublicContentCard } from "@/components/public-content-card";
 
 interface UserProfilePageProps {
@@ -43,7 +45,7 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
   const { user: currentUser } = useAuth();
   const router = useRouter();
   
-  const [isFollowing, setIsFollowing] = useState(false); // Default to false to prevent hydration mismatch
+  const [isFollowing, setIsFollowing] = useState(currentUser?.following.includes(userProfileData.uid) || false);
   const [followerCount, setFollowerCount] = useState(userProfileData.followerCount || 0);
   const [isFollowLoading, setIsFollowLoading] = useState(false);
   
@@ -65,11 +67,8 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
   }, []);
 
   useEffect(() => {
-    // Only update following state on the client
     if (currentUser) {
       setIsFollowing(currentUser.following.includes(userProfileData.uid));
-    } else {
-      setIsFollowing(false);
     }
   }, [currentUser, userProfileData.uid]);
   
@@ -216,22 +215,19 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
     }
   };
 
-  const { name, username, avatarUrl, avatarFallback, bio } = userProfileData;
+  const { name, username, avatarUrl, avatarFallback, bio, links } = userProfileData;
   const isOwner = currentUser?.uid === userProfileData.uid;
 
   const canViewPrivateContent = useMemo(() => isOwner || isFollowing, [isOwner, isFollowing]);
 
   const visiblePosts = useMemo(() => {
-    if (!isClient) {
-        return localPosts.filter(post => post.privacy === 'public');
-    }
     return localPosts.filter(post => {
         if (post.privacy === 'public') return true;
         if (post.privacy === 'followers') return canViewPrivateContent;
         if (post.privacy === 'me') return isOwner;
         return false;
     });
-  }, [localPosts, canViewPrivateContent, isOwner, isClient]);
+  }, [localPosts, canViewPrivateContent, isOwner]);
 
   const allOtherContent = useMemo(() => {
     const authorDetails = {
@@ -320,9 +316,10 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
         </Card>
 
         <Tabs defaultValue="feed" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="feed"><Rss className="mr-2 h-4 w-4"/>Feed</TabsTrigger>
                 <TabsTrigger value="showcase"><Package className="mr-2 h-4 w-4"/>Showcase</TabsTrigger>
+                <TabsTrigger value="about"><Info className="mr-2 h-4 w-4"/>About</TabsTrigger>
                 <TabsTrigger value="contact"><MessageSquare className="mr-2 h-4 w-4" />Contact</TabsTrigger>
             </TabsList>
             <TabsContent value="feed" className="mt-6">
@@ -345,7 +342,7 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
                     )}
                 </div>
             </TabsContent>
-            <TabsContent value="showcase" className="mt-6">
+             <TabsContent value="showcase" className="mt-6">
                 <div className="grid gap-4">
                     {allOtherContent.length > 0 ? (
                         allOtherContent.map(item => <PublicContentCard key={`${item.type}-${item.id}`} item={item as any} />)
@@ -355,6 +352,42 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
                         </Card>
                     )}
                 </div>
+            </TabsContent>
+            <TabsContent value="about" className="mt-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Links</CardTitle>
+                  <CardDescription>
+                    A collection of important links.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="flex flex-col gap-4">
+                  {links.length > 0 ? (
+                    links.map((link, index) => {
+                      const Icon = linkIcons[link.icon as keyof typeof linkIcons] || LinkIcon;
+                      return (
+                        <a
+                          key={index}
+                          href={link.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="w-full group"
+                        >
+                          <div className="w-full h-14 text-base font-semibold flex items-center p-4 rounded-lg bg-secondary transition-all hover:bg-primary hover:text-primary-foreground hover:scale-105 ease-out duration-200 shadow-sm">
+                            <Icon className="h-5 w-5" />
+                            <span className="flex-1 text-center truncate">{link.title}</span>
+                             <ExternalLink className="h-4 w-4 opacity-0 group-hover:opacity-50 transition-opacity" />
+                          </div>
+                        </a>
+                      );
+                    })
+                  ) : (
+                    <div className="text-center text-sm text-muted-foreground py-10 border-2 border-dashed rounded-lg">
+                      This user hasn't added any links yet.
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
             </TabsContent>
             <TabsContent value="contact" className="mt-6">
               {isClient && isOwner ? (
