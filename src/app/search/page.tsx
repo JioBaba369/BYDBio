@@ -28,6 +28,7 @@ import type { Post, EmbeddedPostInfoWithAuthor } from '@/lib/posts';
 import { ClientFormattedDate } from '@/components/client-formatted-date';
 import { ClientFormattedCurrency } from '@/components/client-formatted-currency';
 import { Separator } from '@/components/ui/separator';
+import { EmbeddedPostView } from '@/components/feed/embedded-post-view';
 
 type ItemWithAuthor<T> = T & { author: User };
 type SearchResults = {
@@ -39,30 +40,6 @@ type SearchResults = {
     promoPages: ItemWithAuthor<PromoPage>[];
     posts: ItemWithAuthor<Post & { repostedPost?: EmbeddedPostInfoWithAuthor }>[];
 }
-
-const EmbeddedPostView = ({ post }: { post: EmbeddedPostInfoWithAuthor }) => (
-    <div className="mt-2 border rounded-lg overflow-hidden transition-colors hover:bg-muted/30">
-        <Link href={`/u/${post.author.username}`}>
-            <div className="p-4">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Avatar className="h-5 w-5">
-                        <AvatarImage src={post.author.avatarUrl} />
-                        <AvatarFallback>{post.author.name.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                    <span className="font-semibold text-foreground hover:underline">{post.author.name}</span>
-                    <span>@{post.author.username}</span>
-                </div>
-                <p className="mt-2 text-sm whitespace-pre-wrap">{post.content}</p>
-            </div>
-            {post.imageUrl && (
-                <div className="mt-2 aspect-video relative bg-muted">
-                    <Image src={post.imageUrl} alt="Embedded post image" layout="fill" className="object-cover" />
-                </div>
-            )}
-        </Link>
-    </div>
-);
-
 
 const SearchPageSkeleton = () => (
     <div className="space-y-6 animate-pulse">
@@ -129,15 +106,12 @@ export default function SearchPage() {
         
         const collectionsToSearch = ['listings', 'jobs', 'events', 'offers', 'promoPages', 'posts'];
         const contentPromises = collectionsToSearch.map(col => {
-            let baseQuery = query(
-                collection(db, col), 
+            const q = query(
+                collection(db, col),
                 where('searchableKeywords', 'array-contains-any', searchKeywords),
-                limit(50) 
+                limit(50)
             );
-            if (col === 'posts') {
-                return getDocs(query(baseQuery, where('privacy', '==', 'public')));
-            }
-            return getDocs(baseQuery);
+            return getDocs(q);
         });
         
         const [listingsSnap, jobsSnap, eventsSnap, offersSnap, promoPagesSnap, postsSnap] = await Promise.all(contentPromises);
@@ -173,6 +147,11 @@ export default function SearchPage() {
         };
 
         allContent.forEach(item => {
+            // Client-side filtering for posts privacy
+            if (item.type === 'post' && item.privacy !== 'public') {
+                return; // Skip non-public posts
+            }
+
             const author = authorMap.get(item.authorId);
             if (author) {
                 if (item.repostedPost) {
@@ -201,6 +180,7 @@ export default function SearchPage() {
         setResults(newResults);
 
     } catch (err) {
+        console.error("Search error:", err);
         toast({ title: "Search failed", description: "Could not perform search.", variant: "destructive" });
     } finally {
         setIsLoading(false);
