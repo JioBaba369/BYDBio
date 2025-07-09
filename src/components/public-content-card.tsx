@@ -11,6 +11,7 @@ import Link from 'next/link';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import type { VariantProps } from 'class-variance-authority';
 import { cn } from "@/lib/utils";
+import { ClientFormattedDate } from "./client-formatted-date";
 
 const getBadgeVariant = (itemType: string): VariantProps<typeof badgeVariants>['variant'] => {
     switch (itemType) {
@@ -53,7 +54,7 @@ const getPrimaryStat = (item: PublicContentItem) => {
 }
 
 export function PublicContentCard({ item }: { item: PublicContentItem }) {
-    const title = (item as any).title;
+    const title = (item as any).title || (item as any).name;
     const primaryStat = getPrimaryStat(item);
     const itemTypeLabel = item.type === 'promoPage' ? 'Business Page' : item.type;
     const itemLink = getLink(item);
@@ -66,11 +67,14 @@ export function PublicContentCard({ item }: { item: PublicContentItem }) {
                 </Link>
             )}
             <CardHeader className="p-4 pb-2">
-                <Badge variant={getBadgeVariant(item.type)} className="w-fit capitalize">{itemTypeLabel}</Badge>
+                <div className="flex justify-between items-center text-xs text-muted-foreground">
+                    <Badge variant={getBadgeVariant(item.type)} className="capitalize">{itemTypeLabel}</Badge>
+                    <ClientFormattedDate date={item.date} relative/>
+                </div>
                 <CardTitle className="text-base mt-1"><Link href={itemLink} className="hover:underline">{title}</Link></CardTitle>
             </CardHeader>
             <CardContent className="p-4 pt-2 space-y-3 text-sm text-muted-foreground flex-grow">
-                <div className="flex items-center pt-1">
+                 <div className="flex items-center pt-1">
                     <Link href={`/u/${item.author.username}`} className="flex items-center gap-2 hover:underline">
                         <Avatar className="h-6 w-6">
                             <AvatarImage src={item.author.avatarUrl} alt={item.author.name} data-ai-hint="person portrait"/>

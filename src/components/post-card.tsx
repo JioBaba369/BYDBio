@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 import { useToast } from '@/hooks/use-toast';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
+import { EmbeddedPostView } from './feed/embedded-post-view';
 
 type FeedItem = PostWithAuthor & { isLiked?: boolean; };
 
@@ -27,31 +28,6 @@ interface PostCardProps {
     isLoading?: boolean;
     loadingAction?: 'like' | 'repost' | 'quote' | null;
 }
-
-// Renders an embedded post, used for both quotes and reposts.
-const EmbeddedPostView = ({ post }: { post: EmbeddedPostInfoWithAuthor }) => (
-    <div className="mt-2 border rounded-lg overflow-hidden transition-colors hover:bg-muted/30">
-        <Link href={`/u/${post.author.username}`}>
-            <div className="p-4">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Avatar className="h-5 w-5">
-                        <AvatarImage src={post.author.avatarUrl} />
-                        <AvatarFallback>{post.author.name.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                    <span className="font-semibold text-foreground hover:underline">{post.author.name}</span>
-                    <span>@{post.author.username}</span>
-                </div>
-                <p className="mt-2 text-sm whitespace-pre-wrap">{post.content}</p>
-            </div>
-            {post.imageUrl && (
-                <div className="mt-2 aspect-video relative bg-muted">
-                    <Image src={post.imageUrl} alt="Embedded post image" layout="fill" className="object-cover" />
-                </div>
-            )}
-        </Link>
-    </div>
-);
-
 
 export function PostCard({ item, onLike, onDelete, onRepost, onQuote, isLoading = false, loadingAction = null }: PostCardProps) {
     const { user } = useAuth();
@@ -94,7 +70,7 @@ export function PostCard({ item, onLike, onDelete, onRepost, onQuote, isLoading 
                 <div className="px-4 pt-3 pb-0 text-sm text-muted-foreground font-semibold flex items-center gap-2">
                     <Repeat className="h-4 w-4"/>
                     <Link href={`/u/${item.author.username}`} className="hover:underline">
-                        {user?.uid === item.author.id ? "You" : item.author.name} reposted
+                        {user?.uid === item.author.uid ? "You" : item.author.name} reposted
                     </Link>
                 </div>
             )}
@@ -109,7 +85,7 @@ export function PostCard({ item, onLike, onDelete, onRepost, onQuote, isLoading 
                             <p className="font-semibold">{item.author.name}</p>
                             <p className="text-sm text-muted-foreground">
                                 @{item.author.username} · <ClientFormattedDate date={item.createdAt} relative />
-                                {item.postNumber && <span> · Post #{item.postNumber}</span>}
+                                {item.postNumber > 0 && <span> · Post #{item.postNumber}</span>}
                             </p>
                         </div>
                     </Link>

@@ -11,8 +11,8 @@ import type { Event } from '@/lib/events';
 import type { PromoPage } from "@/lib/promo-pages";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { UserCheck, UserPlus, QrCode, Edit, Loader2, Rss, MessageSquare, Package } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { UserCheck, UserPlus, QrCode, Edit, Loader2, Rss, Package, MessageSquare } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { Logo } from "@/components/logo";
@@ -25,9 +25,7 @@ import { toggleLikePost, deletePost, repostPost } from '@/lib/posts';
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
 import { ContactForm } from "@/components/contact-form";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge, badgeVariants } from "@/components/ui/badge";
-import Image from "next/image";
-import type { VariantProps } from "class-variance-authority";
+import { PublicContentCard } from "@/components/public-content-card";
 
 interface UserProfilePageProps {
   userProfileData: User;
@@ -41,34 +39,11 @@ interface UserProfilePageProps {
   }
 }
 
-const getBadgeVariant = (itemType: string): VariantProps<typeof badgeVariants>['variant'] => {
-    switch (itemType) {
-        case 'event': return 'default';
-        case 'offer': return 'secondary';
-        case 'job': return 'destructive';
-        case 'listing': return 'outline';
-        case 'promoPage': return 'default';
-        default: return 'default';
-    }
-}
-
-const getLink = (item: any) => { // a bit simplified
-    switch (item.type) {
-        case 'event': return `/events/${item.id}`;
-        case 'offer': return `/offer/${item.id}`;
-        case 'job': return `/job/${item.id}`;
-        case 'listing': return `/l/${item.id}`;
-        case 'promoPage': return `/p/${item.id}`;
-        default: return '/';
-    }
-}
-
-
 export default function UserProfilePage({ userProfileData, content }: UserProfilePageProps) {
   const { user: currentUser } = useAuth();
   const router = useRouter();
   
-  const [isFollowing, setIsFollowing] = useState(currentUser?.following?.includes(userProfileData.uid) || false);
+  const [isFollowing, setIsFollowing] = useState(false); // Default to false to prevent hydration mismatch
   const [followerCount, setFollowerCount] = useState(userProfileData.followerCount || 0);
   const [isFollowLoading, setIsFollowLoading] = useState(false);
   
@@ -83,9 +58,19 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
   const [isDeleting, setIsDeleting] = useState(false);
   const [postToDelete, setPostToDelete] = useState<PostWithAuthor | null>(null);
   const [loadingAction, setLoadingAction] = useState<{ postId: string; action: 'like' | 'repost' } | null>(null);
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    setIsFollowing(currentUser?.following?.includes(userProfileData.uid) || false);
+    setIsClient(true);
+  }, []);
+
+  useEffect(() => {
+    // Only update following state on the client
+    if (currentUser) {
+      setIsFollowing(currentUser.following.includes(userProfileData.uid));
+    } else {
+      setIsFollowing(false);
+    }
   }, [currentUser, userProfileData.uid]);
   
   const handleFollowToggle = async () => {
@@ -142,7 +127,7 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
     const updatedPost = {
         ...originalPost,
         isLiked: !originalPost.isLiked,
-        likes: originalPost.likes + (originalPost.isLiked ? -1 : 1),
+        likes: (originalPost.likes || 0) + (originalPost.isLiked ? -1 : 1),
     };
 
     const newPosts = [...originalPosts];
@@ -231,20 +216,22 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
     }
   };
 
-
   const { name, username, avatarUrl, avatarFallback, bio } = userProfileData;
   const isOwner = currentUser?.uid === userProfileData.uid;
 
   const canViewPrivateContent = useMemo(() => isOwner || isFollowing, [isOwner, isFollowing]);
 
   const visiblePosts = useMemo(() => {
+    if (!isClient) {
+        return localPosts.filter(post => post.privacy === 'public');
+    }
     return localPosts.filter(post => {
         if (post.privacy === 'public') return true;
         if (post.privacy === 'followers') return canViewPrivateContent;
         if (post.privacy === 'me') return isOwner;
         return false;
     });
-  }, [localPosts, canViewPrivateContent, isOwner]);
+  }, [localPosts, canViewPrivateContent, isOwner, isClient]);
 
   const allOtherContent = useMemo(() => {
     const combined = [
@@ -279,21 +266,7 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
             </Avatar>
             <h1 className="font-headline text-3xl font-bold text-foreground">{name}</h1>
             <p className="text-muted-foreground">@{username}</p>
-            <div className="flex justify-center gap-4 text-sm text-muted-foreground mt-4">
-              <div className="text-center">
-                <p className="font-bold text-lg text-foreground">{followerCount.toLocaleString()}</p>
-                <p className="text-xs tracking-wide">Followers</p>
-              </div>
-              <div className="text-center">
-                <p className="font-bold text-lg text-foreground">{(userProfileData.following?.length || 0).toLocaleString()}</p>
-                <p className="text-xs tracking-wide">Following</p>
-              </div>
-              <div className="text-center">
-                <p className="font-bold text-lg text-foreground">{(userProfileData.postCount || 0).toLocaleString()}</p>
-                <p className="text-xs tracking-wide">Posts</p>
-              </div>
-            </div>
-            <p className="text-foreground/90 max-w-prose whitespace-pre-wrap mt-6 text-center text-base">{bio || "This user hasn't written a bio yet."}</p>
+            <p className="text-foreground/90 max-w-prose whitespace-pre-wrap mt-4 text-center text-base">{bio || "This user hasn't written a bio yet."}</p>
           </CardHeader>
           <CardContent className="p-0">
             <div className="mt-6 flex flex-wrap gap-2 justify-center">
@@ -304,7 +277,7 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
                     </Link>
                 </Button>
                 <ShareButton className="font-bold flex-1 sm:flex-none" />
-                {isOwner ? (
+                {isClient && isOwner ? (
                     <Button asChild className="font-bold flex-1 sm:flex-none">
                         <Link href="/profile">
                             <Edit className="mr-2 h-4 w-4" />
@@ -315,7 +288,7 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
                     <Button 
                         className="font-bold flex-1 sm:flex-none" 
                         onClick={handleFollowToggle}
-                        disabled={isFollowLoading}
+                        disabled={isFollowLoading || !isClient}
                     >
                         {isFollowLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : isFollowing ? <UserCheck className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
                         {isFollowing ? 'Following' : 'Follow'}
@@ -323,6 +296,20 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
                 )}
             </div>
           </CardContent>
+          <CardFooter className="flex-wrap gap-2 px-0 pt-6 justify-center">
+            <div className="text-center p-3 rounded-lg bg-muted/50 border flex-1">
+                <p className="font-bold text-lg text-foreground">{(followerCount || 0).toLocaleString()}</p>
+                <p className="text-xs text-muted-foreground tracking-wide">Followers</p>
+            </div>
+            <div className="text-center p-3 rounded-lg bg-muted/50 border flex-1">
+                <p className="font-bold text-lg text-foreground">{(userProfileData.following?.length || 0).toLocaleString()}</p>
+                <p className="text-xs text-muted-foreground tracking-wide">Following</p>
+            </div>
+            <div className="text-center p-3 rounded-lg bg-muted/50 border flex-1">
+                <p className="font-bold text-lg text-foreground">{(userProfileData.postCount || 0).toLocaleString()}</p>
+                <p className="text-xs text-muted-foreground tracking-wide">Posts</p>
+            </div>
+          </CardFooter>
         </Card>
 
         <Tabs defaultValue="feed" className="w-full">
@@ -352,30 +339,9 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
                 </div>
             </TabsContent>
             <TabsContent value="showcase" className="mt-6">
-                <div className="space-y-4">
+                <div className="grid gap-4">
                     {allOtherContent.length > 0 ? (
-                        allOtherContent.map(item => {
-                            const itemLink = getLink(item);
-                            const title = (item as any).title || (item as any).name;
-                            const itemTypeLabel = item.type === 'promoPage' ? 'Business Page' : item.type;
-                            
-                            return (
-                                <Card key={`${item.type}-${item.id}`} className="shadow-sm hover:shadow-md transition-shadow">
-                                    <div className="flex gap-4 p-4">
-                                        {(item as any).imageUrl && (
-                                            <Link href={itemLink} className="block shrink-0">
-                                            <Image src={(item as any).imageUrl} alt={title} width={120} height={80} className="w-24 sm:w-32 h-20 object-cover rounded-md" />
-                                            </Link>
-                                        )}
-                                        <div className="flex-1 space-y-1">
-                                            <Badge variant={getBadgeVariant(item.type)} className="capitalize">{itemTypeLabel}</Badge>
-                                            <CardTitle className="text-base sm:text-lg pt-1"><Link href={itemLink} className="hover:underline">{title}</Link></CardTitle>
-                                            <p className="text-sm text-muted-foreground line-clamp-2">{item.description}</p>
-                                        </div>
-                                    </div>
-                                </Card>
-                            )
-                        })
+                        allOtherContent.map(item => <PublicContentCard key={`${item.type}-${item.id}`} item={item} />)
                     ) : (
                         <Card className="text-center text-muted-foreground p-10">
                             This user hasn't created any showcase content yet.
@@ -384,14 +350,14 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
                 </div>
             </TabsContent>
             <TabsContent value="contact" className="mt-6">
-              {!isOwner ? (
-                  <ContactForm recipientId={userProfileData.uid} />
-              ) : (
+              {isClient && isOwner ? (
                   <Card>
                       <CardContent className="p-6 text-center text-muted-foreground">
                           This is a preview of the contact form that visitors will see on your profile.
                       </CardContent>
                   </Card>
+              ) : (
+                 <ContactForm recipientId={userProfileData.uid} />
               )}
             </TabsContent>
         </Tabs>
