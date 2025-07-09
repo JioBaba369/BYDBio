@@ -14,6 +14,7 @@ import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { useToast } from '@/hooks/use-toast';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Badge } from '@/components/ui/badge';
 
 type FeedItem = PostWithAuthor & { isLiked: boolean; };
 
@@ -106,7 +107,10 @@ export function PostCard({ item, onLike, onDelete, onRepost, onQuote, isLoading 
                         </Avatar>
                         <div>
                             <p className="font-semibold">{item.author.name}</p>
-                            <p className="text-sm text-muted-foreground">@{item.author.username} · <ClientFormattedDate date={item.createdAt} relative /></p>
+                            <p className="text-sm text-muted-foreground">
+                                @{item.author.username} · <ClientFormattedDate date={item.createdAt} relative />
+                                {item.postNumber && <span> · Post #{item.postNumber}</span>}
+                            </p>
                         </div>
                     </Link>
                      <div className="flex items-center gap-2">
@@ -167,6 +171,12 @@ export function PostCard({ item, onLike, onDelete, onRepost, onQuote, isLoading 
                 {!isRepost && item.imageUrl && (
                     <div className="mt-4 rounded-lg overflow-hidden border">
                         <Image src={item.imageUrl} alt="Post image" width={600} height={400} className="object-cover" />
+                    </div>
+                )}
+
+                {!isRepost && item.category && (
+                    <div className="mt-4">
+                        <Badge variant="outline">{item.category}</Badge>
                     </div>
                 )}
             </CardContent>

@@ -45,6 +45,7 @@ export type User = {
   bio: string;
   following: string[]; // Array of user IDs this user follows
   followerCount: number;
+  postCount: number;
   links: UserLink[];
   businessCard?: BusinessCard;
   notificationSettings: NotificationSettings;
@@ -120,6 +121,7 @@ export const createUserProfileIfNotExists = async (user: FirebaseUser, additiona
         bio: "",
         following: [],
         followerCount: 0,
+        postCount: 0,
         links: [],
         businessCard: {},
         notificationSettings: {

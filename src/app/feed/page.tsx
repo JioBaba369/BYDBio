@@ -27,6 +27,7 @@ import { ListingFeedItem } from "@/components/feed/listing-feed-item";
 import { OfferFeedItem } from "@/components/feed/offer-feed-item";
 import { PromoPageFeedItem } from "@/components/feed/promo-page-feed-item";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input"
 
 const FeedSkeleton = () => (
     <div className="space-y-6">
@@ -59,6 +60,7 @@ export default function FeedPage() {
   const { toast } = useToast();
 
   const [postContent, setPostContent] = useState('');
+  const [postCategory, setPostCategory] = useState('');
   const [postPrivacy, setPostPrivacy] = useState<'public' | 'followers' | 'me'>('public');
   const [feedItems, setFeedItems] = useState<FeedItem[]>([]);
   
@@ -156,7 +158,7 @@ export default function FeedPage() {
             };
         }
 
-        const newPost = await createPost(user.uid, { content: postContent, imageUrl: imageUrlToPost, quotedPost: quotedPostData, privacy: postPrivacy });
+        const newPost = await createPost(user.uid, { content: postContent, imageUrl: imageUrlToPost, quotedPost: quotedPostData, privacy: postPrivacy, category: postCategory });
         
         const newPostForFeed: FeedItem = {
             ...newPost,
@@ -179,6 +181,7 @@ export default function FeedPage() {
         setPostContent('');
         setCroppedImageUrl(null);
         setPostToQuote(null);
+        setPostCategory('');
         setPostPrivacy('public');
         toast({ title: "Update Posted!" });
     } catch(error) {
@@ -324,9 +327,20 @@ export default function FeedPage() {
               </div>
             </div>
           </CardContent>
-          <CardFooter className="flex justify-between items-center p-4 border-t">
-            <div className="flex items-center gap-2"><Button variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()}><ImageIcon className="h-5 w-5 text-muted-foreground" /></Button><input type="file" ref={fileInputRef} className="hidden" accept="image/png, image/jpeg" onChange={onFileChange}/></div>
-            <div className="flex items-center gap-2">
+          <CardFooter className="flex flex-col sm:flex-row justify-between items-center p-4 border-t gap-4">
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+                <Button variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()}>
+                    <ImageIcon className="h-5 w-5 text-muted-foreground" />
+                </Button>
+                <input type="file" ref={fileInputRef} className="hidden" accept="image/png, image/jpeg" onChange={onFileChange}/>
+                <Input 
+                    placeholder="Category (optional)" 
+                    className="h-9 text-xs" 
+                    value={postCategory} 
+                    onChange={(e) => setPostCategory(e.target.value)}
+                />
+            </div>
+            <div className="flex items-center gap-2 w-full sm:w-auto">
                 <Select value={postPrivacy} onValueChange={(value: 'public' | 'followers' | 'me') => setPostPrivacy(value)}>
                     <SelectTrigger className="w-auto h-9 text-xs sm:text-sm"><SelectValue placeholder="Privacy" /></SelectTrigger>
                     <SelectContent>
@@ -379,5 +393,3 @@ export default function FeedPage() {
     </>
   )
 }
-
-    

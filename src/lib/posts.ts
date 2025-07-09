@@ -47,6 +47,8 @@ export type Post = {
   authorId: string; // UID of the user who created it
   content: string;
   imageUrl: string | null;
+  category?: string;
+  postNumber: number;
   likes: number;
   likedBy: string[]; // Array of user IDs who liked the post
   comments: number;
@@ -87,15 +89,31 @@ export const getPostsByUser = async (userId: string): Promise<PostWithAuthor[]> 
 };
 
 // Function to create a new post
-export const createPost = async (userId: string, data: Pick<Post, 'content' | 'imageUrl' | 'privacy'> & { quotedPost?: EmbeddedPostInfo }): Promise<Post> => {
-  const postsRef = collection(db, 'posts');
-  const keywords = [...new Set(data.content.toLowerCase().split(' ').filter(Boolean))];
+export const createPost = async (userId: string, data: Pick<Post, 'content' | 'imageUrl' | 'privacy' | 'category'> & { quotedPost?: EmbeddedPostInfo }): Promise<Post> => {
+  const userRef = doc(db, "users", userId);
+  const postRef = doc(collection(db, "posts")); // New post ref with auto-generated ID
+
+  const batch = writeBatch(db);
+
+  const userDoc = await getDoc(userRef);
+  if (!userDoc.exists()) {
+      throw new Error("User performing the action not found.");
+  }
+  const postCount = userDoc.data().postCount || 0;
+  const newPostNumber = postCount + 1;
+
+  const keywords = [
+    ...new Set(data.content.toLowerCase().split(' ').filter(Boolean)),
+    ...(data.category ? data.category.toLowerCase().split(' ').filter(Boolean) : []),
+  ];
 
   const postData: any = {
     authorId: userId,
     content: data.content,
     imageUrl: data.imageUrl,
     privacy: data.privacy || 'public',
+    category: data.category || '',
+    postNumber: newPostNumber,
     createdAt: serverTimestamp(),
     likes: 0,
     likedBy: [],
@@ -107,9 +125,15 @@ export const createPost = async (userId: string, data: Pick<Post, 'content' | 'i
   if (data.quotedPost) {
     postData.quotedPost = data.quotedPost;
   }
+  
+  // Set the new post document in the batch
+  batch.set(postRef, postData);
+  // Update the user's post count in the batch
+  batch.update(userRef, { postCount: increment(1) });
+  
+  await batch.commit();
 
-  const docRef = await addDoc(postsRef, postData);
-  const newPostDoc = await getDoc(docRef);
+  const newPostDoc = await getDoc(postRef);
   return serializeDocument<Post>(newPostDoc) as Post;
 };
 
@@ -198,6 +222,8 @@ export const repostPost = async (originalPostId: string, reposterId: string): Pr
         likedBy: [],
         comments: 0,
         repostCount: 0,
+        postNumber: 0, // Reposts don't get a number
+        category: originalPostData.category,
         searchableKeywords: keywords,
     };
     batch.set(newPostRef, newPostData);
