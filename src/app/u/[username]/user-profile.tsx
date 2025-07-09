@@ -70,7 +70,7 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
   }, [userProfileData.uid, currentUser]);
 
   useEffect(() => {
-    // Initial post setup
+    // Initial post setup from server-props
     setLocalPosts(content.posts.map(p => ({
         ...p,
         isLiked: currentUser ? p.likedBy.includes(currentUser.uid) : false,
@@ -105,7 +105,6 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
             await followUser(currentUser.uid, userProfileData.uid);
             toast({ title: `You are now following ${userProfileData.name}` });
         }
-        // Re-fetch posts to show/hide follower-only content
         await fetchPosts();
     } catch (error) {
         setIsFollowing(currentlyFollowing);
@@ -269,7 +268,6 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
           confirmationText="DELETE"
       />
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-        {/* Left column (sticky) */}
         <div className="lg:col-span-1 lg:sticky top-20 space-y-6">
             <Card className="bg-card/80 backdrop-blur-sm shadow-xl rounded-2xl border-primary/10">
                 <CardContent className="p-6">
@@ -321,7 +319,6 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
             )}
         </div>
 
-        {/* Right column (scrollable) */}
         <div className="lg:col-span-2 space-y-6">
             {links && links.length > 0 && (
                 <Card>
@@ -371,4 +368,3 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
     </>
   );
 }
-
