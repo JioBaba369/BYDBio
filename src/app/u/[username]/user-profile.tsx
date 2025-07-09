@@ -11,7 +11,7 @@ import type { Event } from '@/lib/events';
 import type { PromoPage } from "@/lib/promo-pages";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { UserCheck, UserPlus, QrCode, Edit, Loader2, Rss, Package, MessageSquare, Info, Link as LinkIcon, ExternalLink } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
@@ -49,9 +49,9 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
   const [followerCount, setFollowerCount] = useState(userProfileData.followerCount || 0);
   const [isFollowLoading, setIsFollowLoading] = useState(false);
   
-  const [localPosts, setLocalPosts] = useState(content.posts.map(p => ({
+  const [localPosts, setLocalPosts] = useState<PostWithAuthor[]>(content.posts.map(p => ({
     ...p,
-    isLiked: currentUser ? p.likedBy.includes(currentUser.uid) : false,
+    isLiked: currentUser ? (p.likedBy || []).includes(currentUser.uid) : false,
   })));
   
   const { toast } = useToast();
@@ -114,31 +114,24 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
     setLoadingAction({ postId, action: 'like' });
 
     const originalPosts = [...localPosts];
-    const postIndex = localPosts.findIndex(p => p.id === postId);
-    if (postIndex === -1) {
-        setLoadingAction(null);
-        return;
-    }
+    setLocalPosts(prevPosts =>
+      prevPosts.map(p => {
+        if (p.id === postId) {
+          const isLiked = !p.isLiked;
+          return {
+            ...p,
+            isLiked,
+            likes: (p.likes || 0) + (isLiked ? 1 : -1),
+          };
+        }
+        return p;
+      })
+    );
 
-    const originalPost = { ...originalPosts[postIndex] };
-
-    // Optimistic update
-    const updatedPost = {
-        ...originalPost,
-        isLiked: !originalPost.isLiked,
-        likes: (originalPost.likes || 0) + (originalPost.isLiked ? -1 : 1),
-    };
-
-    const newPosts = [...originalPosts];
-    newPosts[postIndex] = updatedPost;
-    setLocalPosts(newPosts);
-
-    // API call
     try {
         await toggleLikePost(postId, currentUser.uid);
     } catch (error) {
         toast({ title: "Something went wrong", variant: "destructive" });
-        // Revert on error
         setLocalPosts(originalPosts);
     } finally {
         setLoadingAction(null);
@@ -156,7 +149,6 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
     setIsDeleting(true);
 
     const originalPosts = [...localPosts];
-    // Optimistic delete
     setLocalPosts(prev => prev.filter(p => p.id !== postToDelete.id));
 
     try {
@@ -164,7 +156,7 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
       toast({ title: "Post deleted" });
     } catch (error) {
       toast({ title: "Failed to delete post", variant: "destructive" });
-      setLocalPosts(originalPosts); // Revert on failure
+      setLocalPosts(originalPosts);
     } finally {
       setIsDeleteDialogOpen(false);
       setPostToDelete(null);

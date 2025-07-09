@@ -24,11 +24,11 @@ import type { Offer } from '@/lib/offers';
 import type { Job } from '@/lib/jobs';
 import type { Event } from '@/lib/events';
 import type { PromoPage } from '@/lib/promo-pages';
-import type { Post, EmbeddedPostInfoWithAuthor } from '@/lib/posts';
+import type { Post, PostWithAuthor } from '@/lib/posts';
 import { ClientFormattedDate } from '@/components/client-formatted-date';
 import { ClientFormattedCurrency } from '@/components/client-formatted-currency';
-import { Separator } from '@/components/ui/separator';
-import { EmbeddedPostView } from '@/components/feed/embedded-post-view';
+import { PostCard } from '@/components/post-card';
+import { populatePostAuthors } from '@/lib/posts';
 
 type ItemWithAuthor<T> = T & { author: User };
 type SearchResults = {
@@ -38,7 +38,7 @@ type SearchResults = {
     events: ItemWithAuthor<Event>[];
     offers: ItemWithAuthor<Offer>[];
     promoPages: ItemWithAuthor<PromoPage>[];
-    posts: ItemWithAuthor<Post & { repostedPost?: EmbeddedPostInfoWithAuthor }>[];
+    posts: PostWithAuthor[];
 }
 
 const SearchPageSkeleton = () => (
@@ -135,10 +135,8 @@ export default function SearchPage() {
 
         const authorIds = new Set<string>();
         allContent.forEach(item => {
-            authorIds.add(item.authorId);
-            if (item.repostedPost?.authorId) {
-                authorIds.add(item.repostedPost.authorId);
-            }
+            if (item.authorId) authorIds.add(item.authorId);
+            if (item.repostedPost?.authorId) authorIds.add(item.repostedPost.authorId);
         });
         
         const authors = await getUsersByIds(Array.from(authorIds));
@@ -153,32 +151,24 @@ export default function SearchPage() {
             promoPages: [],
             posts: [],
         };
+        
+        const postsToPopulate: Post[] = [];
 
         allContent.forEach(item => {
             const author = authorMap.get(item.authorId);
             if (author) {
-                if (item.repostedPost) {
-                    const repostedAuthor = authorMap.get(item.repostedPost.authorId);
-                    if (repostedAuthor) {
-                        item.repostedPost.author = {
-                            uid: repostedAuthor.uid,
-                            name: repostedAuthor.name,
-                            username: repostedAuthor.username,
-                            avatarUrl: repostedAuthor.avatarUrl,
-                        };
-                    }
-                }
-
                 switch (item.type) {
                     case 'listing': newResults.listings.push({ ...item, author }); break;
                     case 'job': newResults.jobs.push({ ...item, author }); break;
                     case 'event': newResults.events.push({ ...item, author }); break;
                     case 'offer': newResults.offers.push({ ...item, author }); break;
                     case 'promoPage': newResults.promoPages.push({ ...item, author }); break;
-                    case 'post': newResults.posts.push({ ...item, author }); break;
+                    case 'post': postsToPopulate.push(item); break;
                 }
             }
         });
+        
+        newResults.posts = await populatePostAuthors(postsToPopulate);
 
         setResults(newResults);
 
@@ -332,36 +322,14 @@ export default function SearchPage() {
             {results.posts.length > 0 ? (
                 <div className="space-y-4">
                     {results.posts.map(post => (
-                        <Card key={post.id}>
-                            <CardContent className="p-4">
-                                <div className="flex items-center gap-3">
-                                    <Link href={`/u/${post.author.username}`}>
-                                        <Avatar>
-                                            <AvatarImage src={post.author.avatarUrl} data-ai-hint="person portrait" />
-                                            <AvatarFallback>{post.author.name.charAt(0)}</AvatarFallback>
-                                        </Avatar>
-                                    </Link>
-                                    <div className="w-full">
-                                        <div className="flex items-center justify-between">
-                                            <Link href={`/u/${post.author.username}`} className="hover:underline">
-                                                <p className="font-semibold">{post.author.name}</p>
-                                                <p className="text-sm text-muted-foreground">@{post.author.username}</p>
-                                            </Link>
-                                            <Link href={`/u/${post.author.username}`} className="text-sm text-muted-foreground hover:underline">
-                                                <ClientFormattedDate date={post.createdAt} relative />
-                                            </Link>
-                                        </div>
-                                        {post.content && <p className="mt-2 text-sm whitespace-pre-wrap line-clamp-3">{post.content}</p>}
-                                        {post.imageUrl && (
-                                            <div className="mt-2 rounded-lg overflow-hidden border">
-                                                <Image src={post.imageUrl} alt="Post image" width={500} height={281} className="object-cover" />
-                                            </div>
-                                        )}
-                                        {post.repostedPost && <EmbeddedPostView post={post.repostedPost} />}
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
+                        <PostCard 
+                            key={post.id} 
+                            item={post} 
+                            onLike={() => {}}
+                            onDelete={() => {}}
+                            onRepost={() => {}}
+                            onQuote={() => {}}
+                        />
                     ))}
                 </div>
             ) : (

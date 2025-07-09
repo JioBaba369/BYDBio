@@ -58,7 +58,7 @@ export type Post = {
   quotedPost?: EmbeddedPostInfo;
   repostedPost?: EmbeddedPostInfo;
   searchableKeywords?: string[];
-  type: 'post'; // To distinguish from other content types
+  type?: 'post'; // To distinguish from other content types
 };
 
 export type PostWithAuthor = Post & {

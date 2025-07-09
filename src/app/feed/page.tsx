@@ -15,7 +15,7 @@ import { uploadImage } from "@/lib/storage"
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog"
 import { PostCard } from "@/components/post-card";
 import Image from "next/image";
-import type { PostWithAuthor, Post } from "@/lib/posts";
+import type { PostWithAuthor } from "@/lib/posts";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { createPost, toggleLikePost, deletePost, repostPost, getFeedPosts, getDiscoveryPosts } from "@/lib/posts";
 import { Input } from "@/components/ui/input";
@@ -271,7 +271,7 @@ export default function FeedPage() {
                 {posts.map(item => (
                     <PostCard
                         key={`${item.type}-${item.id}`}
-                        item={item as PostWithAuthor & { isLiked: boolean }}
+                        item={item}
                         onLike={handleLike}
                         onDelete={openDeleteDialog}
                         onRepost={handleRepost}
@@ -300,17 +300,22 @@ export default function FeedPage() {
       <div className="max-w-2xl mx-auto space-y-6">
         <h1 className="text-2xl sm:text-3xl font-bold font-headline">Status Feed</h1>
         <Card>
-          <CardContent className="p-4">
+          <CardHeader>
             <div className="flex gap-4">
               <Avatar><AvatarImage src={user.avatarUrl} /><AvatarFallback>{user.avatarFallback}</AvatarFallback></Avatar>
               <div className="w-full space-y-2">
-                <Textarea id="new-post" placeholder="What's on your mind?" className="w-full text-base border-0 focus-visible:ring-0 ring-offset-0 p-0" value={postContent} onChange={(e) => setPostContent(e.target.value)}/>
+                <Textarea id="new-post" placeholder="What's on your mind?" className="w-full text-base border-0 focus-visible:ring-0 ring-offset-0 p-0 min-h-[60px]" value={postContent} onChange={(e) => setPostContent(e.target.value)}/>
                  {postToQuote && <QuotedPostPreview post={postToQuote} onRemove={() => setPostToQuote(null)} />}
-                 {croppedImageUrl && (
-                  <div className="relative"><Image src={croppedImageUrl} alt="Preview" width={500} height={281} className="rounded-lg border object-cover w-full" /><Button variant="destructive" size="icon" className="absolute top-2 right-2 h-7 w-7" onClick={handleRemoveImage}><X className="h-4 w-4" /></Button></div>
-                )}
               </div>
             </div>
+          </CardHeader>
+          <CardContent className="p-4 pt-0">
+             {croppedImageUrl && (
+              <div className="relative">
+                <Image src={croppedImageUrl} alt="Preview" width={500} height={281} className="rounded-lg border object-cover w-full" />
+                <Button variant="destructive" size="icon" className="absolute top-2 right-2 h-7 w-7" onClick={handleRemoveImage}><X className="h-4 w-4" /></Button>
+              </div>
+            )}
           </CardContent>
           <CardFooter className="flex flex-col sm:flex-row justify-between items-center p-4 border-t gap-4">
             <div className="flex items-center gap-2 w-full sm:w-auto">

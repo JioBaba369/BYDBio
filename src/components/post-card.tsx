@@ -1,7 +1,7 @@
 
 'use client';
 
-import type { PostWithAuthor, EmbeddedPostInfoWithAuthor } from '@/lib/posts';
+import type { PostWithAuthor } from '@/lib/posts';
 import { useAuth } from '@/components/auth-provider';
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import Link from "next/link";
@@ -17,14 +17,12 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Badge } from '@/components/ui/badge';
 import { EmbeddedPostView } from './feed/embedded-post-view';
 
-type FeedItem = PostWithAuthor & { isLiked?: boolean; type?: string; };
-
 interface PostCardProps {
-    item: FeedItem;
+    item: PostWithAuthor;
     onLike: (postId: string) => void;
-    onDelete: (post: FeedItem) => void;
+    onDelete: (post: PostWithAuthor) => void;
     onRepost: (postId: string) => void;
-    onQuote: (post: FeedItem) => void;
+    onQuote: (post: PostWithAuthor) => void;
     isLoading?: boolean;
     loadingAction?: 'like' | 'repost' | 'quote' | null;
 }
@@ -34,32 +32,27 @@ export function PostCard({ item, onLike, onDelete, onRepost, onQuote, isLoading 
     const { toast } = useToast();
     const isOwner = user?.uid === item.author.uid;
     const isRepost = !!item.repostedPost;
+    
+    // Determine the content to display. If it's a repost, use the nested post's data.
+    const displayItem = isRepost ? item.repostedPost! : item;
+    const displayAuthor = isRepost ? displayItem.author : item.author;
 
     const handleShare = async () => {
-        // Since posts don't have their own pages, we link to the author's profile.
-        const shareUrl = `${window.location.origin}/u/${item.author.username}`;
-        const shareTitle = `Post by ${item.author.name}`;
-        
-        // Use reposted content for share text if it exists
-        const mainContent = item.repostedPost?.content || item.quotedPost?.content || item.content;
-        const shareText = mainContent.substring(0, 100) + (mainContent.length > 100 ? '...' : '');
+        const shareUrl = `${window.location.origin}/u/${displayAuthor.username}`;
+        const shareText = displayItem.content.substring(0, 100) + (displayItem.content.length > 100 ? '...' : '');
 
         if (navigator.share) {
             try {
                 await navigator.share({
-                    title: shareTitle,
+                    title: `Post by ${displayAuthor.name}`,
                     text: shareText,
                     url: shareUrl,
                 });
-            } catch (error) {
-                // This error is thrown if the user cancels the share. We can safely ignore it.
-            }
+            } catch (error) {/* Ignore user cancellation */}
         } else {
-            // Fallback for browsers that don't support the Web Share API
             navigator.clipboard.writeText(shareUrl);
             toast({
                 title: "Link to author's profile copied!",
-                description: "A link to this user's profile has been copied to your clipboard.",
             });
         }
     };
@@ -74,110 +67,100 @@ export function PostCard({ item, onLike, onDelete, onRepost, onQuote, isLoading 
                     </Link>
                 </div>
             )}
-            <CardHeader className="p-4">
-                <div className="flex items-center justify-between">
-                    <Link href={`/u/${item.author.username}`} className="flex items-center gap-3 hover:underline">
-                        <Avatar>
-                            <AvatarImage src={item.author.avatarUrl} />
-                            <AvatarFallback>{item.author.name.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                        <div>
-                            <p className="font-semibold">{item.author.name}</p>
-                            <p className="text-sm text-muted-foreground">
-                                @{item.author.username} · <ClientFormattedDate date={item.createdAt} relative />
-                                {item.postNumber > 0 && <span> · Post #{item.postNumber}</span>}
-                            </p>
+            <div className="flex items-start gap-4 p-4">
+                <Link href={`/u/${displayAuthor.username}`}>
+                    <Avatar>
+                        <AvatarImage src={displayAuthor.avatarUrl} />
+                        <AvatarFallback>{displayAuthor.name.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                </Link>
+                <div className="w-full">
+                    <div className="flex justify-between items-start">
+                         <div className="text-sm">
+                            <Link href={`/u/${displayAuthor.username}`} className="font-semibold hover:underline">{displayAuthor.name}</Link>
+                            <span className="text-muted-foreground ml-2">@{displayAuthor.username}</span>
+                            <span className="text-muted-foreground"> · </span>
+                            <Link href={`/u/${displayAuthor.username}`} className="text-muted-foreground hover:underline">
+                                <ClientFormattedDate date={item.createdAt} relative />
+                            </Link>
                         </div>
-                    </Link>
-                     <div className="flex items-center gap-2">
-                        {isOwner && item.privacy === 'followers' && (
-                            <TooltipProvider>
-                                <Tooltip>
-                                    <TooltipTrigger>
-                                        <Users className="h-4 w-4 text-muted-foreground" />
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                        <p>Visible to followers only</p>
-                                    </TooltipContent>
-                                </Tooltip>
-                            </TooltipProvider>
+                        <div className="flex items-center gap-1 -mt-2">
+                             {item.privacy === 'followers' && (
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger><Users className="h-4 w-4 text-muted-foreground" /></TooltipTrigger>
+                                        <TooltipContent><p>Visible to followers only</p></TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                            )}
+                            {item.privacy === 'public' && (
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger><Globe className="h-4 w-4 text-muted-foreground" /></TooltipTrigger>
+                                        <TooltipContent><p>Visible to everyone</p></TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                            )}
+                            {isOwner && (
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" size="icon" className="h-7 w-7">
+                                            <MoreHorizontal className="h-4 w-4" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                        <DropdownMenuItem onClick={() => onDelete(item)} className="text-destructive cursor-pointer">
+                                            <Trash2 className="mr-2 h-4 w-4" /> Delete Post
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            )}
+                        </div>
+                    </div>
+                    <div className="mt-2 space-y-3">
+                        {/* Render the quote's content first, if it exists */}
+                        {item.content && <p className="whitespace-pre-wrap">{item.content}</p>}
+
+                        {/* Render the quoted post, if this is a quote post */}
+                        {item.quotedPost && item.quotedPost.author && <EmbeddedPostView post={item.quotedPost} />}
+
+                        {/* If it's a pure repost, render the content of the reposted item */}
+                        {isRepost && displayItem.content && <p className="whitespace-pre-wrap">{displayItem.content}</p>}
+                        
+                        {displayItem.imageUrl && (
+                            <div className="mt-2 rounded-lg overflow-hidden border">
+                                <Image src={displayItem.imageUrl} alt="Post image" width={600} height={400} className="object-cover w-full" />
+                            </div>
                         )}
-                        {isOwner && item.privacy === 'public' && (
-                            <TooltipProvider>
-                                <Tooltip>
-                                    <TooltipTrigger>
-                                        <Globe className="h-4 w-4 text-muted-foreground" />
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                        <p>Visible to everyone</p>
-                                    </TooltipContent>
-                                </Tooltip>
-                            </TooltipProvider>
-                        )}
-                        {isOwner && (
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                                        <MoreHorizontal className="h-5 w-5" />
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                    <DropdownMenuItem onClick={() => onDelete(item)} className="text-destructive cursor-pointer">
-                                        <Trash2 className="mr-2 h-4 w-4" /> Delete Post
-                                    </DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
+                        {item.category && !isRepost && (
+                            <div className="pt-2">
+                                <Badge variant="outline">{item.category}</Badge>
+                            </div>
                         )}
                     </div>
+                     <CardFooter className="flex justify-between items-center p-0 pt-3 -ml-2">
+                        <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground hover:text-primary" onClick={() => onLike(item.id)} disabled={isLoading || !user}>
+                            {isLoading && loadingAction === 'like' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Heart className={cn("h-4 w-4", item.isLiked && "fill-red-500 text-red-500")} />}
+                            <span className="text-xs">{item.likes || 0}</span>
+                        </Button>
+                        <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground" disabled>
+                            <MessageCircle className="h-4 w-4" />
+                            <span className="text-xs">{item.comments || 0}</span>
+                        </Button>
+                        <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground hover:text-green-500" onClick={() => onRepost(displayItem.id)} disabled={isLoading || !user}>
+                            {isLoading && loadingAction === 'repost' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Repeat className="h-4 w-4" />}
+                            <span className="text-xs">{displayItem.repostCount || 0}</span>
+                        </Button>
+                        <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground hover:text-blue-500" onClick={() => onQuote(displayItem as PostWithAuthor)} disabled={isLoading || !user}>
+                            <QuoteIcon className="h-4 w-4" />
+                            <span className="text-xs hidden sm:inline">Quote</span>
+                        </Button>
+                        <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground" onClick={handleShare} disabled={isLoading}>
+                            <Share2 className="h-4 w-4" />
+                        </Button>
+                    </CardFooter>
                 </div>
-            </CardHeader>
-            <CardContent className="p-4 pt-0">
-                {/* Render content only if it's NOT a pure repost. A quote post has content. */}
-                {!isRepost && item.content && (
-                    <p className="whitespace-pre-wrap">{item.content}</p>
-                )}
-
-                {/* Render the quoted post if it exists (for quote-posts) */}
-                {item.quotedPost && item.quotedPost.author && <EmbeddedPostView post={item.quotedPost} />}
-
-                {/* Render the reposted post if it exists (for reposts) */}
-                {item.repostedPost && item.repostedPost.author && <EmbeddedPostView post={item.repostedPost} />}
-
-                {/* Render the image if it's NOT a repost and has an image */}
-                {!isRepost && item.imageUrl && (
-                    <div className="mt-4 rounded-lg overflow-hidden border">
-                        <Image src={item.imageUrl} alt="Post image" width={600} height={400} className="object-cover" />
-                    </div>
-                )}
-
-                {!isRepost && item.category && (
-                    <div className="mt-4">
-                        <Badge variant="outline">{item.category}</Badge>
-                    </div>
-                )}
-            </CardContent>
-            <CardFooter className="flex justify-start p-4 border-t gap-1">
-                <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground hover:text-primary" onClick={() => onLike(item.id)} disabled={isLoading || !user}>
-                    {isLoading && loadingAction === 'like' ? <Loader2 className="h-5 w-5 animate-spin" /> : <Heart className={cn("h-5 w-5", item.isLiked && "fill-red-500 text-red-500")} />}
-                    <span>{item.likes || 0}</span>
-                </Button>
-                <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground" disabled>
-                    <MessageCircle className="h-5 w-5" />
-                    <span>{item.comments || 0}</span>
-                </Button>
-                <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground hover:text-green-500" onClick={() => onRepost(isRepost ? item.repostedPost!.id : item.id)} disabled={isLoading || !user}>
-                    {isLoading && loadingAction === 'repost' ? <Loader2 className="h-5 w-5 animate-spin" /> : <Repeat className="h-5 w-5" />}
-                    <span>{item.repostCount || 0}</span>
-                </Button>
-                 <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground hover:text-blue-500" onClick={() => onQuote(item)} disabled={isLoading || !user}>
-                    <QuoteIcon className="h-5 w-5" />
-                    <span>Quote</span>
-                </Button>
-                <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground ml-auto" onClick={handleShare} disabled={isLoading}>
-                    <Share2 className="h-5 w-5" />
-                    <span>Share</span>
-                </Button>
-            </CardFooter>
+            </div>
         </Card>
     );
 }
