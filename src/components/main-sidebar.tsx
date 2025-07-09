@@ -121,55 +121,36 @@ export function MainSidebar() {
         </SidebarGroup>
         
         <SidebarGroup>
-          <SidebarGroupLabel>My Hub</SidebarGroupLabel>
+          <SidebarGroupLabel>My Public Profile</SidebarGroupLabel>
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Dashboard" isActive={isActive('/')}>
-                <Link href="/">
-                  <LayoutDashboard />
-                  <span>Dashboard</span>
+              <SidebarMenuButton asChild tooltip="Bio Page" isActive={isActive(`/u/${user.username}`)}>
+                <Link href={`/u/${user.username}`}>
+                  <UserCircle />
+                  <span>Bio Page</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Status Feed" isActive={isActive('/feed')}>
-                <Link href="/feed">
-                  <Rss />
-                  <span>Status Feed</span>
+              <SidebarMenuButton asChild tooltip="Digital Business Card" isActive={isActive(`/u/${user.username}/card`)}>
+                <Link href={`/u/${user.username}/card`}>
+                  <Building2 />
+                  <span>Digital Business Card</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Inbox" isActive={isActive('/inbox')}>
-                <Link href="/inbox">
-                  <Mail />
-                  <span>Inbox</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Connections" isActive={isActive('/connections')}>
-                <Link href="/connections">
-                  <Users />
-                  <span>Connections</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Notifications" isActive={isActive('/notifications')}>
-                <Link href="/notifications">
-                  <Bell />
-                  <span>Notifications</span>
-                   {unreadNotificationCount > 0 && (
-                    <SidebarMenuBadge>{unreadNotificationCount}</SidebarMenuBadge>
-                  )}
+              <SidebarMenuButton asChild tooltip="Links Page" isActive={isActive(`/u/${user.username}/links`)}>
+                <Link href={`/u/${user.username}/links`}>
+                  <Link2 />
+                  <span>Links Page</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>
         </SidebarGroup>
-        
-         <SidebarGroup>
+
+        <SidebarGroup>
           <SidebarGroupLabel>Community</SidebarGroupLabel>
           <SidebarMenu>
              <SidebarMenuItem>
@@ -222,6 +203,55 @@ export function MainSidebar() {
             </SidebarMenuItem>
           </SidebarMenu>
         </SidebarGroup>
+        
+        <SidebarGroup>
+          <SidebarGroupLabel>My Hub</SidebarGroupLabel>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild tooltip="Dashboard" isActive={isActive('/')}>
+                <Link href="/">
+                  <LayoutDashboard />
+                  <span>Dashboard</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild tooltip="Status Feed" isActive={isActive('/feed')}>
+                <Link href="/feed">
+                  <Rss />
+                  <span>Status Feed</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild tooltip="Inbox" isActive={isActive('/inbox')}>
+                <Link href="/inbox">
+                  <Mail />
+                  <span>Inbox</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild tooltip="Connections" isActive={isActive('/connections')}>
+                <Link href="/connections">
+                  <Users />
+                  <span>Connections</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild tooltip="Notifications" isActive={isActive('/notifications')}>
+                <Link href="/notifications">
+                  <Bell />
+                  <span>Notifications</span>
+                   {unreadNotificationCount > 0 && (
+                    <SidebarMenuBadge>{unreadNotificationCount}</SidebarMenuBadge>
+                  )}
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroup>
 
         <SidebarGroup>
             <SidebarGroupLabel>Workspace</SidebarGroupLabel>
@@ -253,36 +283,6 @@ export function MainSidebar() {
             </SidebarMenu>
         </SidebarGroup>
           
-        <SidebarGroup>
-          <SidebarGroupLabel>My Public Profile</SidebarGroupLabel>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Bio Page" isActive={isActive(`/u/${user.username}`)}>
-                <Link href={`/u/${user.username}`}>
-                  <UserCircle />
-                  <span>Bio Page</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Digital Business Card" isActive={isActive(`/u/${user.username}/card`)}>
-                <Link href={`/u/${user.username}/card`}>
-                  <Building2 />
-                  <span>Digital Business Card</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Links Page" isActive={isActive(`/u/${user.username}/links`)}>
-                <Link href={`/u/${user.username}/links`}>
-                  <Link2 />
-                  <span>Links Page</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarGroup>
-
       </SidebarContent>
       <SidebarFooter>
         <SidebarMenu>
