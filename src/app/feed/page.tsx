@@ -3,10 +3,10 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 import { Image as ImageIcon, Send, X, Users, Compass, Loader2, Globe, Lock } from "lucide-react"
-import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useAuth } from "@/components/auth-provider"
 import { useToast } from "@/hooks/use-toast"
 import Link from "next/link"
@@ -16,18 +16,12 @@ import { uploadImage } from "@/lib/storage"
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog"
 import { PostCard } from "@/components/post-card";
 import Image from "next/image";
-import type { Timestamp } from "firebase/firestore";
+import type { PostWithAuthor, Post } from "@/lib/posts";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { createPost, toggleLikePost, deletePost, repostPost, type PostWithAuthor, type EmbeddedPostInfo, type Post } from "@/lib/posts";
-import { getFollowingFeedContent, type FeedItem } from "@/lib/feed";
-import { ContentFeedCard } from "@/components/feed/content-feed-card";
-import { EventFeedItem } from "@/components/feed/event-feed-item";
-import { JobFeedItem } from "@/components/feed/job-feed-item";
-import { ListingFeedItem } from "@/components/feed/listing-feed-item";
-import { OfferFeedItem } from "@/components/feed/offer-feed-item";
-import { PromoPageFeedItem } from "@/components/feed/promo-page-feed-item";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input"
+import { createPost, toggleLikePost, deletePost, repostPost, getFeedPosts, getDiscoveryPosts } from "@/lib/posts";
+import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 
 const FeedSkeleton = () => (
     <div className="space-y-6">
@@ -62,7 +56,10 @@ export default function FeedPage() {
   const [postContent, setPostContent] = useState('');
   const [postCategory, setPostCategory] = useState('');
   const [postPrivacy, setPostPrivacy] = useState<'public' | 'followers' | 'me'>('public');
-  const [feedItems, setFeedItems] = useState<FeedItem[]>([]);
+  
+  const [followingPosts, setFollowingPosts] = useState<PostWithAuthor[]>([]);
+  const [discoveryPosts, setDiscoveryPosts] = useState<PostWithAuthor[]>([]);
+  const [activeTab, setActiveTab] = useState('following');
   
   const [isLoading, setIsLoading] = useState(true);
   const [isPosting, setIsPosting] = useState(false);
@@ -77,15 +74,29 @@ export default function FeedPage() {
   const [postToQuote, setPostToQuote] = useState<any | null>(null);
   const [loadingAction, setLoadingAction] = useState<{ postId: string; action: 'like' | 'repost' } | null>(null);
 
-  const fetchFeed = useCallback(async () => {
+  const fetchFollowingFeed = useCallback(async () => {
     if (!user) return;
-
     setIsLoading(true);
     try {
-        const items = await getFollowingFeedContent(user.uid, user.following);
-        setFeedItems(items);
+        const items = await getFeedPosts([user.uid, ...user.following]);
+        setFollowingPosts(items.map(p => ({ ...p, isLiked: (p.likedBy || []).includes(user.uid) })));
     } catch (error) {
-        toast({ title: "Failed to load your feed", variant: "destructive" });
+        console.error("Feed fetch error:", error);
+        toast({ title: "Failed to load your feed", description: "There was an issue fetching posts from people you follow.", variant: "destructive" });
+    } finally {
+        setIsLoading(false);
+    }
+  }, [user, toast]);
+  
+  const fetchDiscoveryFeed = useCallback(async () => {
+    if (!user) return;
+    setIsLoading(true);
+    try {
+        const items = await getDiscoveryPosts(user.uid, user.following);
+        setDiscoveryPosts(items.map(p => ({...p, isLiked: (p.likedBy || []).includes(user.uid) })));
+    } catch (error) {
+        console.error("Discovery fetch error:", error);
+        toast({ title: "Failed to load discovery feed", variant: "destructive" });
     } finally {
         setIsLoading(false);
     }
@@ -93,9 +104,15 @@ export default function FeedPage() {
 
   useEffect(() => {
     if (user?.uid) {
-        fetchFeed();
+        fetchFollowingFeed();
     }
-  }, [user?.uid, fetchFeed]);
+  }, [user?.uid, fetchFollowingFeed]);
+
+  useEffect(() => {
+    if (activeTab === 'discovery' && discoveryPosts.length === 0) {
+        fetchDiscoveryFeed();
+    }
+  }, [activeTab, discoveryPosts.length, fetchDiscoveryFeed]);
 
   useEffect(() => {
     const storedPostJson = sessionStorage.getItem('postToQuote');
@@ -148,7 +165,7 @@ export default function FeedPage() {
             imageUrlToPost = await uploadImage(croppedImageUrl, `posts/${user.uid}/${Date.now()}`);
         }
 
-        let quotedPostData: EmbeddedPostInfo | undefined = undefined;
+        let quotedPostData: any | undefined = undefined;
         if (postToQuote) {
             quotedPostData = {
                 id: postToQuote.id,
@@ -158,25 +175,9 @@ export default function FeedPage() {
             };
         }
 
-        const newPost = await createPost(user.uid, { content: postContent, imageUrl: imageUrlToPost, quotedPost: quotedPostData, privacy: postPrivacy, category: postCategory });
+        await createPost(user.uid, { content: postContent, imageUrl: imageUrlToPost, quotedPost: quotedPostData, privacy: postPrivacy, category: postCategory });
         
-        const newPostForFeed: FeedItem = {
-            ...newPost,
-            type: 'post',
-            author: user,
-            sortDate: new Date(),
-            createdAt: (newPost.createdAt as unknown as Timestamp).toDate().toISOString(),
-            isLiked: false
-        };
-
-        if (newPost.quotedPost && postToQuote) {
-            (newPostForFeed as any).quotedPost = {
-                ...newPost.quotedPost,
-                author: postToQuote.author
-            };
-        }
-        
-        setFeedItems(prev => [newPostForFeed, ...prev]);
+        await fetchFollowingFeed();
         
         setPostContent('');
         setCroppedImageUrl(null);
@@ -186,7 +187,7 @@ export default function FeedPage() {
         toast({ title: "Update Posted!" });
     } catch(error) {
         toast({ title: "Failed to post update", variant: "destructive" });
-        await fetchFeed();
+        await fetchFollowingFeed();
     } finally {
         setIsPosting(false);
     }
@@ -197,31 +198,32 @@ export default function FeedPage() {
     
     setLoadingAction({ postId, action: 'like' });
 
-    const optimisticUpdate = (setFeed: React.Dispatch<React.SetStateAction<FeedItem[]>>) => {
-        setFeed(prevFeed => {
-            const newFeed = [...prevFeed];
-            const postIndex = newFeed.findIndex(p => p.id === postId && p.type === 'post');
-            if (postIndex === -1) return prevFeed;
-
-            const originalPost = newFeed[postIndex] as PostWithAuthor & { isLiked: boolean };
-            const updatedPost = {
-                ...originalPost,
-                isLiked: !originalPost.isLiked,
-                likes: originalPost.likes + (originalPost.isLiked ? -1 : 1),
-            };
-            newFeed[postIndex] = updatedPost;
-            return newFeed;
+    const updater = (feed: PostWithAuthor[]) => {
+        return feed.map(p => {
+            if (p.id === postId) {
+                const isLiked = !(p.isLiked);
+                return {
+                    ...p,
+                    isLiked,
+                    likes: (p.likes || 0) + (isLiked ? 1 : -1),
+                };
+            }
+            return p;
         });
     };
 
-    const originalFeed = [...feedItems];
-    optimisticUpdate(setFeedItems);
+    const originalFollowing = [...followingPosts];
+    const originalDiscovery = [...discoveryPosts];
+
+    setFollowingPosts(updater);
+    setDiscoveryPosts(updater);
 
     try {
         await toggleLikePost(postId, user.uid);
     } catch (error) {
         toast({ title: "Something went wrong", variant: "destructive" });
-        setFeedItems(originalFeed);
+        setFollowingPosts(originalFollowing);
+        setDiscoveryPosts(originalDiscovery);
     } finally {
         setLoadingAction(null);
     }
@@ -233,7 +235,7 @@ export default function FeedPage() {
     try {
       await repostPost(postId, user.uid);
       toast({ title: "Reposted!" });
-      await fetchFeed();
+      await fetchFollowingFeed();
     } catch (error: any) {
       toast({ title: error.message || "Failed to repost", variant: "destructive" });
     } finally {
@@ -254,40 +256,24 @@ export default function FeedPage() {
 
   const handleConfirmDelete = async () => {
     if (!postToDelete || !user) return;
-    const originalFeed = [...feedItems];
-    setFeedItems(prev => prev.filter(item => item.id !== postToDelete.id));
+    const originalFollowing = [...followingPosts];
+    const originalDiscovery = [...discoveryPosts];
+    setFollowingPosts(prev => prev.filter(item => item.id !== postToDelete.id));
+    setDiscoveryPosts(prev => prev.filter(item => item.id !== postToDelete.id));
     
     try {
         await deletePost(postToDelete.id);
         toast({ title: "Post Deleted" });
     } catch (error) {
         toast({ title: "Failed to delete post", variant: "destructive" });
-        setFeedItems(originalFeed);
+        setFollowingPosts(originalFollowing);
+        setDiscoveryPosts(originalDiscovery);
     } finally {
         setIsDeleteDialogOpen(false);
         setPostToDelete(null);
     }
   };
 
-  const categoryCounts = useMemo(() => {
-    const counts: Record<string, number> = {
-      Posts: 0,
-      'Business Pages': 0,
-      Listings: 0,
-      Jobs: 0,
-      Events: 0,
-      Offers: 0,
-    };
-    feedItems.forEach(item => {
-        if (item.type === 'post') counts['Posts']++;
-        if (item.type === 'promoPage') counts['Business Pages']++;
-        if (item.type === 'listing') counts['Listings']++;
-        if (item.type === 'job') counts['Jobs']++;
-        if (item.type === 'event') counts['Events']++;
-        if (item.type === 'offer') counts['Offers']++;
-    });
-    return counts;
-  }, [feedItems]);
   
   if (authLoading) {
       return (
@@ -299,14 +285,29 @@ export default function FeedPage() {
   }
 
   if (!user) return null;
-
-  const componentMap: Record<string, React.FC<{ item: any }>> = {
-    promoPage: PromoPageFeedItem,
-    listing: ListingFeedItem,
-    job: JobFeedItem,
-    event: EventFeedItem,
-    offer: OfferFeedItem,
-  };
+  
+  const renderFeedContent = (posts: PostWithAuthor[], emptyState: React.ReactNode) => {
+      if (isLoading) return <FeedSkeleton />;
+      if (posts.length > 0) {
+        return (
+             <div className="space-y-6">
+                {posts.map(item => (
+                    <PostCard
+                        key={`${item.type}-${item.id}`}
+                        item={item as PostWithAuthor & { isLiked: boolean }}
+                        onLike={handleLike}
+                        onDelete={openDeleteDialog}
+                        onRepost={handleRepost}
+                        onQuote={handleQuote}
+                        isLoading={loadingAction?.postId === item.id}
+                        loadingAction={loadingAction && loadingAction.postId === item.id ? loadingAction.action : null}
+                    />
+                ))}
+            </div>
+        )
+      }
+      return emptyState;
+  }
 
   return (
     <>
@@ -357,38 +358,35 @@ export default function FeedPage() {
           </CardFooter>
         </Card>
         
-        <Card>
-            <CardHeader><CardTitle className="text-base">Feed Content</CardTitle><CardDescription>A summary of the latest content in your feed.</CardDescription></CardHeader>
-            <CardContent className="flex flex-wrap gap-2">
-                {Object.entries(categoryCounts).map(([category, count]) => {
-                    if (count === 0) return null;
-                    return <Badge key={category} variant="outline" className="text-sm">{category}: {count}</Badge>
-                })}
-            </CardContent>
-        </Card>
-
-        {isLoading ? ( <FeedSkeleton /> ) : feedItems.length > 0 ? (
-          <div className="space-y-6">
-            {feedItems.map(item => {
-                if (item.type === 'post') {
-                    return <PostCard key={`${item.type}-${item.id}`} item={item as PostWithAuthor & {isLiked: boolean}} onLike={handleLike} onDelete={openDeleteDialog} onRepost={handleRepost} onQuote={handleQuote} isLoading={loadingAction?.postId === item.id} loadingAction={loadingAction && loadingAction.postId === item.id ? loadingAction.action : null}/>
-                }
-                const Component = componentMap[item.type];
-                if (!Component) return null;
-
-                return <ContentFeedCard key={`${item.type}-${item.id}`} author={item.author} date={item.createdAt} category={item.type}><Component item={item} /></ContentFeedCard>
-            })}
-          </div>
-        ) : (
-          <Card>
-            <CardContent className="p-10 text-center text-muted-foreground flex flex-col items-center gap-4">
-                <Compass className="h-12 w-12" />
-                <h3 className="font-semibold text-foreground">Your Feed is Empty</h3>
-                <p>Follow other users to see their status updates and content here.</p>
-                <Button asChild><Link href="/connections?tab=suggestions">Find People to Follow</Link></Button>
-            </CardContent>
-          </Card>
-        )}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="following">Following</TabsTrigger>
+                <TabsTrigger value="discovery">Discovery</TabsTrigger>
+            </TabsList>
+            <TabsContent value="following" className="pt-6">
+                {renderFeedContent(followingPosts, (
+                     <Card>
+                        <CardContent className="p-10 text-center text-muted-foreground flex flex-col items-center gap-4">
+                            <Compass className="h-12 w-12" />
+                            <h3 className="font-semibold text-foreground">Your Feed is Empty</h3>
+                            <p>Follow other users to see their status updates here.</p>
+                            <Button asChild><Link href="/connections?tab=suggestions">Find People to Follow</Link></Button>
+                        </CardContent>
+                    </Card>
+                ))}
+            </TabsContent>
+            <TabsContent value="discovery" className="pt-6">
+                {renderFeedContent(discoveryPosts, (
+                    <Card>
+                        <CardContent className="p-10 text-center text-muted-foreground flex flex-col items-center gap-4">
+                            <Compass className="h-12 w-12" />
+                            <h3 className="font-semibold text-foreground">Nothing to discover yet</h3>
+                            <p>As more people join and post, you'll see interesting public updates here.</p>
+                        </CardContent>
+                    </Card>
+                ))}
+            </TabsContent>
+        </Tabs>
       </div>
     </>
   )

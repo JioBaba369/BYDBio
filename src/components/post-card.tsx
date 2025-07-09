@@ -16,7 +16,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
 
-type FeedItem = PostWithAuthor & { isLiked: boolean; };
+type FeedItem = PostWithAuthor & { isLiked?: boolean; };
 
 interface PostCardProps {
     item: FeedItem;
@@ -183,11 +183,11 @@ export function PostCard({ item, onLike, onDelete, onRepost, onQuote, isLoading 
             <CardFooter className="flex justify-start p-4 border-t gap-1">
                 <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground hover:text-primary" onClick={() => onLike(item.id)} disabled={isLoading || !user}>
                     {isLoading && loadingAction === 'like' ? <Loader2 className="h-5 w-5 animate-spin" /> : <Heart className={cn("h-5 w-5", item.isLiked && "fill-red-500 text-red-500")} />}
-                    <span>{item.likes}</span>
+                    <span>{item.likes || 0}</span>
                 </Button>
                 <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground" disabled>
                     <MessageCircle className="h-5 w-5" />
-                    <span>{item.comments}</span>
+                    <span>{item.comments || 0}</span>
                 </Button>
                 <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground hover:text-green-500" onClick={() => onRepost(isRepost ? item.repostedPost!.id : item.id)} disabled={isLoading || !user}>
                     {isLoading && loadingAction === 'repost' ? <Loader2 className="h-5 w-5 animate-spin" /> : <Repeat className="h-5 w-5" />}

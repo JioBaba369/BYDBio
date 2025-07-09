@@ -62,6 +62,7 @@ export type Post = {
 
 export type PostWithAuthor = Post & {
   author: User;
+  isLiked?: boolean;
   quotedPost?: EmbeddedPostInfoWithAuthor;
   repostedPost?: EmbeddedPostInfoWithAuthor;
 };
@@ -153,7 +154,7 @@ export const toggleLikePost = async (postId: string, userId: string) => {
     }
 
     const postData = postDoc.data() as Post;
-    const isLiked = postData.likedBy.includes(userId);
+    const isLiked = (postData.likedBy || []).includes(userId);
 
     if (isLiked) {
         // Unlike the post
@@ -305,7 +306,12 @@ export const getFeedPosts = async (followingIds: string[]): Promise<PostWithAuth
     const q = query(postsRef, where('authorId', 'in', followingIds), orderBy('createdAt', 'desc'), limit(50));
     const querySnapshot = await getDocs(q);
     
-    const postsData = querySnapshot.docs.map(doc => serializeDocument<Post>(doc)).filter((p): p is Post => !!p);
+    const postsData = querySnapshot.docs.map(doc => serializeDocument<Post>(doc)).filter((p): p is Post => {
+        if (!p) return false;
+        // Treat old posts without a privacy setting as public for the following feed.
+        if (p.privacy === undefined) return true;
+        return p.privacy === 'public' || p.privacy === 'followers';
+    });
 
     return populatePostAuthors(postsData);
 };
@@ -334,5 +340,3 @@ export const getDiscoveryPosts = async (userId: string, followingIds: string[]):
 
     return populatePostAuthors(postsData);
 };
-
-    
