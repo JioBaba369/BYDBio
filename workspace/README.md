@@ -11,6 +11,7 @@ Welcome to BYD.Bio, your all-in-one professional hub. This platform allows you t
 - **Link-in-Bio**: Manage a customizable page of all your important links.
 - **Content Creation**: Post listings, job opportunities, events, and special offers to the community.
 - **Community Interaction**: Follow other users, like posts, and RSVP to events.
+- **A/B Testing**: Run experiments on key engagement flows using Firebase Remote Config to optimize user conversions.
 - **BYD BioTAG**: A physical NFC tag that links directly to your digital business card.
 
 ## Tech Stack
@@ -20,6 +21,7 @@ Welcome to BYD.Bio, your all-in-one professional hub. This platform allows you t
 - **Styling**: [Tailwind CSS](https://tailwindcss.com/)
 - **UI Components**: [shadcn/ui](https://ui.shadcn.com/)
 - **Authentication & Database**: [Firebase](https://firebase.google.com/) (Auth, Firestore, Storage)
+- **A/B Testing & Analytics**: [Firebase](https://firebase.google.com/) (Remote Config, Analytics)
 
 ## Getting Started
 
