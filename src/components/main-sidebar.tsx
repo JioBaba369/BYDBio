@@ -25,7 +25,6 @@ import {
   Megaphone,
   Package,
   UserCircle,
-  Link2,
   Building2,
   Share2,
   LayoutDashboard,
@@ -36,7 +35,6 @@ import {
   Gift,
   Calendar,
   Nfc,
-  Menu,
 } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -136,14 +134,6 @@ export function MainSidebar() {
                 <Link href={`/u/${user.username}/card`}>
                   <Building2 />
                   <span>Digital Business Card</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Links Page" isActive={isActive(`/u/${user.username}/links`)}>
-                <Link href={`/u/${user.username}/links`}>
-                  <Link2 />
-                  <span>Links Page</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
