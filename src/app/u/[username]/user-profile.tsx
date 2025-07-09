@@ -234,16 +234,23 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
   }, [localPosts, canViewPrivateContent, isOwner, isClient]);
 
   const allOtherContent = useMemo(() => {
+    const authorDetails = {
+        uid: userProfileData.uid,
+        name: userProfileData.name,
+        username: userProfileData.username,
+        avatarUrl: userProfileData.avatarUrl,
+        avatarFallback: userProfileData.avatarFallback
+    };
     const combined = [
-      ...content.promoPages.map(item => ({ ...item, type: 'promoPage' as const, date: item.createdAt })),
-      ...content.listings.map(item => ({ ...item, type: 'listing' as const, date: item.createdAt })),
-      ...content.jobs.map(item => ({ ...item, type: 'job' as const, date: item.postingDate })),
-      ...content.events.map(item => ({ ...item, type: 'event' as const, date: item.startDate })),
-      ...content.offers.map(item => ({ ...item, type: 'offer' as const, date: item.startDate })),
+      ...content.promoPages.map(item => ({ ...item, author: authorDetails, type: 'promoPage' as const, date: item.createdAt })),
+      ...content.listings.map(item => ({ ...item, author: authorDetails, type: 'listing' as const, date: item.createdAt })),
+      ...content.jobs.map(item => ({ ...item, author: authorDetails, type: 'job' as const, date: item.postingDate })),
+      ...content.events.map(item => ({ ...item, author: authorDetails, type: 'event' as const, date: item.startDate })),
+      ...content.offers.map(item => ({ ...item, author: authorDetails, type: 'offer' as const, date: item.startDate })),
     ];
     combined.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     return combined;
-  }, [content]);
+  }, [content, userProfileData]);
 
   return (
     <>
@@ -341,7 +348,7 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
             <TabsContent value="showcase" className="mt-6">
                 <div className="grid gap-4">
                     {allOtherContent.length > 0 ? (
-                        allOtherContent.map(item => <PublicContentCard key={`${item.type}-${item.id}`} item={item} />)
+                        allOtherContent.map(item => <PublicContentCard key={`${item.type}-${item.id}`} item={item as any} />)
                     ) : (
                         <Card className="text-center text-muted-foreground p-10">
                             This user hasn't created any showcase content yet.

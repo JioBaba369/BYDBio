@@ -54,6 +54,10 @@ const getPrimaryStat = (item: PublicContentItem) => {
 }
 
 export function PublicContentCard({ item }: { item: PublicContentItem }) {
+    if (!item.author) {
+      return null;
+    }
+    
     const title = (item as any).title || (item as any).name;
     const primaryStat = getPrimaryStat(item);
     const itemTypeLabel = item.type === 'promoPage' ? 'Business Page' : item.type;
