@@ -79,7 +79,7 @@ export const getPost = async (id: string): Promise<Post | null> => {
 // Function to fetch all posts for a specific user
 export const getPostsByUser = async (userId: string): Promise<PostWithAuthor[]> => {
   const postsRef = collection(db, 'posts');
-  const q = query(postsRef, where('authorId', '==', userId), orderBy('createdAt', 'desc'));
+  const q = query(postsRef, where('authorId', '==', userId), where('privacy', '==', 'public'), orderBy('createdAt', 'desc'));
   const querySnapshot = await getDocs(q);
   
   const posts = querySnapshot.docs
