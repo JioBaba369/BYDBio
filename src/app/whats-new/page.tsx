@@ -1,9 +1,8 @@
-
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Rocket, Zap, Bug, Calendar, Nfc, PackageSearch, Redo, Palette, Sparkles, ScanLine } from "lucide-react";
+import { Rocket, Zap, Bug, Calendar, Nfc, PackageSearch, Redo, Paintbrush, Sparkles, ScanLine } from "lucide-react";
 import { ClientFormattedDate } from "@/components/client-formatted-date";
 
 type UpdateItem = {
@@ -27,7 +26,7 @@ const iconMap: Record<string, React.ElementType> = {
   Sparkles,
   PackageSearch,
   Redo,
-  Palette,
+  Paintbrush,
 };
 
 const updates: UpdateItem[] = [
@@ -64,7 +63,7 @@ const updates: UpdateItem[] = [
     version: 'v1.5.0',
     title: 'Major Aesthetic Overhaul',
     description: 'Introducing a completely redesigned look and feel across the entire application. We\'ve implemented a new, sophisticated color palette and updated our typography to create a more modern, professional, and cohesive user experience.',
-    badge: { text: 'Aesthetic', icon: 'Palette' },
+    badge: { text: 'Aesthetic', icon: 'Paintbrush' },
   },
   {
     date: '2025-06-15T12:00:00Z',
