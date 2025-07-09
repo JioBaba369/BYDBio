@@ -132,57 +132,55 @@ export default function ExploreClient({ initialItems }: { initialItems: PublicCo
         </div>
 
         <Card>
-            <CardContent className="p-4 space-y-4">
-                <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
-                    <div className="relative md:col-span-1">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input 
-                            placeholder="Search by keyword..."
-                            className="pl-10"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
-                    </div>
-                    <div className="relative md:col-span-1">
-                        <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input
-                            placeholder="Filter by location..."
-                            className="pl-10"
-                            value={locationFilter}
-                            onChange={(e) => setLocationFilter(e.target.value)}
-                        />
-                    </div>
-                    <Button variant="outline" onClick={handleClearFilters} className="w-full md:col-span-1">
-                        <X className="mr-2 h-4 w-4" />
-                        Clear All Filters
-                    </Button>
-                </div>
-                <Separator />
-                <div className="space-y-2">
-                    <div className="flex flex-wrap gap-2">
-                        {contentTypes.map(({ name, label, icon: Icon, variant }) => {
-                            const isSelected = typeFilters.has(name);
-                            return (
-                                <Badge
-                                    key={name}
-                                    variant={isSelected ? variant : 'outline'}
-                                    onClick={() => handleTypeFilterChange(name)}
-                                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleTypeFilterChange(name); }}
-                                    className={cn(
-                                        'cursor-pointer transition-all py-1.5 px-3 text-sm',
-                                        !isSelected && 'hover:bg-accent/50',
-                                        variant === 'outline' && isSelected && 'bg-foreground text-background border-transparent hover:bg-foreground/90'
-                                    )}
-                                    role="button"
-                                    tabIndex={0}
-                                >
-                                    <Icon className="mr-2 h-4 w-4" /> {label}
-                                </Badge>
-                            )
-                        })}
-                    </div>
-                </div>
-            </CardContent>
+          <CardContent className="p-4 flex flex-wrap items-center gap-4">
+              <div className="relative flex-grow sm:flex-grow-0 sm:w-64">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input 
+                      placeholder="Search by keyword..."
+                      className="pl-10"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+              </div>
+              <div className="relative flex-grow sm:flex-grow-0 sm:w-64">
+                  <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                      placeholder="Filter by location..."
+                      className="pl-10"
+                      value={locationFilter}
+                      onChange={(e) => setLocationFilter(e.target.value)}
+                  />
+              </div>
+              <Separator orientation="vertical" className="h-6 mx-2 hidden lg:block" />
+              <div className="flex flex-wrap gap-2 items-center">
+                  {contentTypes.map(({ name, label, icon: Icon, variant }) => {
+                      const isSelected = typeFilters.has(name);
+                      return (
+                          <Badge
+                              key={name}
+                              variant={isSelected ? variant : 'outline'}
+                              onClick={() => handleTypeFilterChange(name)}
+                              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleTypeFilterChange(name); }}
+                              className={cn(
+                                  'cursor-pointer transition-all py-1.5 px-3 text-sm',
+                                  !isSelected && 'hover:bg-accent/50',
+                                  variant === 'outline' && isSelected && 'bg-foreground text-background border-transparent hover:bg-foreground/90'
+                              )}
+                              role="button"
+                              tabIndex={0}
+                          >
+                              <Icon className="mr-2 h-4 w-4" /> {label}
+                          </Badge>
+                      )
+                  })}
+              </div>
+              {areFiltersActive && (
+                  <Button variant="ghost" size="sm" onClick={handleClearFilters} className="ml-auto">
+                      <X className="mr-2 h-4 w-4" />
+                      Clear
+                  </Button>
+              )}
+          </CardContent>
         </Card>
         
         <div className="space-y-4">
