@@ -11,8 +11,8 @@ import type { Event } from '@/lib/events';
 import type { PromoPage } from "@/lib/promo-pages";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { UserCheck, UserPlus, QrCode, Edit, Loader2, Rss, Info, MessageSquare, Package } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { UserCheck, UserPlus, QrCode, Edit, Loader2, Rss, Package, MessageSquare, Info } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { Logo } from "@/components/logo";
@@ -25,8 +25,6 @@ import { toggleLikePost, deletePost, repostPost } from '@/lib/posts';
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
 import { ContactForm } from "@/components/contact-form";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { linkIcons } from "@/lib/link-icons";
-import { ExternalLink, Link as LinkIcon } from 'lucide-react';
 import { PublicContentCard } from "@/components/public-content-card";
 
 interface UserProfilePageProps {
@@ -215,7 +213,7 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
     }
   };
 
-  const { name, username, avatarUrl, avatarFallback, bio, links } = userProfileData;
+  const { name, username, avatarUrl, avatarFallback, bio } = userProfileData;
   const isOwner = currentUser?.uid === userProfileData.uid;
 
   const canViewPrivateContent = useMemo(() => isOwner || isFollowing, [isOwner, isFollowing]);
@@ -262,7 +260,7 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
       <div className="w-full max-w-xl mx-auto space-y-8">
         <Card className="bg-card/80 backdrop-blur-sm p-6 sm:p-8 shadow-2xl rounded-2xl border-primary/10 relative overflow-hidden">
           <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-primary/10 via-background to-background z-0"></div>
-          <CardHeader className="p-0 relative z-10 flex flex-col items-center text-center">
+          <CardContent className="p-0 relative z-10 flex flex-col items-center text-center">
             <Avatar className="w-24 h-24 mb-4 border-4 border-background shadow-lg">
               <AvatarImage src={avatarUrl} alt={name} />
               <AvatarFallback>{avatarFallback}</AvatarFallback>
@@ -270,8 +268,22 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
             <h1 className="font-headline text-3xl font-bold text-foreground">{name}</h1>
             <p className="text-muted-foreground">@{username}</p>
             <p className="text-foreground/90 max-w-prose whitespace-pre-wrap mt-4 text-center text-base">{bio || "This user hasn't written a bio yet."}</p>
-          </CardHeader>
-          <CardContent className="p-0">
+            
+            <div className="flex w-full justify-center gap-2 sm:gap-4 mt-6 py-4 border-y border-border/20">
+                <div className="text-center p-2 flex-1">
+                    <p className="font-bold text-lg sm:text-xl text-foreground">{followerCount.toLocaleString()}</p>
+                    <p className="text-xs text-muted-foreground tracking-wide">Followers</p>
+                </div>
+                <div className="text-center p-2 flex-1">
+                    <p className="font-bold text-lg sm:text-xl text-foreground">{(userProfileData.following?.length || 0).toLocaleString()}</p>
+                    <p className="text-xs text-muted-foreground tracking-wide">Following</p>
+                </div>
+                <div className="text-center p-2 flex-1">
+                    <p className="font-bold text-lg sm:text-xl text-foreground">{(userProfileData.postCount || 0).toLocaleString()}</p>
+                    <p className="text-xs text-muted-foreground tracking-wide">Posts</p>
+                </div>
+            </div>
+
             <div className="mt-6 flex flex-wrap gap-2 justify-center">
                  <Button asChild variant="secondary" className="font-bold flex-1 sm:flex-none">
                     <Link href={`/u/${username}/card`}>
@@ -299,27 +311,12 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
                 )}
             </div>
           </CardContent>
-          <CardFooter className="flex-wrap gap-2 px-0 pt-6 justify-center">
-            <div className="text-center p-3 rounded-lg bg-muted/50 border flex-1">
-                <p className="font-bold text-lg text-foreground">{(followerCount || 0).toLocaleString()}</p>
-                <p className="text-xs text-muted-foreground tracking-wide">Followers</p>
-            </div>
-            <div className="text-center p-3 rounded-lg bg-muted/50 border flex-1">
-                <p className="font-bold text-lg text-foreground">{(userProfileData.following?.length || 0).toLocaleString()}</p>
-                <p className="text-xs text-muted-foreground tracking-wide">Following</p>
-            </div>
-            <div className="text-center p-3 rounded-lg bg-muted/50 border flex-1">
-                <p className="font-bold text-lg text-foreground">{(userProfileData.postCount || 0).toLocaleString()}</p>
-                <p className="text-xs text-muted-foreground tracking-wide">Posts</p>
-            </div>
-          </CardFooter>
         </Card>
 
         <Tabs defaultValue="feed" className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="feed"><Rss className="mr-2 h-4 w-4"/>Feed</TabsTrigger>
                 <TabsTrigger value="showcase"><Package className="mr-2 h-4 w-4"/>Showcase</TabsTrigger>
-                <TabsTrigger value="about"><Info className="mr-2 h-4 w-4"/>About</TabsTrigger>
                 <TabsTrigger value="contact"><MessageSquare className="mr-2 h-4 w-4" />Contact</TabsTrigger>
             </TabsList>
             <TabsContent value="feed" className="mt-6">
@@ -353,42 +350,6 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
                     )}
                 </div>
             </TabsContent>
-            <TabsContent value="about" className="mt-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Links</CardTitle>
-                  <CardDescription>
-                    A collection of important links.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="flex flex-col gap-4">
-                  {links.length > 0 ? (
-                    links.map((link, index) => {
-                      const Icon = linkIcons[link.icon as keyof typeof linkIcons] || LinkIcon;
-                      return (
-                        <a
-                          key={index}
-                          href={link.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="w-full group"
-                        >
-                          <div className="w-full h-14 text-base font-semibold flex items-center p-4 rounded-lg bg-secondary transition-all hover:bg-primary hover:text-primary-foreground hover:scale-105 ease-out duration-200 shadow-sm">
-                            <Icon className="h-5 w-5" />
-                            <span className="flex-1 text-center truncate">{link.title}</span>
-                             <ExternalLink className="h-4 w-4 opacity-0 group-hover:opacity-50 transition-opacity" />
-                          </div>
-                        </a>
-                      );
-                    })
-                  ) : (
-                    <div className="text-center text-sm text-muted-foreground py-10 border-2 border-dashed rounded-lg">
-                      This user hasn't added any links yet.
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
             <TabsContent value="contact" className="mt-6">
               {isClient && isOwner ? (
                   <Card>
@@ -412,3 +373,4 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
     </>
   );
 }
+
