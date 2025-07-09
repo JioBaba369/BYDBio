@@ -11,16 +11,17 @@ import type { Event } from '@/lib/events';
 import type { PromoPage } from "@/lib/promo-pages";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { ExternalLink, UserCheck, UserPlus, QrCode, Edit, Loader2, Link2 as LinkIcon } from "lucide-react";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { ExternalLink, UserCheck, UserPlus, QrCode, Edit, Loader2, Rss, Link2 as LinkIcon, MessageSquare, Package } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
+import ShareButton from "@/components/share-button";
 import { linkIcons } from "@/lib/link-icons";
 import { useAuth } from "@/components/auth-provider";
 import { followUser, unfollowUser } from "@/lib/connections";
 import { useRouter } from "next/navigation";
 import { PostCard } from "@/components/post-card";
-import { getPostsByUser, toggleLikePost, deletePost, repostPost } from '@/lib/posts';
+import { toggleLikePost, deletePost, repostPost, getPostsByUser } from '@/lib/posts';
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
 import { PromoPageFeedItem } from "@/components/feed/promo-page-feed-item";
 import { ListingFeedItem } from "@/components/feed/listing-feed-item";
@@ -28,7 +29,8 @@ import { JobFeedItem } from "@/components/feed/job-feed-item";
 import { EventFeedItem } from "@/components/feed/event-feed-item";
 import { OfferFeedItem } from "@/components/feed/offer-feed-item";
 import { ContactForm } from "@/components/contact-form";
-import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 
 interface UserProfilePageProps {
   userProfileData: User;
@@ -267,103 +269,107 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
           itemName="post"
           confirmationText="DELETE"
       />
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-        <div className="lg:col-span-1 lg:sticky top-20 space-y-6">
-            <Card className="bg-card/80 backdrop-blur-sm shadow-xl rounded-2xl border-primary/10">
-                <CardContent className="p-6">
-                    <div className="flex flex-col items-center text-center">
-                        <Avatar className="w-24 h-24 mb-4 border-4 border-background shadow-lg">
-                            <AvatarImage src={avatarUrl} alt={name} />
-                            <AvatarFallback>{avatarFallback}</AvatarFallback>
-                        </Avatar>
-                        <h1 className="font-headline text-3xl font-bold text-foreground">{name}</h1>
-                        <p className="text-muted-foreground">@{username}</p>
+      <div className="space-y-8">
+        <Card>
+            <CardHeader>
+                <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
+                    <Avatar className="w-24 h-24 border-4 border-background shadow-lg">
+                        <AvatarImage src={avatarUrl} alt={name} />
+                        <AvatarFallback>{avatarFallback}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 text-center sm:text-left">
+                        <div className="flex items-center justify-center sm:justify-start gap-4">
+                            <CardTitle className="text-3xl font-headline">{name}</CardTitle>
+                            <ShareButton variant="ghost" size="icon" />
+                        </div>
+                        <CardDescription>@{username}</CardDescription>
                         
-                        <div className="mt-4 flex items-center justify-center gap-4 text-sm">
+                         <div className="mt-4 flex items-center justify-center sm:justify-start gap-4 text-sm">
                             <p><span className="font-bold">{followerCount}</span> Followers</p>
                             <p><span className="font-bold">{userProfileData.following.length}</span> Following</p>
                         </div>
-
-                        <div className="mt-6 flex w-full flex-col sm:flex-row items-center gap-2">
-                            {isOwner ? (
-                                <Button asChild className="w-full sm:w-auto font-bold">
-                                    <Link href="/profile">
-                                        <Edit className="mr-2 h-4 w-4" /> Edit Profile
-                                    </Link>
-                                </Button>
-                            ) : (
-                                <Button className="w-full sm:w-auto font-bold" onClick={handleFollowToggle} disabled={isFollowLoading}>
-                                    {isFollowLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : isFollowing ? <UserCheck className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
-                                    {isFollowing ? 'Following' : 'Follow'}
-                                </Button>
-                            )}
-                            <Button asChild variant="outline" className="w-full sm:w-auto">
-                                <Link href={`/u/${username}/card`}>
-                                    <QrCode className="mr-2 h-4 w-4" /> Digital Card
-                                </Link>
-                            </Button>
-                        </div>
+                        {bio && <p className="text-sm text-foreground/80 mt-4 max-w-prose whitespace-pre-wrap">{bio}</p>}
                     </div>
-                </CardContent>
-            </Card>
+                </div>
+            </CardHeader>
+            <CardFooter className="flex-wrap gap-2">
+                 {isOwner ? (
+                    <Button asChild className="font-bold">
+                        <Link href="/profile">
+                            <Edit className="mr-2 h-4 w-4" /> Edit Profile
+                        </Link>
+                    </Button>
+                ) : (
+                    <Button className="font-bold" onClick={handleFollowToggle} disabled={isFollowLoading}>
+                        {isFollowLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : isFollowing ? <UserCheck className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
+                        {isFollowing ? 'Following' : 'Follow'}
+                    </Button>
+                )}
+                <Button asChild variant="outline">
+                    <Link href={`/u/${username}/card`}>
+                        <QrCode className="mr-2 h-4 w-4" /> Digital Card
+                    </Link>
+                </Button>
+            </CardFooter>
+        </Card>
 
-            {bio && (
-                 <Card>
-                    <CardHeader>
-                        <CardTitle className="text-lg">About</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <p className="text-sm text-foreground/80 whitespace-pre-wrap">{bio}</p>
-                    </CardContent>
-                </Card>
-            )}
-        </div>
-
-        <div className="lg:col-span-2 space-y-6">
-            {links && links.length > 0 && (
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="text-lg flex items-center gap-2"><LinkIcon className="h-5 w-5"/> Links</CardTitle>
-                    </CardHeader>
-                    <CardContent className="flex flex-col space-y-3">
-                        {links.map((link, index) => {
-                            const Icon = linkIcons[link.icon as keyof typeof linkIcons];
-                            return (
-                            <a key={index} href={link.url} target="_blank" rel="noopener noreferrer" className="w-full group">
-                                <div className="w-full h-12 text-sm font-semibold flex items-center p-3 rounded-lg bg-background/70 shadow-sm border hover:bg-muted transition-all ease-out duration-200">
-                                {Icon && <Icon className="h-5 w-5 text-primary" />}
-                                <span className="flex-1 text-left ml-3 truncate">{link.title}</span>
-                                <ExternalLink className="h-4 w-4 flex-shrink-0 text-muted-foreground/50 transition-transform group-hover:translate-x-1" />
-                                </div>
-                            </a>
-                            )
+        <Tabs defaultValue="feed" className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="feed"><Rss className="mr-2 h-4 w-4" />Feed</TabsTrigger>
+                <TabsTrigger value="links"><LinkIcon className="mr-2 h-4 w-4" />Links</TabsTrigger>
+                <TabsTrigger value="contact"><MessageSquare className="mr-2 h-4 w-4" />Contact</TabsTrigger>
+            </TabsList>
+            <TabsContent value="feed" className="mt-6">
+                {unifiedFeed.length > 0 ? (
+                    <div className="space-y-6">
+                        {unifiedFeed.map(item => {
+                            const ContentComponent = componentMap[item.type as keyof typeof componentMap];
+                            if (!ContentComponent) return null;
+                            return <ContentComponent key={`${item.type}-${item.id}`} item={item} />;
                         })}
-                    </CardContent>
-                </Card>
-            )}
-             
-            {unifiedFeed.length > 0 ? (
-                <div className="space-y-6">
-                    <h2 className="text-xl font-bold font-headline">Feed</h2>
-                    {unifiedFeed.map(item => {
-                        const ContentComponent = componentMap[item.type as keyof typeof componentMap];
-                        if (!ContentComponent) return null;
-                        return <ContentComponent key={`${item.type}-${item.id}`} item={item} />;
-                    })}
-                </div>
-            ) : (
-                <Card className="text-center text-muted-foreground p-10">
-                    This user hasn't posted any content yet.
-                </Card>
-            )}
-
-            {!isOwner && (
-                <div>
-                    <Separator className="my-8" />
-                    <ContactForm recipientId={userProfileData.uid} />
-                </div>
-            )}
-        </div>
+                    </div>
+                ) : (
+                    <Card className="text-center text-muted-foreground p-10">
+                        This user hasn't created any content yet.
+                    </Card>
+                )}
+            </TabsContent>
+            <TabsContent value="links" className="mt-6">
+                {links && links.length > 0 ? (
+                    <Card>
+                        <CardContent className="p-4 flex flex-col space-y-3">
+                            {links.map((link, index) => {
+                                const Icon = linkIcons[link.icon as keyof typeof linkIcons];
+                                return (
+                                <a key={index} href={link.url} target="_blank" rel="noopener noreferrer" className="w-full group">
+                                    <div className="w-full h-14 text-base font-semibold flex items-center p-3 rounded-lg bg-secondary/50 hover:bg-secondary transition-all ease-out duration-200">
+                                    {Icon && <Icon className="h-5 w-5 text-primary" />}
+                                    <span className="flex-1 text-center">{link.title}</span>
+                                    <ExternalLink className="h-5 w-5 text-muted-foreground/50 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                    </div>
+                                </a>
+                                )
+                            })}
+                        </CardContent>
+                    </Card>
+                ) : (
+                    <Card className="text-center text-muted-foreground p-10">
+                        This user hasn't added any links yet.
+                    </Card>
+                )}
+            </TabsContent>
+             <TabsContent value="contact" className="mt-6">
+              {!isOwner ? (
+                  <ContactForm recipientId={userProfileData.uid} />
+              ) : (
+                  <Card>
+                      <CardContent className="p-6 text-center text-muted-foreground">
+                          This is a preview of the contact form that visitors will see on your profile.
+                      </CardContent>
+                  </Card>
+              )}
+            </TabsContent>
+        </Tabs>
       </div>
     </>
   );
