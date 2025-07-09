@@ -253,8 +253,8 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
     />
     <div className="flex justify-center bg-dot py-8 px-4">
       <div className="w-full max-w-xl mx-auto space-y-8">
-        <Card className="bg-card/80 backdrop-blur-sm p-6 sm:p-8 shadow-2xl rounded-2xl border-primary/10 relative">
-          <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10 z-0"></div>
+        <Card className="bg-card/80 backdrop-blur-sm p-6 sm:p-8 shadow-2xl rounded-2xl border-primary/10 relative overflow-hidden">
+          <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-primary/10 via-background to-background z-0"></div>
           <div className="relative z-10 flex flex-col items-center text-center">
             <Avatar className="w-24 h-24 mb-4 border-4 border-background shadow-lg">
               <AvatarImage src={avatarUrl} alt={name} />
