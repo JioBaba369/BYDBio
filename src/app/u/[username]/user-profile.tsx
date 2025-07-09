@@ -11,12 +11,11 @@ import type { Event } from '@/lib/events';
 import type { PromoPage } from "@/lib/promo-pages";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { ExternalLink, UserCheck, UserPlus, QrCode, Edit, Loader2, Rss, Link2 as LinkIcon, MessageSquare } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { UserCheck, UserPlus, QrCode, Edit, Loader2, Rss, MessageSquare, Link2 as LinkIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import ShareButton from "@/components/share-button";
-import { linkIcons } from "@/lib/link-icons";
 import { useAuth } from "@/components/auth-provider";
 import { followUser, unfollowUser } from "@/lib/connections";
 import { useRouter } from "next/navigation";
@@ -302,6 +301,11 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
                     </Button>
                 )}
                 <Button asChild variant="outline" className="flex-1 sm:flex-none">
+                    <Link href={`/u/${username}/links`}>
+                        <LinkIcon className="mr-2 h-4 w-4" /> Links Page
+                    </Link>
+                </Button>
+                <Button asChild variant="outline" className="flex-1 sm:flex-none">
                     <Link href={`/u/${username}/card`}>
                         <QrCode className="mr-2 h-4 w-4" /> Digital Card
                     </Link>
@@ -310,9 +314,8 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
         </Card>
 
         <Tabs defaultValue="feed" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="feed"><Rss className="mr-2 h-4 w-4"/>Feed</TabsTrigger>
-                <TabsTrigger value="links"><LinkIcon className="mr-2 h-4 w-4"/>Links</TabsTrigger>
                 <TabsTrigger value="contact"><MessageSquare className="mr-2 h-4 w-4" />Contact</TabsTrigger>
             </TabsList>
             <TabsContent value="feed" className="mt-6">
@@ -328,30 +331,6 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
                 ) : (
                     <Card className="text-center text-muted-foreground p-10">
                         This user hasn't created any content yet.
-                    </Card>
-                )}
-            </TabsContent>
-            <TabsContent value="links" className="mt-6">
-                {links && links.length > 0 ? (
-                    <Card>
-                        <CardContent className="p-4 flex flex-col space-y-3">
-                            {links.map((link, index) => {
-                                const Icon = linkIcons[link.icon as keyof typeof linkIcons];
-                                return (
-                                <a key={index} href={link.url} target="_blank" rel="noopener noreferrer" className="w-full group">
-                                    <div className="w-full h-14 text-base font-semibold flex items-center p-3 rounded-lg bg-secondary/50 hover:bg-secondary transition-all ease-out duration-200">
-                                    {Icon && <Icon className="h-5 w-5 text-primary" />}
-                                    <span className="flex-1 text-center">{link.title}</span>
-                                    <ExternalLink className="h-5 w-5 text-muted-foreground/50 opacity-0 group-hover:opacity-100 transition-opacity" />
-                                    </div>
-                                </a>
-                                )
-                            })}
-                        </CardContent>
-                    </Card>
-                ) : (
-                    <Card className="text-center text-muted-foreground p-10">
-                        This user hasn't added any links yet.
                     </Card>
                 )}
             </TabsContent>
@@ -371,5 +350,3 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
     </>
   );
 }
-
-    
