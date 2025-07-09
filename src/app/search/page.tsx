@@ -107,21 +107,19 @@ export default function SearchPage() {
         const collectionsToSearch = ['listings', 'jobs', 'events', 'offers', 'promoPages', 'posts'];
         
         const contentPromises = collectionsToSearch.map(colName => {
+            const queryConstraints: any[] = [
+                where('searchableKeywords', 'array-contains-any', searchKeywords),
+                limit(50)
+            ];
+
             if (colName === 'posts') {
-                return getDocs(query(
-                    collection(db, colName),
-                    where('searchableKeywords', 'array-contains-any', searchKeywords),
-                    where('privacy', '==', 'public'),
-                    limit(50)
-                ));
+                queryConstraints.push(where('privacy', '==', 'public'));
             } else {
-                return getDocs(query(
-                    collection(db, colName),
-                    where('searchableKeywords', 'array-contains-any', searchKeywords),
-                    where('status', '==', 'active'),
-                    limit(50)
-                ));
+                queryConstraints.push(where('status', '==', 'active'));
             }
+            
+            const finalQuery = query(collection(db, colName), ...queryConstraints);
+            return getDocs(finalQuery);
         });
         
         const [listingsSnap, jobsSnap, eventsSnap, offersSnap, promoPagesSnap, postsSnap] = await Promise.all(contentPromises);
