@@ -47,14 +47,11 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
   const { user: currentUser } = useAuth();
   const router = useRouter();
   
-  const [isFollowing, setIsFollowing] = useState(currentUser?.following?.includes(userProfileData.uid) || false);
+  const [isFollowing, setIsFollowing] = useState(false);
   const [followerCount, setFollowerCount] = useState(userProfileData.followerCount || 0);
   const [isFollowLoading, setIsFollowLoading] = useState(false);
   
-  const [localPosts, setLocalPosts] = useState(content.posts.map(p => ({
-    ...p,
-    isLiked: currentUser ? p.likedBy.includes(currentUser.uid) : false,
-  })));
+  const [localPosts, setLocalPosts] = useState<PostWithAuthor[]>([]);
   
   const { toast } = useToast();
   
@@ -66,15 +63,16 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
   const isOwner = currentUser?.uid === userProfileData.uid;
 
   useEffect(() => {
+    setIsFollowing(currentUser?.following?.includes(userProfileData.uid) || false);
+    setFollowerCount(userProfileData.followerCount || 0);
+  }, [currentUser, userProfileData]);
+
+  useEffect(() => {
     setLocalPosts(content.posts.map(p => ({
         ...p,
         isLiked: currentUser ? p.likedBy.includes(currentUser.uid) : false,
     })));
   }, [content.posts, currentUser]);
-
-  useEffect(() => {
-    setIsFollowing(currentUser?.following?.includes(userProfileData.uid) || false);
-  }, [currentUser, userProfileData.uid]);
   
   const fetchPosts = useCallback(async () => {
     const freshPosts = await getPostsByUser(userProfileData.uid);
@@ -95,7 +93,6 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
     setIsFollowLoading(true);
     const currentlyFollowing = isFollowing;
 
-    // Optimistic UI Update
     setIsFollowing(!currentlyFollowing);
     setFollowerCount(prev => prev + (!currentlyFollowing ? 1 : -1));
 
@@ -281,12 +278,8 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
                 <h1 className="font-headline text-3xl font-bold text-foreground">{name}</h1>
                 <p className="text-muted-foreground">@{username}</p>
               
-                <div className="mt-6 grid w-full grid-cols-1 sm:grid-cols-3 items-center gap-4">
-                    <div className="sm:col-span-1 text-center p-2 rounded-md bg-muted/50">
-                        <p className="font-bold text-lg text-foreground">{followerCount}</p>
-                        <p className="text-xs text-muted-foreground tracking-wide">Followers</p>
-                    </div>
-                    <div className="sm:col-span-2 flex flex-col sm:flex-row gap-2">
+                <div className="mt-6 grid w-full grid-cols-1 items-center gap-4">
+                     <div className="flex flex-col sm:flex-row gap-2">
                         {isOwner ? (
                             <Button asChild className="flex-1 font-bold">
                                 <Link href="/profile">
@@ -306,39 +299,15 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
                         </Button>
                     </div>
                 </div>
+
+                {bio && (
+                  <>
+                    <Separator className="my-6" />
+                    <p className="text-sm text-muted-foreground whitespace-pre-wrap text-left">{bio}</p>
+                  </>
+                )}
               </div>
           </Card>
-          {(bio || (links && links.length > 0)) && (
-            <Card className="bg-card/80 backdrop-blur-sm p-6 shadow-2xl rounded-2xl border-primary/10">
-                <div className="w-full text-left">
-                  {bio && (
-                      <div>
-                          <h3 className="font-headline font-semibold text-lg">About</h3>
-                          <p className="mt-2 text-foreground/90 max-w-prose whitespace-pre-wrap text-sm">{bio}</p>
-                      </div>
-                  )}
-                  {links && links.length > 0 && (
-                      <div className={cn(bio && "mt-6")}>
-                          <h3 className="font-headline font-semibold text-lg">Links</h3>
-                          <div className="flex flex-col space-y-3 mt-3">
-                            {links.map((link, index) => {
-                                const Icon = linkIcons[link.icon as keyof typeof linkIcons];
-                                return (
-                                <a key={index} href={link.url} target="_blank" rel="noopener noreferrer" className="w-full group">
-                                    <div className="w-full h-14 text-base font-semibold flex items-center p-4 rounded-lg bg-background/70 shadow-sm border hover:bg-muted transition-all hover:scale-[1.02] ease-out duration-200">
-                                    {Icon && <Icon className="h-5 w-5" />}
-                                    <span className="flex-1 text-center text-sm">{link.title}</span>
-                                    <ExternalLink className="h-5 w-5 text-muted-foreground/50 opacity-0 group-hover:opacity-100 transition-opacity" />
-                                    </div>
-                                </a>
-                                )
-                            })}
-                          </div>
-                      </div>
-                  )}
-                </div>
-            </Card>
-          )}
         </div>
 
         {/* Right Column */}
@@ -346,7 +315,7 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
           <Tabs defaultValue="feed" className="w-full">
               <TabsList className="grid w-full grid-cols-2">
                   <TabsTrigger value="feed"><Rss className="mr-2 h-4 w-4"/>Feed</TabsTrigger>
-                  <TabsTrigger value="about"><MessageSquare className="mr-2 h-4 w-4" />Contact</TabsTrigger>
+                  <TabsTrigger value="connect"><MessageSquare className="mr-2 h-4 w-4" />Connect</TabsTrigger>
               </TabsList>
               <TabsContent value="feed" className="mt-6">
                   {unifiedFeed.length > 0 ? (
@@ -363,7 +332,28 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
                       </Card>
                   )}
               </TabsContent>
-              <TabsContent value="about" className="mt-6">
+              <TabsContent value="connect" className="mt-6 space-y-6">
+                {links && links.length > 0 && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Links</CardTitle>
+                    </CardHeader>
+                    <CardContent className="flex flex-col gap-3">
+                      {links.map((link, index) => {
+                          const Icon = linkIcons[link.icon as keyof typeof linkIcons];
+                          return (
+                          <a key={index} href={link.url} target="_blank" rel="noopener noreferrer" className="w-full group">
+                              <div className="w-full h-14 text-base font-semibold flex items-center p-4 rounded-lg bg-background/70 shadow-sm border hover:bg-muted transition-all hover:scale-[1.02] ease-out duration-200">
+                              {Icon && <Icon className="h-5 w-5 text-primary" />}
+                              <span className="flex-1 text-center text-sm">{link.title}</span>
+                              <ExternalLink className="h-5 w-5 text-muted-foreground/50 opacity-0 group-hover:opacity-100 transition-opacity" />
+                              </div>
+                          </a>
+                          )
+                      })}
+                    </CardContent>
+                  </Card>
+                )}
                 {!isOwner ? (
                     <ContactForm recipientId={userProfileData.uid} />
                 ) : (
@@ -380,4 +370,3 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
     </>
   );
 }
-
