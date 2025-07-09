@@ -3,7 +3,7 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
+import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 import { Image as ImageIcon, Send, X, Users, Compass, Loader2, Globe, Lock } from "lucide-react"
 import { useState, useRef, useEffect, useCallback } from "react";
@@ -215,8 +215,8 @@ export default function FeedPage() {
     const originalFollowing = [...followingPosts];
     const originalDiscovery = [...discoveryPosts];
 
-    setFollowingPosts(updater);
-    setDiscoveryPosts(updater);
+    setFollowingPosts(feed => updater(feed));
+    setDiscoveryPosts(feed => updater(feed));
 
     try {
         await toggleLikePost(postId, user.uid);
