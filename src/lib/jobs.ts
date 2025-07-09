@@ -16,6 +16,7 @@ import {
 import { db } from '@/lib/firebase';
 import type { User } from './users';
 import { getUsersByIds } from './users';
+import { serializeDocument } from './firestore-utils';
 
 export type Job = {
   id: string; // Document ID from Firestore
@@ -28,14 +29,14 @@ export type Job = {
   category?: string;
   subCategory?: string;
   remuneration?: string;
-  postingDate: Date;
-  closingDate?: Date | null;
+  postingDate: string; // ISO 8601 string
+  closingDate?: string | null; // ISO 8601 string
   imageUrl: string | null;
   status: 'active' | 'archived';
   views: number;
   applicants: number;
   followerCount: number;
-  createdAt: Date;
+  createdAt: string; // ISO 8601 string
   searchableKeywords: string[];
   applicationUrl?: string;
   contactInfo?: string;
@@ -43,28 +44,12 @@ export type Job = {
 
 export type JobWithAuthor = Job & { author: Pick<User, 'uid' | 'name' | 'username' | 'avatarUrl'> };
 
-const serializeJob = (doc: any): Job | null => {
-    const data = doc.data();
-    if (!data || !data.postingDate) return null;
-
-    const job: any = { id: doc.id };
-    for (const key in data) {
-        if (data[key] instanceof Timestamp) {
-            job[key] = data[key].toDate();
-        } else {
-            job[key] = data[key];
-        }
-    }
-    return job as Job;
-};
-
-
 // Function to fetch a single job by its ID
 export const getJob = async (id: string): Promise<Job | null> => {
   const jobDocRef = doc(db, 'jobs', id);
   const jobDoc = await getDoc(jobDocRef);
   if (!jobDoc.exists()) return null;
-  return serializeJob(jobDoc);
+  return serializeDocument<Job>(jobDoc);
 };
 
 // Function to fetch all jobs for a specific user
@@ -72,7 +57,7 @@ export const getJobsByUser = async (userId: string): Promise<Job[]> => {
   const jobsRef = collection(db, 'jobs');
   const q = query(jobsRef, where('authorId', '==', userId), where('status', '==', 'active'), orderBy('postingDate', 'desc'));
   const querySnapshot = await getDocs(q);
-  return querySnapshot.docs.map(serializeJob).filter((job): job is Job => job !== null);
+  return querySnapshot.docs.map(doc => serializeDocument<Job>(doc)).filter((job): job is Job => job !== null);
 };
 
 // Function to create a new job
@@ -176,7 +161,7 @@ export const getAllJobs = async (): Promise<JobWithAuthor[]> => {
     const querySnapshot = await getDocs(q);
 
     const jobDocs = querySnapshot.docs
-        .map(serializeJob)
+        .map(doc => serializeDocument<Job>(doc))
         .filter((job): job is Job => !!job);
 
     if (jobDocs.length === 0) return [];

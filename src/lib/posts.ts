@@ -22,6 +22,7 @@ import { db } from '@/lib/firebase';
 import type { User } from './users';
 import { createNotification } from './notifications';
 import { getUsersByIds } from './users';
+import { serializeDocument } from './firestore-utils';
 
 // This is the structure stored in Firestore for a quoted or reposted post.
 export type EmbeddedPostInfo = {
@@ -63,27 +64,13 @@ export type PostWithAuthor = Post & {
   repostedPost?: EmbeddedPostInfoWithAuthor;
 };
 
-const serializePost = (doc: any): Post | null => {
-    const data = doc.data();
-    if (!data || !data.createdAt) return null;
-
-    const post: any = { id: doc.id };
-    for (const key in data) {
-        if (data[key] instanceof Timestamp) {
-            post[key] = data[key].toDate().toISOString();
-        } else {
-            post[key] = data[key];
-        }
-    }
-    return post as Post;
-}
 
 // Function to fetch a single post by its ID
 export const getPost = async (id: string): Promise<Post | null> => {
   const postDocRef = doc(db, 'posts', id);
   const postDoc = await getDoc(postDocRef);
   if (!postDoc.exists()) return null;
-  return serializePost(postDoc);
+  return serializeDocument<Post>(postDoc);
 };
 
 // Function to fetch all posts for a specific user
@@ -93,7 +80,7 @@ export const getPostsByUser = async (userId: string): Promise<PostWithAuthor[]> 
   const querySnapshot = await getDocs(q);
   
   const posts = querySnapshot.docs
-    .map(serializePost)
+    .map(doc => serializeDocument<Post>(doc))
     .filter((post): post is Post => post !== null);
   
   return populatePostAuthors(posts);
@@ -123,7 +110,7 @@ export const createPost = async (userId: string, data: Pick<Post, 'content' | 'i
 
   const docRef = await addDoc(postsRef, postData);
   const newPostDoc = await getDoc(docRef);
-  return serializePost(newPostDoc) as Post;
+  return serializeDocument<Post>(newPostDoc) as Post;
 };
 
 // Function to delete a post
@@ -218,7 +205,7 @@ export const repostPost = async (originalPostId: string, reposterId: string): Pr
     await batch.commit();
 
     const newDoc = await getDoc(newPostRef);
-    return serializePost(newDoc) as Post;
+    return serializeDocument<Post>(newDoc) as Post;
 };
 
 export const populatePostAuthors = async (posts: Post[]): Promise<PostWithAuthor[]> => {
@@ -292,7 +279,7 @@ export const getFeedPosts = async (followingIds: string[]): Promise<PostWithAuth
     const q = query(postsRef, where('authorId', 'in', followingIds), orderBy('createdAt', 'desc'), limit(50));
     const querySnapshot = await getDocs(q);
     
-    const postsData = querySnapshot.docs.map(serializePost).filter((p): p is Post => !!p);
+    const postsData = querySnapshot.docs.map(doc => serializeDocument<Post>(doc)).filter((p): p is Post => !!p);
 
     return populatePostAuthors(postsData);
 };
@@ -317,7 +304,7 @@ export const getDiscoveryPosts = async (userId: string, followingIds: string[]):
         return [];
     }
 
-    const postsData = discoveryDocs.map(serializePost).filter((p): p is Post => !!p);
+    const postsData = discoveryDocs.map(doc => serializeDocument<Post>(doc)).filter((p): p is Post => !!p);
 
     return populatePostAuthors(postsData);
 };

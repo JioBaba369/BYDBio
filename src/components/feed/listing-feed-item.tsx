@@ -21,12 +21,12 @@ export function ListingFeedItem({ item }: { item: Listing }) {
                 alt={item.title}
                 width={120}
                 height={80}
-                className="rounded-lg object-cover aspect-[3/2]"
+                className="rounded-lg object-cover aspect-[3/2] border"
                 data-ai-hint="product design"
               />
             </Link>
           )}
-          <div className="flex-1">
+          <div className="flex-1 space-y-2">
             <p className="text-primary font-bold text-lg">
               <ClientFormattedCurrency value={item.price} />
             </p>

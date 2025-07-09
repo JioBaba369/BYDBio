@@ -290,10 +290,11 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
         </Card>
 
         <Tabs defaultValue="creations" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="creations"><Package className="mr-2 h-4 w-4"/>Creations</TabsTrigger>
                 <TabsTrigger value="feed"><Rss className="mr-2 h-4 w-4"/>Feed</TabsTrigger>
                 <TabsTrigger value="about"><Info className="mr-2 h-4 w-4"/>About</TabsTrigger>
+                <TabsTrigger value="contact"><MessageSquare className="mr-2 h-4 w-4" />Contact</TabsTrigger>
             </TabsList>
             <TabsContent value="creations" className="mt-6">
                  {allOtherContent.length > 0 ? (
@@ -371,8 +372,17 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
                     </CardContent>
                 </Card>
                 )}
-
-                {!isOwner && <ContactForm recipientId={userProfileData.uid} />}
+            </TabsContent>
+            <TabsContent value="contact" className="mt-6">
+              {!isOwner ? (
+                  <ContactForm recipientId={userProfileData.uid} />
+              ) : (
+                  <Card>
+                      <CardContent className="p-6 text-center text-muted-foreground">
+                          This is a preview of the contact form that visitors will see on your profile.
+                      </CardContent>
+                  </Card>
+              )}
             </TabsContent>
         </Tabs>
         

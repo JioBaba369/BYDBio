@@ -16,6 +16,7 @@ import {
 import { db } from '@/lib/firebase';
 import type { User } from './users';
 import { getUsersByIds } from './users';
+import { serializeDocument } from './firestore-utils';
 
 export type PromoPage = {
   id: string; // Document ID from Firestore
@@ -34,26 +35,11 @@ export type PromoPage = {
   views?: number;
   clicks?: number;
   followerCount: number;
-  createdAt: Date;
+  createdAt: string; // ISO 8601 string
   searchableKeywords: string[];
 };
 
 export type PromoPageWithAuthor = PromoPage & { author: Pick<User, 'uid' | 'name' | 'username' | 'avatarUrl'> };
-
-const serializePromoPage = (doc: any): PromoPage | null => {
-    const data = doc.data();
-    if (!data) return null;
-
-    const page: any = { id: doc.id };
-    for (const key in data) {
-        if (data[key] instanceof Timestamp) {
-            page[key] = data[key].toDate();
-        } else {
-            page[key] = data[key];
-        }
-    }
-    return page as PromoPage;
-};
 
 
 // Function to fetch a single promo page by its ID
@@ -61,7 +47,7 @@ export const getPromoPage = async (id: string): Promise<PromoPage | null> => {
   const promoPageDocRef = doc(db, 'promoPages', id);
   const promoPageDoc = await getDoc(promoPageDocRef);
   if (!promoPageDoc.exists()) return null;
-  return serializePromoPage(promoPageDoc);
+  return serializeDocument<PromoPage>(promoPageDoc);
 };
 
 // Function to fetch all promo pages for a specific user
@@ -70,7 +56,7 @@ export const getPromoPagesByUser = async (userId: string): Promise<PromoPage[]> 
   const q = query(promoPagesRef, where('authorId', '==', userId), where('status', '==', 'active'), orderBy('createdAt', 'desc'));
   const querySnapshot = await getDocs(q);
   return querySnapshot.docs
-    .map(serializePromoPage)
+    .map(doc => serializeDocument<PromoPage>(doc))
     .filter((page): page is PromoPage => page !== null);
 };
 
@@ -166,7 +152,7 @@ export const getAllPromoPages = async (): Promise<PromoPageWithAuthor[]> => {
     const querySnapshot = await getDocs(q);
 
     const promoPageDocs = querySnapshot.docs
-        .map(serializePromoPage)
+        .map(doc => serializeDocument<PromoPage>(doc))
         .filter((page): page is PromoPage => !!page);
 
     if (promoPageDocs.length === 0) return [];

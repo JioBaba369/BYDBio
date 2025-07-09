@@ -20,9 +20,8 @@ import {
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { User } from './users';
-import { formatCurrency } from './utils';
-import { createNotification } from './notifications';
 import { getUsersByIds } from './users';
+import { serializeDocument } from './firestore-utils';
 
 export type ItineraryItem = {
   time: string;
@@ -78,28 +77,12 @@ export type CalendarItem = {
   rsvps?: string[];
 };
 
-const serializeEvent = (doc: any): Event | null => {
-    const data = doc.data();
-    if (!data || !data.startDate) return null;
-
-    const event: any = { id: doc.id };
-    for (const key in data) {
-        if (data[key] instanceof Timestamp) {
-            event[key] = data[key].toDate().toISOString();
-        } else {
-            event[key] = data[key];
-        }
-    }
-    return event as Event;
-};
-
-
 // Function to fetch a single event by its ID
 export const getEvent = async (id: string): Promise<Event | null> => {
   const eventDocRef = doc(db, 'events', id);
   const eventDoc = await getDoc(eventDocRef);
   if (!eventDoc.exists()) return null;
-  return serializeEvent(eventDoc);
+  return serializeDocument<Event>(eventDoc);
 };
 
 // Function to fetch all events for a specific user
@@ -107,7 +90,7 @@ export const getEventsByUser = async (userId: string): Promise<Event[]> => {
   const eventsRef = collection(db, 'events');
   const q = query(eventsRef, where('authorId', '==', userId), where('status', '==', 'active'), orderBy('startDate', 'desc'));
   const querySnapshot = await getDocs(q);
-  return querySnapshot.docs.map(serializeEvent).filter((event): event is Event => event !== null);
+  return querySnapshot.docs.map(doc => serializeDocument<Event>(doc)).filter((event): event is Event => event !== null);
 };
 
 // Function to create a new event
@@ -231,7 +214,7 @@ export const getAllEvents = async (): Promise<EventWithAuthor[]> => {
     const querySnapshot = await getDocs(q);
 
     const eventDocs = querySnapshot.docs
-        .map(serializeEvent)
+        .map(doc => serializeDocument<Event>(doc))
         .filter((event): event is Event => !!event);
 
     if (eventDocs.length === 0) return [];
@@ -297,14 +280,8 @@ export const getCalendarItems = async (userId: string): Promise<CalendarItem[]> 
     
     const formattedItems = Array.from(allItems.values()).map((item: any) => {
         // Serialize all potential date fields in the item
-        const serializedItem: { [key: string]: any } = {};
-        for (const key in item) {
-            if (item[key] instanceof Timestamp) {
-                serializedItem[key] = item[key].toDate().toISOString();
-            } else {
-                serializedItem[key] = item[key];
-            }
-        }
+        const serializedItem = serializeDocument<any>(item);
+        if (!serializedItem) return null;
 
         let primaryDate = serializedItem.startDate || serializedItem.postingDate || serializedItem.createdAt;
         if (!primaryDate) return null;

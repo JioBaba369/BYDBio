@@ -16,6 +16,7 @@ import {
 import { db } from '@/lib/firebase';
 import type { User } from './users';
 import { getUsersByIds } from './users';
+import { serializeDocument } from './firestore-utils';
 
 export type Listing = {
   id: string; // Document ID from Firestore
@@ -31,36 +32,20 @@ export type Listing = {
   views?: number;
   clicks?: number;
   followerCount: number;
-  startDate?: Date | null;
-  endDate?: Date | null;
-  createdAt: Date;
+  startDate?: string | null; // ISO 8601 string
+  endDate?: string | null; // ISO 8601 string
+  createdAt: string; // ISO 8601 string
   searchableKeywords: string[];
 };
 
 export type ListingWithAuthor = Listing & { author: Pick<User, 'uid' | 'name' | 'username' | 'avatarUrl'> };
-
-const serializeListing = (doc: any): Listing | null => {
-    const data = doc.data();
-    if (!data) return null;
-
-    const listing: any = { id: doc.id };
-    for (const key in data) {
-        if (data[key] instanceof Timestamp) {
-            listing[key] = data[key].toDate();
-        } else {
-            listing[key] = data[key];
-        }
-    }
-    return listing as Listing;
-};
-
 
 // Function to fetch a single listing by its ID
 export const getListing = async (id: string): Promise<Listing | null> => {
   const listingDocRef = doc(db, 'listings', id);
   const listingDoc = await getDoc(listingDocRef);
   if (!listingDoc.exists()) return null;
-  return serializeListing(listingDoc);
+  return serializeDocument<Listing>(listingDoc);
 };
 
 // Function to fetch all listings for a specific user
@@ -68,7 +53,7 @@ export const getListingsByUser = async (userId: string): Promise<Listing[]> => {
   const listingsRef = collection(db, 'listings');
   const q = query(listingsRef, where('authorId', '==', userId), where('status', '==', 'active'), orderBy('createdAt', 'desc'));
   const querySnapshot = await getDocs(q);
-  return querySnapshot.docs.map(serializeListing).filter((listing): listing is Listing => listing !== null);
+  return querySnapshot.docs.map(doc => serializeDocument<Listing>(doc)).filter((listing): listing is Listing => listing !== null);
 };
 
 // Function to create a new listing
@@ -155,7 +140,7 @@ export const getAllListings = async (): Promise<ListingWithAuthor[]> => {
     const querySnapshot = await getDocs(q);
 
     const listingDocs = querySnapshot.docs
-      .map(serializeListing)
+      .map(doc => serializeDocument<Listing>(doc))
       .filter((listing): listing is Listing => !!listing);
 
     if (listingDocs.length === 0) return [];

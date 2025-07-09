@@ -108,7 +108,7 @@ export default function PromoClient({ initialPromoPages }: { initialPromoPages: 
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold font-headline">Community Business Pages</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold font-headline">Business Pages</h1>
             <p className="text-muted-foreground">Discover business pages and company profiles from the community.</p>
           </div>
           <div className="flex items-center gap-2">

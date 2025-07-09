@@ -16,6 +16,7 @@ import {
 import { db } from '@/lib/firebase';
 import type { User } from './users';
 import { getUsersByIds } from './users';
+import { serializeDocument } from './firestore-utils';
 
 export type Offer = {
   id: string; // Document ID from Firestore
@@ -24,8 +25,8 @@ export type Offer = {
   description: string;
   category: string;
   subCategory?: string;
-  startDate: Date;
-  endDate?: Date | null;
+  startDate: string; // ISO 8601 string
+  endDate?: string | null; // ISO 8601 string
   imageUrl: string | null;
   couponCode?: string;
   ctaLink?: string;
@@ -33,26 +34,11 @@ export type Offer = {
   views: number;
   claims: number;
   followerCount: number;
-  createdAt: Date;
+  createdAt: string; // ISO 8601 string
   searchableKeywords: string[];
 };
 
 export type OfferWithAuthor = Offer & { author: Pick<User, 'uid' | 'name' | 'username' | 'avatarUrl'> };
-
-const serializeOffer = (doc: any): Offer | null => {
-    const data = doc.data();
-    if (!data || !data.startDate) return null;
-
-    const offer: any = { id: doc.id };
-    for (const key in data) {
-        if (data[key] instanceof Timestamp) {
-            offer[key] = data[key].toDate();
-        } else {
-            offer[key] = data[key];
-        }
-    }
-    return offer as Offer;
-};
 
 
 // Function to fetch a single offer by its ID
@@ -60,7 +46,7 @@ export const getOffer = async (id: string): Promise<Offer | null> => {
   const offerDocRef = doc(db, 'offers', id);
   const offerDoc = await getDoc(offerDocRef);
   if (!offerDoc.exists()) return null;
-  return serializeOffer(offerDoc);
+  return serializeDocument<Offer>(offerDoc);
 };
 
 // Function to fetch all offers for a specific user
@@ -68,7 +54,7 @@ export const getOffersByUser = async (userId: string): Promise<Offer[]> => {
   const offersRef = collection(db, 'offers');
   const q = query(offersRef, where('authorId', '==', userId), where('status', '==', 'active'), orderBy('startDate', 'desc'));
   const querySnapshot = await getDocs(q);
-  return querySnapshot.docs.map(serializeOffer).filter((offer): offer is Offer => offer !== null);
+  return querySnapshot.docs.map(doc => serializeDocument<Offer>(doc)).filter((offer): offer is Offer => offer !== null);
 };
 
 // Function to create a new offer
@@ -159,7 +145,7 @@ export const getAllOffers = async (): Promise<OfferWithAuthor[]> => {
     const querySnapshot = await getDocs(q);
 
     const offerDocs = querySnapshot.docs
-        .map(serializeOffer)
+        .map(doc => serializeDocument<Offer>(doc))
         .filter((offer): offer is Offer => !!offer);
 
     if (offerDocs.length === 0) return [];
