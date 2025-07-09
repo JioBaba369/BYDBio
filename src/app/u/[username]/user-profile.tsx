@@ -12,7 +12,7 @@ import type { PromoPage } from "@/lib/promo-pages";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { ExternalLink, UserCheck, UserPlus, QrCode, Edit, Loader2, Rss, Link2 as LinkIcon, MessageSquare, Package } from "lucide-react";
+import { ExternalLink, UserCheck, UserPlus, QrCode, Edit, Loader2, Rss, Link2 as LinkIcon, MessageSquare } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import ShareButton from "@/components/share-button";
@@ -21,7 +21,7 @@ import { useAuth } from "@/components/auth-provider";
 import { followUser, unfollowUser } from "@/lib/connections";
 import { useRouter } from "next/navigation";
 import { PostCard } from "@/components/post-card";
-import { toggleLikePost, deletePost, repostPost, getPostsByUser } from '@/lib/posts';
+import { toggleLikePost, deletePost, repostPost, getPrivatePostsByUser } from '@/lib/posts';
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
 import { PromoPageFeedItem } from "@/components/feed/promo-page-feed-item";
 import { ListingFeedItem } from "@/components/feed/listing-feed-item";
@@ -48,11 +48,11 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
   const { user: currentUser } = useAuth();
   const router = useRouter();
   
+  const [localPosts, setLocalPosts] = useState(content.posts);
+  
   const [isFollowing, setIsFollowing] = useState(false);
   const [followerCount, setFollowerCount] = useState(userProfileData.followerCount || 0);
   const [isFollowLoading, setIsFollowLoading] = useState(false);
-  
-  const [localPosts, setLocalPosts] = useState<PostWithAuthor[]>([]);
   
   const { toast } = useToast();
   
@@ -62,28 +62,40 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
   const [loadingAction, setLoadingAction] = useState<{ postId: string; action: 'like' | 'repost' } | null>(null);
 
   const isOwner = currentUser?.uid === userProfileData.uid;
-
-  const fetchPosts = useCallback(async () => {
-    const freshPosts = await getPostsByUser(userProfileData.uid);
-    setLocalPosts(freshPosts.map(p => ({
-      ...p,
-      isLiked: currentUser ? p.likedBy.includes(currentUser.uid) : false,
-    })));
-  }, [userProfileData.uid, currentUser]);
+  const canViewPrivateContent = useMemo(() => isOwner || isFollowing, [isOwner, isFollowing]);
 
   useEffect(() => {
-    // Initial post setup from server-props
-    setLocalPosts(content.posts.map(p => ({
-        ...p,
-        isLiked: currentUser ? p.likedBy.includes(currentUser.uid) : false,
-    })));
-  }, [content.posts, currentUser]);
-
-  useEffect(() => {
-    // Update following state when currentUser or profile data changes
     setIsFollowing(currentUser?.following?.includes(userProfileData.uid) || false);
     setFollowerCount(userProfileData.followerCount || 0);
   }, [currentUser, userProfileData]);
+  
+  useEffect(() => {
+    const fetchAndMergePrivatePosts = async () => {
+      if (canViewPrivateContent) {
+        try {
+          const privatePosts = await getPrivatePostsByUser(userProfileData.uid);
+          const allPosts = [...content.posts, ...privatePosts];
+          const uniquePosts = Array.from(new Map(allPosts.map(p => [p.id, p])).values());
+          uniquePosts.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+          
+          setLocalPosts(uniquePosts.map(p => ({
+            ...p,
+            isLiked: currentUser ? p.likedBy.includes(currentUser.uid) : false,
+          })));
+        } catch (error) {
+          console.error("Failed to fetch private posts:", error);
+        }
+      } else {
+        setLocalPosts(content.posts.map(p => ({
+            ...p,
+            isLiked: currentUser ? p.likedBy.includes(currentUser.uid) : false,
+        })));
+      }
+    };
+    
+    fetchAndMergePrivatePosts();
+  }, [canViewPrivateContent, userProfileData.uid, content.posts, currentUser]);
+
 
   const handleFollowToggle = async () => {
     if (!currentUser) {
@@ -95,7 +107,6 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
 
     setIsFollowLoading(true);
     const currentlyFollowing = isFollowing;
-
     setIsFollowing(!currentlyFollowing);
     setFollowerCount(prev => prev + (!currentlyFollowing ? 1 : -1));
 
@@ -107,7 +118,6 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
             await followUser(currentUser.uid, userProfileData.uid);
             toast({ title: `You are now following ${userProfileData.name}` });
         }
-        await fetchPosts();
     } catch (error) {
         setIsFollowing(currentlyFollowing);
         setFollowerCount(prev => prev + (currentlyFollowing ? 1 : -1));
@@ -124,7 +134,6 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
     }
 
     setLoadingAction({ postId, action: 'like' });
-
     const originalPosts = [...localPosts];
     const postIndex = localPosts.findIndex(p => p.id === postId);
     if (postIndex === -1) {
@@ -183,9 +192,6 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
     try {
       await repostPost(postId, currentUser.uid);
       toast({ title: "Reposted!", description: "It will now appear on your own feed." });
-      if (isOwner) {
-          await fetchPosts();
-      }
     } catch (error: any) {
         toast({ title: "Failed to repost", description: error.message, variant: 'destructive' });
     } finally {
@@ -216,20 +222,9 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
 
   const { name, username, avatarUrl, avatarFallback, bio, links } = userProfileData;
 
-  const canViewPrivateContent = useMemo(() => isOwner || isFollowing, [isOwner, isFollowing]);
-
-  const visiblePosts = useMemo(() => {
-    return localPosts.filter(post => {
-        if (post.privacy === 'public') return true;
-        if (post.privacy === 'followers') return canViewPrivateContent;
-        if (post.privacy === 'me') return isOwner;
-        return false;
-    });
-  }, [localPosts, canViewPrivateContent, isOwner]);
-
   const unifiedFeed = useMemo(() => {
     const allContent = [
-      ...visiblePosts.map(item => ({ ...item, type: 'post' as const, date: item.createdAt })),
+      ...localPosts.map(item => ({ ...item, type: 'post' as const, date: item.createdAt })),
       ...content.promoPages.map(item => ({ ...item, type: 'promoPage' as const, date: item.createdAt })),
       ...content.listings.map(item => ({ ...item, type: 'listing' as const, date: item.createdAt })),
       ...content.jobs.map(item => ({ ...item, type: 'job' as const, date: item.postingDate })),
@@ -238,8 +233,8 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
     ];
     allContent.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     return allContent;
-  }, [visiblePosts, content]);
-
+  }, [localPosts, content]);
+  
   const componentMap = {
       post: (item: any) => (
         <PostCard
@@ -252,12 +247,13 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
           loadingAction={loadingAction?.postId === item.id ? loadingAction.action : null}
         />
       ),
-      promoPage: (item: any) => <Card><CardContent className="p-4"><PromoPageFeedItem item={item as PromoPage} /></CardContent></Card>,
-      listing: (item: any) => <Card><CardContent className="p-4"><ListingFeedItem item={item as Listing} /></CardContent></Card>,
-      job: (item: any) => <Card><CardContent className="p-4"><JobFeedItem item={item as Job} /></CardContent></Card>,
-      event: (item: any) => <Card><CardContent className="p-4"><EventFeedItem item={item as Event} /></CardContent></Card>,
-      offer: (item: any) => <Card><CardContent className="p-4"><OfferFeedItem item={item as Offer} /></CardContent></Card>,
+      promoPage: (item: any) => <PromoPageFeedItem item={item as PromoPage} />,
+      listing: (item: any) => <ListingFeedItem item={item as Listing} />,
+      job: (item: any) => <JobFeedItem item={item as Job} />,
+      event: (item: any) => <EventFeedItem item={item as Event} />,
+      offer: (item: any) => <OfferFeedItem item={item as Offer} />,
   };
+
 
   return (
     <>
@@ -271,7 +267,7 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
       />
       <div className="space-y-8">
         <Card>
-            <CardHeader>
+            <CardHeader className="p-6">
                 <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
                     <Avatar className="w-24 h-24 border-4 border-background shadow-lg">
                         <AvatarImage src={avatarUrl} alt={name} />
@@ -292,20 +288,20 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
                     </div>
                 </div>
             </CardHeader>
-            <CardFooter className="flex-wrap gap-2">
+            <CardFooter className="flex-wrap gap-2 px-6 pb-6">
                  {isOwner ? (
-                    <Button asChild className="font-bold">
+                    <Button asChild className="font-bold flex-1 sm:flex-none">
                         <Link href="/profile">
                             <Edit className="mr-2 h-4 w-4" /> Edit Profile
                         </Link>
                     </Button>
                 ) : (
-                    <Button className="font-bold" onClick={handleFollowToggle} disabled={isFollowLoading}>
+                    <Button className="font-bold flex-1 sm:flex-none" onClick={handleFollowToggle} disabled={isFollowLoading}>
                         {isFollowLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : isFollowing ? <UserCheck className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
                         {isFollowing ? 'Following' : 'Follow'}
                     </Button>
                 )}
-                <Button asChild variant="outline">
+                <Button asChild variant="outline" className="flex-1 sm:flex-none">
                     <Link href={`/u/${username}/card`}>
                         <QrCode className="mr-2 h-4 w-4" /> Digital Card
                     </Link>
@@ -323,9 +319,10 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
                 {unifiedFeed.length > 0 ? (
                     <div className="space-y-6">
                         {unifiedFeed.map(item => {
+                            const uniqueKey = `${item.type}-${item.id}`;
                             const ContentComponent = componentMap[item.type as keyof typeof componentMap];
                             if (!ContentComponent) return null;
-                            return <ContentComponent key={`${item.type}-${item.id}`} item={item} />;
+                            return <div key={uniqueKey}>{ContentComponent}</div>
                         })}
                     </div>
                 ) : (

@@ -76,7 +76,7 @@ export const getPost = async (id: string): Promise<Post | null> => {
   return serializeDocument<Post>(postDoc);
 };
 
-// Function to fetch all posts for a specific user
+// Function to fetch all PUBLIC posts for a specific user. Safe for server-side rendering.
 export const getPostsByUser = async (userId: string): Promise<PostWithAuthor[]> => {
   const postsRef = collection(db, 'posts');
   const q = query(postsRef, where('authorId', '==', userId), where('privacy', '==', 'public'), orderBy('createdAt', 'desc'));
@@ -88,6 +88,24 @@ export const getPostsByUser = async (userId: string): Promise<PostWithAuthor[]> 
   
   return populatePostAuthors(posts);
 };
+
+// Fetches a user's private ('followers' or 'me') posts. To be called from the client when authorized.
+export const getPrivatePostsByUser = async (userId: string): Promise<PostWithAuthor[]> => {
+    const postsRef = collection(db, 'posts');
+    const q = query(
+        postsRef, 
+        where('authorId', '==', userId), 
+        where('privacy', 'in', ['followers', 'me']),
+        orderBy('createdAt', 'desc')
+    );
+    const querySnapshot = await getDocs(q);
+
+    const posts = querySnapshot.docs
+        .map(doc => serializeDocument<Post>(doc))
+        .filter((post): post is Post => post !== null);
+
+    return populatePostAuthors(posts);
+}
 
 // Function to create a new post
 export const createPost = async (userId: string, data: Pick<Post, 'content' | 'imageUrl' | 'privacy' | 'category'> & { quotedPost?: EmbeddedPostInfo }): Promise<Post> => {
