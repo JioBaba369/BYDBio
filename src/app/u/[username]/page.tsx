@@ -76,7 +76,7 @@ export default async function PublicProfilePageWrapper({ params }: { params: { u
 
     // Fetch all content related to the user in parallel
     const [posts, listings, jobs, events, offers, promoPages] = await Promise.all([
-        getPostsByUser(userProfileData.uid),
+        getPostsByUser(userProfileData.uid, true), // Fetch public posts only for initial load
         getListingsByUser(userProfileData.uid),
         getJobsByUser(userProfileData.uid),
         getEventsByUser(userProfileData.uid),

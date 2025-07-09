@@ -35,6 +35,7 @@ import {
   Gift,
   Calendar,
   Nfc,
+  Link as LinkIcon,
 } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -122,7 +123,7 @@ export function MainSidebar() {
           <SidebarGroupLabel>My Public Profile</SidebarGroupLabel>
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Bio Page" isActive={isActive(`/u/${user.username}`)}>
+              <SidebarMenuButton asChild tooltip="Bio Page" isActive={isActive(`/u/${user.username}`) && !pathname.includes('/card') && !pathname.includes('/links')}>
                 <Link href={`/u/${user.username}`}>
                   <UserCircle />
                   <span>Bio Page</span>
@@ -134,6 +135,14 @@ export function MainSidebar() {
                 <Link href={`/u/${user.username}/card`}>
                   <Building2 />
                   <span>Digital Business Card</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild tooltip="Links Page" isActive={isActive(`/u/${user.username}/links`)}>
+                <Link href={`/u/${user.username}/links`}>
+                  <LinkIcon />
+                  <span>Links Page</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>

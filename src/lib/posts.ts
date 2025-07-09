@@ -76,10 +76,16 @@ export const getPost = async (id: string): Promise<Post | null> => {
   return serializeDocument<Post>(postDoc);
 };
 
-// Function to fetch all PUBLIC posts for a specific user. Safe for server-side rendering.
-export const getPostsByUser = async (userId: string): Promise<PostWithAuthor[]> => {
+// Function to fetch all posts for a specific user.
+export const getPostsByUser = async (userId: string, publicOnly = false): Promise<PostWithAuthor[]> => {
   const postsRef = collection(db, 'posts');
-  const q = query(postsRef, where('authorId', '==', userId), where('privacy', '==', 'public'), orderBy('createdAt', 'desc'));
+  let q;
+  if (publicOnly) {
+    q = query(postsRef, where('authorId', '==', userId), where('privacy', '==', 'public'), orderBy('createdAt', 'desc'));
+  } else {
+    q = query(postsRef, where('authorId', '==', userId), orderBy('createdAt', 'desc'));
+  }
+  
   const querySnapshot = await getDocs(q);
   
   const posts = querySnapshot.docs
@@ -353,6 +359,8 @@ export const getFeedPosts = async (userId: string, followingIds: string[]): Prom
         // For others, only show public or followers posts
         return p.privacy === 'public' || p.privacy === 'followers';
     });
+    
+    postsData.sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
     return populatePostAuthors(postsData);
 };

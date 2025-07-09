@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useMemo } from "react";
@@ -10,27 +11,23 @@ import type { Event } from '@/lib/events';
 import type { PromoPage } from "@/lib/promo-pages";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { ExternalLink, UserCheck, UserPlus, QrCode, Edit, Loader2, Rss, Info, MessageSquare, Package, Link as LinkIcon } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { UserCheck, UserPlus, QrCode, Edit, Loader2, Rss, MessageSquare, Package } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { Logo } from "@/components/logo";
 import ShareButton from "@/components/share-button";
-import { linkIcons } from "@/lib/link-icons";
 import { useAuth } from "@/components/auth-provider";
 import { followUser, unfollowUser } from "@/lib/connections";
 import { useRouter } from "next/navigation";
 import { PostCard } from "@/components/post-card";
 import { toggleLikePost, deletePost, repostPost } from '@/lib/posts';
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
-import { PromoPageFeedItem } from "@/components/feed/promo-page-feed-item";
-import { ListingFeedItem } from "@/components/feed/listing-feed-item";
-import { JobFeedItem } from "@/components/feed/job-feed-item";
-import { EventFeedItem } from "@/components/feed/event-feed-item";
-import { OfferFeedItem } from "@/components/feed/offer-feed-item";
 import { ContactForm } from "@/components/contact-form";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
+import { Badge, badgeVariants } from "@/components/ui/badge";
+import Image from "next/image";
+import type { VariantProps } from "class-variance-authority";
 
 interface UserProfilePageProps {
   userProfileData: User;
@@ -43,6 +40,29 @@ interface UserProfilePageProps {
     promoPages: PromoPage[];
   }
 }
+
+const getBadgeVariant = (itemType: string): VariantProps<typeof badgeVariants>['variant'] => {
+    switch (itemType) {
+        case 'event': return 'default';
+        case 'offer': return 'secondary';
+        case 'job': return 'destructive';
+        case 'listing': return 'outline';
+        case 'promoPage': return 'default';
+        default: return 'default';
+    }
+}
+
+const getLink = (item: any) => { // a bit simplified
+    switch (item.type) {
+        case 'event': return `/events/${item.id}`;
+        case 'offer': return `/offer/${item.id}`;
+        case 'job': return `/job/${item.id}`;
+        case 'listing': return `/l/${item.id}`;
+        case 'promoPage': return `/p/${item.id}`;
+        default: return '/';
+    }
+}
+
 
 export default function UserProfilePage({ userProfileData, content }: UserProfilePageProps) {
   const { user: currentUser } = useAuth();
@@ -212,7 +232,7 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
   };
 
 
-  const { name, username, avatarUrl, avatarFallback, bio, links } = userProfileData;
+  const { name, username, avatarUrl, avatarFallback, bio } = userProfileData;
   const isOwner = currentUser?.uid === userProfileData.uid;
 
   const canViewPrivateContent = useMemo(() => isOwner || isFollowing, [isOwner, isFollowing]);
@@ -237,8 +257,6 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
     combined.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     return combined;
   }, [content]);
-  
-  const hasLinks = links.length > 0;
 
   return (
     <>
@@ -263,7 +281,7 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
             <p className="text-muted-foreground">@{username}</p>
             <div className="flex justify-center gap-4 text-sm text-muted-foreground mt-4">
               <div className="text-center">
-                <p className="font-bold text-lg text-foreground">{(followerCount || 0).toLocaleString()}</p>
+                <p className="font-bold text-lg text-foreground">{followerCount.toLocaleString()}</p>
                 <p className="text-xs tracking-wide">Followers</p>
               </div>
               <div className="text-center">
@@ -277,38 +295,40 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
             </div>
             <p className="text-foreground/90 max-w-prose whitespace-pre-wrap mt-6 text-center text-base">{bio || "This user hasn't written a bio yet."}</p>
           </CardHeader>
-          <CardFooter className="flex-wrap gap-2 px-0 pt-6 justify-center">
-             <Button asChild variant="secondary" className="font-bold flex-1 sm:flex-none">
-                <Link href={`/u/${username}/card`}>
-                    <QrCode className="mr-2 h-4 w-4" />
-                    Digital Card
-                </Link>
-            </Button>
-            <ShareButton className="font-bold flex-1 sm:flex-none" />
-            {isOwner ? (
-                <Button asChild className="font-bold flex-1 sm:flex-none">
-                    <Link href="/profile">
-                        <Edit className="mr-2 h-4 w-4" />
-                        Edit Profile
+          <CardContent className="p-0">
+            <div className="mt-6 flex flex-wrap gap-2 justify-center">
+                 <Button asChild variant="secondary" className="font-bold flex-1 sm:flex-none">
+                    <Link href={`/u/${username}/card`}>
+                        <QrCode className="mr-2 h-4 w-4" />
+                        Digital Card
                     </Link>
                 </Button>
-            ) : (
-                <Button 
-                    className="font-bold flex-1 sm:flex-none" 
-                    onClick={handleFollowToggle}
-                    disabled={isFollowLoading}
-                >
-                    {isFollowLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : isFollowing ? <UserCheck className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
-                    {isFollowing ? 'Following' : 'Follow'}
-                </Button>
-            )}
-          </CardFooter>
+                <ShareButton className="font-bold flex-1 sm:flex-none" />
+                {isOwner ? (
+                    <Button asChild className="font-bold flex-1 sm:flex-none">
+                        <Link href="/profile">
+                            <Edit className="mr-2 h-4 w-4" />
+                            Edit Profile
+                        </Link>
+                    </Button>
+                ) : (
+                    <Button 
+                        className="font-bold flex-1 sm:flex-none" 
+                        onClick={handleFollowToggle}
+                        disabled={isFollowLoading}
+                    >
+                        {isFollowLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : isFollowing ? <UserCheck className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
+                        {isFollowing ? 'Following' : 'Follow'}
+                    </Button>
+                )}
+            </div>
+          </CardContent>
         </Card>
 
         <Tabs defaultValue="feed" className="w-full">
             <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="feed"><Rss className="mr-2 h-4 w-4"/>Feed</TabsTrigger>
-                <TabsTrigger value="links"><LinkIcon className="mr-2 h-4 w-4"/>Links</TabsTrigger>
+                <TabsTrigger value="showcase"><Package className="mr-2 h-4 w-4"/>Showcase</TabsTrigger>
                 <TabsTrigger value="contact"><MessageSquare className="mr-2 h-4 w-4" />Contact</TabsTrigger>
             </TabsList>
             <TabsContent value="feed" className="mt-6">
@@ -329,49 +349,39 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
                             This user hasn't made any posts yet.
                         </Card>
                     )}
-                    {allOtherContent.length > 0 && (
-                        <>
-                            {visiblePosts.length > 0 && <div className="text-center text-xs text-muted-foreground font-semibold uppercase tracking-wider">Older Content</div>}
-                            {allOtherContent.map(item => {
-                                const uniqueKey = `${item.type}-${item.id}`;
-                                const componentMap = {
-                                    promoPage: <PromoPageFeedItem item={item as PromoPage} />,
-                                    listing: <ListingFeedItem item={item as Listing} />,
-                                    job: <JobFeedItem item={item as Job} />,
-                                    event: <EventFeedItem item={item as Event} />,
-                                    offer: <OfferFeedItem item={item as Offer} />,
-                                };
-                                const content = componentMap[item.type as keyof typeof componentMap];
-                                if (!content) return null;
-                                return <div key={uniqueKey}>{content}</div>
-                            })}
-                        </>
-                    )}
                 </div>
             </TabsContent>
-            <TabsContent value="links" className="mt-6 space-y-6">
-                {hasLinks ? (
-                    <Card>
-                        <CardContent className="flex flex-col space-y-3 p-4">
-                            {links.map((link, index) => {
-                                const Icon = linkIcons[link.icon as keyof typeof linkIcons] || LinkIcon;
-                                return (
-                                <a key={index} href={link.url} target="_blank" rel="noopener noreferrer" className="w-full group">
-                                    <div className="w-full h-14 text-base font-semibold flex items-center gap-4 p-3 rounded-lg bg-secondary transition-colors hover:bg-secondary/80">
-                                    <Icon className="h-6 w-6 text-secondary-foreground/80" />
-                                    <span className="flex-1 text-left text-secondary-foreground truncate">{link.title}</span>
-                                    <ExternalLink className="h-5 w-5 text-secondary-foreground/50 opacity-50 group-hover:opacity-100 transition-opacity" />
+            <TabsContent value="showcase" className="mt-6">
+                <div className="space-y-4">
+                    {allOtherContent.length > 0 ? (
+                        allOtherContent.map(item => {
+                            const itemLink = getLink(item);
+                            const title = (item as any).title || (item as any).name;
+                            const itemTypeLabel = item.type === 'promoPage' ? 'Business Page' : item.type;
+                            
+                            return (
+                                <Card key={`${item.type}-${item.id}`} className="shadow-sm hover:shadow-md transition-shadow">
+                                    <div className="flex gap-4 p-4">
+                                        {(item as any).imageUrl && (
+                                            <Link href={itemLink} className="block shrink-0">
+                                            <Image src={(item as any).imageUrl} alt={title} width={120} height={80} className="w-24 sm:w-32 h-20 object-cover rounded-md" />
+                                            </Link>
+                                        )}
+                                        <div className="flex-1 space-y-1">
+                                            <Badge variant={getBadgeVariant(item.type)} className="capitalize">{itemTypeLabel}</Badge>
+                                            <CardTitle className="text-base sm:text-lg pt-1"><Link href={itemLink} className="hover:underline">{title}</Link></CardTitle>
+                                            <p className="text-sm text-muted-foreground line-clamp-2">{item.description}</p>
+                                        </div>
                                     </div>
-                                </a>
-                                )
-                            })}
-                        </CardContent>
-                    </Card>
-                ) : (
-                    <Card className="text-center text-muted-foreground p-10">
-                        This user hasn't added any links yet.
-                    </Card>
-                )}
+                                </Card>
+                            )
+                        })
+                    ) : (
+                        <Card className="text-center text-muted-foreground p-10">
+                            This user hasn't created any showcase content yet.
+                        </Card>
+                    )}
+                </div>
             </TabsContent>
             <TabsContent value="contact" className="mt-6">
               {!isOwner ? (
