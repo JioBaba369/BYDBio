@@ -13,6 +13,7 @@ import {
   SidebarFooter,
   SidebarMenuButton,
   SidebarMenuBadge,
+  SidebarSeparator,
 } from '@/components/ui/sidebar';
 import { Logo } from './logo';
 import {
@@ -120,36 +121,6 @@ export function MainSidebar() {
         </SidebarGroup>
         
         <SidebarGroup>
-          <SidebarGroupLabel>My Public Profile</SidebarGroupLabel>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Bio Page" isActive={isActive(`/u/${user.username}`) && !pathname.includes('/card') && !pathname.includes('/links')}>
-                <Link href={`/u/${user.username}`}>
-                  <UserCircle />
-                  <span>Bio Page</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Digital Business Card" isActive={isActive(`/u/${user.username}/card`)}>
-                <Link href={`/u/${user.username}/card`}>
-                  <Building2 />
-                  <span>Digital Business Card</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Links Page" isActive={isActive(`/u/${user.username}/links`)}>
-                <Link href={`/u/${user.username}/links`}>
-                  <LinkIcon />
-                  <span>Links Page</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarGroup>
-
-        <SidebarGroup>
           <SidebarGroupLabel>Community</SidebarGroupLabel>
           <SidebarMenu>
              <SidebarMenuItem>
@@ -253,7 +224,7 @@ export function MainSidebar() {
         </SidebarGroup>
 
         <SidebarGroup>
-            <SidebarGroupLabel>Workspace</SidebarGroupLabel>
+            <SidebarGroupLabel>Manage Profile</SidebarGroupLabel>
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip="Profile Editor" isActive={isActive('/profile')}>
@@ -276,6 +247,31 @@ export function MainSidebar() {
                   <Link href="/bydtag/design">
                     <Nfc />
                     <span>BYD BioTAG</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarSeparator/>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Public Bio Page" isActive={isActive(`/u/${user.username}`) && !pathname.includes('/card') && !pathname.includes('/links')}>
+                  <Link href={`/u/${user.username}`}>
+                    <UserCircle />
+                    <span>Public Bio Page</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Digital Business Card" isActive={isActive(`/u/${user.username}/card`)}>
+                  <Link href={`/u/${user.username}/card`}>
+                    <Building2 />
+                    <span>Digital Card</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Links Page" isActive={isActive(`/u/${user.username}/links`)}>
+                  <Link href={`/u/${user.username}/links`}>
+                    <LinkIcon />
+                    <span>Links Page</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
