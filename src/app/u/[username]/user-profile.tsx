@@ -31,7 +31,7 @@ import { EventFeedItem } from "@/components/feed/event-feed-item";
 import { OfferFeedItem } from "@/components/feed/offer-feed-item";
 import { ContactForm } from "@/components/contact-form";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
+import { ContentFeedCard } from "@/components/feed/content-feed-card";
 
 interface UserProfilePageProps {
   userProfileData: User;
@@ -297,7 +297,7 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
                 <TabsTrigger value="contact"><MessageSquare className="mr-2 h-4 w-4" />Contact</TabsTrigger>
             </TabsList>
             <TabsContent value="creations" className="mt-6">
-                 {allOtherContent.length > 0 ? (
+                {allOtherContent.length > 0 ? (
                     <div className="space-y-6">
                         {allOtherContent.map(item => {
                             const uniqueKey = `${item.type}-${item.id}`;
@@ -308,9 +308,19 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
                                 event: <EventFeedItem item={item as Event} />,
                                 offer: <OfferFeedItem item={item as Offer} />,
                             };
-                            const content = componentMap[item.type as keyof typeof componentMap];
-                            if (!content) return null;
-                            return <div key={uniqueKey}>{content}</div>
+                            const contentBody = componentMap[item.type as keyof typeof componentMap];
+                            if (!contentBody) return null;
+
+                            return (
+                                <ContentFeedCard
+                                    key={uniqueKey}
+                                    author={userProfileData}
+                                    date={item.date}
+                                    category={item.type}
+                                >
+                                    {contentBody}
+                                </ContentFeedCard>
+                            );
                         })}
                     </div>
                 ) : (
