@@ -37,18 +37,19 @@ export default function ResetPasswordPage() {
     setIsSubmitting(true);
     try {
       await sendPasswordResetEmail(auth, data.email);
+      // We intentionally don't handle success here, but in the `finally` block
+      // to ensure the same user experience regardless of the outcome.
+    } catch (error: any) {
+      // Intentionally swallow specific errors like 'auth/user-not-found'
+      // to prevent email enumeration. We will only log it for debugging purposes.
+      console.error(`Password reset attempt for ${data.email} failed silently:`, error.code);
+    } finally {
+      // Always show the same confirmation message to the user.
       toast({
-        title: "Reset Link Sent",
-        description: "If an account exists, a password reset link has been sent to your email.",
+        title: "Request Sent",
+        description: "If an account exists for this email, you will receive a password reset link shortly.",
       });
       setIsSubmitted(true);
-    } catch (error: any) {
-      toast({
-        title: "Error Sending Link",
-        description: error.message || "An unexpected error occurred while sending the reset link.",
-        variant: "destructive",
-      });
-    } finally {
       setIsSubmitting(false);
     }
   };
