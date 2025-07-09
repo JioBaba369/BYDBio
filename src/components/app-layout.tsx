@@ -24,6 +24,39 @@ function Header() {
     const router = useRouter();
     const pathname = usePathname();
 
+    const getPageTitle = React.useCallback((path: string): string => {
+        if (path === '/') return 'Dashboard';
+        const pathSegments = path.split('/').filter(Boolean);
+        const base = pathSegments[0];
+
+        switch (base) {
+            case 'feed': return 'Status Feed';
+            case 'explore': return 'Explore';
+            case 'connections': return 'Connections';
+            case 'notifications': return 'Notifications';
+            case 'inbox': return 'Inbox';
+            case 'calendar': return 'My Content';
+            case 'profile': return 'Profile Editor';
+            case 'settings': return 'Settings';
+            case 'promo': return 'Business Pages';
+            case 'listings': return 'Listings';
+            case 'job': return 'Job Board';
+            case 'events': return 'Events';
+            case 'offers': return 'Offers';
+            case 'bydtag': return 'BYD BioTAG';
+            case 'search': return 'Search Results';
+            case 'u': return 'User Profile';
+            case 'p': return 'Business Page';
+            case 'l': return 'Listing';
+            case 'offer': return 'Offer';
+            case 'whats-new': return "What's New";
+            case 'url-tree': return "URL Tree";
+            default: return '';
+        }
+    }, []);
+
+    const pageTitle = getPageTitle(pathname);
+
     const handleLogout = async () => {
         try {
           await signOut(auth);
@@ -48,7 +81,9 @@ function Header() {
                  <div className="md:hidden">
                     <Skeleton className="h-7 w-7" />
                 </div>
-                <div className="w-full flex-1"></div>
+                <div className="flex-1">
+                    <Skeleton className="h-6 w-32" />
+                </div>
                 <Skeleton className="h-9 w-32 rounded-full" />
             </header>
         )
@@ -69,22 +104,13 @@ function Header() {
         )
     }
 
-    const showBackButton = pathname !== '/';
-
     return (
         <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background/80 backdrop-blur-sm px-4 md:px-6">
             <div className="md:hidden">
                 <SidebarTrigger />
             </div>
-            {showBackButton && (
-                <Button variant="ghost" size="icon" onClick={() => router.back()} className="h-8 w-8">
-                    <ArrowLeft className="h-5 w-5" />
-                    <span className="sr-only">Back</span>
-                </Button>
-            )}
-            <div className="w-full flex-1">
-                {/* We can add a search bar here later if needed */}
-            </div>
+            
+            <h1 className="flex-1 text-lg font-semibold truncate">{pageTitle}</h1>
 
             <Button asChild variant="ghost" size="icon" className="relative">
               <Link href="/notifications">
