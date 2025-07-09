@@ -16,7 +16,6 @@ import { ExternalLink, UserCheck, UserPlus, QrCode, Edit, Loader2, Rss, Info, Me
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { Logo } from "@/components/logo";
-import ShareButton from "@/components/share-button";
 import { linkIcons } from "@/lib/link-icons";
 import { useAuth } from "@/components/auth-provider";
 import { followUser, unfollowUser } from "@/lib/connections";
@@ -32,6 +31,7 @@ import { OfferFeedItem } from "@/components/feed/offer-feed-item";
 import { ContactForm } from "@/components/contact-form";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ContentFeedCard } from "@/components/feed/content-feed-card";
+import { Separator } from "@/components/ui/separator";
 
 interface UserProfilePageProps {
   userProfileData: User;
@@ -261,7 +261,7 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
     return combined;
   }, [content]);
   
-  const hasLinks = links.length > 0;
+  const hasLinks = links && links.length > 0;
 
   return (
     <>
@@ -277,53 +277,85 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
       <div className="w-full max-w-xl mx-auto space-y-8">
         <Card className="bg-card/80 backdrop-blur-sm p-6 sm:p-8 shadow-2xl rounded-2xl border-primary/10 relative overflow-hidden">
           <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-primary/10 via-background to-background z-0"></div>
-          <div className="relative z-10 flex flex-col items-center text-center">
-            <Avatar className="w-24 h-24 mb-4 border-4 border-background shadow-lg">
-              <AvatarImage src={avatarUrl} alt={name} />
-              <AvatarFallback>{avatarFallback}</AvatarFallback>
-            </Avatar>
-            <h1 className="font-headline text-3xl font-bold text-foreground">{name}</h1>
-            <p className="text-muted-foreground">@{username}</p>
-            
-             <div className="mt-6 grid w-full grid-cols-1 sm:grid-cols-3 items-center gap-4">
-                <div className="sm:col-span-1 text-center p-2 rounded-md bg-muted/50">
-                    <p className="font-bold text-lg text-foreground">{followerCount}</p>
-                    <p className="text-xs text-muted-foreground tracking-wide">Followers</p>
-                </div>
-                <div className="sm:col-span-2 flex flex-col sm:flex-row gap-2">
-                    {isOwner ? (
-                        <Button asChild className="flex-1 font-bold">
-                            <Link href="/profile">
-                                <Edit className="mr-2 h-4 w-4" />
-                                Edit Profile
-                            </Link>
-                        </Button>
-                    ) : (
-                        <Button 
-                            className="flex-1 font-bold" 
-                            onClick={handleFollowToggle}
-                            disabled={isFollowLoading}
-                        >
-                            {isFollowLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : isFollowing ? <UserCheck className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
-                            {isFollowing ? 'Following' : 'Follow'}
-                        </Button>
-                    )}
-                    <Button asChild variant="outline" className="flex-1">
-                        <Link href={`/u/${username}/card`}>
-                            <QrCode className="mr-2 h-4 w-4" />
-                            Digital Card
-                        </Link>
-                    </Button>
-                </div>
+          <div className="relative z-10">
+            <div className="flex flex-col items-center text-center">
+              <Avatar className="w-24 h-24 mb-4 border-4 border-background shadow-lg">
+                <AvatarImage src={avatarUrl} alt={name} />
+                <AvatarFallback>{avatarFallback}</AvatarFallback>
+              </Avatar>
+              <h1 className="font-headline text-3xl font-bold text-foreground">{name}</h1>
+              <p className="text-muted-foreground">@{username}</p>
+              
+               <div className="mt-6 grid w-full grid-cols-1 sm:grid-cols-3 items-center gap-4">
+                  <div className="sm:col-span-1 text-center p-2 rounded-md bg-muted/50">
+                      <p className="font-bold text-lg text-foreground">{followerCount}</p>
+                      <p className="text-xs text-muted-foreground tracking-wide">Followers</p>
+                  </div>
+                  <div className="sm:col-span-2 flex flex-col sm:flex-row gap-2">
+                      {isOwner ? (
+                          <Button asChild className="flex-1 font-bold">
+                              <Link href="/profile">
+                                  <Edit className="mr-2 h-4 w-4" />
+                                  Edit Profile
+                              </Link>
+                          </Button>
+                      ) : (
+                          <Button 
+                              className="flex-1 font-bold" 
+                              onClick={handleFollowToggle}
+                              disabled={isFollowLoading}
+                          >
+                              {isFollowLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : isFollowing ? <UserCheck className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
+                              {isFollowing ? 'Following' : 'Follow'}
+                          </Button>
+                      )}
+                      <Button asChild variant="outline" className="flex-1">
+                          <Link href={`/u/${username}/card`}>
+                              <QrCode className="mr-2 h-4 w-4" />
+                              Digital Card
+                          </Link>
+                      </Button>
+                  </div>
+              </div>
             </div>
+
+            {(bio || hasLinks) && (
+              <div className="w-full text-left mt-8">
+                <Separator />
+                {bio && (
+                    <div className="mt-6">
+                        <h3 className="font-headline font-semibold text-lg">About</h3>
+                        <p className="mt-2 text-foreground/90 max-w-prose whitespace-pre-wrap">{bio}</p>
+                    </div>
+                )}
+                {hasLinks && (
+                    <div className="mt-6">
+                        <h3 className="font-headline font-semibold text-lg">Links</h3>
+                        <div className="flex flex-col space-y-3 mt-3">
+                          {links.map((link, index) => {
+                              const Icon = linkIcons[link.icon as keyof typeof linkIcons];
+                              return (
+                              <a key={index} href={link.url} target="_blank" rel="noopener noreferrer" className="w-full group">
+                                  <div className="w-full h-14 text-base font-semibold flex items-center p-4 rounded-lg bg-background/70 shadow-sm border hover:bg-muted transition-all hover:scale-[1.02] ease-out duration-200">
+                                  {Icon && <Icon className="h-5 w-5" />}
+                                  <span className="flex-1 text-center">{link.title}</span>
+                                  <ExternalLink className="h-5 w-5 text-muted-foreground/50 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                  </div>
+                              </a>
+                              )
+                          })}
+                        </div>
+                    </div>
+                )}
+              </div>
+            )}
           </div>
         </Card>
 
         <Tabs defaultValue="creations" className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="creations"><Package className="mr-2 h-4 w-4"/>Creations</TabsTrigger>
                 <TabsTrigger value="feed"><Rss className="mr-2 h-4 w-4"/>Feed</TabsTrigger>
-                <TabsTrigger value="about"><Info className="mr-2 h-4 w-4"/>About</TabsTrigger>
                 <TabsTrigger value="contact"><MessageSquare className="mr-2 h-4 w-4" />Contact</TabsTrigger>
             </TabsList>
             <TabsContent value="creations" className="mt-6">
@@ -379,38 +411,6 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
                      <Card className="text-center text-muted-foreground p-10">
                         This user hasn't made any posts yet.
                     </Card>
-                )}
-            </TabsContent>
-            <TabsContent value="about" className="mt-6 space-y-6">
-                <Card>
-                    <CardHeader>
-                        <CardTitle>About</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <p className="text-foreground/90 max-w-prose whitespace-pre-wrap">{bio || "This user hasn't written a bio yet."}</p>
-                    </CardContent>
-                </Card>
-
-                {hasLinks && (
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Links</CardTitle>
-                    </CardHeader>
-                    <CardContent className="flex flex-col space-y-4">
-                        {links.map((link, index) => {
-                            const Icon = linkIcons[link.icon as keyof typeof linkIcons];
-                            return (
-                            <a key={index} href={link.url} target="_blank" rel="noopener noreferrer" className="w-full group">
-                                <div className="w-full h-14 text-lg font-semibold flex items-center p-4 rounded-lg bg-background/70 shadow-sm border hover:bg-muted transition-all hover:scale-[1.02] ease-out duration-200">
-                                {Icon && <Icon className="h-5 w-5" />}
-                                <span className="flex-1 text-center">{link.title}</span>
-                                <ExternalLink className="h-5 w-5 text-muted-foreground/50 opacity-0 group-hover:opacity-100 transition-opacity" />
-                                </div>
-                            </a>
-                            )
-                        })}
-                    </CardContent>
-                </Card>
                 )}
             </TabsContent>
             <TabsContent value="contact" className="mt-6">
