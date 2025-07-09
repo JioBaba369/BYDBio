@@ -65,6 +65,8 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
   const [postToDelete, setPostToDelete] = useState<PostWithAuthor | null>(null);
   const [loadingAction, setLoadingAction] = useState<{ postId: string; action: 'like' | 'repost' } | null>(null);
 
+  const isOwner = currentUser?.uid === userProfileData.uid;
+
   useEffect(() => {
     setIsFollowing(currentUser?.following?.includes(userProfileData.uid) || false);
   }, [currentUser, userProfileData.uid]);
@@ -188,6 +190,9 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
     try {
       await repostPost(postId, currentUser.uid);
       toast({ title: "Reposted!", description: "It will now appear on your own feed." });
+      if (isOwner) {
+          await fetchPosts();
+      }
     } catch (error: any) {
         toast({ title: "Failed to repost", description: error.message, variant: 'destructive' });
     } finally {
@@ -224,7 +229,6 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
 
 
   const { name, username, avatarUrl, avatarFallback, bio, links } = userProfileData;
-  const isOwner = currentUser?.uid === userProfileData.uid;
 
   const canViewPrivateContent = useMemo(() => isOwner || isFollowing, [isOwner, isFollowing]);
 
