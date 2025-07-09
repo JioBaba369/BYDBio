@@ -229,8 +229,7 @@ export async function searchUsers(searchText: string): Promise<User[]> {
 
     const usersRef = collection(db, "users");
     
-    // Use array-contains-any for multi-keyword search
-    const q = query(usersRef, where('searchableKeywords', 'array-contains-any', searchKeywords));
+    const q = query(usersRef, where('searchableKeywords', 'array-contains-any', searchKeywords), limit(50));
 
     const querySnapshot = await getDocs(q);
 

@@ -17,7 +17,7 @@ import { searchUsers, getUsersByIds } from '@/lib/users';
 import { followUser, unfollowUser } from '@/lib/connections';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
-import { getDocs, collection, query, where } from 'firebase/firestore';
+import { getDocs, collection, query, where, limit } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Listing } from '@/lib/listings';
 import type { Offer } from '@/lib/offers';
@@ -129,7 +129,11 @@ export default function SearchPage() {
         
         const collectionsToSearch = ['listings', 'jobs', 'events', 'offers', 'promoPages', 'posts'];
         const contentPromises = collectionsToSearch.map(col => {
-            const baseQuery = query(collection(db, col), where('searchableKeywords', 'array-contains-any', searchKeywords));
+            let baseQuery = query(
+                collection(db, col), 
+                where('searchableKeywords', 'array-contains-any', searchKeywords),
+                limit(50) 
+            );
             if (col === 'posts') {
                 return getDocs(query(baseQuery, where('privacy', '==', 'public')));
             }
