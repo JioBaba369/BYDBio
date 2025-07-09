@@ -3,7 +3,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Rocket, Zap, Palette, Bug, Calendar as CalendarIcon, Nfc, ScanLine, Sparkles, PackageSearch, Redo, PaintBrush } from "lucide-react";
+import { Rocket, Zap, Bug, Calendar as CalendarIcon, Nfc, ScanLine, Sparkles, PackageSearch, Redo, PaintBrush } from "lucide-react";
 import { ClientFormattedDate } from "@/components/client-formatted-date";
 
 type UpdateItem = {
