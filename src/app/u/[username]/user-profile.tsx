@@ -318,7 +318,7 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
                   </div>
               </div>
             </div>
-
+            
             {(bio || hasLinks) && (
               <div className="w-full text-left mt-8">
                 <Separator />
