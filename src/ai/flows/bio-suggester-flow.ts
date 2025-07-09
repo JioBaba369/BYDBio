@@ -30,12 +30,17 @@ const prompt = ai.definePrompt({
   name: 'bioSuggesterPrompt',
   input: {schema: BioSuggestInputSchema},
   output: {schema: BioSuggestOutputSchema},
-  prompt: `You are a professional brand strategist and copywriter. Your task is to write several compelling and professional bios for a user named {{{name}}}.
-The bio must be 160 characters or less.
-Use the following keywords and points as inspiration for the bio:
+  prompt: `You are an expert brand strategist and professional copywriter specializing in crafting compelling, first-person bios for online profiles. Your task is to write 3 to 5 distinct and professional bios for a user named {{{name}}}.
+
+Each bio MUST be 160 characters or less.
+Each bio MUST be written in the first person (e.g., "I am a...").
+
+Use the following keywords and bullet points as the core inspiration for the bios. Transform these points into creative, engaging, and professional narratives that capture the user's essence.
+
+Inspiration Points:
 {{{keywords}}}
 
-Generate 3 to 5 distinct bio suggestions. Ensure they are creative, professional, and capture the essence of the user's profile. Write in the first person (e.g., "I am a...").`,
+Generate a diverse range of suggestions. For example, one could be direct and professional, another more creative and mission-driven, and a third focused on a key achievement.`,
 });
 
 
