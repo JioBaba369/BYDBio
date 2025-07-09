@@ -3,32 +3,36 @@
 
 import { useState, useEffect } from 'react';
 import { getAllPublicContent, type PublicContentItem } from '@/lib/content';
-import ExploreClient from '@/app/explore/explore-client';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from './ui/button';
 import Link from 'next/link';
+import { PublicContentCard } from './public-content-card';
+import { ArrowRight } from 'lucide-react';
 
 const LandingPageSkeleton = () => (
-    <div className="space-y-6 animate-pulse">
-        <div className="space-y-2">
-            <Skeleton className="h-9 w-64" />
-            <Skeleton className="h-4 w-80" />
+    <div className="space-y-16 animate-pulse">
+        <div className="text-center py-12 md:py-16 px-4">
+            <Skeleton className="h-12 md:h-16 w-3/4 mx-auto" />
+            <Skeleton className="h-6 w-full max-w-3xl mx-auto mt-4" />
+            <Skeleton className="h-12 w-48 mx-auto mt-8" />
         </div>
-        <Card>
-            <Skeleton className="h-24 w-full" />
-        </Card>
-        <div className="flex items-center justify-between">
-            <Skeleton className="h-7 w-48" />
-            <Skeleton className="h-10 w-40" />
-        </div>
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {[...Array(3)].map((_, i) => (
-                <Card key={i}>
-                    <Skeleton className="h-52 w-full rounded-t-lg" />
-                    <Skeleton className="h-32 w-full p-4" />
-                </Card>
-            ))}
+         <div className="space-y-8">
+            <div className="text-center">
+                <Skeleton className="h-9 w-72 mx-auto" />
+                <Skeleton className="h-4 w-96 mx-auto mt-2" />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[...Array(6)].map((_, i) => (
+                    <Card key={i}>
+                        <Skeleton className="h-40 w-full rounded-t-lg" />
+                        <Skeleton className="h-44 w-full p-4" />
+                    </Card>
+                ))}
+            </div>
+            <div className="text-center">
+                <Skeleton className="h-11 w-36 mx-auto" />
+            </div>
         </div>
     </div>
 );
@@ -40,7 +44,7 @@ export function LandingPage() {
     
     useEffect(() => {
         getAllPublicContent()
-            .then(setItems)
+            .then(content => setItems(content.slice(0, 6))) // Only take the first 6 items
             .catch(() => {})
             .finally(() => setIsLoading(false));
     }, []);
@@ -50,7 +54,7 @@ export function LandingPage() {
     }
 
     return (
-        <div className="space-y-8">
+        <div className="space-y-16">
             <div className="text-center py-12 md:py-16 px-4">
                 <h1 className="text-4xl md:text-5xl lg:text-6xl font-headline font-bold tracking-tighter">Your All-in-One Professional Hub</h1>
                 <p className="mt-4 max-w-3xl mx-auto text-lg text-muted-foreground">
@@ -64,7 +68,34 @@ export function LandingPage() {
                     </Button>
                 </div>
             </div>
-            <ExploreClient initialItems={items} />
+            
+            <div className="space-y-8">
+                <div className="text-center">
+                    <h2 className="text-3xl font-headline font-bold">Latest from the Community</h2>
+                    <p className="mt-2 text-muted-foreground">See what others are creating and sharing right now.</p>
+                </div>
+                
+                {items.length > 0 ? (
+                    <>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {items.map(item => <PublicContentCard key={`${item.type}-${item.id}`} item={item} />)}
+                        </div>
+                        <div className="text-center">
+                            <Button asChild variant="outline" size="lg">
+                                <Link href="/explore">
+                                    Explore All Content <ArrowRight className="ml-2 h-4 w-4"/>
+                                </Link>
+                            </Button>
+                        </div>
+                    </>
+                ) : (
+                    <Card>
+                        <CardContent className="p-10 text-center">
+                            <p className="text-muted-foreground">Nothing has been posted by the community yet.</p>
+                        </CardContent>
+                    </Card>
+                )}
+            </div>
         </div>
     );
 }
