@@ -3,7 +3,7 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardFooter } from "@/components/ui/card"
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 import { Image as ImageIcon, Send, X, Users, Compass, Loader2, Globe, Lock } from "lucide-react"
 import { useState, useRef, useEffect, useCallback } from "react";
@@ -11,7 +11,6 @@ import { useAuth } from "@/components/auth-provider"
 import { useToast } from "@/hooks/use-toast"
 import Link from "next/link"
 import ImageCropper from "@/components/image-cropper"
-import { Skeleton } from "@/components/ui/skeleton"
 import { uploadImage } from "@/lib/storage"
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog"
 import { PostCard } from "@/components/post-card";
@@ -21,32 +20,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { createPost, toggleLikePost, deletePost, repostPost, getFeedPosts, getDiscoveryPosts } from "@/lib/posts";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
-
-const FeedSkeleton = () => (
-    <div className="space-y-6">
-        <Card><CardContent className="p-4"><Skeleton className="h-32" /></CardContent></Card>
-        <Card><CardHeader className="p-4"><div className="flex items-center gap-3"><Skeleton className="h-10 w-10 rounded-full" /><div className="space-y-1"><Skeleton className="h-4 w-24" /><Skeleton className="h-3 w-16" /></div></div></CardHeader><CardContent className="p-4 pt-0 space-y-2"><Skeleton className="h-4 w-full" /><Skeleton className="h-4 w-3/4" /></CardContent><CardFooter className="p-4 border-t"><Skeleton className="h-8 w-full" /></CardFooter></Card>
-        <Card><CardHeader className="p-4"><div className="flex items-center gap-3"><Skeleton className="h-10 w-10 rounded-full" /><div className="space-y-1"><Skeleton className="h-4 w-24" /><Skeleton className="h-3 w-16" /></div></div></CardHeader><CardContent className="p-4 pt-0 space-y-2"><Skeleton className="h-4 w-full" /><Skeleton className="h-4 w-3/4" /></CardContent><CardFooter className="p-4 border-t"><Skeleton className="h-8 w-full" /></CardFooter></Card>
-    </div>
-);
-
-const QuotedPostPreview = ({ post, onRemove }: { post: any, onRemove: () => void }) => (
-    <div className="mt-2 p-3 border rounded-lg relative">
-        <Button variant="ghost" size="icon" className="absolute top-1 right-1 h-6 w-6" onClick={onRemove}>
-            <X className="h-4 w-4" />
-        </Button>
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Avatar className="h-5 w-5">
-                <AvatarImage src={post.author.avatarUrl} />
-                <AvatarFallback>{post.author.name.charAt(0)}</AvatarFallback>
-            </Avatar>
-            <span className="font-semibold">{post.author.name}</span>
-            <span>@{post.author.username}</span>
-        </div>
-        <p className="mt-2 text-sm whitespace-pre-wrap line-clamp-3">{post.content}</p>
-    </div>
-);
+import { FeedSkeleton } from "@/components/feed-skeleton";
+import { QuotedPostPreview } from "@/components/quoted-post-preview";
 
 
 export default function FeedPage() {
@@ -78,10 +53,11 @@ export default function FeedPage() {
     if (!user) return;
     setIsLoading(true);
     try {
-        const items = await getFeedPosts([user.uid, ...user.following]);
-        setFollowingPosts(items.map(p => ({ ...p, isLiked: p.likedBy.includes(user.uid) })));
+        const items = await getFeedPosts(user.uid, user.following);
+        setFollowingPosts(items.map(p => ({ ...p, isLiked: (p.likedBy || []).includes(user.uid) })));
     } catch (error) {
-        toast({ title: "Failed to load your feed", variant: "destructive" });
+        console.error("Feed fetch error:", error);
+        toast({ title: "Failed to load your feed", description: "There was an issue fetching posts from people you follow.", variant: "destructive" });
     } finally {
         setIsLoading(false);
     }
@@ -92,8 +68,9 @@ export default function FeedPage() {
     setIsLoading(true);
     try {
         const items = await getDiscoveryPosts(user.uid, user.following);
-        setDiscoveryPosts(items.map(p => ({...p, isLiked: p.likedBy.includes(user.uid) })));
+        setDiscoveryPosts(items.map(p => ({...p, isLiked: (p.likedBy || []).includes(user.uid) })));
     } catch (error) {
+        console.error("Discovery fetch error:", error);
         toast({ title: "Failed to load discovery feed", variant: "destructive" });
     } finally {
         setIsLoading(false);
@@ -173,7 +150,7 @@ export default function FeedPage() {
             };
         }
 
-        const newPost = await createPost(user.uid, { content: postContent, imageUrl: imageUrlToPost, quotedPost: quotedPostData, privacy: postPrivacy, category: postCategory });
+        await createPost(user.uid, { content: postContent, imageUrl: imageUrlToPost, quotedPost: quotedPostData, privacy: postPrivacy, category: postCategory });
         
         await fetchFollowingFeed();
         
@@ -203,7 +180,7 @@ export default function FeedPage() {
                 return {
                     ...p,
                     isLiked,
-                    likes: p.likes + (isLiked ? 1 : -1),
+                    likes: (p.likes || 0) + (isLiked ? 1 : -1),
                 };
             }
             return p;
@@ -213,8 +190,8 @@ export default function FeedPage() {
     const originalFollowing = [...followingPosts];
     const originalDiscovery = [...discoveryPosts];
 
-    setFollowingPosts(updater);
-    setDiscoveryPosts(updater);
+    setFollowingPosts(prevPosts => updater(prevPosts));
+    setDiscoveryPosts(prevPosts => updater(prevPosts));
 
     try {
         await toggleLikePost(postId, user.uid);
@@ -276,7 +253,6 @@ export default function FeedPage() {
   if (authLoading) {
       return (
          <div className="max-w-2xl mx-auto space-y-6">
-            <Skeleton className="h-9 w-48" />
             <FeedSkeleton />
         </div>
       );
