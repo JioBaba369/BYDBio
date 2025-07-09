@@ -31,16 +31,6 @@ const EditJobPageSkeleton = () => (
     </div>
 );
 
-const combineDateAndTime = (date: Date, timeString: string | undefined | null): Date => {
-    const newDate = new Date(date);
-    if (timeString) {
-        const [hours, minutes] = timeString.split(':').map(Number);
-        newDate.setHours(hours, minutes, 0, 0); // Set seconds and ms to 0
-    }
-    return newDate;
-};
-
-
 export default function EditJobPage() {
     const router = useRouter();
     const params = useParams();
@@ -85,8 +75,6 @@ export default function EditJobPage() {
         return {
             ...jobToEdit,
             closingDate: jobToEdit.closingDate ? new Date(jobToEdit.closingDate) : null,
-            startDate: jobToEdit.startDate ? new Date(jobToEdit.startDate) : null,
-            endDate: jobToEdit.endDate ? new Date(jobToEdit.endDate) : null,
         };
     }, [jobToEdit]);
 
@@ -97,18 +85,9 @@ export default function EditJobPage() {
         }
         setIsSaving(true);
         try {
-            const { imageUrl, closingDate, startDate, endDate, startTime, endTime, ...restOfData } = data;
-            const combinedStartDate = startDate ? combineDateAndTime(startDate, startTime) : null;
-            const combinedEndDate = endDate ? combineDateAndTime(endDate, endTime) : null;
+            const { imageUrl, ...restOfData } = data;
             
-            const dataToSave: Partial<Omit<Job, 'id' | 'authorId' | 'createdAt'>> = {
-                ...restOfData,
-                closingDate: closingDate || null,
-                startDate: combinedStartDate,
-                endDate: combinedEndDate,
-            };
-
-            await updateJob(jobId, dataToSave);
+            await updateJob(jobId, restOfData);
 
             if (imageUrl && imageUrl.startsWith('data:image')) {
                 toast({ title: "Job Updated!", description: "Your job posting has been saved. Your new image is being uploaded.", });

@@ -9,16 +9,6 @@ import { useAuth } from "@/components/auth-provider";
 import { createJob, updateJob, type Job } from "@/lib/jobs";
 import { uploadImage } from "@/lib/storage";
 
-const combineDateAndTime = (date: Date, timeString: string | undefined | null): Date => {
-    const newDate = new Date(date);
-    if (timeString) {
-        const [hours, minutes] = timeString.split(':').map(Number);
-        newDate.setHours(hours, minutes, 0, 0); // Set seconds and ms to 0
-    }
-    return newDate;
-};
-
-
 export default function CreateJobPage() {
     const router = useRouter();
     const { user } = useAuth();
@@ -32,18 +22,9 @@ export default function CreateJobPage() {
         }
         setIsSaving(true);
         try {
-            const { imageUrl, closingDate, startDate, endDate, startTime, endTime, ...restOfData } = data;
-            const combinedStartDate = startDate ? combineDateAndTime(startDate, startTime) : null;
-            const combinedEndDate = endDate ? combineDateAndTime(endDate, endTime) : null;
+            const { imageUrl, ...restOfData } = data;
 
-            const dataToSave: Partial<Omit<Job, 'id' | 'authorId' | 'createdAt' | 'status' | 'views' | 'applicants' | 'postingDate' | 'searchableKeywords' | 'followerCount' | 'imageUrl'>> = {
-                ...restOfData,
-                closingDate: closingDate,
-                startDate: combinedStartDate,
-                endDate: combinedEndDate,
-            };
-
-            const jobId = await createJob(user.uid, dataToSave);
+            const jobId = await createJob(user.uid, restOfData);
             
             toast({
                 title: "Job Created!",

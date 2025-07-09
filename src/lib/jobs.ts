@@ -30,8 +30,6 @@ export type Job = {
   remuneration?: string;
   postingDate: Date;
   closingDate?: Date | null;
-  startDate?: Date | null;
-  endDate?: Date | null;
   imageUrl: string | null;
   status: 'active' | 'archived';
   views: number;

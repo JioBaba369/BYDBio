@@ -1,3 +1,5 @@
 // This file is intentionally left blank to resolve a Next.js routing conflict.
-// By not exporting a default component, this directory is not registered as an active route.
-// The redirect is now handled by middleware.
+// By exporting a null component, we satisfy the compiler while allowing middleware to handle the redirect.
+export default function LegacyJobRedirectPage() {
+  return null;
+}
