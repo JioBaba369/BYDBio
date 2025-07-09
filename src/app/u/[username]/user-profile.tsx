@@ -263,28 +263,36 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
             <h1 className="font-headline text-3xl font-bold text-foreground">{name}</h1>
             <p className="text-muted-foreground">@{username}</p>
             
-             <div className="mt-6 flex w-full flex-col sm:flex-row items-center gap-4">
-              {isOwner ? (
-                  <Button asChild className="flex-1 font-bold w-full sm:w-auto">
-                      <Link href="/profile">
-                          <Edit className="mr-2 h-4 w-4" />
-                          Edit Profile
-                      </Link>
-                  </Button>
-              ) : (
-                  <Button 
-                      className="flex-1 font-bold w-full sm:w-auto" 
-                      onClick={handleFollowToggle}
-                      disabled={isFollowLoading}
-                  >
-                      {isFollowLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : isFollowing ? <UserCheck className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
-                      {isFollowing ? 'Following' : 'Follow'}
-                  </Button>
-              )}
-              <div className="text-center p-2 rounded-md bg-muted/50 w-full sm:w-28">
-                <p className="font-bold text-lg text-foreground">{followerCount}</p>
-                <p className="text-xs text-muted-foreground tracking-wide">Followers</p>
-              </div>
+             <div className="mt-6 grid w-full grid-cols-1 sm:grid-cols-3 items-center gap-4">
+                <div className="sm:col-span-1 text-center p-2 rounded-md bg-muted/50">
+                    <p className="font-bold text-lg text-foreground">{followerCount}</p>
+                    <p className="text-xs text-muted-foreground tracking-wide">Followers</p>
+                </div>
+                <div className="sm:col-span-2 flex flex-col sm:flex-row gap-2">
+                    {isOwner ? (
+                        <Button asChild className="flex-1 font-bold">
+                            <Link href="/profile">
+                                <Edit className="mr-2 h-4 w-4" />
+                                Edit Profile
+                            </Link>
+                        </Button>
+                    ) : (
+                        <Button 
+                            className="flex-1 font-bold" 
+                            onClick={handleFollowToggle}
+                            disabled={isFollowLoading}
+                        >
+                            {isFollowLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : isFollowing ? <UserCheck className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
+                            {isFollowing ? 'Following' : 'Follow'}
+                        </Button>
+                    )}
+                    <Button asChild variant="outline" className="flex-1">
+                        <Link href={`/u/${username}/card`}>
+                            <QrCode className="mr-2 h-4 w-4" />
+                            Digital Card
+                        </Link>
+                    </Button>
+                </div>
             </div>
           </div>
         </Card>
