@@ -3,7 +3,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Rocket, Zap, Bug, Calendar as CalendarIcon, Nfc, ScanLine, Sparkles, PackageSearch, Redo, PaintBrush } from "lucide-react";
+import { Rocket, Zap, Bug, Calendar, Nfc, ScanLine, Sparkles, PackageSearch, Redo, PaintBrush } from "lucide-react";
 import { ClientFormattedDate } from "@/components/client-formatted-date";
 
 type UpdateItem = {
@@ -65,7 +65,7 @@ const updates: UpdateItem[] = [
     version: 'v1.3.1',
     title: 'Interactive Diary & Content Calendar',
     description: 'We\'ve supercharged the "My Content" and "Diary" pages with new calendar views. Visualize your schedule, manage events with notes, and get a high-level view of all your content in one place.',
-    badge: { text: 'Improvement', icon: CalendarIcon },
+    badge: { text: 'Improvement', icon: Calendar },
   },
   {
     date: '2025-06-05T12:00:00Z',
@@ -90,27 +90,30 @@ const updates: UpdateItem[] = [
   },
 ];
 
-const UpdateCard = ({ item }: { item: UpdateItem }) => (
-    <Card className="transition-shadow hover:shadow-md">
-        <CardHeader>
-            <div className="flex items-start justify-between gap-4">
-                <CardTitle>{item.title}</CardTitle>
-                <Badge variant="outline" className="shrink-0">
-                    <item.badge.icon className="mr-1.5 h-3.5 w-3.5" />
-                    {item.badge.text}
-                </Badge>
-            </div>
-            <CardDescription className="flex items-center gap-x-4 text-xs pt-2 font-mono">
-                <span><ClientFormattedDate date={item.date} formatStr="d MMMM yyyy" /></span>
-                <span className="text-muted-foreground/50">|</span>
-                <span>{item.version}</span>
-            </CardDescription>
-        </CardHeader>
-        <CardContent>
-            <p className="text-muted-foreground">{item.description}</p>
-        </CardContent>
-    </Card>
-);
+const UpdateCard = ({ item }: { item: UpdateItem }) => {
+    const Icon = item.badge.icon;
+    return (
+        <Card className="transition-shadow hover:shadow-md">
+            <CardHeader>
+                <div className="flex items-start justify-between gap-4">
+                    <CardTitle>{item.title}</CardTitle>
+                    <Badge variant="outline" className="shrink-0">
+                        <Icon className="mr-1.5 h-3.5 w-3.5" />
+                        {item.badge.text}
+                    </Badge>
+                </div>
+                <CardDescription className="flex items-center gap-x-4 text-xs pt-2 font-mono">
+                    <span><ClientFormattedDate date={item.date} formatStr="d MMMM yyyy" /></span>
+                    <span className="text-muted-foreground/50">|</span>
+                    <span>{item.version}</span>
+                </CardDescription>
+            </CardHeader>
+            <CardContent>
+                <p className="text-muted-foreground">{item.description}</p>
+            </CardContent>
+        </Card>
+    )
+};
 
 
 export default function WhatsNewPage() {
@@ -136,7 +139,7 @@ export default function WhatsNewPage() {
                 {sortedYears.map(year => (
                     <div key={year}>
                         <h2 className="text-2xl font-bold mb-6 flex items-center gap-2 font-headline">
-                            <CalendarIcon className="w-6 h-6 text-primary" /> {year} Updates
+                            <Calendar className="w-6 h-6 text-primary" /> {year} Updates
                         </h2>
                         <div className="space-y-6">
                             {updatesByYear[year].map((update, index) => (
