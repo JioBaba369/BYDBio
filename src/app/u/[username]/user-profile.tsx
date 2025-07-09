@@ -1,7 +1,6 @@
-
 'use client';
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo } from "react";
 import type { User } from '@/lib/users';
 import type { PostWithAuthor } from '@/lib/posts';
 import type { Listing } from '@/lib/listings';
@@ -11,16 +10,18 @@ import type { Event } from '@/lib/events';
 import type { PromoPage } from "@/lib/promo-pages";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { UserCheck, UserPlus, QrCode, Edit, Loader2, Rss, MessageSquare, Link2 as LinkIcon } from "lucide-react";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { ExternalLink, UserCheck, UserPlus, QrCode, Edit, Loader2, Rss, Info, MessageSquare, Package } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
+import { Logo } from "@/components/logo";
 import ShareButton from "@/components/share-button";
+import { linkIcons } from "@/lib/link-icons";
 import { useAuth } from "@/components/auth-provider";
 import { followUser, unfollowUser } from "@/lib/connections";
 import { useRouter } from "next/navigation";
 import { PostCard } from "@/components/post-card";
-import { toggleLikePost, deletePost, repostPost, getPrivatePostsByUser } from '@/lib/posts';
+import { toggleLikePost, deletePost, repostPost } from '@/lib/posts';
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
 import { PromoPageFeedItem } from "@/components/feed/promo-page-feed-item";
 import { ListingFeedItem } from "@/components/feed/listing-feed-item";
@@ -47,11 +48,14 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
   const { user: currentUser } = useAuth();
   const router = useRouter();
   
-  const [localPosts, setLocalPosts] = useState(content.posts);
-  
-  const [isFollowing, setIsFollowing] = useState(false);
+  const [isFollowing, setIsFollowing] = useState(currentUser?.following?.includes(userProfileData.uid) || false);
   const [followerCount, setFollowerCount] = useState(userProfileData.followerCount || 0);
   const [isFollowLoading, setIsFollowLoading] = useState(false);
+  
+  const [localPosts, setLocalPosts] = useState(content.posts.map(p => ({
+    ...p,
+    isLiked: currentUser ? p.likedBy.includes(currentUser.uid) : false,
+  })));
   
   const { toast } = useToast();
   
@@ -60,42 +64,10 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
   const [postToDelete, setPostToDelete] = useState<PostWithAuthor | null>(null);
   const [loadingAction, setLoadingAction] = useState<{ postId: string; action: 'like' | 'repost' } | null>(null);
 
-  const isOwner = currentUser?.uid === userProfileData.uid;
-  const canViewPrivateContent = useMemo(() => isOwner || isFollowing, [isOwner, isFollowing]);
-
   useEffect(() => {
     setIsFollowing(currentUser?.following?.includes(userProfileData.uid) || false);
-    setFollowerCount(userProfileData.followerCount || 0);
-  }, [currentUser, userProfileData]);
+  }, [currentUser, userProfileData.uid]);
   
-  useEffect(() => {
-    const fetchAndMergePrivatePosts = async () => {
-      if (canViewPrivateContent) {
-        try {
-          const privatePosts = await getPrivatePostsByUser(userProfileData.uid);
-          const allPosts = [...content.posts, ...privatePosts];
-          const uniquePosts = Array.from(new Map(allPosts.map(p => [p.id, p])).values());
-          uniquePosts.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-          
-          setLocalPosts(uniquePosts.map(p => ({
-            ...p,
-            isLiked: currentUser ? p.likedBy.includes(currentUser.uid) : false,
-          })));
-        } catch (error) {
-          console.error("Failed to fetch private posts:", error);
-        }
-      } else {
-        setLocalPosts(content.posts.map(p => ({
-            ...p,
-            isLiked: currentUser ? p.likedBy.includes(currentUser.uid) : false,
-        })));
-      }
-    };
-    
-    fetchAndMergePrivatePosts();
-  }, [canViewPrivateContent, userProfileData.uid, content.posts, currentUser]);
-
-
   const handleFollowToggle = async () => {
     if (!currentUser) {
         toast({ title: "Please sign in to follow users.", variant: "destructive" });
@@ -106,6 +78,8 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
 
     setIsFollowLoading(true);
     const currentlyFollowing = isFollowing;
+
+    // Optimistic UI Update
     setIsFollowing(!currentlyFollowing);
     setFollowerCount(prev => prev + (!currentlyFollowing ? 1 : -1));
 
@@ -118,6 +92,7 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
             toast({ title: `You are now following ${userProfileData.name}` });
         }
     } catch (error) {
+        // Rollback on error
         setIsFollowing(currentlyFollowing);
         setFollowerCount(prev => prev + (currentlyFollowing ? 1 : -1));
         toast({ title: "Something went wrong", variant: "destructive" });
@@ -133,6 +108,7 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
     }
 
     setLoadingAction({ postId, action: 'like' });
+
     const originalPosts = [...localPosts];
     const postIndex = localPosts.findIndex(p => p.id === postId);
     if (postIndex === -1) {
@@ -141,15 +117,24 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
     }
 
     const originalPost = { ...originalPosts[postIndex] };
-    const updatedPost = { ...originalPost, isLiked: !originalPost.isLiked, likes: originalPost.likes + (originalPost.isLiked ? -1 : 1) };
+
+    // Optimistic update
+    const updatedPost = {
+        ...originalPost,
+        isLiked: !originalPost.isLiked,
+        likes: originalPost.likes + (originalPost.isLiked ? -1 : 1),
+    };
+
     const newPosts = [...originalPosts];
     newPosts[postIndex] = updatedPost;
     setLocalPosts(newPosts);
 
+    // API call
     try {
         await toggleLikePost(postId, currentUser.uid);
     } catch (error) {
         toast({ title: "Something went wrong", variant: "destructive" });
+        // Revert on error
         setLocalPosts(originalPosts);
     } finally {
         setLoadingAction(null);
@@ -167,6 +152,7 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
     setIsDeleting(true);
 
     const originalPosts = [...localPosts];
+    // Optimistic delete
     setLocalPosts(prev => prev.filter(p => p.id !== postToDelete.id));
 
     try {
@@ -174,7 +160,7 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
       toast({ title: "Post deleted" });
     } catch (error) {
       toast({ title: "Failed to delete post", variant: "destructive" });
-      setLocalPosts(originalPosts);
+      setLocalPosts(originalPosts); // Revert on failure
     } finally {
       setIsDeleteDialogOpen(false);
       setPostToDelete(null);
@@ -209,8 +195,14 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
             id: post.id,
             content: post.content,
             imageUrl: post.imageUrl,
-            author: { uid: post.author.uid, name: post.author.name, username: post.author.username, avatarUrl: post.author.avatarUrl },
+            author: { 
+                uid: post.author.uid,
+                name: post.author.name,
+                username: post.author.username,
+                avatarUrl: post.author.avatarUrl,
+            },
         };
+
         sessionStorage.setItem('postToQuote', JSON.stringify(postToStore));
         router.push('/feed');
     } catch (error) {
@@ -219,122 +211,168 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
     }
   };
 
-  const { name, username, avatarUrl, avatarFallback, bio, links } = userProfileData;
 
-  const unifiedFeed = useMemo(() => {
-    const allContent = [
-      ...localPosts.map(item => ({ ...item, type: 'post' as const, date: item.createdAt })),
+  const { name, username, avatarUrl, avatarFallback, bio, links } = userProfileData;
+  const isOwner = currentUser?.uid === userProfileData.uid;
+
+  const canViewPrivateContent = useMemo(() => isOwner || isFollowing, [isOwner, isFollowing]);
+
+  const visiblePosts = useMemo(() => {
+    return localPosts.filter(post => {
+        if (post.privacy === 'public') return true;
+        if (post.privacy === 'followers') return canViewPrivateContent;
+        if (post.privacy === 'me') return isOwner;
+        return false;
+    });
+  }, [localPosts, canViewPrivateContent, isOwner]);
+
+  const allOtherContent = useMemo(() => {
+    const combined = [
       ...content.promoPages.map(item => ({ ...item, type: 'promoPage' as const, date: item.createdAt })),
       ...content.listings.map(item => ({ ...item, type: 'listing' as const, date: item.createdAt })),
       ...content.jobs.map(item => ({ ...item, type: 'job' as const, date: item.postingDate })),
       ...content.events.map(item => ({ ...item, type: 'event' as const, date: item.startDate })),
       ...content.offers.map(item => ({ ...item, type: 'offer' as const, date: item.startDate })),
     ];
-    allContent.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    return allContent;
-  }, [localPosts, content]);
+    combined.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    return combined;
+  }, [content]);
   
-  const componentMap = {
-      post: (item: any) => (
-        <PostCard
-          item={item}
-          onLike={handleLike}
-          onDelete={openDeleteDialog}
-          onRepost={handleRepost}
-          onQuote={handleQuote}
-          isLoading={loadingAction?.postId === item.id}
-          loadingAction={loadingAction?.postId === item.id ? loadingAction.action : null}
-        />
-      ),
-      promoPage: (item: any) => <PromoPageFeedItem item={item as PromoPage} />,
-      listing: (item: any) => <ListingFeedItem item={item as Listing} />,
-      job: (item: any) => <JobFeedItem item={item as Job} />,
-      event: (item: any) => <EventFeedItem item={item as Event} />,
-      offer: (item: any) => <OfferFeedItem item={item as Offer} />,
-  };
-
+  const hasLinks = links.length > 0;
 
   return (
     <>
-      <DeleteConfirmationDialog 
-          open={isDeleteDialogOpen}
-          onOpenChange={setIsDeleteDialogOpen}
-          onConfirm={handleConfirmDelete}
-          isLoading={isDeleting}
-          itemName="post"
-          confirmationText="DELETE"
-      />
-      <div className="space-y-8">
-        <Card>
-            <CardHeader className="p-6">
-                <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
-                    <Avatar className="w-24 h-24 border-4 border-background shadow-lg">
-                        <AvatarImage src={avatarUrl} alt={name} />
-                        <AvatarFallback>{avatarFallback}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 text-center sm:text-left">
-                        <div className="flex items-center justify-center sm:justify-start gap-4">
-                            <CardTitle className="text-3xl font-headline">{name}</CardTitle>
-                            <ShareButton variant="ghost" size="icon" />
-                        </div>
-                        <CardDescription>@{username}</CardDescription>
-                        
-                         <div className="mt-4 flex items-center justify-center sm:justify-start gap-4 text-sm">
-                            <p><span className="font-bold">{followerCount}</span> Followers</p>
-                            <p><span className="font-bold">{userProfileData.following.length}</span> Following</p>
-                        </div>
-                        {bio && <p className="text-sm text-foreground/80 mt-4 max-w-prose whitespace-pre-wrap">{bio}</p>}
-                    </div>
-                </div>
-            </CardHeader>
-            <CardFooter className="flex-wrap gap-2 px-6 pb-6">
-                 {isOwner ? (
-                    <Button asChild className="font-bold flex-1 sm:flex-none">
-                        <Link href="/profile">
-                            <Edit className="mr-2 h-4 w-4" /> Edit Profile
-                        </Link>
-                    </Button>
-                ) : (
-                    <Button className="font-bold flex-1 sm:flex-none" onClick={handleFollowToggle} disabled={isFollowLoading}>
-                        {isFollowLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : isFollowing ? <UserCheck className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
-                        {isFollowing ? 'Following' : 'Follow'}
-                    </Button>
-                )}
-                <Button asChild variant="outline" className="flex-1 sm:flex-none">
-                    <Link href={`/u/${username}/links`}>
-                        <LinkIcon className="mr-2 h-4 w-4" /> Links Page
-                    </Link>
-                </Button>
-                <Button asChild variant="outline" className="flex-1 sm:flex-none">
-                    <Link href={`/u/${username}/card`}>
-                        <QrCode className="mr-2 h-4 w-4" /> Digital Card
-                    </Link>
-                </Button>
-            </CardFooter>
+    <DeleteConfirmationDialog 
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        onConfirm={handleConfirmDelete}
+        isLoading={isDeleting}
+        itemName="post"
+        confirmationText="DELETE"
+    />
+    <div className="flex justify-center bg-dot py-8 px-4">
+      <div className="w-full max-w-xl mx-auto space-y-8">
+        <Card className="bg-card/80 backdrop-blur-sm p-6 sm:p-8 shadow-2xl rounded-2xl border-primary/10 relative overflow-hidden">
+          <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-primary/10 via-background to-background z-0"></div>
+          <div className="relative z-10 flex flex-col items-center text-center">
+            <Avatar className="w-24 h-24 mb-4 border-4 border-background shadow-lg">
+              <AvatarImage src={avatarUrl} alt={name} />
+              <AvatarFallback>{avatarFallback}</AvatarFallback>
+            </Avatar>
+            <h1 className="font-headline text-3xl font-bold text-foreground">{name}</h1>
+            <p className="text-muted-foreground">@{username}</p>
+            
+             <div className="mt-6 flex w-full flex-col sm:flex-row items-center gap-4">
+              {isOwner ? (
+                  <Button asChild className="flex-1 font-bold w-full sm:w-auto">
+                      <Link href="/profile">
+                          <Edit className="mr-2 h-4 w-4" />
+                          Edit Profile
+                      </Link>
+                  </Button>
+              ) : (
+                  <Button 
+                      className="flex-1 font-bold w-full sm:w-auto" 
+                      onClick={handleFollowToggle}
+                      disabled={isFollowLoading}
+                  >
+                      {isFollowLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : isFollowing ? <UserCheck className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
+                      {isFollowing ? 'Following' : 'Follow'}
+                  </Button>
+              )}
+              <div className="text-center p-2 rounded-md bg-muted/50 w-full sm:w-28">
+                <p className="font-bold text-lg text-foreground">{followerCount}</p>
+                <p className="text-xs text-muted-foreground tracking-wide">Followers</p>
+              </div>
+            </div>
+          </div>
         </Card>
 
-        <Tabs defaultValue="feed" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
+        <Tabs defaultValue="creations" className="w-full">
+            <TabsList className="grid w-full grid-cols-4">
+                <TabsTrigger value="creations"><Package className="mr-2 h-4 w-4"/>Creations</TabsTrigger>
                 <TabsTrigger value="feed"><Rss className="mr-2 h-4 w-4"/>Feed</TabsTrigger>
+                <TabsTrigger value="about"><Info className="mr-2 h-4 w-4"/>About</TabsTrigger>
                 <TabsTrigger value="contact"><MessageSquare className="mr-2 h-4 w-4" />Contact</TabsTrigger>
             </TabsList>
-            <TabsContent value="feed" className="mt-6">
-                {unifiedFeed.length > 0 ? (
+            <TabsContent value="creations" className="mt-6">
+                 {allOtherContent.length > 0 ? (
                     <div className="space-y-6">
-                        {unifiedFeed.map(item => {
+                        {allOtherContent.map(item => {
                             const uniqueKey = `${item.type}-${item.id}`;
-                            const ContentComponent = componentMap[item.type as keyof typeof componentMap];
-                            if (!ContentComponent) return null;
-                            return <div key={uniqueKey}>{ContentComponent}</div>
+                            const componentMap = {
+                                promoPage: <PromoPageFeedItem item={item as PromoPage} />,
+                                listing: <ListingFeedItem item={item as Listing} />,
+                                job: <JobFeedItem item={item as Job} />,
+                                event: <EventFeedItem item={item as Event} />,
+                                offer: <OfferFeedItem item={item as Offer} />,
+                            };
+                            const content = componentMap[item.type as keyof typeof componentMap];
+                            if (!content) return null;
+                            return <div key={uniqueKey}>{content}</div>
                         })}
                     </div>
                 ) : (
-                    <Card className="text-center text-muted-foreground p-10">
-                        This user hasn't created any content yet.
+                     <Card className="text-center text-muted-foreground p-10">
+                        This user hasn't created any public content yet.
                     </Card>
                 )}
             </TabsContent>
-             <TabsContent value="contact" className="mt-6">
+            <TabsContent value="feed" className="mt-6">
+                {visiblePosts.length > 0 ? (
+                    <div className="space-y-6">
+                        {visiblePosts.map(post => (
+                            <PostCard
+                                key={post.id}
+                                item={post}
+                                onLike={handleLike}
+                                onDelete={openDeleteDialog}
+                                onRepost={handleRepost}
+                                onQuote={handleQuote}
+                                isLoading={loadingAction?.postId === post.id}
+                                loadingAction={loadingAction?.postId === post.id ? loadingAction.action : null}
+                            />
+                        ))}
+                    </div>
+                ) : (
+                     <Card className="text-center text-muted-foreground p-10">
+                        This user hasn't made any posts yet.
+                    </Card>
+                )}
+            </TabsContent>
+            <TabsContent value="about" className="mt-6 space-y-6">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>About</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <p className="text-foreground/90 max-w-prose whitespace-pre-wrap">{bio || "This user hasn't written a bio yet."}</p>
+                    </CardContent>
+                </Card>
+
+                {hasLinks && (
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Links</CardTitle>
+                    </CardHeader>
+                    <CardContent className="flex flex-col space-y-4">
+                        {links.map((link, index) => {
+                            const Icon = linkIcons[link.icon as keyof typeof linkIcons];
+                            return (
+                            <a key={index} href={link.url} target="_blank" rel="noopener noreferrer" className="w-full group">
+                                <div className="w-full h-14 text-lg font-semibold flex items-center p-4 rounded-lg bg-background/70 shadow-sm border hover:bg-muted transition-all hover:scale-[1.02] ease-out duration-200">
+                                {Icon && <Icon className="h-5 w-5" />}
+                                <span className="flex-1 text-center">{link.title}</span>
+                                <ExternalLink className="h-5 w-5 text-muted-foreground/50 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                </div>
+                            </a>
+                            )
+                        })}
+                    </CardContent>
+                </Card>
+                )}
+            </TabsContent>
+            <TabsContent value="contact" className="mt-6">
               {!isOwner ? (
                   <ContactForm recipientId={userProfileData.uid} />
               ) : (
@@ -346,7 +384,14 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
               )}
             </TabsContent>
         </Tabs>
+        
+        <div className="text-center mt-8">
+            <Link href="/" className="text-sm text-muted-foreground hover:text-primary flex items-center justify-center gap-2">
+                Powered by <Logo className="text-lg text-foreground" />
+            </Link>
+        </div>
       </div>
+    </div>
     </>
   );
 }
