@@ -11,7 +11,7 @@ import type { Event } from '@/lib/events';
 import type { PromoPage } from "@/lib/promo-pages";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ExternalLink, UserCheck, UserPlus, QrCode, Edit, Loader2, Rss, Info, MessageSquare, Package } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
@@ -30,7 +30,6 @@ import { EventFeedItem } from "@/components/feed/event-feed-item";
 import { OfferFeedItem } from "@/components/feed/offer-feed-item";
 import { ContactForm } from "@/components/contact-form";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ContentFeedCard } from "@/components/feed/content-feed-card";
 import { Separator } from "@/components/ui/separator";
 
 interface UserProfilePageProps {
@@ -262,6 +261,14 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
   }, [content]);
   
   const hasLinks = links && links.length > 0;
+  
+  const componentMap = {
+      promoPage: (item: any) => <PromoPageFeedItem item={item as PromoPage} />,
+      listing: (item: any) => <ListingFeedItem item={item as Listing} />,
+      job: (item: any) => <JobFeedItem item={item as Job} />,
+      event: (item: any) => <EventFeedItem item={item as Event} />,
+      offer: (item: any) => <OfferFeedItem item={item as Offer} />,
+  };
 
   return (
     <>
@@ -363,25 +370,15 @@ export default function UserProfilePage({ userProfileData, content }: UserProfil
                     <div className="space-y-6">
                         {allOtherContent.map(item => {
                             const uniqueKey = `${item.type}-${item.id}`;
-                            const componentMap = {
-                                promoPage: <PromoPageFeedItem item={item as PromoPage} />,
-                                listing: <ListingFeedItem item={item as Listing} />,
-                                job: <JobFeedItem item={item as Job} />,
-                                event: <EventFeedItem item={item as Event} />,
-                                offer: <OfferFeedItem item={item as Offer} />,
-                            };
-                            const contentBody = componentMap[item.type as keyof typeof componentMap];
-                            if (!contentBody) return null;
+                            const ContentComponent = componentMap[item.type as keyof typeof componentMap];
+                            if (!ContentComponent) return null;
 
                             return (
-                                <ContentFeedCard
-                                    key={uniqueKey}
-                                    author={userProfileData}
-                                    date={item.date}
-                                    category={item.type}
-                                >
-                                    {contentBody}
-                                </ContentFeedCard>
+                                <Card key={uniqueKey}>
+                                    <CardContent className="p-4">
+                                        <ContentComponent item={item} />
+                                    </CardContent>
+                                </Card>
                             );
                         })}
                     </div>
