@@ -55,7 +55,7 @@ export default function FeedPage() {
     setIsLoading(true);
     try {
         const items = await getFeedPosts(user.uid, user.following);
-        setFollowingPosts(items.map(p => ({ ...p, isLiked: (p.likedBy || []).includes(user.uid) })));
+        setFollowingPosts(items);
     } catch (error) {
         console.error("Feed fetch error:", error);
         toast({ title: "Failed to load your feed", description: "There was an issue fetching posts from people you follow.", variant: "destructive" });
@@ -69,7 +69,7 @@ export default function FeedPage() {
     setIsLoading(true);
     try {
         const items = await getDiscoveryPosts(user.uid, user.following);
-        setDiscoveryPosts(items.map(p => ({...p, isLiked: (p.likedBy || []).includes(user.uid) })));
+        setDiscoveryPosts(items);
     } catch (error) {
         console.error("Discovery fetch error:", error);
         toast({ title: "Failed to load discovery feed", variant: "destructive" });
@@ -276,7 +276,7 @@ export default function FeedPage() {
                 {posts.map(item => (
                     <PostCard
                         key={item.id}
-                        item={{...item, isLiked: item.likedBy.includes(user.uid)}}
+                        item={item}
                         onLike={handleLike}
                         onDelete={openDeleteDialog}
                         onRepost={handleRepost}

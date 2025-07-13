@@ -48,7 +48,7 @@ const SearchPageSkeleton = () => (
             <Skeleton className="h-4 w-80" />
         </div>
         <Tabs defaultValue="users" className="w-full">
-            <TabsList className="flex flex-wrap h-auto justify-center gap-1">
+            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-7">
                 <TabsTrigger value="users" disabled><Skeleton className="h-5 w-20" /></TabsTrigger>
                 <TabsTrigger value="posts" disabled><Skeleton className="h-5 w-20" /></TabsTrigger>
                 <TabsTrigger value="promoPages" disabled><Skeleton className="h-5 w-24" /></TabsTrigger>
@@ -156,15 +156,17 @@ export default function SearchPage() {
 
         allContent.forEach(item => {
             const author = authorMap.get(item.authorId);
-            if (author) {
-                switch (item.type) {
-                    case 'listing': newResults.listings.push({ ...item, author }); break;
-                    case 'job': newResults.jobs.push({ ...item, author }); break;
-                    case 'event': newResults.events.push({ ...item, author }); break;
-                    case 'offer': newResults.offers.push({ ...item, author }); break;
-                    case 'promoPage': newResults.promoPages.push({ ...item, author }); break;
-                    case 'post': postsToPopulate.push(item); break;
-                }
+            if (!author) {
+                return; // Skip content if author is not found (e.g., deleted account)
+            }
+            
+            switch (item.type) {
+                case 'listing': newResults.listings.push({ ...item, author }); break;
+                case 'job': newResults.jobs.push({ ...item, author }); break;
+                case 'event': newResults.events.push({ ...item, author }); break;
+                case 'offer': newResults.offers.push({ ...item, author }); break;
+                case 'promoPage': newResults.promoPages.push({ ...item, author }); break;
+                case 'post': postsToPopulate.push(item); break;
             }
         });
         

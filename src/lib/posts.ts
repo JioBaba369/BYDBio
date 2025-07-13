@@ -64,7 +64,7 @@ export type Post = {
 
 export type PostWithAuthor = Post & {
   author: User;
-  isLiked?: boolean;
+  isLiked: boolean;
   quotedPost?: EmbeddedPostInfoWithAuthor;
   repostedPost?: EmbeddedPostInfoWithAuthor;
 };
@@ -89,7 +89,7 @@ export const getPostsByUser = async (userId: string): Promise<PostWithAuthor[]> 
     .map(doc => serializeDocument<Post>(doc))
     .filter((post): post is Post => post !== null);
   
-  return populatePostAuthors(posts);
+  return populatePostAuthors(posts, userId);
 };
 
 // Function to create a new post
@@ -238,7 +238,7 @@ export const repostPost = async (originalPostId: string, reposterId: string): Pr
     return serializeDocument<Post>(newDoc) as Post;
 };
 
-export const populatePostAuthors = async (posts: Post[]): Promise<PostWithAuthor[]> => {
+export const populatePostAuthors = async (posts: Post[], viewerId?: string): Promise<PostWithAuthor[]> => {
     if (posts.length === 0) return [];
 
     const authorIds = new Set<string>();
@@ -262,6 +262,7 @@ export const populatePostAuthors = async (posts: Post[]): Promise<PostWithAuthor
         const populatedPost: PostWithAuthor = {
             ...post,
             author,
+            isLiked: viewerId ? post.likedBy.includes(viewerId) : false,
         };
 
         if (post.quotedPost) {
@@ -304,10 +305,13 @@ export const getFeedPosts = async (userId: string, followingIds: string[]): Prom
     // A user's feed should contain their own posts plus posts from people they follow.
     const authorsToFetch = [...new Set([userId, ...followingIds])];
     
+    if (authorsToFetch.length === 0) {
+        return [];
+    }
+
     // Firestore 'in' queries are limited to 30 items. We'll chunk the query.
     const chunkArray = <T>(array: T[], size: number): T[][] => {
         const chunks: T[][] = [];
-        if (!array) return chunks;
         for (let i = 0; i < array.length; i += size) {
             chunks.push(array.slice(i, i + size));
         }
@@ -327,19 +331,14 @@ export const getFeedPosts = async (userId: string, followingIds: string[]): Prom
 
     const postSnapshots = await Promise.all(postPromises);
     const allPostDocs = postSnapshots.flatMap(snap => snap.docs);
-    const uniquePostDocs = Array.from(new Map(allPostDocs.map(doc => [doc.id, doc])).values());
+    
+    const uniquePosts = Array.from(new Map(allPostDocs.map(doc => [doc.id, doc])).values());
 
-    const postsData = uniquePostDocs.map(doc => serializeDocument<Post>(doc)).filter((p): p is Post => {
-        if (!p) return false;
-        // Logic for filtering based on privacy
-        if (p.authorId === userId) return true; // Always show user's own posts
-        // For others, only show public or followers posts
-        return p.privacy === 'public' || p.privacy === 'followers';
-    });
+    const postsData = uniquePosts.map(doc => serializeDocument<Post>(doc)).filter((p): p is Post => !!p);
     
     postsData.sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
-    return populatePostAuthors(postsData.slice(0, FEED_POST_LIMIT));
+    return populatePostAuthors(postsData.slice(0, FEED_POST_LIMIT), userId);
 };
 
 /**
@@ -364,5 +363,5 @@ export const getDiscoveryPosts = async (userId: string, followingIds: string[]):
 
     const postsData = discoveryDocs.map(doc => serializeDocument<Post>(doc)).filter((p): p is Post => !!p);
 
-    return populatePostAuthors(postsData);
+    return populatePostAuthors(postsData, userId);
 };
