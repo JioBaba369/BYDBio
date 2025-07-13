@@ -79,7 +79,7 @@ export default function CalendarPage() {
   const [view, setView] = useState<'grid' | 'list' | 'calendar'>('grid');
   
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
-  const [month, setMonth] = useState<Date>();
+  const [month, setMonth] = useState<Date | undefined>();
 
   useEffect(() => {
     // Initialize date states on the client to avoid hydration errors
