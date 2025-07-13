@@ -63,12 +63,12 @@ const TagPreview = forwardRef<HTMLDivElement, { values: DesignFormValues; user: 
     if (side === 'back') {
         const backCardBg = cardBgClass || (values.textColor === 'light' ? 'bg-gray-900' : 'bg-white');
         return (
-            <div ref={ref} className={cn("w-full h-full rounded-2xl flex flex-col items-center justify-between p-6 transition-colors relative", backCardBg)} style={cardStyle}>
+            <div ref={ref} className={cn("w-full h-full rounded-2xl flex flex-col items-center justify-center p-6 transition-colors relative", backCardBg)} style={cardStyle}>
                  {values.backgroundImageUrl && <div className="absolute inset-0 bg-black/60 rounded-2xl" />}
-                 <div className="relative z-10 w-full flex flex-col items-center justify-between h-full">
-                    <Logo className={cn("text-xl", textColor)} />
+                 <div className="relative z-10 w-full flex flex-col items-center justify-center gap-4 h-full">
                     {values.showQrCode && user ? (
-                        <div className="flex flex-col items-center gap-2">
+                        <div className="flex flex-col items-center gap-4">
+                            <Logo className={cn("text-xl", textColor)} />
                             <div className="bg-white p-2 rounded-md shadow-md">
                                 <QRCode
                                     value={`${window.location.origin}/u/${user.username}`}
@@ -81,7 +81,7 @@ const TagPreview = forwardRef<HTMLDivElement, { values: DesignFormValues; user: 
                             <p className={cn("text-[10px] font-mono leading-tight", subtitleColor)}>{`byd.bio/u/${user.username}`}</p>
                         </div>
                     ) : <div />}
-                    <p className={cn("text-xs font-semibold leading-tight", subtitleColor)}>Tap or Scan to Connect</p>
+                    <p className={cn("text-xs font-semibold leading-tight absolute bottom-6", subtitleColor)}>Tap or Scan to Connect</p>
                 </div>
             </div>
         )
@@ -127,9 +127,9 @@ const TagPreview = forwardRef<HTMLDivElement, { values: DesignFormValues; user: 
     // Lanyard Card
     if (layout === 'lanyard') {
          return (
-            <div ref={ref} className={cn("w-full h-full rounded-2xl p-6 transition-colors relative flex flex-col items-center justify-center text-center", cardBgClass)} style={cardStyle}>
+            <div ref={ref} className={cn("w-full h-full rounded-2xl p-6 transition-colors relative flex flex-col items-center justify-center text-center pt-12", cardBgClass)} style={cardStyle}>
                 {values.backgroundImageUrl && <div className="absolute inset-0 bg-black/50 rounded-2xl" />}
-                <div className="relative z-10 flex w-full flex-col items-center justify-center gap-4 pt-4">
+                <div className="relative z-10 flex w-full flex-col items-center justify-center gap-4">
                     {renderAvatar("h-24 w-24", "text-5xl")}
                      <div className="space-y-1">
                         <h3 className={cn("font-bold text-3xl leading-tight", textColor)}>{values.name || 'Your Name'}</h3>
