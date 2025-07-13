@@ -112,6 +112,10 @@ export const getNotificationsWithActors = async (userId: string): Promise<Notifi
   const actorIds = notifications.map(n => n.actorId).filter((id): id is string => !!id);
   const uniqueActorIds = [...new Set(actorIds)];
 
+  if (uniqueActorIds.length === 0) {
+      return notifications.map(n => ({...n, actor: null}));
+  }
+
   const actors = await getUsersByIds(uniqueActorIds);
   const actorMap = new Map(actors.map(actor => [actor.uid, actor]));
 
@@ -151,10 +155,10 @@ export const markNotificationsAsRead = async (userId: string) => {
 };
 
 
-const getNotificationLink = (notification: Notification): string => {
+const getNotificationLink = (notification: NotificationWithActor): string => {
     switch (notification.type) {
         case 'new_follower':
-            return `/u/${notification.actorId}`;
+            return notification.actor ? `/u/${notification.actor.username}` : '/connections';
         case 'new_like':
             return `/feed`; // A real app would link to `/posts/${notification.entityId}`
         case 'event_rsvp':
