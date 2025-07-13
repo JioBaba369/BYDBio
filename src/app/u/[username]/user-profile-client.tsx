@@ -5,7 +5,7 @@ import { useState, useEffect, useMemo } from "react";
 import type { User } from '@/lib/users';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { UserCheck, UserPlus, Edit, Loader2, Link as LinkIcon, Rss, Info, MessageSquare, Briefcase, QrCode } from "lucide-react";
+import { UserCheck, UserPlus, Edit, Loader2, Link as LinkIcon, Rss, Info, MessageSquare, Briefcase, QrCode, Mail } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { useAuth } from "@/components/auth-provider";
@@ -15,7 +15,7 @@ import { useRouter } from "next/navigation";
 import type { PostWithAuthor, UserProfilePayload } from "@/lib/users";
 import { deletePost, toggleLikePost, repostPost } from "@/lib/posts";
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import QRCode from "qrcode.react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -24,6 +24,7 @@ import { linkIcons } from "@/lib/link-icons";
 import { generateVCard } from "@/lib/vcard";
 import { BookingDialog } from "@/components/booking-dialog";
 import { Badge } from "@/components/ui/badge";
+import { ContactForm } from "@/components/contact-form";
 
 interface UserProfilePageProps {
   userProfileData: UserProfilePayload;
@@ -129,7 +130,7 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
     if (!currentUser || loadingAction) return;
     setLoadingAction({ postId, action: 'repost' });
     try {
-      await repostPost(postId, currentUser.uid);
+      await repostPost(postId, user.uid);
       toast({ title: "Reposted!" });
     } catch (error: any) {
       toast({ title: error.message || "Failed to repost", variant: "destructive" });
@@ -189,66 +190,72 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
         confirmationText="DELETE"
       />
       <div className="space-y-8">
-        <div className="flex flex-col items-center sm:flex-row sm:items-start gap-6">
-          <Avatar className="w-28 h-28 border-4 border-background shadow-md shrink-0">
-            <AvatarImage src={user.avatarUrl} alt={user.name} />
-            <AvatarFallback>{user.avatarFallback}</AvatarFallback>
-          </Avatar>
-          <div className="flex-1 text-center sm:text-left w-full">
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div className="text-center sm:text-left">
-                  <h1 className="text-3xl font-bold font-headline">{user.name}</h1>
-                  <p className="text-muted-foreground">@{user.username}</p>
-              </div>
-              <div className="flex items-center gap-2 shrink-0">
-                  {isOwner ? (
-                      <Button asChild><Link href="/profile"><Edit className="mr-2 h-4 w-4" />Edit Profile</Link></Button>
-                  ) : (
-                      <Button onClick={handleFollowToggle} disabled={isFollowLoading}>
-                          {isFollowLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : isFollowing ? <UserCheck className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
-                          {isFollowing ? 'Following' : 'Follow'}
-                      </Button>
-                  )}
-                  {user.bookingSettings?.acceptingAppointments && (
-                      <BookingDialog user={user} />
-                  )}
-                  <Dialog>
-                      <DialogTrigger asChild>
-                          <Button variant="outline" size="icon"><QrCode className="h-4 w-4"/></Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                          <DialogHeader>
-                              <DialogTitle>Scan to Save Contact</DialogTitle>
-                          </DialogHeader>
-                          <div className="flex flex-col items-center justify-center p-4 gap-4">
-                              <div className="p-3 bg-primary-foreground rounded-lg">
-                                  {vCardData ? <QRCode value={vCardData} size={256} level="Q" fgColor="#000000" bgColor="#ffffff" /> : <p>Loading QR Code...</p>}
+        <Card className="overflow-hidden">
+            <div className="h-28 bg-gradient-to-br from-primary via-secondary to-accent" />
+            <CardContent className="p-4 sm:p-6 pt-0">
+                <div className="flex flex-col items-center sm:flex-row sm:items-end gap-4 -mt-16">
+                    <Avatar className="w-32 h-32 border-4 border-background bg-background shadow-md shrink-0">
+                        <AvatarImage src={user.avatarUrl} alt={user.name} />
+                        <AvatarFallback>{user.avatarFallback}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 w-full text-center sm:text-left sm:pb-2">
+                        <h1 className="text-3xl font-bold font-headline">{user.name}</h1>
+                        <p className="text-muted-foreground">@{user.username}</p>
+                    </div>
+                    <div className="flex flex-wrap items-center justify-center gap-2 shrink-0">
+                      {isOwner ? (
+                          <Button asChild><Link href="/profile"><Edit className="mr-2 h-4 w-4" />Edit Profile</Link></Button>
+                      ) : (
+                          <Button onClick={handleFollowToggle} disabled={isFollowLoading}>
+                              {isFollowLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : isFollowing ? <UserCheck className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
+                              {isFollowing ? 'Following' : 'Follow'}
+                          </Button>
+                      )}
+                       <Dialog>
+                          <DialogTrigger asChild>
+                              <Button variant="outline"><Mail className="mr-2 h-4 w-4"/>Contact Me</Button>
+                          </DialogTrigger>
+                          <DialogContent>
+                              <ContactForm recipientId={user.uid} />
+                          </DialogContent>
+                      </Dialog>
+                      {user.bookingSettings?.acceptingAppointments && (
+                          <BookingDialog user={user} />
+                      )}
+                      <Dialog>
+                          <DialogTrigger asChild>
+                              <Button variant="outline" size="icon"><QrCode className="h-4 w-4"/></Button>
+                          </DialogTrigger>
+                          <DialogContent>
+                              <DialogHeader>
+                                  <DialogTitle>Scan to Save Contact</DialogTitle>
+                              </DialogHeader>
+                              <div className="flex flex-col items-center justify-center p-4 gap-4">
+                                  <div className="p-3 bg-primary-foreground rounded-lg">
+                                      {vCardData ? <QRCode value={vCardData} size={256} level="Q" fgColor="#000000" bgColor="#ffffff" /> : <p>Loading QR Code...</p>}
+                                  </div>
+                                  <p className="text-sm text-muted-foreground text-center break-all">Scan this code to add {user.name} to your contacts.</p>
                               </div>
-                              <p className="text-sm text-muted-foreground text-center break-all">Scan this code to add {user.name} to your contacts.</p>
-                          </div>
-                      </DialogContent>
-                  </Dialog>
-              </div>
-            </div>
-
-            {user.bio && <p className="mt-4 max-w-xl text-center sm:text-left">{user.bio}</p>}
-            
-            <div className="flex items-center justify-center sm:justify-start gap-4 mt-4 text-sm">
-                <p><span className="font-bold">{followerCount.toLocaleString()}</span> Followers</p>
-                <p><span className="font-bold">{user.following.length.toLocaleString()}</span> Following</p>
-                <p><span className="font-bold">{user.postCount || 0}</span> Posts</p>
-            </div>
-          </div>
-        </div>
+                          </DialogContent>
+                      </Dialog>
+                    </div>
+                </div>
+                {user.bio && <p className="mt-4 max-w-2xl text-center sm:text-left">{user.bio}</p>}
+                <div className="flex items-center justify-center sm:justify-start gap-4 mt-4 text-sm border-t pt-4">
+                    <p><span className="font-bold">{followerCount.toLocaleString()}</span> Followers</p>
+                    <p><span className="font-bold">{user.following.length.toLocaleString()}</span> Following</p>
+                    <p><span className="font-bold">{user.postCount || 0}</span> Posts</p>
+                </div>
+                 {user.hashtags && user.hashtags.length > 0 && (
+                    <div className="flex flex-wrap gap-2 justify-center sm:justify-start mt-4 border-t pt-4">
+                        {user.hashtags.map(tag => (
+                            <Badge key={tag} variant="secondary">{tag}</Badge>
+                        ))}
+                    </div>
+                )}
+            </CardContent>
+        </Card>
         
-         {user.hashtags && user.hashtags.length > 0 && (
-            <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
-                {user.hashtags.map(tag => (
-                    <Badge key={tag} variant="secondary">{tag}</Badge>
-                ))}
-            </div>
-        )}
-
         <Tabs defaultValue="posts" className="w-full">
             <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="posts">Posts</TabsTrigger>
