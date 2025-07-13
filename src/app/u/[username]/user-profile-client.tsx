@@ -189,52 +189,56 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
         confirmationText="DELETE"
       />
       <div className="space-y-8">
-        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
-          <Avatar className="w-28 h-28 border-4 border-background shadow-md">
+        <div className="flex flex-col items-center sm:flex-row sm:items-start gap-6">
+          <Avatar className="w-28 h-28 border-4 border-background shadow-md shrink-0">
             <AvatarImage src={user.avatarUrl} alt={user.name} />
             <AvatarFallback>{user.avatarFallback}</AvatarFallback>
           </Avatar>
-          <div className="flex-1 text-center sm:text-left">
-            <h1 className="text-3xl font-bold font-headline">{user.name}</h1>
-            <p className="text-muted-foreground">@{user.username}</p>
-            {user.bio && <p className="mt-2 max-w-xl">{user.bio}</p>}
-            <div className="flex items-center justify-center sm:justify-start gap-4 mt-3 text-sm">
+          <div className="flex-1 text-center sm:text-left w-full">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="text-center sm:text-left">
+                  <h1 className="text-3xl font-bold font-headline">{user.name}</h1>
+                  <p className="text-muted-foreground">@{user.username}</p>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                  {isOwner ? (
+                      <Button asChild><Link href="/profile"><Edit className="mr-2 h-4 w-4" />Edit Profile</Link></Button>
+                  ) : (
+                      <Button onClick={handleFollowToggle} disabled={isFollowLoading}>
+                          {isFollowLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : isFollowing ? <UserCheck className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
+                          {isFollowing ? 'Following' : 'Follow'}
+                      </Button>
+                  )}
+                  {user.bookingSettings?.acceptingAppointments && (
+                      <BookingDialog user={user} />
+                  )}
+                  <Dialog>
+                      <DialogTrigger asChild>
+                          <Button variant="outline" size="icon"><QrCode className="h-4 w-4"/></Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                          <DialogHeader>
+                              <DialogTitle>Scan to Save Contact</DialogTitle>
+                          </DialogHeader>
+                          <div className="flex flex-col items-center justify-center p-4 gap-4">
+                              <div className="p-3 bg-primary-foreground rounded-lg">
+                                  {vCardData ? <QRCode value={vCardData} size={256} level="Q" fgColor="#000000" bgColor="#ffffff" /> : <p>Loading QR Code...</p>}
+                              </div>
+                              <p className="text-sm text-muted-foreground text-center break-all">Scan this code to add {user.name} to your contacts.</p>
+                          </div>
+                      </DialogContent>
+                  </Dialog>
+              </div>
+            </div>
+
+            {user.bio && <p className="mt-4 max-w-xl text-center sm:text-left">{user.bio}</p>}
+            
+            <div className="flex items-center justify-center sm:justify-start gap-4 mt-4 text-sm">
                 <p><span className="font-bold">{followerCount.toLocaleString()}</span> Followers</p>
                 <p><span className="font-bold">{user.following.length.toLocaleString()}</span> Following</p>
                 <p><span className="font-bold">{user.postCount || 0}</span> Posts</p>
             </div>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
-                {isOwner ? (
-                    <Button asChild><Link href="/profile"><Edit className="mr-2 h-4 w-4" />Edit Profile</Link></Button>
-                ) : (
-                    <Button onClick={handleFollowToggle} disabled={isFollowLoading}>
-                        {isFollowLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : isFollowing ? <UserCheck className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
-                        {isFollowing ? 'Following' : 'Follow'}
-                    </Button>
-                )}
-                
-                {user.bookingSettings?.acceptingAppointments && (
-                    <BookingDialog user={user} />
-                )}
-
-                <Dialog>
-                    <DialogTrigger asChild>
-                        <Button variant="outline" size="icon"><QrCode className="h-4 w-4"/></Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>Scan to Save Contact</DialogTitle>
-                        </DialogHeader>
-                        <div className="flex flex-col items-center justify-center p-4 gap-4">
-                            <div className="p-3 bg-primary-foreground rounded-lg">
-                                {vCardData ? <QRCode value={vCardData} size={256} level="Q" fgColor="#000000" bgColor="#ffffff" /> : <p>Loading QR Code...</p>}
-                            </div>
-                            <p className="text-sm text-muted-foreground text-center break-all">Scan this code to add {user.name} to your contacts.</p>
-                        </div>
-                    </DialogContent>
-                </Dialog>
-            </div>
         </div>
         
          {user.hashtags && user.hashtags.length > 0 && (
