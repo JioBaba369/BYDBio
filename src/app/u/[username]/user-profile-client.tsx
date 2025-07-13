@@ -52,6 +52,11 @@ export default function UserProfileClientPage({ userProfileData, viewerId }: Use
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [postToDelete, setPostToDelete] = useState<PostWithAuthor | null>(null);
   const [loadingAction, setLoadingAction] = useState<{ postId: string; action: 'like' | 'repost' } | null>(null);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const { toast } = useToast();
 
@@ -195,10 +200,10 @@ export default function UserProfileClientPage({ userProfileData, viewerId }: Use
         <div className="md:col-span-1 md:sticky top-20 space-y-6">
             <AuthorCard author={{...user, followerCount}} isOwner={isOwner} />
              <div className="flex items-center gap-2">
-                {isOwner ? (
+                {isClient && isOwner ? (
                     <Button asChild className="w-full"><Link href="/profile"><Edit className="mr-2 h-4 w-4" />Edit Profile</Link></Button>
                 ) : (
-                    <Button onClick={handleFollowToggle} disabled={isFollowLoading} className="w-full">
+                    <Button onClick={handleFollowToggle} disabled={!isClient || isFollowLoading} className="w-full">
                         {isFollowLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : isFollowing ? <UserCheck className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
                         {isFollowing ? 'Following' : 'Follow'}
                     </Button>
@@ -220,7 +225,7 @@ export default function UserProfileClientPage({ userProfileData, viewerId }: Use
                             <div className="p-3 bg-primary-foreground rounded-lg">
                                 {vCardData ? <QRCode value={vCardData} size={256} level="Q" fgColor="#000000" bgColor="#ffffff" /> : <p>Loading QR Code...</p>}
                             </div>
-                            <p className="text-sm text-muted-foreground text-center">Scan this code to add {user.name} to your contacts.</p>
+                            <p className="text-sm text-muted-foreground text-center break-all">Scan this code to add {user.name} to your contacts.</p>
                         </div>
                     </DialogContent>
                 </Dialog>
