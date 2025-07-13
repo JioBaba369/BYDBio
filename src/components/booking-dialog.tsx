@@ -52,18 +52,18 @@ export function BookingDialog({ user }: BookingDialogProps) {
   return (
     <Dialog>
       <TooltipProvider>
-        <Tooltip>
-          <DialogTrigger asChild>
+        <DialogTrigger asChild>
+          <Tooltip>
             <TooltipTrigger asChild>
               <Button variant="secondary" className="w-full">
                   <CalendarIcon className="mr-2 h-4 w-4" /> Book a Meeting
               </Button>
             </TooltipTrigger>
-          </DialogTrigger>
-          <TooltipContent>
-            <p>Schedule a meeting directly</p>
-          </TooltipContent>
-        </Tooltip>
+            <TooltipContent>
+              <p>Schedule a meeting directly</p>
+            </TooltipContent>
+          </Tooltip>
+        </DialogTrigger>
       </TooltipProvider>
       <DialogContent className="sm:max-w-2xl grid-cols-1 md:grid-cols-2">
           <div className="p-2">
