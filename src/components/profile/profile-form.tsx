@@ -128,10 +128,19 @@ export function ProfileForm() {
             <FormField control={form.control} name="bio" render={({ field }) => ( <FormItem> <div className="flex items-center justify-between"> <FormLabel>Bio</FormLabel> <Button type="button" variant="outline" size="sm" onClick={() => setIsBioGeneratorOpen(true)}> <Sparkles className="mr-2 h-4 w-4"/> Generate with AI </Button> </div> <FormControl><Textarea rows={3} {...field} placeholder="Tell everyone a little bit about yourself..." /></FormControl> <FormMessage /> </FormItem> )}/>
           </div>
           <Separator />
-          <div className="space-y-6">
-            <h3 className="text-lg font-medium">Hashtags</h3>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-medium">Hashtags</h3>
+                <p className="text-sm text-muted-foreground">Add tags to improve your profile's discoverability in search.</p>
+              </div>
+              <Button type="button" variant="outline" size="sm" onClick={handleGenerateHashtags} disabled={isGeneratingHashtags}>
+                {isGeneratingHashtags ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+                Suggest with AI
+              </Button>
+            </div>
             <div className="p-4 border rounded-lg space-y-4">
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2 min-h-[2.25rem] items-center">
                 {fields.map((field, index) => (
                   <Badge key={field.id} variant="secondary" className="flex items-center gap-1.5 pr-1">
                     {field.value}
@@ -140,15 +149,11 @@ export function ProfileForm() {
                     </button>
                   </Badge>
                 ))}
-                {fields.length === 0 && <p className="text-sm text-muted-foreground">No hashtags added yet.</p>}
+                {fields.length === 0 && <p className="text-sm text-muted-foreground px-2">No hashtags added yet.</p>}
               </div>
-              <Button type="button" variant="outline" onClick={handleGenerateHashtags} disabled={isGeneratingHashtags}>
-                {isGeneratingHashtags ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-                Suggest Hashtags with AI
-              </Button>
                {suggestedHashtags.length > 0 && (
-                <div className="space-y-2 pt-2">
-                    <p className="text-sm font-medium">Click to add:</p>
+                <div className="space-y-2 pt-4 border-t">
+                    <p className="text-sm font-medium">Click to add suggested tags:</p>
                     <div className="flex flex-wrap gap-2">
                         {suggestedHashtags.map(tag => (
                             <Badge key={tag} onClick={() => addHashtag(tag)} className="cursor-pointer hover:bg-primary hover:text-primary-foreground">{tag}</Badge>
