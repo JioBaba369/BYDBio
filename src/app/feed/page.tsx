@@ -54,7 +54,7 @@ export default function FeedPage() {
     if (!user) return;
     setIsLoading(true);
     try {
-        const items = await getFeedPosts(user.uid, user.following);
+        const items = await getFeedPosts(user.following);
         setFollowingPosts(items.map(p => ({ ...p, isLiked: (p.likedBy || []).includes(user.uid) })));
     } catch (error) {
         console.error("Feed fetch error:", error);

@@ -48,6 +48,7 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
 
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [postToDelete, setPostToDelete] = useState<PostWithAuthor | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [loadingAction, setLoadingAction] = useState<{ postId: string; action: 'like' | 'repost' } | null>(null);
 
   const { toast } = useToast();
@@ -149,6 +150,7 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
 
   const handleConfirmDelete = async () => {
     if (!postToDelete || !currentUser) return;
+    setIsDeleting(true);
     const originalPosts = [...posts];
     setPosts(prev => prev.filter(item => item.id !== postToDelete.id));
 
@@ -161,6 +163,7 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
     } finally {
         setIsDeleteDialogOpen(false);
         setPostToDelete(null);
+        setIsDeleting(false);
     }
   };
 
@@ -181,6 +184,7 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
         open={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}
         onConfirm={handleConfirmDelete}
+        isLoading={isDeleting}
         itemName="post"
         confirmationText="DELETE"
       />

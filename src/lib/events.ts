@@ -203,7 +203,9 @@ export const getEventAndAuthor = async (eventId: string): Promise<{ event: Event
         return null;
     }
 
-    const author = { uid: userDoc.id, ...userDoc.data() } as User;
+    const author = serializeDocument<User>(userDoc);
+    if (!author) return null;
+
     return { event, author };
 }
 
@@ -278,9 +280,7 @@ export const getCalendarItems = async (userId: string): Promise<CalendarItem[]> 
     processSnapshot(snapshots[5], 'event', true); // RSVP'd events are processed as external
     
     const formattedItems = Array.from(allItems.values()).map((item: any) => {
-        const serializedItem = item; // Already serialized
-
-        let primaryDate = serializedItem.startDate || serializedItem.postingDate || serializedItem.createdAt;
+        let primaryDate = item.startDate || item.postingDate || item.createdAt;
         if (!primaryDate) return null;
 
         const typeMap: { [key: string]: CalendarItem['type'] } = {
@@ -303,25 +303,25 @@ export const getCalendarItems = async (userId: string): Promise<CalendarItem[]> 
         };
 
         return {
-            id: serializedItem.id,
+            id: item.id,
             type: typeMap[item.type],
             date: primaryDate,
-            title: serializedItem.title || serializedItem.name,
-            description: serializedItem.description,
-            location: serializedItem.location,
-            category: serializedItem.category,
-            company: serializedItem.company,
-            jobType: item.type === 'job' ? serializedItem.type : undefined,
-            price: serializedItem.price,
-            imageUrl: serializedItem.imageUrl,
-            editPath: item.isExternal ? `/events/${item.id}` : getEditPath(item.type, serializedItem.id),
+            title: item.title || item.name,
+            description: item.description,
+            location: item.location,
+            category: item.category,
+            company: item.company,
+            jobType: item.type === 'job' ? item.type : undefined,
+            price: item.price,
+            imageUrl: item.imageUrl,
+            editPath: item.isExternal ? `/events/${item.id}` : getEditPath(item.type, item.id),
             isExternal: item.isExternal || false,
-            status: serializedItem.status,
-            views: serializedItem.views,
-            clicks: serializedItem.clicks,
-            claims: serializedItem.claims,
-            applicants: serializedItem.applicants,
-            rsvps: serializedItem.rsvps,
+            status: item.status,
+            views: item.views,
+            clicks: item.clicks,
+            claims: item.claims,
+            applicants: item.applicants,
+            rsvps: item.rsvps,
         };
     }).filter((item): item is CalendarItem => item !== null);
 

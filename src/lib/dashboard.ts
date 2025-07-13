@@ -86,16 +86,3 @@ export const getRecentActivity = async (userId: string): Promise<ActivityItem[]>
 
     return allItems.slice(0, 5) as ActivityItem[];
 };
-
-
-const getActivityLink = (item: ActivityItem) => {
-    switch (item.type) {
-        case 'Listing': return `/l/${item.id}`;
-        case 'Job': return `/job/${item.id}`;
-        case 'Event': return `/events/${item.id}`;
-        case 'Offer': return `/offer/${item.id}`;
-        case 'Business Page': return `/p/${item.id}`;
-        case 'Post': return `/feed`;
-        default: return '/';
-    }
-  };
