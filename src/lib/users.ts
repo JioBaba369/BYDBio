@@ -1,3 +1,4 @@
+
 import { collection, query, where, getDocs, limit, doc, getDoc, setDoc, updateDoc, deleteDoc, arrayUnion } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { deleteUser, type User as FirebaseUser } from "firebase/auth";
@@ -224,7 +225,7 @@ export const updateUser = async (uid: string, data: Partial<User>): Promise<User
             const newBio = data.bio ?? existingData.bio;
             const newTitle = data.businessCard?.title ?? existingData.businessCard?.title;
             const newCompany = data.businessCard?.company ?? existingData.businessCard?.company;
-            const newHashtags = (data.hashtags ?? existingData.hashtags ?? []).map(h => h.replace('#', '').toLowerCase());
+            const newHashtags = (data.hashtags || existingData.hashtags || []).map(h => h.replace('#', '').toLowerCase());
             
             dataToUpdate.searchableKeywords = [...new Set([
                 ...newName.toLowerCase().split(' ').filter(Boolean),
