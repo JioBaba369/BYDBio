@@ -32,6 +32,7 @@ import { Separator } from "@/components/ui/separator";
 import { AIBioGenerator } from "@/components/ai/bio-generator";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
+import { generateVCard } from "@/lib/vcard";
 
 const publicProfileSchema = z.object({
   name: z.string().min(1, "Name cannot be empty.").max(50, "Name cannot be longer than 50 characters."),
@@ -88,16 +89,6 @@ const bookingSettingsSchema = z.object({
     }),
 });
 type BookingSettingsFormValues = z.infer<typeof bookingSettingsSchema>;
-
-
-const escapeVCard = (str: string | undefined | null): string => {
-  if (!str) return '';
-  return str
-    .replace(/\\/g, '\\\\')
-    .replace(/,/g, '\\,')
-    .replace(/;/g, '\\;')
-    .replace(/\n/g, '\\n');
-};
 
 const SortableLinkItem = ({ field, index, remove }: { field: { id: string }, index: number, remove: (index: number) => void }) => {
   const { control, setValue } = useFormContext<LinksFormValues>();
@@ -312,7 +303,7 @@ export default function ProfilePage() {
       bookingForm.reset(user.bookingSettings || bookingForm.getValues());
       setCroppedImageUrl(user.avatarUrl || null);
     }
-  }, [user, publicProfileForm.reset, businessCardForm.reset, linksForm.reset, bookingForm.reset]);
+  }, [user, publicProfileForm, businessCardForm, linksForm, bookingForm]);
 
   const watchedPublicProfile = publicProfileForm.watch();
   const watchedBusinessCard = businessCardForm.watch();
@@ -425,18 +416,13 @@ export default function ProfilePage() {
   
   const vCardData = useMemo(() => {
     if (!user) return '';
-    return `BEGIN:VCARD
-VERSION:3.0
-FN:${escapeVCard(watchedPublicProfile.name || user.name)}
-ORG:${escapeVCard(watchedBusinessCard.company)}
-TITLE:${escapeVCard(watchedBusinessCard.title)}
-TEL;TYPE=WORK,VOICE:${watchedBusinessCard.phone || ''}
-EMAIL:${watchedBusinessCard.email || ''}
-URL:${watchedBusinessCard.website || ''}
-X-SOCIALPROFILE;type=linkedin:${watchedBusinessCard.linkedin || ''}
-ADR;TYPE=WORK:;;${escapeVCard(watchedBusinessCard.location)}
-END:VCARD`;
-  }, [user, watchedPublicProfile.name, watchedBusinessCard]);
+    const tempUser = {
+      ...user,
+      name: watchedPublicProfile.name || user.name,
+      businessCard: watchedBusinessCard
+    };
+    return generateVCard(tempUser as AppUser);
+  }, [user, watchedPublicProfile, watchedBusinessCard]);
 
   if (loading || !user) {
     return <ProfilePageSkeleton />;
@@ -550,7 +536,7 @@ END:VCARD`;
                     <div className="md:sticky top-20">
                         <Card>
                             <CardHeader> <CardTitle>Live Preview</CardTitle> </CardHeader>
-                            <CardContent> <div className="w-full max-w-[300px] bg-background p-4 rounded-2xl shadow-lg border mx-auto"> <div className="bg-muted/40 p-4 rounded-lg h-[500px] overflow-y-auto"> <div className="flex flex-col items-center text-center"> <Avatar className="h-20 w-20 mb-3 ring-2 ring-primary/20 ring-offset-2 ring-offset-background"> <AvatarImage src={user.avatarUrl} alt={user.name} /> <AvatarFallback>{user.avatarFallback}</AvatarFallback> </Avatar> <h1 className="font-headline text-xl font-bold">{user.name}</h1> <p className="text-muted-foreground text-sm">@{user.username}</p> </div> <div className="flex flex-col gap-3 mt-6"> {watchedLinks && watchedLinks.length > 0 ? ( watchedLinks.map((link, index) => { const Icon = linkIcons[link.icon as keyof typeof linkIcons] || LinkIcon; return ( <div key={index} className="w-full group"> <div className="w-full h-14 text-base font-semibold flex items-center p-3 rounded-lg bg-secondary"> <Icon className="h-5 w-5 text-secondary-foreground/80" /> <span className="flex-1 text-center text-secondary-foreground">{link.title || "Link Title"}</span> <ExternalLink className="h-4 w-4 text-secondary-foreground/50" /> </div> </div> ) }) ) : ( <div className="text-center text-sm text-muted-foreground py-10"> Your links will appear here. </div> )} </div> </div> </div> </CardContent>
+                            <CardContent> <div className="w-full max-w-[300px] bg-background p-4 rounded-2xl shadow-lg border mx-auto"> <div className="bg-muted/40 p-4 rounded-lg h-[500px] overflow-y-auto"> <div className="flex flex-col items-center text-center"> <Avatar className="h-20 w-20 mb-3 ring-2 ring-primary/20 ring-offset-2 ring-offset-background"> <AvatarImage src={user.avatarUrl} alt={user.name} /> <AvatarFallback>{user.avatarFallback}</AvatarFallback> </Avatar> <h1 className="font-headline text-xl font-bold">{user.name}</h1> <p className="text-muted-foreground text-sm">@{user.username}</p> </div> <div className="flex flex-col gap-3 mt-6"> {watchedLinks && watchedLinks.length > 0 ? ( watchedLinks.map((link, index) => { const Icon = linkIcons[link.icon as keyof typeof linkIcons] || LinkIcon; return ( <div key={index} className="w-full group"> <div className="w-full h-14 text-base font-semibold flex items-center p-3 rounded-lg bg-secondary"> <Icon className="h-5 w-5 text-secondary-foreground/80" /> <span className="flex-1 text-center truncate">{link.title || "Link Title"}</span> <ExternalLink className="h-4 w-4 text-secondary-foreground/50" /> </div> </div> ) }) ) : ( <div className="text-center text-sm text-muted-foreground py-10"> Your links will appear here. </div> )} </div> </div> </div> </CardContent>
                         </Card>
                     </div>
                     </div>

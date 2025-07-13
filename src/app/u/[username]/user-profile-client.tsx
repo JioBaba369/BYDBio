@@ -22,7 +22,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PublicContentCard } from "@/components/public-content-card";
 import { AuthorCard } from "@/components/author-card";
 import { linkIcons } from "@/lib/link-icons";
-import { escapeVCard } from "@/lib/vcard";
+import { generateVCard } from "@/lib/vcard";
 import { BookingDialog } from "@/components/booking-dialog";
 
 interface UserProfilePageProps {
@@ -59,7 +59,7 @@ export default function UserProfileClientPage({ userProfileData, viewerId }: Use
 
   useEffect(() => {
     if (userProfileData.user) {
-      setVCardData(escapeVCard(userProfileData.user));
+      setVCardData(generateVCard(userProfileData.user));
     }
   }, [userProfileData.user]);
 

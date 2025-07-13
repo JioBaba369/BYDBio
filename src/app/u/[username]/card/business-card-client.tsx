@@ -12,15 +12,7 @@ import ShareButton from "@/components/share-button";
 import type { User } from "@/lib/users";
 import { saveAs } from "file-saver";
 import { useToast } from "@/hooks/use-toast";
-
-const escapeVCard = (str: string | undefined | null): string => {
-  if (!str) return '';
-  return str
-    .replace(/\\/g, '\\\\')
-    .replace(/,/g, '\\,')
-    .replace(/;/g, '\\;')
-    .replace(/\n/g, '\\n');
-};
+import { generateVCard } from "@/lib/vcard";
 
 export default function BusinessCardClient({ user }: { user: User }) {
   const { toast } = useToast();
@@ -36,17 +28,7 @@ export default function BusinessCardClient({ user }: { user: User }) {
     location = '' 
   } = businessCard || {};
 
-  const vCardData = `BEGIN:VCARD
-VERSION:3.0
-FN:${escapeVCard(name)}
-ORG:${escapeVCard(company)}
-TITLE:${escapeVCard(title)}
-TEL;TYPE=WORK,VOICE:${phone || ''}
-EMAIL:${email || ''}
-URL:${website || ''}
-X-SOCIALPROFILE;type=linkedin:${linkedin || ''}
-ADR;TYPE=WORK:;;${escapeVCard(location)}
-END:VCARD`;
+  const vCardData = generateVCard(user);
 
   const handleSaveToContacts = () => {
     const blob = new Blob([vCardData], { type: "text/vcard;charset=utf-8" });
