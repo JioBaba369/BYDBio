@@ -15,10 +15,15 @@ interface BookingDialogProps {
 }
 
 export function BookingDialog({ user }: BookingDialogProps) {
-  const [date, setDate] = useState<Date | undefined>(new Date());
+  const [date, setDate] = useState<Date | undefined>(undefined);
   const [timeSlots, setTimeSlots] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Set the initial date only on the client side to avoid hydration mismatches.
+    setDate(new Date());
+  }, []);
 
   useEffect(() => {
     if (!date || !user.bookingSettings?.acceptingAppointments) {
