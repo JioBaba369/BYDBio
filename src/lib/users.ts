@@ -79,7 +79,7 @@ export type User = {
   subscriptions: Subscriptions;
   fcmTokens?: string[]; // Array of Firebase Cloud Messaging tokens
   searchableKeywords: string[];
-  bookingSettings?: BookingSettings;
+  bookingSettings: BookingSettings;
 };
 
 export type UserProfilePayload = {

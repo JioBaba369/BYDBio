@@ -210,6 +210,19 @@ export default function ProfilePage() {
   const { toast } = useToast();
   const [isBioGeneratorOpen, setIsBioGeneratorOpen] = useState(false);
 
+  const defaultBookingSettings: BookingSettingsFormValues = {
+      acceptingAppointments: false,
+      availability: {
+          sunday: { enabled: false, startTime: '09:00', endTime: '17:00' },
+          monday: { enabled: true, startTime: '09:00', endTime: '17:00' },
+          tuesday: { enabled: true, startTime: '09:00', endTime: '17:00' },
+          wednesday: { enabled: true, startTime: '09:00', endTime: '17:00' },
+          thursday: { enabled: true, startTime: '09:00', endTime: '17:00' },
+          friday: { enabled: true, startTime: '09:00', endTime: '17:00' },
+          saturday: { enabled: false, startTime: '09:00', endTime: '17:00' },
+      },
+  };
+
   const publicProfileForm = useForm<PublicProfileFormValues>({
     resolver: zodResolver(publicProfileSchema),
     defaultValues: { name: "", username: "", bio: "" },
@@ -230,18 +243,7 @@ export default function ProfilePage() {
   
   const bookingForm = useForm<BookingSettingsFormValues>({
       resolver: zodResolver(bookingSettingsSchema),
-      defaultValues: {
-          acceptingAppointments: false,
-          availability: {
-              sunday: { enabled: false, startTime: '09:00', endTime: '17:00' },
-              monday: { enabled: true, startTime: '09:00', endTime: '17:00' },
-              tuesday: { enabled: true, startTime: '09:00', endTime: '17:00' },
-              wednesday: { enabled: true, startTime: '09:00', endTime: '17:00' },
-              thursday: { enabled: true, startTime: '09:00', endTime: '17:00' },
-              friday: { enabled: true, startTime: '09:00', endTime: '17:00' },
-              saturday: { enabled: false, startTime: '09:00', endTime: '17:00' },
-          },
-      },
+      defaultValues: defaultBookingSettings,
       mode: 'onChange',
   });
   
@@ -256,10 +258,9 @@ export default function ProfilePage() {
     if (user) {
       publicProfileForm.reset({ name: user.name || '', username: user.username || '', bio: user.bio || '' });
       businessCardForm.reset(user.businessCard || {});
-      // Safeguard against user.links being undefined
       const userLinks = user.links || [];
       linksForm.reset({ links: userLinks.map((link, index) => ({...link, id: `link-${index}`})) });
-      bookingForm.reset(user.bookingSettings || bookingForm.getValues());
+      bookingForm.reset(user.bookingSettings || defaultBookingSettings);
       setCroppedImageUrl(user.avatarUrl || null);
     }
   }, [user, publicProfileForm, businessCardForm, linksForm, bookingForm]);
@@ -308,7 +309,6 @@ export default function ProfilePage() {
 
         await updateUser(firebaseUser.uid, dataToUpdate);
         
-        // After successful update, reset forms to their new state to clear dirty flags
         publicProfileForm.reset(publicData);
         businessCardForm.reset(cardData);
         linksForm.reset(linksData);
@@ -439,7 +439,7 @@ export default function ProfilePage() {
                         <div className="md:sticky top-20 space-y-4">
                             <Card>
                                 <CardHeader> <CardTitle>Live Preview</CardTitle> </CardHeader>
-                                <CardContent> <div className="w-full max-w-[280px] bg-muted/30 p-6 rounded-xl shadow-lg border mx-auto"> <div className="text-center"> <Avatar className="h-20 w-20 mx-auto mb-2"> <AvatarImage src={croppedImageUrl || user.avatarUrl} /> <AvatarFallback>{user.avatarFallback}</AvatarFallback> </Avatar> <p className="font-headline font-semibold text-lg">{watchedPublicProfile.name || 'Your Name'}</p> <p className="text-primary text-sm">{watchedBusinessCard.title || 'Your Title'}</p> <p className="text-muted-foreground text-xs flex items-center justify-center gap-1.5 mt-1"><Building className="h-3.5 w-3.5"/>{watchedBusinessCard.company || 'Your Company'}</p> </div> <div className="flex justify-center mt-4"> {vCardData ? ( <QRCode value={vCardData} size={150} bgColor="transparent" fgColor="hsl(var(--foreground))" level="Q" /> ) : ( <div className="w-[150px] h-[150px] bg-gray-200 animate-pulse mx-auto rounded-md" /> )} </div> <p className="text-xs text-muted-foreground text-center mt-2">Scan to save contact</p> </div> </CardContent>
+                                <CardContent> <div className="w-full max-w-[280px] bg-muted/30 p-6 rounded-xl shadow-lg border mx-auto"> <div className="text-center"> <Avatar className="h-20 w-20 mx-auto mb-2"> <AvatarImage src={croppedImageUrl || user.avatarUrl} /> <AvatarFallback>{user.avatarFallback}</AvatarFallback> </Avatar> <p className="font-headline font-semibold text-lg">{watchedPublicProfile.name || 'Your Name'}</p> <p className="text-primary text-sm">{watchedBusinessCard.title || 'Your Title'}</p> <p className="text-muted-foreground text-xs flex items-center justify-center gap-1.5 mt-1"><Building className="h-3.5 w-3.5"/>{watchedBusinessCard.company || 'Your Company'}</p> d`> </div> <div className="flex justify-center mt-4"> {vCardData ? ( <QRCode value={vCardData} size={150} bgColor="transparent" fgColor="hsl(var(--foreground))" level="Q" /> ) : ( <div className="w-[150px] h-[150px] bg-gray-200 animate-pulse mx-auto rounded-md" /> )} </div> <p className="text-xs text-muted-foreground text-center mt-2">Scan to save contact</p> </div> </CardContent>
                             </Card>
                             <Card className="max-w-[280px] mx-auto text-center border-primary/20">
                                 <CardHeader className="p-4"> <CardTitle className="text-base flex items-center justify-center gap-2"> <Nfc className="h-5 w-5 text-primary"/> Get Your BYD BioTAG </CardTitle> </CardHeader>
