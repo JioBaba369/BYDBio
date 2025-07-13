@@ -14,7 +14,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
-import type { Timestamp } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 
 const InboxSkeleton = () => (
@@ -155,7 +154,7 @@ export default function InboxPage() {
                                                 <p className="line-clamp-2">{msg.messageBody}</p>
                                             </TableCell>
                                             <TableCell className="hidden md:table-cell">
-                                                <ClientFormattedDate date={(msg.createdAt as unknown as Timestamp).toDate()} relative />
+                                                <ClientFormattedDate date={msg.createdAt} relative />
                                             </TableCell>
                                             <TableCell className="text-right pr-6">
                                                 <Button variant="outline" size="sm">View</Button>
