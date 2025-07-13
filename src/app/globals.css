@@ -111,3 +111,5 @@
 .day-with-event:hover::after {
     background-color: hsl(var(--primary)) !important;
 }
+
+    
