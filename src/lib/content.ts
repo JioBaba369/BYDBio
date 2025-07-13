@@ -116,3 +116,56 @@ export const getAllPublicContent = async (): Promise<PublicContentItem[]> => {
 
     return contentWithAuthors;
 };
+
+// This function is intended to get all public content *except* posts for a specific user profile
+export const getPublicContentByUser = async (userId: string) => {
+    const listingsQuery = query(collection(db, 'listings'), where('status', '==', 'active'), where('authorId', '==', userId));
+    const jobsQuery = query(collection(db, 'jobs'), where('status', '==', 'active'), where('authorId', '==', userId));
+    const eventsQuery = query(collection(db, 'events'), where('status', '==', 'active'), where('authorId', '==', userId));
+    const offersQuery = query(collection(db, 'offers'), where('status', '==', 'active'), where('authorId', '==', userId));
+    const promoPagesQuery = query(collection(db, 'promoPages'), where('status', '==', 'active'), where('authorId', '==', userId));
+
+     const [
+        listingsSnap,
+        jobsSnap,
+        eventsSnap,
+        offersSnap,
+        promoPagesSnap,
+    ] = await Promise.all([
+        getDocs(listingsQuery),
+        getDocs(jobsQuery),
+        getDocs(eventsQuery),
+        getDocs(offersQuery),
+        getDocs(promoPagesQuery),
+    ]);
+
+    const allContent: any[] = [
+        ...listingsSnap.docs.map(doc => ({ ...doc.data(), id: doc.id, type: 'listing' })),
+        ...jobsSnap.docs.map(doc => ({ ...doc.data(), id: doc.id, type: 'job' })),
+        ...eventsSnap.docs.map(doc => ({ ...doc.data(), id: doc.id, type: 'event' })),
+        ...offersSnap.docs.map(doc => ({ ...doc.data(), id: doc.id, type: 'offer' })),
+        ...promoPagesSnap.docs.map(doc => ({ ...doc.data(), id: doc.id, type: 'promoPage' })),
+    ];
+
+    const serializedContent = allContent.map(item => {
+        const serializedItem: any = { ...item };
+        for (const key in serializedItem) {
+            if (serializedItem[key] instanceof Timestamp) {
+                serializedItem[key] = serializedItem[key].toDate().toISOString();
+            }
+        }
+         if (serializedItem.type === 'promoPage' && serializedItem.name) {
+            serializedItem.title = serializedItem.name;
+        }
+
+        let primaryDate = serializedItem.createdAt; 
+        if (item.type === 'event' || item.type === 'offer') primaryDate = serializedItem.startDate;
+        else if (item.type === 'job') primaryDate = serializedItem.postingDate;
+
+        return {...serializedItem, date: primaryDate};
+    });
+
+    serializedContent.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    return serializedContent;
+};

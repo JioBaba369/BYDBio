@@ -1,6 +1,6 @@
 
 import type { Metadata } from 'next';
-import { getUserProfileData } from '@/lib/users';
+import { getUserProfileData, type UserProfilePayload } from '@/lib/users';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -9,6 +9,7 @@ import type { auth as adminAuth } from 'firebase-admin';
 import UserProfileClientPage from './user-profile-client';
 
 export async function generateMetadata({ params }: { params: { username: string } }): Promise<Metadata> {
+  // We can call this with a null viewerId for metadata generation
   const data = await getUserProfileData(params.username, null);
 
   if (!data?.user) {
@@ -61,7 +62,7 @@ export default async function PublicProfilePageWrapper({ params }: { params: { u
     }
 
 
-    const userProfileData = await getUserProfileData(params.username, viewerId);
+    const userProfileData: UserProfilePayload | null = await getUserProfileData(params.username, viewerId);
 
     if (!userProfileData) {
         return (
@@ -79,5 +80,5 @@ export default async function PublicProfilePageWrapper({ params }: { params: { u
         )
     }
 
-    return <UserProfileClientPage userProfileData={userProfileData} viewerId={viewerId} />;
+    return <UserProfileClientPage userProfileData={userProfileData} />;
 }

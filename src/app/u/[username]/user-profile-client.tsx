@@ -17,7 +17,7 @@ import { deletePost, toggleLikePost, repostPost } from "@/lib/posts";
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import QRCode from 'qrcode.react';
+import QRCode from "qrcode.react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PublicContentCard } from "@/components/public-content-card";
 import { AuthorCard } from "@/components/author-card";
@@ -27,52 +27,42 @@ import { BookingDialog } from "@/components/booking-dialog";
 
 interface UserProfilePageProps {
   userProfileData: UserProfilePayload;
-  viewerId: string | null;
 }
 
-export default function UserProfileClientPage({ userProfileData, viewerId }: UserProfilePageProps) {
+export default function UserProfileClientPage({ userProfileData }: UserProfilePageProps) {
   const { user: currentUser } = useAuth();
   const router = useRouter();
 
-  const isOwner = useMemo(() => viewerId === userProfileData.user.uid, [viewerId, userProfileData.user.uid]);
+  const { isOwner, user } = userProfileData;
   
-  const [isFollowing, setIsFollowing] = useState(
-    currentUser?.following.includes(userProfileData.user.uid) || false
-  );
-  const [followerCount, setFollowerCount] = useState(userProfileData.user.followerCount || 0);
+  const [isFollowing, setIsFollowing] = useState(userProfileData.isFollowedByCurrentUser);
+  const [followerCount, setFollowerCount] = useState(user.followerCount || 0);
   const [isFollowLoading, setIsFollowLoading] = useState(false);
   
   const [posts, setPosts] = useState<PostWithAuthor[]>(
     userProfileData.posts.map(p => ({
       ...p,
-      isLiked: viewerId ? (p.likedBy || []).includes(viewerId) : false,
+      isLiked: userProfileData.isOwner ? (p.likedBy || []).includes(user.uid) : false,
     }))
   );
 
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [postToDelete, setPostToDelete] = useState<PostWithAuthor | null>(null);
   const [loadingAction, setLoadingAction] = useState<{ postId: string; action: 'like' | 'repost' } | null>(null);
-  const [isClient, setIsClient] = useState(false);
-
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
 
   const { toast } = useToast();
 
   const vCardData = useMemo(() => {
-    if (!userProfileData.user) return '';
-    return generateVCard(userProfileData.user);
-  }, [userProfileData.user]);
+    if (!user) return '';
+    return generateVCard(user);
+  }, [user]);
 
 
   useEffect(() => {
     if (currentUser) {
-      setIsFollowing(currentUser.following.includes(userProfileData.user.uid));
-    } else {
-      setIsFollowing(false);
+      setIsFollowing(currentUser.following.includes(user.uid));
     }
-  }, [currentUser, userProfileData.user.uid]);
+  }, [currentUser, user.uid]);
 
   const handleFollowToggle = async () => {
     if (!currentUser) {
@@ -90,11 +80,11 @@ export default function UserProfileClientPage({ userProfileData, viewerId }: Use
 
     try {
         if (currentlyFollowing) {
-            await unfollowUser(currentUser.uid, userProfileData.user.uid);
-            toast({ title: `Unfollowed ${userProfileData.user.name}` });
+            await unfollowUser(currentUser.uid, user.uid);
+            toast({ title: `Unfollowed ${user.name}` });
         } else {
-            await followUser(currentUser.uid, userProfileData.user.uid);
-            toast({ title: `You are now following ${userProfileData.user.name}` });
+            await followUser(currentUser.uid, user.uid);
+            toast({ title: `You are now following ${user.name}` });
         }
     } catch (error) {
         setIsFollowing(currentlyFollowing);
@@ -174,8 +164,6 @@ export default function UserProfileClientPage({ userProfileData, viewerId }: Use
     }
   };
 
-  const { user, content } = userProfileData;
-
   const canViewPrivateContent = isOwner || isFollowing;
 
   const visiblePosts = useMemo(() => {
@@ -200,10 +188,10 @@ export default function UserProfileClientPage({ userProfileData, viewerId }: Use
         <div className="md:col-span-1 md:sticky top-20 space-y-6">
             <AuthorCard author={{...user, followerCount}} isOwner={isOwner} />
              <div className="flex items-center gap-2">
-                {isClient && isOwner ? (
+                {isOwner ? (
                     <Button asChild className="w-full"><Link href="/profile"><Edit className="mr-2 h-4 w-4" />Edit Profile</Link></Button>
                 ) : (
-                    <Button onClick={handleFollowToggle} disabled={!isClient || isFollowLoading} className="w-full">
+                    <Button onClick={handleFollowToggle} disabled={isFollowLoading} className="w-full">
                         {isFollowLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : isFollowing ? <UserCheck className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
                         {isFollowing ? 'Following' : 'Follow'}
                     </Button>
@@ -265,9 +253,9 @@ export default function UserProfileClientPage({ userProfileData, viewerId }: Use
                     )}
                 </TabsContent>
                 <TabsContent value="content" className="mt-6">
-                    {content && content.length > 0 ? (
+                    {userProfileData.otherContent && userProfileData.otherContent.length > 0 ? (
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                            {content.map(item => (
+                            {userProfileData.otherContent.map(item => (
                                 <PublicContentCard key={item.id} item={{...item, author: user}} />
                             ))}
                         </div>

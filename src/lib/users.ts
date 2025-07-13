@@ -4,7 +4,11 @@ import { db } from "@/lib/firebase";
 import { deleteUser, type User as FirebaseUser } from "firebase/auth";
 import type { Timestamp } from "firebase/firestore";
 import { getPostsByUser, type PostWithAuthor } from "./posts";
-import { getPublicContentByUser } from "./content";
+import { getListingsByUser } from "./listings";
+import { getOffersByUser } from "./offers";
+import { getJobsByUser } from "./jobs";
+import { getEventsByUser } from "./events";
+import { getPromoPagesByUser } from "./promo-pages";
 import { serializeDocument } from "./firestore-utils";
 
 export type BusinessCard = {
@@ -75,14 +79,15 @@ export type User = {
   subscriptions: Subscriptions;
   fcmTokens?: string[]; // Array of Firebase Cloud Messaging tokens
   searchableKeywords: string[];
-  isFollowedByCurrentUser?: boolean; // Client-side state
   bookingSettings?: BookingSettings;
 };
 
 export type UserProfilePayload = {
     user: User;
     posts: PostWithAuthor[];
-    content: any[];
+    otherContent: any[];
+    isOwner: boolean;
+    isFollowedByCurrentUser: boolean;
 }
 
 
@@ -246,14 +251,43 @@ export async function getUserProfileData(username: string, viewerId: string | nu
     if (!user) {
         return null;
     }
+
+    const posts = await getPostsByUser(user.uid);
     
-    const posts = await getPostsByUser(user.uid, viewerId);
-    const content = await getPublicContentByUser(user.uid);
+    // Fetch all other public content types
+    const [listings, offers, jobs, events, promoPages] = await Promise.all([
+        getListingsByUser(user.uid),
+        getOffersByUser(user.uid),
+        getJobsByUser(user.uid),
+        getEventsByUser(user.uid),
+        getPromoPagesByUser(user.uid),
+    ]);
+    
+    const otherContent = [
+      ...promoPages.map(item => ({ ...item, type: 'promoPage' as const, date: item.createdAt })),
+      ...listings.map(item => ({ ...item, type: 'listing' as const, date: item.createdAt })),
+      ...jobs.map(item => ({ ...item, type: 'job' as const, date: item.postingDate })),
+      ...events.map(item => ({ ...item, type: 'event' as const, date: item.startDate })),
+      ...offers.map(item => ({ ...item, type: 'offer' as const, date: item.startDate })),
+    ];
+    otherContent.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+
+    let isFollowedByCurrentUser = false;
+    if (viewerId && viewerId !== user.uid) {
+        const viewerDoc = await getDoc(doc(db, 'users', viewerId));
+        if (viewerDoc.exists()) {
+            const viewerData = viewerDoc.data() as User;
+            isFollowedByCurrentUser = viewerData.following?.includes(user.uid);
+        }
+    }
     
     return {
         user,
         posts,
-        content
+        otherContent,
+        isOwner: viewerId === user.uid,
+        isFollowedByCurrentUser
     }
 }
 
