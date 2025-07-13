@@ -22,6 +22,7 @@ import { db } from '@/lib/firebase';
 import type { User } from './users';
 import { getUsersByIds } from './users';
 import { serializeDocument } from './firestore-utils';
+import type { Appointment } from './appointments';
 
 export type ItineraryItem = {
   time: string;
@@ -57,7 +58,7 @@ export type EventWithAuthor = Event & { author: Pick<User, 'uid' | 'name' | 'use
 
 export type CalendarItem = {
   id: string;
-  type: 'Event' | 'Offer' | 'Job' | 'Listing' | 'Business Page';
+  type: 'Event' | 'Offer' | 'Job' | 'Listing' | 'Business Page' | 'Appointment';
   date: string;
   title: string;
   description?: string;
@@ -75,6 +76,10 @@ export type CalendarItem = {
   claims?: number;
   applicants?: number;
   rsvps?: string[];
+  // Appointment specific fields
+  bookerName?: string;
+  startTime?: string;
+  endTime?: string;
 };
 
 // Function to fetch a single event by its ID
@@ -251,8 +256,12 @@ export const getCalendarItems = async (userId: string): Promise<CalendarItem[]> 
     const rsvpedEventsPromise = getDocs(
         query(collection(db, 'events'), where('rsvps', 'array-contains', userId), where('status', '==', 'active'))
     );
+    
+    const appointmentsPromise = getDocs(
+        query(collection(db, 'appointments'), where('ownerId', '==', userId))
+    );
 
-    const snapshots = await Promise.all([...userContentPromises, rsvpedEventsPromise]);
+    const snapshots = await Promise.all([...userContentPromises, rsvpedEventsPromise, appointmentsPromise]);
     
     const allItems = new Map<string, any>();
 
@@ -278,10 +287,35 @@ export const getCalendarItems = async (userId: string): Promise<CalendarItem[]> 
     processSnapshot(snapshots[3], 'listing');
     processSnapshot(snapshots[4], 'promoPage');
     processSnapshot(snapshots[5], 'event', true); // RSVP'd events are processed as external
+    processSnapshot(snapshots[6], 'appointment'); // Process appointments
     
     const formattedItems = Array.from(allItems.values()).map((item: any) => {
-        let primaryDate = item.startDate || item.postingDate || item.createdAt;
-        if (!primaryDate) return null;
+        let primaryDate: string | undefined;
+        let title: string | undefined;
+
+        switch (item.type) {
+            case 'appointment':
+                primaryDate = item.startTime;
+                title = `Meeting with ${item.bookerName}`;
+                break;
+            case 'event':
+                primaryDate = item.startDate;
+                title = item.title;
+                break;
+            case 'offer':
+                primaryDate = item.startDate;
+                title = item.title;
+                break;
+            case 'job':
+                primaryDate = item.postingDate;
+                title = item.title;
+                break;
+            default:
+                primaryDate = item.createdAt;
+                title = item.title || item.name;
+        }
+
+        if (!primaryDate || !title) return null;
 
         const typeMap: { [key: string]: CalendarItem['type'] } = {
             'event': 'Event',
@@ -289,6 +323,7 @@ export const getCalendarItems = async (userId: string): Promise<CalendarItem[]> 
             'job': 'Job',
             'listing': 'Listing',
             'promoPage': 'Business Page',
+            'appointment': 'Appointment',
         };
 
         const getEditPath = (itemType: string, id: string): string => {
@@ -306,7 +341,7 @@ export const getCalendarItems = async (userId: string): Promise<CalendarItem[]> 
             id: item.id,
             type: typeMap[item.type],
             date: primaryDate,
-            title: item.title || item.name,
+            title: title,
             description: item.description,
             location: item.location,
             category: item.category,
@@ -316,12 +351,15 @@ export const getCalendarItems = async (userId: string): Promise<CalendarItem[]> 
             imageUrl: item.imageUrl,
             editPath: item.isExternal ? `/events/${item.id}` : getEditPath(item.type, item.id),
             isExternal: item.isExternal || false,
-            status: item.status,
+            status: item.status || 'active',
             views: item.views,
             clicks: item.clicks,
             claims: item.claims,
             applicants: item.applicants,
             rsvps: item.rsvps,
+            bookerName: item.bookerName,
+            startTime: item.startTime,
+            endTime: item.endTime,
         };
     }).filter((item): item is CalendarItem => item !== null);
 

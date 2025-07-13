@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Badge, badgeVariants } from '@/components/ui/badge';
 import { getCalendarItems, toggleRsvp, deleteEvent, type CalendarItem } from '@/lib/events';
 import { useAuth } from '@/components/auth-provider';
-import { Search, MapPin, Tag, Briefcase, DollarSign, X, Clock, MoreHorizontal, Edit, Trash2, PlusCircle, Tags, Calendar as CalendarIconLucide, Building2, List, LayoutGrid, Eye, MousePointerClick, Gift, Users, Megaphone } from 'lucide-react';
+import { Search, MapPin, Tag, Briefcase, DollarSign, X, Clock, MoreHorizontal, Edit, Trash2, PlusCircle, Tags, Calendar as CalendarIconLucide, Building2, List, LayoutGrid, Eye, MousePointerClick, Gift, Users, Megaphone, CalendarPlus, UserCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { VariantProps } from 'class-variance-authority';
 import Image from 'next/image';
@@ -28,7 +28,9 @@ import { ClientFormattedDate } from '@/components/client-formatted-date';
 import { ClientFormattedCurrency } from '@/components/client-formatted-currency';
 import { DayPicker } from 'react-day-picker';
 import 'react-day-picker/dist/style.css';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
+import * as ics from 'ics';
+import { saveAs } from 'file-saver';
 import { KillChainTracker } from '@/components/kill-chain-tracker';
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
@@ -68,7 +70,7 @@ export default function CalendarPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [locationFilter, setLocationFilter] = useState('');
   const [typeFilters, setTypeFilters] = useState<Set<string>>(
-    new Set(['Event', 'Offer', 'Job', 'Listing', 'Business Page'])
+    new Set(['Event', 'Offer', 'Job', 'Listing', 'Business Page', 'Appointment'])
   );
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -101,7 +103,7 @@ export default function CalendarPage() {
   }, [user?.uid, toast]);
 
 
-  const areFiltersActive = !!searchTerm || !!locationFilter || typeFilters.size < 5;
+  const areFiltersActive = !!searchTerm || !!locationFilter || typeFilters.size < 6;
 
   const filteredItems = useMemo(() => {
     return allItems.filter(item => {
@@ -127,7 +129,7 @@ export default function CalendarPage() {
   const handleClearFilters = () => {
     setSearchTerm('');
     setLocationFilter('');
-    setTypeFilters(new Set(['Event', 'Offer', 'Job', 'Listing', 'Business Page']));
+    setTypeFilters(new Set(['Event', 'Offer', 'Job', 'Listing', 'Business Page', 'Appointment']));
   }
   
   const handleTypeFilterChange = (type: string) => {
@@ -149,6 +151,11 @@ export default function CalendarPage() {
 
   const handleDelete = async () => {
     if (!selectedItem || !user) return;
+    if (selectedItem.type === 'Appointment') {
+        toast({ title: "Action not supported", description: "Appointments cannot be deleted from this view yet." });
+        setIsDeleteDialogOpen(false);
+        return;
+    }
     setIsDeleting(true);
 
     const previousItems = [...allItems];
@@ -201,6 +208,7 @@ export default function CalendarPage() {
         case 'Job': return 'destructive';
         case 'Listing': return 'outline';
         case 'Business Page': return 'default';
+        case 'Appointment': return 'secondary';
         default: return 'default';
     }
   }
@@ -211,6 +219,7 @@ export default function CalendarPage() {
     { name: 'Job', icon: Briefcase, variant: 'destructive' },
     { name: 'Listing', icon: Tags, variant: 'outline' },
     { name: 'Business Page', icon: Megaphone, variant: 'default' },
+    { name: 'Appointment', icon: UserCheck, variant: 'secondary' },
   ];
   
   const getStatsValue = (item: CalendarItem): number => {
@@ -234,6 +243,30 @@ export default function CalendarPage() {
         default: return 'Interactions';
     }
   }
+
+  const handleAddToCalendar = (item: CalendarItem) => {
+    if (!user || !item.startTime || !item.endTime) return;
+    const startDate = parseISO(item.startTime);
+    const endDate = parseISO(item.endTime);
+    const icsEvent: ics.EventAttributes = {
+        title: item.title,
+        description: `Appointment with ${item.bookerName}.`,
+        start: [startDate.getFullYear(), startDate.getMonth() + 1, startDate.getDate(), startDate.getHours(), startDate.getMinutes()],
+        end: [endDate.getFullYear(), endDate.getMonth() + 1, endDate.getDate(), endDate.getHours(), endDate.getMinutes()],
+        organizer: { name: user.name, email: user.email || 'noreply@byd.bio' },
+        attendees: [{ name: item.bookerName, rsvp: true }]
+    };
+
+    const { error, value } = ics.createEvent(icsEvent);
+
+    if (error) {
+        toast({ title: "Error creating calendar file", variant: "destructive" });
+        return;
+    }
+    if (value) {
+        saveAs(new Blob([value], { type: 'text/calendar;charset=utf-8' }), `${item.title.replace(/ /g,"_")}.ics`);
+    }
+  };
   
   const eventDays = useMemo(() => {
     return allItems.map(item => new Date(item.date));
@@ -262,26 +295,33 @@ export default function CalendarPage() {
                         </Tooltip>
                     </TooltipProvider>
                 </div>
-                 <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-7 w-7 flex-shrink-0">
-                        <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                        <DropdownMenuItem asChild>
-                        <Link href={item.editPath} className="cursor-pointer">
-                            <Edit className="mr-2 h-4 w-4" /> {item.isExternal ? 'View Details' : 'Edit'}
-                        </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => openDeleteDialog(item)} className="text-destructive cursor-pointer">
-                        <Trash2 className="mr-2 h-4 w-4" /> {item.isExternal ? 'Remove from Calendar' : 'Delete'}
-                        </DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
+                {item.type !== 'Appointment' ? (
+                     <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-7 w-7 flex-shrink-0">
+                            <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuItem asChild>
+                            <Link href={item.editPath} className="cursor-pointer">
+                                <Edit className="mr-2 h-4 w-4" /> {item.isExternal ? 'View Details' : 'Edit'}
+                            </Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => openDeleteDialog(item)} className="text-destructive cursor-pointer">
+                            <Trash2 className="mr-2 h-4 w-4" /> {item.isExternal ? 'Remove from Calendar' : 'Delete'}
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                ) : (
+                    <Button variant="ghost" size="icon" className="h-7 w-7 flex-shrink-0" onClick={() => handleAddToCalendar(item)}>
+                        <CalendarPlus className="h-4 w-4" />
+                    </Button>
+                )}
             </div>
         </CardHeader>
         <CardContent className="p-3 pt-0 space-y-1 text-xs text-muted-foreground">
+            {item.type === 'Appointment' && item.startTime && <div className="flex items-center gap-2"><Clock className="h-3 w-3" /><span><ClientFormattedDate date={item.startTime} formatStr="p"/></span></div>}
             {item.location && <div className="flex items-center gap-2"><MapPin className="h-3 w-3" /><span>{item.location}</span></div>}
             {item.company && <div className="flex items-center gap-2"><Briefcase className="h-3 w-3" /><span>{item.company}</span></div>}
             {item.price && <div className="flex items-center gap-2"><DollarSign className="h-3 w-3" /><span className="font-semibold"><ClientFormattedCurrency value={item.price} /></span></div>}
@@ -387,6 +427,7 @@ export default function CalendarPage() {
                     <div className="flex flex-wrap gap-2">
                         {contentTypes.map(({ name, icon: Icon, variant }) => {
                             const isSelected = typeFilters.has(name);
+                            const label = name === 'Business Page' ? name : `${name}s`;
                             return (
                                 <Badge
                                     key={name}
@@ -401,7 +442,7 @@ export default function CalendarPage() {
                                     role="button"
                                     tabIndex={0}
                                 >
-                                    <Icon className="mr-2 h-4 w-4" /> {name}s
+                                    <Icon className="mr-2 h-4 w-4" /> {label}
                                 </Badge>
                             )
                         })}
@@ -445,7 +486,7 @@ export default function CalendarPage() {
                             {selectedDate ? format(selectedDate, 'PPP') : 'Select a day'}
                         </h3>
                         {selectedDayItems.length > 0 ? (
-                            selectedDayItems.map(item => <CalendarItemCard key={item.id} item={item} />)
+                            selectedDayItems.map(item => <CalendarItemCard key={`${item.type}-${item.id}`} item={item} />)
                         ) : (
                             <Card className="border-dashed">
                                 <CardContent className="p-6 text-center text-muted-foreground">
@@ -459,6 +500,35 @@ export default function CalendarPage() {
                   view === 'grid' ? (
                   <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                       {filteredItems.map((item) => {
+                         if (item.type === 'Appointment') {
+                             return (
+                                 <Card key={item.id} className="shadow-sm flex flex-col bg-secondary/40">
+                                     <CardHeader className="p-4 pb-2">
+                                        <div className="flex justify-between items-start">
+                                            <div>
+                                                <Badge variant={getBadgeVariant(item.type)}>{item.type}</Badge>
+                                                <CardTitle className="text-base mt-2">{item.title}</CardTitle>
+                                            </div>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0" onClick={() => handleAddToCalendar(item)}>
+                                                <CalendarPlus className="h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                     </CardHeader>
+                                     <CardContent className="p-4 pt-2 space-y-2 text-sm text-muted-foreground flex-grow">
+                                        <div className="flex items-center gap-2">
+                                            <Clock className="h-4 w-4" />
+                                            <span><ClientFormattedDate date={item.startTime!} formatStr="p" /> - <ClientFormattedDate date={item.endTime!} formatStr="p" /></span>
+                                        </div>
+                                     </CardContent>
+                                     <CardFooter className="border-t pt-3 px-4 pb-3">
+                                        <div className="flex items-center gap-2 text-sm">
+                                            <UserCheck className="h-4 w-4 text-primary" />
+                                            <span className="font-medium">Booked by: {item.bookerName}</span>
+                                        </div>
+                                     </CardFooter>
+                                 </Card>
+                             )
+                         }
                          return (
                           <Card key={item.id} className="shadow-sm flex flex-col">
                               {item.imageUrl && (
@@ -532,23 +602,29 @@ export default function CalendarPage() {
                                         <TableCell><ClientFormattedDate date={item.date} formatStr="PPP"/></TableCell>
                                         <TableCell><Badge variant={item.status === 'active' ? 'secondary' : 'outline'}>{item.status}</Badge></TableCell>
                                         <TableCell className="text-right">
-                                            <DropdownMenu>
-                                                <DropdownMenuTrigger asChild>
-                                                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                                                    <MoreHorizontal className="h-4 w-4" />
-                                                    </Button>
-                                                </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="end">
-                                                    <DropdownMenuItem asChild>
-                                                        <Link href={item.editPath} className="cursor-pointer">
-                                                            <Edit className="mr-2 h-4 w-4" /> {item.isExternal ? 'View Details' : 'Edit'}
-                                                        </Link>
-                                                    </DropdownMenuItem>
-                                                    <DropdownMenuItem onClick={() => openDeleteDialog(item)} className="text-destructive cursor-pointer">
-                                                        <Trash2 className="mr-2 h-4 w-4" /> {item.isExternal ? 'Remove from Calendar' : 'Delete'}
-                                                    </DropdownMenuItem>
-                                                </DropdownMenuContent>
-                                            </DropdownMenu>
+                                            {item.type !== 'Appointment' ? (
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger asChild>
+                                                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                                                        <MoreHorizontal className="h-4 w-4" />
+                                                        </Button>
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent align="end">
+                                                        <DropdownMenuItem asChild>
+                                                            <Link href={item.editPath} className="cursor-pointer">
+                                                                <Edit className="mr-2 h-4 w-4" /> {item.isExternal ? 'View Details' : 'Edit'}
+                                                            </Link>
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem onClick={() => openDeleteDialog(item)} className="text-destructive cursor-pointer">
+                                                            <Trash2 className="mr-2 h-4 w-4" /> {item.isExternal ? 'Remove from Calendar' : 'Delete'}
+                                                        </DropdownMenuItem>
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
+                                            ) : (
+                                                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleAddToCalendar(item)}>
+                                                    <CalendarPlus className="h-4 w-4" />
+                                                </Button>
+                                            )}
                                         </TableCell>
                                     </TableRow>
                                 ))}
