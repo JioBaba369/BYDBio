@@ -24,6 +24,7 @@ import { AuthorCard } from "@/components/author-card";
 import { linkIcons } from "@/lib/link-icons";
 import { generateVCard } from "@/lib/vcard";
 import { BookingDialog } from "@/components/booking-dialog";
+import { Badge } from "@/components/ui/badge";
 
 interface UserProfilePageProps {
   userProfileData: UserProfilePayload;
@@ -191,6 +192,17 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
         <div className="md:col-span-1 md:sticky top-20 space-y-6">
             <AuthorCard author={{...user, followerCount}} isOwner={isOwner} />
+            {user.hashtags && user.hashtags.length > 0 && (
+                <Card>
+                    <CardContent className="p-4">
+                        <div className="flex flex-wrap gap-2">
+                            {user.hashtags.map(tag => (
+                                <Badge key={tag} variant="secondary">{tag}</Badge>
+                            ))}
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
              <div className="flex items-center gap-2">
                 {isOwner ? (
                     <Button asChild className="w-full"><Link href="/profile"><Edit className="mr-2 h-4 w-4" />Edit Profile</Link></Button>

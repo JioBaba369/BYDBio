@@ -5,11 +5,10 @@ import { useEffect, useState } from 'react';
 import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import Link from 'next/link';
 
 import { useAuth } from '@/components/auth-provider';
 import { useToast } from '@/hooks/use-toast';
-import { updateUser, type User as AppUser, type UserLink, type BusinessCard, type BookingSettings } from '@/lib/users';
+import { updateUser, type User as AppUser, type BookingSettings } from '@/lib/users';
 import { ProfilePageSkeleton } from '@/components/profile-skeleton';
 
 import { Button } from '@/components/ui/button';
@@ -31,6 +30,7 @@ const publicProfileSchema = z.object({
     .regex(/^[a-z0-9_]+$/, "Username can only contain lowercase letters, numbers, and underscores."),
   bio: z.string().max(160, "Bio must be 160 characters or less.").optional(),
   avatarUrl: z.string().url().optional(),
+  hashtags: z.array(z.string()).max(10, "You can add up to 10 hashtags.").optional(),
 });
 
 const businessCardSchema = z.object({
@@ -100,7 +100,7 @@ export default function ProfilePage() {
     mode: 'onChange',
   });
 
-  const { formState: { isDirty }, reset, getValues } = form;
+  const { formState: { isDirty }, reset } = form;
 
   useEffect(() => {
     if (user) {
@@ -109,6 +109,7 @@ export default function ProfilePage() {
         username: user.username || '',
         bio: user.bio || '',
         avatarUrl: user.avatarUrl || '',
+        hashtags: user.hashtags || [],
         businessCard: user.businessCard || {},
         links: (user.links || []).map((link, i) => ({ ...link, id: `link-${i}` })),
         bookingSettings: user.bookingSettings || defaultBookingSettings,
@@ -127,6 +128,7 @@ export default function ProfilePage() {
         username: data.username,
         bio: data.bio,
         avatarUrl: data.avatarUrl,
+        hashtags: data.hashtags,
         businessCard: data.businessCard,
         links: data.links.map(({ id, ...rest }) => rest), // Remove temporary 'id' for dnd
         bookingSettings: data.bookingSettings,
@@ -141,6 +143,7 @@ export default function ProfilePage() {
           username: updatedUser.username || '',
           bio: updatedUser.bio || '',
           avatarUrl: updatedUser.avatarUrl || '',
+          hashtags: updatedUser.hashtags || [],
           businessCard: updatedUser.businessCard || {},
           links: (updatedUser.links || []).map((link, i) => ({ ...link, id: `link-${i}` })),
           bookingSettings: updatedUser.bookingSettings || defaultBookingSettings,

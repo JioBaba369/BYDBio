@@ -1,4 +1,3 @@
-
 import { collection, query, where, getDocs, limit, doc, getDoc, setDoc, updateDoc, deleteDoc, arrayUnion } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { deleteUser, type User as FirebaseUser } from "firebase/auth";
@@ -66,6 +65,7 @@ export type User = {
   avatarUrl: string;
   avatarFallback: string;
   bio: string;
+  hashtags?: string[];
   following: string[]; // Array of user IDs this user follows
   followerCount: number;
   postCount: number;
@@ -151,6 +151,7 @@ export const createUserProfileIfNotExists = async (user: FirebaseUser, additiona
         avatarUrl: user.photoURL || `https://placehold.co/200x200.png`,
         avatarFallback: name ? name.charAt(0).toUpperCase() : '?',
         bio: "",
+        hashtags: [],
         following: [],
         followerCount: 0,
         postCount: 0,
@@ -214,21 +215,32 @@ export const updateUser = async (uid: string, data: Partial<User>): Promise<User
         }
     }
 
-    if (data.name || dataToUpdate.username) {
+    if (data.name || dataToUpdate.username || data.bio || data.businessCard || data.hashtags) {
         const userDoc = await getDoc(userDocRef);
         if (userDoc.exists()) {
             const existingData = userDoc.data() as User;
             const newName = data.name ?? existingData.name;
             const newUsername = dataToUpdate.username ?? existingData.username;
+            const newBio = data.bio ?? existingData.bio;
+            const newTitle = data.businessCard?.title ?? existingData.businessCard?.title;
+            const newCompany = data.businessCard?.company ?? existingData.businessCard?.company;
+            const newHashtags = (data.hashtags ?? existingData.hashtags ?? []).map(h => h.replace('#', '').toLowerCase());
+            
             dataToUpdate.searchableKeywords = [...new Set([
                 ...newName.toLowerCase().split(' ').filter(Boolean),
-                newUsername
+                newUsername,
+                ...newBio.toLowerCase().split(' ').filter(Boolean),
+                ...(newTitle ? newTitle.toLowerCase().split(' ').filter(Boolean) : []),
+                ...(newCompany ? newCompany.toLowerCase().split(' ').filter(Boolean) : []),
+                ...newHashtags,
             ])];
+            
             if(data.name && data.name.length > 0) {
                 dataToUpdate.avatarFallback = data.name.charAt(0).toUpperCase();
             }
         }
     }
+    
     await updateDoc(userDocRef, dataToUpdate);
 
     // After updating, fetch and return the full updated document

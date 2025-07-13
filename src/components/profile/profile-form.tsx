@@ -1,5 +1,5 @@
 
-import { useFormContext } from 'react-hook-form';
+import { useFormContext, useFieldArray } from 'react-hook-form';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -8,7 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Upload, Sparkles, Loader2 } from 'lucide-react';
+import { Upload, Sparkles, Loader2, X } from 'lucide-react';
 import { UnifiedProfileFormValues } from '@/app/profile/page';
 import { useState, useRef } from 'react';
 import ImageCropper from '../image-cropper';
@@ -16,6 +16,8 @@ import { useToast } from '@/hooks/use-toast';
 import { uploadImage } from '@/lib/storage';
 import { useAuth } from '../auth-provider';
 import { AIBioGenerator } from '../ai/bio-generator';
+import { suggestHashtags, type HashtagSuggestInput } from '@/ai/flows/hashtag-suggester-flow';
+import { Badge } from '../ui/badge';
 
 export function ProfileForm() {
   const form = useFormContext<UnifiedProfileFormValues>();
@@ -28,8 +30,16 @@ export function ProfileForm() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [isBioGeneratorOpen, setIsBioGeneratorOpen] = useState(false);
+  const [isGeneratingHashtags, setIsGeneratingHashtags] = useState(false);
+  const [suggestedHashtags, setSuggestedHashtags] = useState<string[]>([]);
   
   const watchedAvatar = form.watch('avatarUrl');
+  const watchedHashtags = form.watch('hashtags', []);
+
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: 'hashtags',
+  });
 
   const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -56,6 +66,35 @@ export function ProfileForm() {
     }
     setIsCropperOpen(false);
   };
+  
+  const handleGenerateHashtags = async () => {
+    setIsGeneratingHashtags(true);
+    const { name, bio, businessCard } = form.getValues();
+    const input: HashtagSuggestInput = {
+      name,
+      bio: bio || '',
+      title: businessCard?.title,
+      company: businessCard?.company,
+    };
+    try {
+        const result = await suggestHashtags(input);
+        setSuggestedHashtags(result.hashtags.filter(h => !watchedHashtags.includes(h)));
+    } catch(e) {
+        toast({ title: "Error generating hashtags", variant: "destructive" });
+    } finally {
+        setIsGeneratingHashtags(false);
+    }
+  };
+  
+  const addHashtag = (tag: string) => {
+    if (watchedHashtags.length >= 10) {
+      toast({ title: "Hashtag limit reached", description: "You can add up to 10 hashtags.", variant: "destructive" });
+      return;
+    }
+    append(tag);
+    setSuggestedHashtags(current => current.filter(t => t !== tag));
+  };
+
 
   return (
     <>
@@ -87,6 +126,42 @@ export function ProfileForm() {
               </div>
             </div>
             <FormField control={form.control} name="bio" render={({ field }) => ( <FormItem> <div className="flex items-center justify-between"> <FormLabel>Bio</FormLabel> <Button type="button" variant="outline" size="sm" onClick={() => setIsBioGeneratorOpen(true)}> <Sparkles className="mr-2 h-4 w-4"/> Generate with AI </Button> </div> <FormControl><Textarea rows={3} {...field} placeholder="Tell everyone a little bit about yourself..." /></FormControl> <FormMessage /> </FormItem> )}/>
+          </div>
+          <Separator />
+          <div className="space-y-6">
+            <h3 className="text-lg font-medium">Hashtags</h3>
+            <div className="p-4 border rounded-lg space-y-4">
+              <div className="flex flex-wrap gap-2">
+                {fields.map((field, index) => (
+                  <Badge key={field.id} variant="secondary" className="flex items-center gap-1.5 pr-1">
+                    {field.value}
+                    <button type="button" onClick={() => remove(index)} className="rounded-full hover:bg-destructive/20 p-0.5">
+                      <X className="h-3 w-3" />
+                    </button>
+                  </Badge>
+                ))}
+                {fields.length === 0 && <p className="text-sm text-muted-foreground">No hashtags added yet.</p>}
+              </div>
+              <Button type="button" variant="outline" onClick={handleGenerateHashtags} disabled={isGeneratingHashtags}>
+                {isGeneratingHashtags ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+                Suggest Hashtags with AI
+              </Button>
+               {suggestedHashtags.length > 0 && (
+                <div className="space-y-2 pt-2">
+                    <p className="text-sm font-medium">Click to add:</p>
+                    <div className="flex flex-wrap gap-2">
+                        {suggestedHashtags.map(tag => (
+                            <Badge key={tag} onClick={() => addHashtag(tag)} className="cursor-pointer hover:bg-primary hover:text-primary-foreground">{tag}</Badge>
+                        ))}
+                    </div>
+                </div>
+               )}
+            </div>
+             <FormField
+                control={form.control}
+                name="hashtags"
+                render={() => ( <FormItem><FormMessage /></FormItem> )}
+            />
           </div>
           <Separator />
           <div className="space-y-6">
