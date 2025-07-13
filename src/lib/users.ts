@@ -216,13 +216,13 @@ export const updateUser = async (uid: string, data: Partial<User>): Promise<User
         }
     }
 
-    if (data.name || dataToUpdate.username || data.bio || data.businessCard || data.hashtags) {
+    if (data.name || dataToUpdate.username || data.bio !== undefined || data.businessCard || data.hashtags) {
         const userDoc = await getDoc(userDocRef);
         if (userDoc.exists()) {
             const existingData = userDoc.data() as User;
             const newName = data.name ?? existingData.name;
             const newUsername = dataToUpdate.username ?? existingData.username;
-            const newBio = data.bio ?? existingData.bio;
+            const newBio = data.bio ?? existingData.bio ?? ''; // Ensure newBio is always a string
             const newTitle = data.businessCard?.title ?? existingData.businessCard?.title;
             const newCompany = data.businessCard?.company ?? existingData.businessCard?.company;
             const newHashtags = (data.hashtags || existingData.hashtags || []).map(h => h.replace('#', '').toLowerCase());
