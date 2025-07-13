@@ -3,106 +3,117 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+  
+    // =================================================================
+    // Helper Functions
+    // =================================================================
 
-    // By default, deny all access.
-    match /{document=**} {
-      allow read, write: if false;
-    }
-
-    // --- USERS ---
-    // Users collection contains public and private data.
-    match /users/{userId} {
-      // Anyone can read a user's public profile information.
-      allow read: if true;
-      
-      // A user can create their own profile upon sign up.
-      allow create: if request.auth != null && request.auth.uid == userId;
-
-      // A user can only update their own profile.
-      // Disallow updating followerCount or postCount directly.
-      allow update: if request.auth != null && request.auth.uid == userId
-                    && !('followerCount' in request.resource.data)
-                    && !('postCount' in request.resource.data);
-      
-      // A user can delete their own profile.
-      allow delete: if request.auth != null && request.auth.uid == userId;
-    }
-
-    // --- POSTS ---
-    // Posts can be public, for followers only, or private.
-    match /posts/{postId} {
-      // Read access logic:
-      // - Public posts are readable by anyone.
-      // - Private posts are readable only by the author.
-      // - Follower-only posts are readable by the author and their followers.
-      allow read: if resource.data.privacy == 'public'
-                  || (request.auth != null && request.auth.uid == resource.data.authorId)
-                  || (resource.data.privacy == 'followers' && isSignedIn() && isFollowing(resource.data.authorId));
-                  
-      // A user can create a post for themselves.
-      allow create: if isSignedIn() && request.auth.uid == request.resource.data.authorId;
-
-      // Only the author can update their post.
-      allow update: if isSignedIn() && request.auth.uid == resource.data.authorId;
-
-      // Only the author can delete their post.
-      allow delete: if isSignedIn() && request.auth.uid == resource.data.authorId;
-    }
-    
-    // --- GENERIC CONTENT (Events, Jobs, Listings, Offers, PromoPages) ---
-    function canReadPublicContent() {
-      return resource.data.status == 'active';
-    }
-    
-    function isOwner() {
-      return request.auth != null && request.auth.uid == resource.data.authorId;
-    }
-
-    match /events/{eventId} {
-      allow read: if canReadPublicContent();
-      allow create, update, delete: if isOwner();
-    }
-    
-    match /jobs/{jobId} {
-      allow read: if canReadPublicContent();
-      allow create, update, delete: if isOwner();
-    }
-    
-    match /listings/{listingId} {
-      allow read: if canReadPublicContent();
-      allow create, update, delete: if isOwner();
-    }
-    
-    match /offers/{offerId} {
-      allow read: if canReadPublicContent();
-      allow create, update, delete: if isOwner();
-    }
-    
-    match /promoPages/{pageId} {
-      allow read: if canReadPublicContent();
-      allow create, update, delete: if isOwner();
-    }
-    
-    // --- NOTIFICATIONS & APPOINTMENTS ---
-    // Only the recipient can read their own notifications/appointments.
-    match /notifications/{notificationId} {
-      allow read, update, delete: if request.auth != null && request.auth.uid == resource.data.userId;
-      // Creation is handled by backend functions.
-      allow create: if false; 
-    }
-    
-    match /appointments/{appointmentId} {
-       allow read, create: if request.auth != null; // Booker or Owner can read/create.
-       allow update, delete: if request.auth != null && request.auth.uid == resource.data.ownerId;
-    }
-    
-    // --- HELPER FUNCTIONS ---
+    // Is the user authenticated?
     function isSignedIn() {
       return request.auth != null;
     }
-    
-    function isFollowing(authorId) {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.following.hasAny([authorId]);
+
+    // Is the user the owner of the resource?
+    function isOwner(userId) {
+      return request.auth.uid == userId;
     }
+
+    // Is the incoming data for a create operation owned by the user?
+    function isCreatingOwned(userIdKey) {
+        return isSignedIn() && request.resource.data[userIdKey] == request.auth.uid;
+    }
+    
+    // Does the incoming data have all the required fields for creation?
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+    
+    // Is the user updating only the allowed fields?
+    function isUpdatingAllowedFields(allowedFields) {
+      return request.resource.data.keys().hasOnly(allowedFields);
+    }
+
+    // =================================================================
+    // Users Collection
+    // =================================================================
+    match /users/{userId} {
+      // Anyone can read a user's public profile
+      allow get: if true;
+      
+      // Users can list other users (for search/connections)
+      allow list: if isSignedIn();
+
+      // A user can create their own profile document
+      allow create: if isOwner(userId);
+
+      // A user can only update their own profile
+      allow update: if isOwner(userId);
+      
+      // A user can only delete their own profile
+      allow delete: if isOwner(userId);
+    }
+    
+    // =================================================================
+    // Posts Collection
+    // =================================================================
+    match /posts/{postId} {
+      // Allow reading posts based on their privacy setting
+      allow get: if resource.data.privacy == 'public' || 
+                    (resource.data.privacy == 'followers' && isSignedIn() && resource.data.authorId in get(/databases/$(database)/documents/users/$(request.auth.uid)).data.following) ||
+                    (resource.data.privacy == 'me' && isSignedIn() && isOwner(resource.data.authorId));
+      
+      // Allow listing public posts
+      allow list: if isSignedIn();
+      
+      // Any authenticated user can create a post
+      allow create: if isCreatingOwned('authorId');
+      
+      // Only the author can update or delete their post
+      allow update, delete: if isSignedIn() && isOwner(resource.data.authorId);
+    }
+
+    // =================================================================
+    // Generic Content Collections (Events, Jobs, Listings, Offers, PromoPages)
+    // =================================================================
+    match /{collection}/{docId} {
+      // Anyone can view any specific content item
+      allow get: if true;
+      
+      // Anyone can list active content
+      allow list: if true;
+
+      // Authenticated users can create content they own
+      allow create: if isCreatingOwned('authorId');
+
+      // Only the author can update or delete their content
+      allow update, delete: if isSignedIn() && isOwner(resource.data.authorId);
+    }
+
+    // =================================================================
+    // Notifications Collection
+    // =================================================================
+    match /notifications/{notificationId} {
+        // A user can only access their own notifications
+        allow read, write, delete: if isSignedIn() && isOwner(resource.data.userId);
+        
+        // A user can only create notifications for themselves (e.g. contact form)
+        // or other server-side processes can create them for the user
+        allow create: if request.auth == null || isOwner(request.resource.data.userId);
+    }
+    
+    // =================================================================
+    // Appointments Collection
+    // =================================================================
+    match /appointments/{appointmentId} {
+        // Only the owner of the appointment (the person being booked) or the booker can view it.
+        allow get: if isSignedIn() && (isOwner(resource.data.ownerId) || isOwner(resource.data.bookerId));
+
+        // Authenticated users can create appointments
+        allow create: if isSignedIn();
+        
+        // Only the owner or booker can update/delete (e.g., cancel)
+        allow update, delete: if isSignedIn() && (isOwner(resource.data.ownerId) || isOwner(resource.data.bookerId));
+    }
+    
   }
 }
