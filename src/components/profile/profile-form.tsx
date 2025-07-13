@@ -1,4 +1,6 @@
 
+'use client';
+
 import { useFormContext, useFieldArray } from 'react-hook-form';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -18,6 +20,7 @@ import { useAuth } from '../auth-provider';
 import { AIBioGenerator } from '../ai/bio-generator';
 import { suggestHashtags, type HashtagSuggestInput } from '@/ai/flows/hashtag-suggester-flow';
 import { Badge } from '../ui/badge';
+import { AIAvatarGenerator } from '../ai/avatar-generator';
 
 export function ProfileForm() {
   const form = useFormContext<UnifiedProfileFormValues>();
@@ -30,6 +33,8 @@ export function ProfileForm() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [isBioGeneratorOpen, setIsBioGeneratorOpen] = useState(false);
+  const [isAvatarGeneratorOpen, setIsAvatarGeneratorOpen] = useState(false);
+
   const [isGeneratingHashtags, setIsGeneratingHashtags] = useState(false);
   const [suggestedHashtags, setSuggestedHashtags] = useState<string[]>([]);
   
@@ -50,20 +55,14 @@ export function ProfileForm() {
       e.target.value = '';
     }
   };
+  
+  const handleAvatarSelect = (newAvatarUrl: string) => {
+    form.setValue('avatarUrl', newAvatarUrl, { shouldDirty: true });
+    toast({ title: "Avatar Updated!", description: "Your new profile picture has been set. Remember to save your changes." });
+  };
 
   const handleCropComplete = async (url: string) => {
-    if (!firebaseUser) return;
-    setIsUploading(true);
-    toast({ title: "Uploading...", description: "Please wait while we upload your new avatar." });
-    try {
-      const downloadURL = await uploadImage(url, `avatars/${firebaseUser.uid}`);
-      form.setValue('avatarUrl', downloadURL, { shouldDirty: true });
-      toast({ title: "Avatar Updated!", description: "Your new profile picture has been saved." });
-    } catch (error) {
-      toast({ title: "Error Uploading Avatar", variant: 'destructive' });
-    } finally {
-      setIsUploading(false);
-    }
+    handleAvatarSelect(url);
     setIsCropperOpen(false);
   };
   
@@ -100,6 +99,7 @@ export function ProfileForm() {
     <>
       <ImageCropper imageSrc={imageToCrop} open={isCropperOpen} onOpenChange={setIsCropperOpen} onCropComplete={handleCropComplete} isRound={true} aspectRatio={1} />
       <AIBioGenerator open={isBioGeneratorOpen} onOpenChange={setIsBioGeneratorOpen} onSelectBio={(bio) => { form.setValue('bio', bio, { shouldDirty: true }); }} />
+      <AIAvatarGenerator open={isAvatarGeneratorOpen} onOpenChange={setIsAvatarGeneratorOpen} onSelectAvatar={handleAvatarSelect} />
       
       <Card>
         <CardHeader>
@@ -118,10 +118,16 @@ export function ProfileForm() {
                   <AvatarImage src={watchedAvatar || user?.avatarUrl} />
                   <AvatarFallback>{user?.avatarFallback}</AvatarFallback>
                 </Avatar>
-                <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={isUploading}>
-                  {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
-                  Change Photo
-                </Button>
+                <div className="flex flex-col gap-2">
+                  <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={isUploading}>
+                    <Upload className="mr-2 h-4 w-4" />
+                    Upload Photo
+                  </Button>
+                  <Button type="button" variant="outline" onClick={() => setIsAvatarGeneratorOpen(true)}>
+                    <Sparkles className="mr-2 h-4 w-4" />
+                    Enhance with AI
+                  </Button>
+                </div>
                 <input type="file" ref={fileInputRef} className="hidden" accept="image/png, image/jpeg" onChange={onFileChange} />
               </div>
             </div>
