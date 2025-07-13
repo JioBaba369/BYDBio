@@ -1,7 +1,7 @@
 
 'use client';
 
-import type { PostWithAuthor, EmbeddedPostInfoWithAuthor } from '@/lib/posts';
+import type { PostWithAuthor } from '@/lib/posts';
 import { useAuth } from '@/components/auth-provider';
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import Link from "next/link";
@@ -121,10 +121,10 @@ export function PostCard({ item, onLike, onDelete, onRepost, onQuote, isLoading 
                         </div>
                     </div>
                     <div className="mt-2 space-y-3">
-                         {item.content && !isRepost && <p className="whitespace-pre-wrap">{item.content}</p>}
-                         {item.quotedPost && item.quotedPost.author && <EmbeddedPostView post={item.quotedPost} />}
+                        {item.content && !isRepost && <p className="whitespace-pre-wrap">{item.content}</p>}
+                        {item.quotedPost && item.quotedPost.author && <EmbeddedPostView post={item.quotedPost} />}
 
-                         {isRepost && displayItem.content && (
+                        {isRepost && displayItem.content && (
                             <div className="p-4 border rounded-md">
                                 <div className="flex items-center gap-2 text-sm">
                                     <Link href={`/u/${displayAuthor.username}`} className="flex items-center gap-2 hover:underline">

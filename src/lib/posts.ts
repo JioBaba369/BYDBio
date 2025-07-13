@@ -69,6 +69,7 @@ export type PostWithAuthor = Post & {
   repostedPost?: EmbeddedPostInfoWithAuthor;
 };
 
+const FEED_POST_LIMIT = 50;
 
 // Function to fetch a single post by its ID
 export const getPost = async (id: string): Promise<Post | null> => {
@@ -319,7 +320,7 @@ export const getFeedPosts = async (userId: string, followingIds: string[]): Prom
             collection(db, 'posts'), 
             where('authorId', 'in', chunk),
             orderBy('createdAt', 'desc'),
-            limit(50) // Limit per chunk, we'll sort and slice later
+            limit(FEED_POST_LIMIT)
         );
         return getDocs(postsQuery);
     });
@@ -338,7 +339,7 @@ export const getFeedPosts = async (userId: string, followingIds: string[]): Prom
     
     postsData.sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
-    return populatePostAuthors(postsData.slice(0, 50));
+    return populatePostAuthors(postsData.slice(0, FEED_POST_LIMIT));
 };
 
 /**

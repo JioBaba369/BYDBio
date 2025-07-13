@@ -37,6 +37,8 @@ export type Notification = {
 
 export type NotificationWithActor = Omit<Notification, 'actorId'> & { actor: User | null };
 
+const NOTIFICATION_FETCH_LIMIT = 50;
+
 // Create a notification
 export const createNotification = async (
   userId: string,
@@ -60,7 +62,10 @@ export const createNotification = async (
   if (actorId) {
     const userDocRef = doc(db, 'users', userId);
     const userDoc = await getDoc(userDocRef);
-    if (!userDoc.exists()) return; // Don't create notification for non-existent user
+    if (!userDoc.exists()) {
+      console.warn(`Attempted to create notification for non-existent user: ${userId}`);
+      return;
+    }
     
     const userData = userDoc.data() as User;
     const settings = userData.notificationSettings;
@@ -92,7 +97,7 @@ export const getNotificationsForUser = async (userId: string): Promise<Notificat
     notificationsRef,
     where('userId', '==', userId),
     orderBy('createdAt', 'desc'),
-    limit(50) // Limit to the last 50 notifications
+    limit(NOTIFICATION_FETCH_LIMIT)
   );
 
   const querySnapshot = await getDocs(q);
@@ -155,6 +160,14 @@ export const markNotificationsAsRead = async (userId: string) => {
 };
 
 
+const entityTypePathMap: Record<string, string> = {
+    promoPages: 'p',
+    listings: 'l',
+    jobs: 'job',
+    offers: 'offer',
+    events: 'events',
+};
+
 const getNotificationLink = (notification: NotificationWithActor): string => {
     switch (notification.type) {
         case 'new_follower':
@@ -165,14 +178,7 @@ const getNotificationLink = (notification: NotificationWithActor): string => {
             return `/events/${notification.entityId}`;
         case 'new_content_follower':
             if (notification.entityType && notification.entityId) {
-                const typeMap = {
-                    promoPages: 'p',
-                    listings: 'l',
-                    jobs: 'job',
-                    offers: 'offer',
-                    events: 'events',
-                };
-                const prefix = typeMap[notification.entityType as keyof typeof typeMap];
+                const prefix = entityTypePathMap[notification.entityType];
                 if (prefix) {
                     return `/${prefix}/${notification.entityId}`;
                 }

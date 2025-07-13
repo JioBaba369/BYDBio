@@ -4,9 +4,9 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import Image from "next/image";
-import { PlusCircle, Eye, MousePointerClick, ExternalLink, Calendar, Tags, List, LayoutGrid, Bell, DollarSign } from "lucide-react";
+import { PlusCircle, Eye, MousePointerClick, Calendar, Tags, List, LayoutGrid, Bell, DollarSign } from "lucide-react";
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { type ListingWithAuthor } from "@/lib/listings";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -49,12 +49,7 @@ const ListingPageSkeleton = () => (
 
 export default function ListingsClient({ initialListings }: { initialListings: ListingWithAuthor[] }) {
   const { user, loading: authLoading } = useAuth();
-  const [listings, setListings] = useState<ListingWithAuthor[]>(initialListings);
   const [view, setView] = useState<'grid' | 'list'>('grid');
-
-  useEffect(() => {
-    setListings(initialListings);
-  }, [initialListings]);
   
   if (authLoading) {
     return <ListingPageSkeleton />;
@@ -87,10 +82,10 @@ export default function ListingsClient({ initialListings }: { initialListings: L
         </div>
       </div>
       
-      {listings.length > 0 ? (
+      {initialListings.length > 0 ? (
         view === 'grid' ? (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {listings.map((item) => (
+          {initialListings.map((item) => (
             <Card key={item.id} className="flex flex-col shadow-sm hover:shadow-md transition-shadow duration-200">
               {item.imageUrl && (
                   <div className="overflow-hidden rounded-t-lg">
@@ -141,7 +136,7 @@ export default function ListingsClient({ initialListings }: { initialListings: L
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {listings.map((item) => (
+                {initialListings.map((item) => (
                     <TableRow key={item.id}>
                       <TableCell>
                         <div className="flex items-center gap-4">
