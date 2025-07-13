@@ -299,7 +299,9 @@ export default function ProfilePage() {
     if (user) {
       publicProfileForm.reset({ name: user.name || '', username: user.username || '', bio: user.bio || '' });
       businessCardForm.reset(user.businessCard || {});
-      linksForm.reset({ links: user.links.map((link, index) => ({...link, id: `link-${index}`})) });
+      // Safeguard against user.links being undefined
+      const userLinks = user.links || [];
+      linksForm.reset({ links: userLinks.map((link, index) => ({...link, id: `link-${index}`})) });
       bookingForm.reset(user.bookingSettings || bookingForm.getValues());
       setCroppedImageUrl(user.avatarUrl || null);
     }
