@@ -3,10 +3,13 @@ import { collection, query, where, getDocs, limit, doc, getDoc, setDoc, updateDo
 import { db } from "@/lib/firebase";
 import { deleteUser, type User as FirebaseUser } from "firebase/auth";
 import type { Timestamp } from "firebase/firestore";
+import { getPostsByUser, type PostWithAuthor } from "./posts";
+import { getPublicContentByUser } from "./content";
+import { serializeDocument } from "./firestore-utils";
 
 export type BusinessCard = {
-  title: string;
-  company: string;
+  title?: string;
+  company?: string;
   phone?: string;
   email?: string;
   website?: string;
@@ -15,6 +18,7 @@ export type BusinessCard = {
 };
 
 export type UserLink = {
+    id?: string;
     icon: string;
     title: string;
     url: string;
@@ -35,6 +39,25 @@ export type Subscriptions = {
   offers: string[];
 }
 
+export type DayAvailability = {
+    enabled: boolean;
+    startTime: string; // e.g., "09:00"
+    endTime: string;   // e.g., "17:00"
+}
+
+export type BookingSettings = {
+    acceptingAppointments: boolean;
+    availability: {
+        sunday: DayAvailability;
+        monday: DayAvailability;
+        tuesday: DayAvailability;
+        wednesday: DayAvailability;
+        thursday: DayAvailability;
+        friday: DayAvailability;
+        saturday: DayAvailability;
+    }
+}
+
 export type User = {
   uid: string; // Firebase Auth UID and Document ID
   name: string;
@@ -53,7 +76,15 @@ export type User = {
   fcmTokens?: string[]; // Array of Firebase Cloud Messaging tokens
   searchableKeywords: string[];
   isFollowedByCurrentUser?: boolean; // Client-side state
+  bookingSettings?: BookingSettings;
 };
+
+export type UserProfilePayload = {
+    user: User;
+    posts: PostWithAuthor[];
+    content: any[];
+}
+
 
 const generateUniqueUsername = async (baseUsername: string): Promise<string> => {
     let username = baseUsername;
@@ -137,6 +168,18 @@ export const createUserProfileIfNotExists = async (user: FirebaseUser, additiona
             events: [],
             offers: [],
         },
+        bookingSettings: {
+            acceptingAppointments: false,
+            availability: {
+                sunday: { enabled: false, startTime: '09:00', endTime: '17:00' },
+                monday: { enabled: true, startTime: '09:00', endTime: '17:00' },
+                tuesday: { enabled: true, startTime: '09:00', endTime: '17:00' },
+                wednesday: { enabled: true, startTime: '09:00', endTime: '17:00' },
+                thursday: { enabled: true, startTime: '09:00', endTime: '17:00' },
+                friday: { enabled: true, startTime: '09:00', endTime: '17:00' },
+                saturday: { enabled: false, startTime: '09:00', endTime: '17:00' },
+            },
+        },
         fcmTokens: [],
         searchableKeywords: searchableKeywords,
     });
@@ -169,7 +212,6 @@ export const updateUser = async (uid: string, data: Partial<User>) => {
         }
     }
 
-    // If name or username is being updated, also update searchableKeywords and avatarFallback
     if (data.name || dataToUpdate.username) {
         const userDoc = await getDoc(userDocRef);
         if (userDoc.exists()) {
@@ -180,7 +222,6 @@ export const updateUser = async (uid: string, data: Partial<User>) => {
                 ...newName.toLowerCase().split(' ').filter(Boolean),
                 newUsername
             ])];
-            // Only update the fallback if the name is explicitly being changed.
             if(data.name) {
                 dataToUpdate.avatarFallback = data.name.charAt(0).toUpperCase();
             }
@@ -197,15 +238,28 @@ export async function getUserByUsername(username: string): Promise<User | null> 
     if (querySnapshot.empty) {
         return null;
     }
-
-    const userDoc = querySnapshot.docs[0];
-    return { uid: userDoc.id, ...userDoc.data() } as User;
+    return serializeDocument<User>(querySnapshot.docs[0]);
 }
+
+export async function getUserProfileData(username: string, viewerId: string | null): Promise<UserProfilePayload | null> {
+    const user = await getUserByUsername(username);
+    if (!user) {
+        return null;
+    }
+    
+    const posts = await getPostsByUser(user.uid, viewerId);
+    const content = await getPublicContentByUser(user.uid);
+    
+    return {
+        user,
+        posts,
+        content
+    }
+}
+
 
 export async function getUsersByIds(uids: string[]): Promise<User[]> {
     if (uids.length === 0) return [];
-    // Firestore 'in' queries are limited to 30 items per query.
-    // We need to chunk the requests.
     const chunks: string[][] = [];
     for (let i = 0; i < uids.length; i += 30) {
         chunks.push(uids.slice(i, i + 30));
@@ -217,7 +271,8 @@ export async function getUsersByIds(uids: string[]): Promise<User[]> {
         const q = query(usersRef, where("uid", "in", chunk));
         const querySnapshot = await getDocs(q);
         querySnapshot.forEach(doc => {
-            users.push({ uid: doc.id, ...doc.data() } as User)
+            const serialized = serializeDocument<User>(doc);
+            if(serialized) users.push(serialized);
         });
     }
     return users;
@@ -231,7 +286,6 @@ export async function searchUsers(searchText: string): Promise<User[]> {
     const usersRef = collection(db, "users");
     const usersMap = new Map<string, User>();
 
-    // Query 1: By parts of the name (existing functionality)
     if (searchKeywords.length > 0) {
         const nameQuery = query(
             usersRef,
@@ -240,11 +294,11 @@ export async function searchUsers(searchText: string): Promise<User[]> {
         );
         const nameQuerySnapshot = await getDocs(nameQuery);
         nameQuerySnapshot.forEach(doc => {
-            usersMap.set(doc.id, { uid: doc.id, ...doc.data() } as User);
+            const serialized = serializeDocument<User>(doc);
+            if (serialized) usersMap.set(doc.id, serialized);
         });
     }
 
-    // Query 2: By username prefix
     const usernameQuery = query(
         usersRef,
         where('username', '>=', lowercasedSearchText),
@@ -253,7 +307,8 @@ export async function searchUsers(searchText: string): Promise<User[]> {
     );
     const usernameQuerySnapshot = await getDocs(usernameQuery);
     usernameQuerySnapshot.forEach(doc => {
-        usersMap.set(doc.id, { uid: doc.id, ...doc.data() } as User);
+        const serialized = serializeDocument<User>(doc);
+        if (serialized) usersMap.set(doc.id, serialized);
     });
 
     return Array.from(usersMap.values());
@@ -268,24 +323,10 @@ export async function searchUsers(searchText: string): Promise<User[]> {
 export const deleteUserAccount = async (fbUser: FirebaseUser) => {
     const userDocRef = doc(db, "users", fbUser.uid);
 
-    // First, delete the user's Firestore document
     await deleteDoc(userDocRef);
-
-    // Then, delete the user from Firebase Authentication.
-    // The SDK will throw an error if re-authentication is needed, which is caught by the calling component.
     await deleteUser(fbUser);
-    
-    // IMPORTANT: For a full production application, you should also set up a Cloud Function
-    // triggered by `functions.auth.user().onDelete()` to remove all other content 
-    // created by the user (posts, events, etc.) to ensure complete data cleanup.
 };
 
-/**
- * Adds a Firebase Cloud Messaging (FCM) token to a user's profile.
- * Uses arrayUnion to prevent duplicate tokens.
- * @param uid The user's unique ID.
- * @param token The FCM token to add.
- */
 export const addFcmTokenToUser = async (uid: string, token: string) => {
     const userDocRef = doc(db, "users", uid);
     await updateDoc(userDocRef, {

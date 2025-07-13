@@ -1,27 +1,23 @@
 
 import type { Metadata } from 'next';
-import { getUserByUsername } from '@/lib/users';
-import UserProfilePage from './user-profile';
+import { getUserProfileData } from '@/lib/users';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { getPostsByUser } from '@/lib/posts';
-import { getListingsByUser } from '@/lib/listings';
-import { getJobsByUser } from '@/lib/jobs';
-import { getEventsByUser } from '@/lib/events';
-import { getOffersByUser } from '@/lib/offers';
-import { getPromoPagesByUser } from '@/lib/promo-pages';
+import { cookies } from 'next/headers';
+import { auth } from '@/lib/firebase-admin';
+import UserProfileClientPage from './user-profile-client';
 
 export async function generateMetadata({ params }: { params: { username: string } }): Promise<Metadata> {
-  const username = params.username;
-  const user = await getUserByUsername(username);
+  const data = await getUserProfileData(params.username, null);
 
-  if (!user) {
+  if (!data?.user) {
     return {
       title: 'User Not Found | BYD.Bio',
       description: "The profile you are looking for does not exist.",
     };
   }
+  const { user } = data;
 
   return {
     title: `${user.name} | BYD.Bio`,
@@ -29,14 +25,7 @@ export async function generateMetadata({ params }: { params: { username: string 
     openGraph: {
       title: `${user.name} | BYD.Bio`,
       description: user.bio,
-      images: [
-        {
-          url: user.avatarUrl,
-          width: 200,
-          height: 200,
-          alt: user.name,
-        },
-      ],
+      images: [{ url: user.avatarUrl, width: 200, height: 200, alt: user.name }],
       url: `/u/${user.username}`,
       type: 'profile',
       profile: {
@@ -55,8 +44,17 @@ export async function generateMetadata({ params }: { params: { username: string 
 }
 
 export default async function PublicProfilePageWrapper({ params }: { params: { username: string } }) {
-    const username = params.username;
-    const userProfileData = await getUserByUsername(username);
+    const sessionCookie = cookies().get('session')?.value || '';
+    let viewerId: string | null = null;
+    try {
+        const decodedClaims = await auth.verifySessionCookie(sessionCookie, true);
+        viewerId = decodedClaims.uid;
+    } catch (error) {
+        // Session cookie is invalid or expired. User is not logged in.
+        viewerId = null;
+    }
+
+    const userProfileData = await getUserProfileData(params.username, viewerId);
 
     if (!userProfileData) {
         return (
@@ -74,24 +72,5 @@ export default async function PublicProfilePageWrapper({ params }: { params: { u
         )
     }
 
-    // Fetch all content related to the user in parallel
-    const [posts, listings, jobs, events, offers, promoPages] = await Promise.all([
-        getPostsByUser(userProfileData.uid, true), // Fetch public posts only for initial load
-        getListingsByUser(userProfileData.uid),
-        getJobsByUser(userProfileData.uid),
-        getEventsByUser(userProfileData.uid),
-        getOffersByUser(userProfileData.uid),
-        getPromoPagesByUser(userProfileData.uid)
-    ]);
-    
-    const content = {
-        posts,
-        listings,
-        jobs,
-        events,
-        offers,
-        promoPages,
-    };
-
-    return <UserProfilePage userProfileData={userProfileData} content={content} />;
+    return <UserProfileClientPage userProfileData={userProfileData} viewerId={viewerId} />;
 }
