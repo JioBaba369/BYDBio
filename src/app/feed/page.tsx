@@ -270,7 +270,7 @@ export default function FeedPage() {
              <div className="space-y-6">
                 {posts.map(item => (
                     <PostCard
-                        key={`${item.type}-${item.id}`}
+                        key={item.id}
                         item={item}
                         onLike={handleLike}
                         onDelete={openDeleteDialog}

@@ -55,13 +55,11 @@ export default function UserProfileClientPage({ userProfileData, viewerId }: Use
 
   const { toast } = useToast();
 
-  const [vCardData, setVCardData] = useState('');
-
-  useEffect(() => {
-    if (userProfileData.user) {
-      setVCardData(generateVCard(userProfileData.user));
-    }
+  const vCardData = useMemo(() => {
+    if (!userProfileData.user) return '';
+    return generateVCard(userProfileData.user);
   }, [userProfileData.user]);
+
 
   useEffect(() => {
     if (currentUser) {
