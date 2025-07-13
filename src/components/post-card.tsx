@@ -1,7 +1,7 @@
 
 'use client';
 
-import type { PostWithAuthor } from '@/lib/posts';
+import type { PostWithAuthor, EmbeddedPostInfoWithAuthor } from '@/lib/posts';
 import { useAuth } from '@/components/auth-provider';
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import Link from "next/link";
@@ -16,13 +16,16 @@ import { useToast } from '@/hooks/use-toast';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
 import { EmbeddedPostView } from './feed/embedded-post-view';
+import React from 'react';
+
+type FeedItem = PostWithAuthor & { isLiked?: boolean; };
 
 interface PostCardProps {
-    item: PostWithAuthor;
+    item: FeedItem;
     onLike: (postId: string) => void;
-    onDelete: (post: PostWithAuthor) => void;
+    onDelete: (post: FeedItem) => void;
     onRepost: (postId: string) => void;
-    onQuote: (post: PostWithAuthor) => void;
+    onQuote: (post: FeedItem) => void;
     isLoading?: boolean;
     loadingAction?: 'like' | 'repost' | 'quote' | null;
 }
@@ -151,7 +154,7 @@ export function PostCard({ item, onLike, onDelete, onRepost, onQuote, isLoading 
                             {isLoading && loadingAction === 'repost' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Repeat className="h-4 w-4" />}
                             <span className="text-xs">{displayItem.repostCount || 0}</span>
                         </Button>
-                        <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground hover:text-blue-500" onClick={() => onQuote(displayItem as PostWithAuthor)} disabled={isLoading || !user}>
+                        <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground hover:text-blue-500" onClick={() => onQuote(item as PostWithAuthor)} disabled={isLoading || !user}>
                             <QuoteIcon className="h-4 w-4" />
                             <span className="text-xs hidden sm:inline">Quote</span>
                         </Button>
