@@ -65,7 +65,8 @@ const TagPreview = forwardRef<HTMLDivElement, { values: DesignFormValues; user: 
         return (
             <div ref={ref} className={cn("w-full h-full rounded-2xl flex flex-col items-center justify-center p-6 transition-colors relative", backCardBg)} style={cardStyle}>
                  {values.backgroundImageUrl && <div className="absolute inset-0 bg-black/60 rounded-2xl" />}
-                 <div className="relative z-10 w-full flex flex-col items-center justify-center gap-4 h-full">
+                 <div className="relative z-10 w-full flex flex-col items-center justify-between h-full">
+                    <div />
                     {values.showQrCode && user ? (
                         <div className="flex flex-col items-center gap-2">
                             <Logo className={cn("text-xl mb-1", textColor)} />
@@ -81,7 +82,7 @@ const TagPreview = forwardRef<HTMLDivElement, { values: DesignFormValues; user: 
                             <p className={cn("text-[10px] font-mono leading-tight", subtitleColor)}>{`byd.bio/u/${user.username}`}</p>
                         </div>
                     ) : <div />}
-                    <div className={cn("absolute bottom-6 flex items-center justify-center gap-2 rounded-full px-3 py-1.5", values.textColor === 'light' ? 'bg-black/30' : 'bg-white/30')}>
+                    <div className={cn("flex items-center justify-center gap-2 rounded-full px-3 py-1.5", values.textColor === 'light' ? 'bg-black/30' : 'bg-white/30')}>
                         <Nfc className={cn("h-4 w-4", subtitleColor)} />
                         <p className={cn("text-xs font-semibold leading-tight", subtitleColor)}>Tap or Scan to Connect</p>
                     </div>
