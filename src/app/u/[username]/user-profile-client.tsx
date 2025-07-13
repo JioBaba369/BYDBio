@@ -195,7 +195,7 @@ export default function UserProfileClientPage({ userProfileData, viewerId }: Use
       />
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
         <div className="md:col-span-1 md:sticky top-20 space-y-6">
-            <AuthorCard author={user} isOwner={isOwner} followerCount={followerCount} />
+            <AuthorCard author={{...user, followerCount}} isOwner={isOwner} />
              <div className="flex items-center gap-2">
                 {isOwner ? (
                     <Button asChild className="w-full"><Link href="/profile"><Edit className="mr-2 h-4 w-4" />Edit Profile</Link></Button>
@@ -240,7 +240,7 @@ export default function UserProfileClientPage({ userProfileData, viewerId }: Use
                         <div className="space-y-6">
                         {visiblePosts.map(item => (
                             <PostCard
-                                key={item.id}
+                                key={`${item.id}-${item.author.uid}`}
                                 item={item}
                                 onLike={handleLike}
                                 onDelete={openDeleteDialog}
