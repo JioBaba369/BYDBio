@@ -193,11 +193,12 @@ export const createUserProfileIfNotExists = async (user: FirebaseUser, additiona
 };
 
 /**
- * Updates a user's profile document in Firestore.
+ * Updates a user's profile document in Firestore and returns the updated document.
  * @param uid The user's unique ID.
  * @param data The data to update. This will be merged with existing data.
+ * @returns The full, updated user object.
  */
-export const updateUser = async (uid: string, data: Partial<User>) => {
+export const updateUser = async (uid: string, data: Partial<User>): Promise<User | null> => {
     const userDocRef = doc(db, "users", uid);
     const dataToUpdate: { [key: string]: any } = { ...data };
 
@@ -233,6 +234,10 @@ export const updateUser = async (uid: string, data: Partial<User>) => {
         }
     }
     await updateDoc(userDocRef, dataToUpdate);
+
+    // After updating, fetch and return the full updated document
+    const updatedDoc = await getDoc(userDocRef);
+    return serializeDocument<User>(updatedDoc);
 };
 
 export async function getUserByUsername(username: string): Promise<User | null> {
@@ -367,3 +372,5 @@ export const addFcmTokenToUser = async (uid: string, token: string) => {
         fcmTokens: arrayUnion(token)
     });
 };
+
+    

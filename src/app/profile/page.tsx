@@ -307,12 +307,14 @@ export default function ProfilePage() {
             dataToUpdate.username = publicData.username;
         }
 
-        await updateUser(firebaseUser.uid, dataToUpdate);
-        
-        publicProfileForm.reset(publicData);
-        businessCardForm.reset(cardData);
-        linksForm.reset(linksData);
-        bookingForm.reset(bookingData);
+        const updatedUser = await updateUser(firebaseUser.uid, dataToUpdate);
+
+        if (updatedUser) {
+          publicProfileForm.reset({ name: updatedUser.name || '', username: updatedUser.username || '', bio: updatedUser.bio || '' });
+          businessCardForm.reset(updatedUser.businessCard || {});
+          linksForm.reset({ links: (updatedUser.links || []).map((link, index) => ({...link, id: `link-${index}`})) });
+          bookingForm.reset(updatedUser.bookingSettings || defaultBookingSettings);
+        }
 
         toast({ title: "Profile Saved", description: "Your information has been successfully updated." });
     } catch(error: any) {
@@ -371,7 +373,7 @@ export default function ProfilePage() {
       businessCard: watchedBusinessCard
     };
     return generateVCard(tempUser as AppUser);
-  }, [user, watchedPublicProfile, watchedBusinessCard]);
+  }, [user, watchedPublicProfile.name, watchedBusinessCard]);
 
   if (loading || !user) {
     return <ProfilePageSkeleton />;
@@ -439,7 +441,7 @@ export default function ProfilePage() {
                         <div className="md:sticky top-20 space-y-4">
                             <Card>
                                 <CardHeader> <CardTitle>Live Preview</CardTitle> </CardHeader>
-                                <CardContent> <div className="w-full max-w-[280px] bg-muted/30 p-6 rounded-xl shadow-lg border mx-auto"> <div className="text-center"> <Avatar className="h-20 w-20 mx-auto mb-2"> <AvatarImage src={croppedImageUrl || user.avatarUrl} /> <AvatarFallback>{user.avatarFallback}</AvatarFallback> </Avatar> <p className="font-headline font-semibold text-lg">{watchedPublicProfile.name || 'Your Name'}</p> <p className="text-primary text-sm">{watchedBusinessCard.title || 'Your Title'}</p> <p className="text-muted-foreground text-xs flex items-center justify-center gap-1.5 mt-1"><Building className="h-3.5 w-3.5"/>{watchedBusinessCard.company || 'Your Company'}</p> d`> </div> <div className="flex justify-center mt-4"> {vCardData ? ( <QRCode value={vCardData} size={150} bgColor="transparent" fgColor="hsl(var(--foreground))" level="Q" /> ) : ( <div className="w-[150px] h-[150px] bg-gray-200 animate-pulse mx-auto rounded-md" /> )} </div> <p className="text-xs text-muted-foreground text-center mt-2">Scan to save contact</p> </div> </CardContent>
+                                <CardContent> <div className="w-full max-w-[280px] bg-muted/30 p-6 rounded-xl shadow-lg border mx-auto"> <div className="text-center"> <Avatar className="h-20 w-20 mx-auto mb-2"> <AvatarImage src={croppedImageUrl || user.avatarUrl} /> <AvatarFallback>{user.avatarFallback}</AvatarFallback> </Avatar> <p className="font-headline font-semibold text-lg">{watchedPublicProfile.name || 'Your Name'}</p> <p className="text-primary text-sm">{watchedBusinessCard.title || 'Your Title'}</p> <p className="text-muted-foreground text-xs flex items-center justify-center gap-1.5 mt-1"><Building className="h-3.5 w-3.5"/>{watchedBusinessCard.company || 'Your Company'}</p> </div> <div className="flex justify-center mt-4"> {vCardData ? ( <QRCode value={vCardData} size={150} bgColor="transparent" fgColor="hsl(var(--foreground))" level="Q" /> ) : ( <div className="w-[150px] h-[150px] bg-gray-200 animate-pulse mx-auto rounded-md" /> )} </div> <p className="text-xs text-muted-foreground text-center mt-2">Scan to save contact</p> </div> </CardContent>
                             </Card>
                             <Card className="max-w-[280px] mx-auto text-center border-primary/20">
                                 <CardHeader className="p-4"> <CardTitle className="text-base flex items-center justify-center gap-2"> <Nfc className="h-5 w-5 text-primary"/> Get Your BYD BioTAG </CardTitle> </CardHeader>
@@ -551,3 +553,5 @@ export default function ProfilePage() {
     </>
   )
 }
+
+    
