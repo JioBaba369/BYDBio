@@ -15,7 +15,7 @@ import { uploadImage } from "@/lib/storage"
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog"
 import { PostCard } from "@/components/post-card";
 import Image from "next/image";
-import type { PostWithAuthor } from "@/lib/posts";
+import type { PostWithAuthor, Post } from "@/lib/posts";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { createPost, toggleLikePost, deletePost, repostPost, getFeedPosts, getDiscoveryPosts } from "@/lib/posts";
 import { Input } from "@/components/ui/input";
