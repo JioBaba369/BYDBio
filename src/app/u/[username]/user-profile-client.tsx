@@ -20,7 +20,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import QRCode from "qrcode.react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PublicContentCard } from "@/components/public-content-card";
-import { linkIcons } from "@/lib/link-icons";
 import { generateVCard } from "@/lib/vcard";
 import { BookingDialog } from "@/components/booking-dialog";
 import { ContactForm } from "@/components/contact-form";
@@ -248,87 +247,62 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
             </CardContent>
         </Card>
         
-        <Tabs defaultValue="about" className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
-                <TabsTrigger value="about">About</TabsTrigger>
-                <TabsTrigger value="posts">Posts</TabsTrigger>
-                <TabsTrigger value="content">Content</TabsTrigger>
-                <TabsTrigger value="links">Links</TabsTrigger>
-            </TabsList>
-            <TabsContent value="about" className="mt-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-1 space-y-6 lg:sticky top-20 self-start">
                 <AboutTab user={user} />
-            </TabsContent>
-            <TabsContent value="posts" className="mt-6">
-                {visiblePosts.length > 0 ? (
-                    <div className="space-y-6 max-w-2xl mx-auto">
-                    {visiblePosts.map(item => (
-                        <PostCard
-                            key={`${item.id}-${item.author.uid}`}
-                            item={item}
-                            onLike={handleLike}
-                            onDelete={openDeleteDialog}
-                            onRepost={handleRepost}
-                            onQuote={handleQuote}
-                            isLoading={loadingAction?.postId === item.id}
-                            loadingAction={loadingAction && loadingAction.postId === item.id ? loadingAction.action : null}
-                        />
-                    ))}
-                    </div>
-                ) : (
-                    <Card>
-                        <CardContent className="p-10 text-center text-muted-foreground">
-                            <Rss className="h-10 w-10 mx-auto" />
-                            <h3 className="mt-4 font-semibold">No Posts Yet</h3>
-                            <p>This user hasn't posted anything yet.</p>
-                        </CardContent>
-                    </Card>
-                )}
-            </TabsContent>
-            <TabsContent value="content" className="mt-6">
-                {userProfileData.otherContent && userProfileData.otherContent.length > 0 ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {userProfileData.otherContent.map(item => (
-                            <PublicContentCard key={item.id} item={{...item, author: user}} />
-                        ))}
-                    </div>
-                ) : (
-                      <Card>
-                        <CardContent className="p-10 text-center text-muted-foreground">
-                            <Briefcase className="h-10 w-10 mx-auto" />
-                            <h3 className="mt-4 font-semibold">No Content Yet</h3>
-                            <p>This user hasn't created any public content yet.</p>
-                        </CardContent>
-                    </Card>
-                )}
-            </TabsContent>
-            <TabsContent value="links" className="mt-6">
-                {user.links && user.links.length > 0 ? (
-                    <div className="space-y-3 max-w-2xl mx-auto">
-                        {user.links.map(link => {
-                            const Icon = linkIcons[link.icon as keyof typeof linkIcons] || LinkIcon;
-                            return (
-                            <a key={link.id || link.url} href={link.url} target="_blank" rel="noopener noreferrer">
-                                <Card className="hover:bg-accent transition-colors">
-                                    <CardContent className="p-4 flex items-center justify-center font-semibold gap-3">
-                                        <Icon className="h-5 w-5" />
-                                        <span>{link.title}</span>
-                                    </CardContent>
-                                </Card>
-                            </a>
-                            )
-                        })}
-                    </div>
-                ) : (
-                      <Card>
-                        <CardContent className="p-10 text-center text-muted-foreground">
-                            <LinkIcon className="h-10 w-10 mx-auto" />
-                            <h3 className="mt-4 font-semibold">No Links Available</h3>
-                            <p>This user hasn't added any links to their profile yet.</p>
-                        </CardContent>
-                    </Card>
-                )}
-            </TabsContent>
-        </Tabs>
+            </div>
+            <div className="lg:col-span-2">
+                 <Tabs defaultValue="posts" className="w-full">
+                    <TabsList className="grid w-full grid-cols-2">
+                        <TabsTrigger value="posts">Posts</TabsTrigger>
+                        <TabsTrigger value="content">Other Content</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="posts" className="mt-6">
+                        {visiblePosts.length > 0 ? (
+                            <div className="space-y-6">
+                            {visiblePosts.map(item => (
+                                <PostCard
+                                    key={`${item.id}-${item.author.uid}`}
+                                    item={item}
+                                    onLike={handleLike}
+                                    onDelete={openDeleteDialog}
+                                    onRepost={handleRepost}
+                                    onQuote={handleQuote}
+                                    isLoading={loadingAction?.postId === item.id}
+                                    loadingAction={loadingAction && loadingAction.postId === item.id ? loadingAction.action : null}
+                                />
+                            ))}
+                            </div>
+                        ) : (
+                            <Card>
+                                <CardContent className="p-10 text-center text-muted-foreground">
+                                    <Rss className="h-10 w-10 mx-auto" />
+                                    <h3 className="mt-4 font-semibold">No Posts Yet</h3>
+                                    <p>This user hasn't posted anything yet.</p>
+                                </CardContent>
+                            </Card>
+                        )}
+                    </TabsContent>
+                    <TabsContent value="content" className="mt-6">
+                        {userProfileData.otherContent && userProfileData.otherContent.length > 0 ? (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                {userProfileData.otherContent.map(item => (
+                                    <PublicContentCard key={item.id} item={{...item, author: user}} />
+                                ))}
+                            </div>
+                        ) : (
+                            <Card>
+                                <CardContent className="p-10 text-center text-muted-foreground">
+                                    <Briefcase className="h-10 w-10 mx-auto" />
+                                    <h3 className="mt-4 font-semibold">No Content Yet</h3>
+                                    <p>This user hasn't created any public content yet.</p>
+                                </CardContent>
+                            </Card>
+                        )}
+                    </TabsContent>
+                </Tabs>
+            </div>
+        </div>
       </div>
     </>
   );
