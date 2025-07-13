@@ -1,8 +1,8 @@
 
 'use client';
 
-import { useState, useEffect, useMemo } from "react";
-import type { User } from '@/lib/users';
+import { useState, useEffect, useMemo, useCallback } from "react";
+import type { User, PostWithAuthor, UserProfilePayload } from '@/lib/users';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { UserCheck, UserPlus, Edit, Loader2, Link as LinkIcon, Rss, Info, MessageSquare, Briefcase, QrCode, Mail, Users as UsersIcon } from "lucide-react";
@@ -12,8 +12,7 @@ import { useAuth } from "@/components/auth-provider";
 import { followUser, unfollowUser } from "@/lib/connections";
 import { PostCard } from "@/components/post-card";
 import { useRouter } from "next/navigation";
-import type { PostWithAuthor, UserProfilePayload } from "@/lib/users";
-import { deletePost, toggleLikePost, repostPost } from "@/lib/posts";
+import { getPostsByUser, deletePost, toggleLikePost, repostPost } from "@/lib/posts";
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -39,12 +38,8 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
   const [followerCount, setFollowerCount] = useState(user.followerCount || 0);
   const [isFollowLoading, setIsFollowLoading] = useState(false);
   
-  const [posts, setPosts] = useState<PostWithAuthor[]>(
-    userProfileData.posts.map(p => ({
-      ...p,
-      isLiked: userProfileData.isOwner ? (p.likedBy || []).includes(user.uid) : false,
-    }))
-  );
+  const [posts, setPosts] = useState<PostWithAuthor[]>([]);
+  const [postsLoading, setPostsLoading] = useState(false);
 
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [postToDelete, setPostToDelete] = useState<PostWithAuthor | null>(null);
@@ -178,6 +173,22 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
     });
   }, [posts, canViewPrivateContent, isOwner]);
 
+  const loadPosts = useCallback(async () => {
+    if (posts.length > 0 || postsLoading) return; // Don't refetch if already loaded
+    setPostsLoading(true);
+    try {
+        const fetchedPosts = await getPostsByUser(user.uid, currentUser?.uid);
+        setPosts(fetchedPosts.map(p => ({
+            ...p,
+            isLiked: currentUser ? (p.likedBy || []).includes(currentUser.uid) : false,
+        })));
+    } catch (error) {
+        toast({ title: "Error loading posts", variant: "destructive" });
+    } finally {
+        setPostsLoading(false);
+    }
+  }, [posts.length, postsLoading, user.uid, currentUser?.uid, toast]);
+
   return (
     <>
       <DeleteConfirmationDialog
@@ -252,13 +263,21 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
                 <AboutTab user={user} />
             </div>
             <div className="lg:col-span-2">
-                 <Tabs defaultValue="posts" className="w-full">
+                 <Tabs defaultValue="content" className="w-full" onValueChange={(value) => {
+                     if (value === 'posts') {
+                         loadPosts();
+                     }
+                 }}>
                     <TabsList className="grid w-full grid-cols-2">
+                        <TabsTrigger value="content">Content</TabsTrigger>
                         <TabsTrigger value="posts">Posts</TabsTrigger>
-                        <TabsTrigger value="content">Other Content</TabsTrigger>
                     </TabsList>
                     <TabsContent value="posts" className="mt-6">
-                        {visiblePosts.length > 0 ? (
+                        {postsLoading ? (
+                            <div className="flex justify-center items-center h-48">
+                                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                            </div>
+                        ) : visiblePosts.length > 0 ? (
                             <div className="space-y-6">
                             {visiblePosts.map(item => (
                                 <PostCard

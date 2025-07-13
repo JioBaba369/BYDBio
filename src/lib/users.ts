@@ -81,7 +81,6 @@ export type User = {
 
 export type UserProfilePayload = {
     user: User;
-    posts: PostWithAuthor[];
     otherContent: any[];
     isOwner: boolean;
     isFollowedByCurrentUser: boolean;
@@ -235,7 +234,7 @@ export const updateUser = async (uid: string, data: Partial<User>): Promise<User
         dataToUpdate.searchableKeywords = [...new Set([
             ...newName.toLowerCase().split(' ').filter(Boolean),
             newUsername,
-            ...newBio.toLowerCase().split(' ').filter(Boolean),
+            ...(newBio || '').toLowerCase().split(' ').filter(Boolean),
             ...newTitle.toLowerCase().split(' ').filter(Boolean),
             ...newCompany.toLowerCase().split(' ').filter(Boolean),
             ...newHashtags,
@@ -269,10 +268,7 @@ export async function getUserProfileData(username: string, viewerId: string | nu
     if (!user) {
         return null;
     }
-
-    const posts = await getPostsByUser(user.uid, viewerId);
     
-    // Fetch all other public content types
     const otherContent = await getPublicContentByUser(user.uid);
     
     let isFollowedByCurrentUser = false;
@@ -286,7 +282,6 @@ export async function getUserProfileData(username: string, viewerId: string | nu
     
     return {
         user,
-        posts,
         otherContent,
         isOwner: viewerId === user.uid,
         isFollowedByCurrentUser
