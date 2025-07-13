@@ -49,10 +49,17 @@ export function MainSidebar() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = React.useState('');
   const { user, loading, unreadNotificationCount } = useAuth();
+  const [currentPath, setCurrentPath] = React.useState('');
+
+  React.useEffect(() => {
+    // Set the path on the client to avoid hydration errors
+    setCurrentPath(pathname);
+  }, [pathname]);
 
   const isActive = (path: string) => {
-    if (path === '/') return pathname === '/';
-    return pathname.startsWith(path);
+    if (!currentPath) return false;
+    if (path === '/') return currentPath === '/';
+    return currentPath.startsWith(path);
   };
 
   const handleSearchSubmit = (e: React.FormEvent) => {
