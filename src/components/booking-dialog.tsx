@@ -8,6 +8,7 @@ import { Calendar as CalendarIcon, Loader2 } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import type { User } from '@/lib/users';
 import { getAvailableSlots } from '@/lib/appointments';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 
 interface BookingDialogProps {
   user: User;
@@ -50,11 +51,20 @@ export function BookingDialog({ user }: BookingDialogProps) {
 
   return (
     <Dialog>
-      <DialogTrigger asChild>
-        <Button variant="secondary" className="w-full">
-            <CalendarIcon className="mr-2 h-4 w-4" /> Book a Meeting
-        </Button>
-      </DialogTrigger>
+      <TooltipProvider>
+        <Tooltip>
+          <DialogTrigger asChild>
+            <TooltipTrigger asChild>
+              <Button variant="secondary" className="w-full">
+                  <CalendarIcon className="mr-2 h-4 w-4" /> Book a Meeting
+              </Button>
+            </TooltipTrigger>
+          </DialogTrigger>
+          <TooltipContent>
+            <p>Schedule a meeting directly</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
       <DialogContent className="sm:max-w-2xl grid-cols-1 md:grid-cols-2">
           <div className="p-2">
             <DialogHeader>
