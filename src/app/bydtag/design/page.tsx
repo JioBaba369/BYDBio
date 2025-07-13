@@ -296,7 +296,7 @@ export default function BydTagDesignPage() {
           <div className="grid lg:grid-cols-3 gap-8 items-start">
               {/* Preview Column */}
               <div className="lg:col-span-2 space-y-4 lg:sticky top-20">
-                  <div className={cn("w-full max-w-lg mx-auto", isPortraitLayout ? 'aspect-[53.98/85.60]' : 'aspect-[85.60/53.98]')}>
+                  <div className={cn("mx-auto", isPortraitLayout ? 'w-[204px] h-[323px]' : 'w-[323px] h-[204px]')}>
                     <div className="relative w-full h-full perspective-1000">
                         <div className={cn("relative w-full h-full transition-transform duration-700 preserve-3d", isFlipped && "rotate-y-180")}>
                             <div className="absolute w-full h-full backface-hidden">
@@ -487,5 +487,7 @@ export default function BydTagDesignPage() {
     </>
   );
 }
+
+    
 
     
