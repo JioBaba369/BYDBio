@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useAuth } from '@/components/auth-provider';
-import { ArrowRight, ArrowLeft, RefreshCw, Download, Upload, Paintbrush, Text, LayoutTemplate, Settings2 } from 'lucide-react';
+import { ArrowRight, ArrowLeft, RefreshCw, Download, Upload, Paintbrush, Text, LayoutTemplate, Settings2, Nfc } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -67,8 +67,8 @@ const TagPreview = forwardRef<HTMLDivElement, { values: DesignFormValues; user: 
                  {values.backgroundImageUrl && <div className="absolute inset-0 bg-black/60 rounded-2xl" />}
                  <div className="relative z-10 w-full flex flex-col items-center justify-center gap-4 h-full">
                     {values.showQrCode && user ? (
-                        <div className="flex flex-col items-center gap-4">
-                            <Logo className={cn("text-xl", textColor)} />
+                        <div className="flex flex-col items-center gap-2">
+                            <Logo className={cn("text-xl mb-1", textColor)} />
                             <div className="bg-white p-2 rounded-md shadow-md">
                                 <QRCode
                                     value={`${window.location.origin}/u/${user.username}`}
@@ -81,7 +81,10 @@ const TagPreview = forwardRef<HTMLDivElement, { values: DesignFormValues; user: 
                             <p className={cn("text-[10px] font-mono leading-tight", subtitleColor)}>{`byd.bio/u/${user.username}`}</p>
                         </div>
                     ) : <div />}
-                    <p className={cn("text-xs font-semibold leading-tight absolute bottom-6", subtitleColor)}>Tap or Scan to Connect</p>
+                    <div className={cn("absolute bottom-6 flex items-center justify-center gap-2 rounded-full px-3 py-1.5", values.textColor === 'light' ? 'bg-black/30' : 'bg-white/30')}>
+                        <Nfc className={cn("h-4 w-4", subtitleColor)} />
+                        <p className={cn("text-xs font-semibold leading-tight", subtitleColor)}>Tap or Scan to Connect</p>
+                    </div>
                 </div>
             </div>
         )
@@ -484,7 +487,3 @@ export default function BydTagDesignPage() {
     </>
   );
 }
-
-    
-
-    
