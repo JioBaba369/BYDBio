@@ -140,11 +140,9 @@ export default function SignUpPage() {
           <div className="grid grid-cols-2 gap-4">
             <Tooltip>
               <TooltipTrigger asChild>
-                <span className="w-full" tabIndex={0}>
-                  <Button variant="outline" className="w-full" disabled>
-                    <GoogleIcon /> Google
-                  </Button>
-                </span>
+                <Button variant="outline" className="w-full" disabled>
+                  <GoogleIcon /> Google
+                </Button>
               </TooltipTrigger>
               <TooltipContent>
                 <p>Coming Soon</p>
@@ -152,11 +150,9 @@ export default function SignUpPage() {
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
-                <span className="w-full" tabIndex={0}>
-                  <Button variant="outline" className="w-full" disabled>
-                    <Github className="mr-2" /> GitHub
-                  </Button>
-                </span>
+                <Button variant="outline" className="w-full" disabled>
+                  <Github className="mr-2" /> GitHub
+                </Button>
               </TooltipTrigger>
               <TooltipContent>
                 <p>Coming Soon</p>
