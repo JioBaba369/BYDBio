@@ -70,7 +70,7 @@ export function PostCard({ item, onLike, onDelete, onRepost, onQuote, isLoading 
                 <div className="px-4 pt-3 pb-0 text-sm text-muted-foreground font-semibold flex items-center gap-2">
                     <Repeat className="h-4 w-4"/>
                     <Link href={`/u/${item.author.username}`} className="hover:underline">
-                        {user?.uid === item.author.id ? "You" : item.author.name} reposted
+                        {user?.uid === item.author.uid ? "You" : item.author.name} reposted
                     </Link>
                 </div>
             )}
@@ -85,7 +85,7 @@ export function PostCard({ item, onLike, onDelete, onRepost, onQuote, isLoading 
                             <p className="font-semibold">{item.author.name}</p>
                             <p className="text-sm text-muted-foreground">
                                 @{item.author.username} · <ClientFormattedDate date={item.createdAt} relative />
-                                {item.postNumber && <span> · Post #{item.postNumber}</span>}
+                                {isOwner && item.postNumber && <span> · Post #{item.postNumber}</span>}
                             </p>
                         </div>
                     </Link>
