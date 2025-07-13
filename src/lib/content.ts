@@ -10,6 +10,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { getUsersByIds, type User } from './users';
+import { serializeDocument } from './firestore-utils';
 import type { Listing } from './listings';
 import type { Offer } from './offers';
 import type { Job } from './jobs';
@@ -79,19 +80,8 @@ export const getAllPublicContent = async (): Promise<PublicContentItem[]> => {
             return null;
         }
 
-        // Robustly handle date serialization, as old data might be a string
-        const dateString = primaryDate instanceof Timestamp
-            ? primaryDate.toDate().toISOString()
-            : String(primaryDate);
-
-
-        const serializedItem: any = { ...item };
-        // Manually serialize all potential date fields in the item
-        for (const key in serializedItem) {
-            if (serializedItem[key] instanceof Timestamp) {
-                serializedItem[key] = serializedItem[key].toDate().toISOString();
-            }
-        }
+        const serializedItem = serializeDocument<any>({ data: () => item, id: item.id });
+        if (!serializedItem) return null;
         
         // Normalize the title property
         if (serializedItem.type === 'promoPage' && serializedItem.name) {
@@ -107,7 +97,9 @@ export const getAllPublicContent = async (): Promise<PublicContentItem[]> => {
                 avatarUrl: author.avatarUrl,
                 avatarFallback: author.avatarFallback,
             },
-            date: dateString
+            date: primaryDate instanceof Timestamp
+                ? primaryDate.toDate().toISOString()
+                : String(primaryDate),
         };
     }).filter((item): item is PublicContentItem => item !== null && !!item.title);
 
@@ -148,13 +140,10 @@ export const getPublicContentByUser = async (userId: string) => {
     ];
 
     const serializedContent = allContent.map(item => {
-        const serializedItem: any = { ...item };
-        for (const key in serializedItem) {
-            if (serializedItem[key] instanceof Timestamp) {
-                serializedItem[key] = serializedItem[key].toDate().toISOString();
-            }
-        }
-         if (serializedItem.type === 'promoPage' && serializedItem.name) {
+        const serializedItem = serializeDocument<any>({ data: () => item, id: item.id });
+        if (!serializedItem) return null;
+        
+        if (serializedItem.type === 'promoPage' && serializedItem.name) {
             serializedItem.title = serializedItem.name;
         }
 
@@ -163,7 +152,7 @@ export const getPublicContentByUser = async (userId: string) => {
         else if (item.type === 'job') primaryDate = serializedItem.postingDate;
 
         return {...serializedItem, date: primaryDate};
-    });
+    }).filter(item => !!item);
 
     serializedContent.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 

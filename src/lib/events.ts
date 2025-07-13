@@ -211,7 +211,23 @@ export const getEventAndAuthor = async (eventId: string): Promise<{ event: Event
     const author = serializeDocument<User>(userDoc);
     if (!author) return null;
 
-    return { event, author };
+    // Fetch attendee avatars and names
+    const rsvpLimit = 10;
+    const rsvpIds = event.rsvps.slice(0, rsvpLimit);
+    const attendees = rsvpIds.length > 0 ? await getUsersByIds(rsvpIds) : [];
+    
+    const eventWithAttendees: Event = {
+      ...event,
+      attendees: attendees.map(a => ({
+          id: a.uid,
+          name: a.name,
+          username: a.username,
+          avatarUrl: a.avatarUrl,
+      })),
+    } as any;
+
+
+    return { event: eventWithAttendees, author };
 }
 
 // Function to get all events from all users (for the public events page)

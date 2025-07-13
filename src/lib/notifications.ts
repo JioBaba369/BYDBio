@@ -16,6 +16,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { getUsersByIds, type User } from './users';
+import { serializeDocument } from './firestore-utils';
 
 export type NotificationType = 'new_follower' | 'new_like' | 'event_rsvp' | 'contact_form_submission' | 'new_content_follower';
 
@@ -28,14 +29,18 @@ export type Notification = {
   entityType?: 'promoPages' | 'listings' | 'jobs' | 'events' | 'offers';
   entityTitle?: string; // A title or snippet for context
   read: boolean;
-  createdAt: Timestamp;
+  createdAt: string; // Serialized date
   // Fields for contact form submissions
   senderName?: string;
   senderEmail?: string;
   messageBody?: string;
 };
 
-export type NotificationWithActor = Omit<Notification, 'actorId'> & { actor: User | null };
+export type NotificationWithActor = Omit<Notification, 'actorId' | 'createdAt'> & {
+    actor: User | null;
+    createdAt: string; // Ensure it's always a string after serialization
+};
+
 
 const NOTIFICATION_FETCH_LIMIT = 50;
 
@@ -105,9 +110,9 @@ export const getNotificationsForUser = async (userId: string): Promise<Notificat
     return [];
   }
 
-  const notifications = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Notification));
-  
-  return notifications;
+  return querySnapshot.docs
+    .map(doc => serializeDocument<Notification>(doc))
+    .filter((notif): notif is Notification => notif !== null);
 };
 
 // Get notifications for a user, populating actor details where applicable

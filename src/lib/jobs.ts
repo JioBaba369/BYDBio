@@ -150,7 +150,9 @@ export const getJobAndAuthor = async (jobId: string): Promise<{ job: Job; author
         return null;
     }
 
-    const author = { uid: userDoc.id, ...userDoc.data() } as User;
+    const author = serializeDocument<User>(userDoc);
+    if (!author) return null;
+
     return { job, author };
 }
 

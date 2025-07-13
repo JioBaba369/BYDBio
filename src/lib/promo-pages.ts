@@ -140,8 +140,10 @@ export const getPromoPageAndAuthor = async (promoPageId: string): Promise<{ prom
     if (!userDoc.exists()) {
         return null;
     }
+    
+    const author = serializeDocument<User>(userDoc);
+    if (!author) return null;
 
-    const author = { uid: userDoc.id, ...userDoc.data() } as User;
     return { promoPage, author };
 }
 

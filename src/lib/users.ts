@@ -4,11 +4,7 @@ import { db } from "@/lib/firebase";
 import { deleteUser, type User as FirebaseUser } from "firebase/auth";
 import type { Timestamp } from "firebase/firestore";
 import { getPostsByUser, type PostWithAuthor } from "./posts";
-import { getListingsByUser } from "./listings";
-import { getOffersByUser } from "./offers";
-import { getJobsByUser } from "./jobs";
-import { getEventsByUser } from "./events";
-import { getPromoPagesByUser } from "./promo-pages";
+import { getPublicContentByUser } from "./content";
 import { serializeDocument } from "./firestore-utils";
 
 export type BusinessCard = {
@@ -257,27 +253,11 @@ export async function getUserProfileData(username: string, viewerId: string | nu
         return null;
     }
 
-    const posts = await getPostsByUser(user.uid);
+    const posts = await getPostsByUser(user.uid, viewerId);
     
     // Fetch all other public content types
-    const [listings, offers, jobs, events, promoPages] = await Promise.all([
-        getListingsByUser(user.uid),
-        getOffersByUser(user.uid),
-        getJobsByUser(user.uid),
-        getEventsByUser(user.uid),
-        getPromoPagesByUser(user.uid),
-    ]);
+    const otherContent = await getPublicContentByUser(user.uid);
     
-    const otherContent = [
-      ...promoPages.map(item => ({ ...item, type: 'promoPage' as const, date: item.createdAt })),
-      ...listings.map(item => ({ ...item, type: 'listing' as const, date: item.createdAt })),
-      ...jobs.map(item => ({ ...item, type: 'job' as const, date: item.postingDate })),
-      ...events.map(item => ({ ...item, type: 'event' as const, date: item.startDate })),
-      ...offers.map(item => ({ ...item, type: 'offer' as const, date: item.startDate })),
-    ];
-    otherContent.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-
-
     let isFollowedByCurrentUser = false;
     if (viewerId && viewerId !== user.uid) {
         const viewerDoc = await getDoc(doc(db, 'users', viewerId));
@@ -372,5 +352,3 @@ export const addFcmTokenToUser = async (uid: string, token: string) => {
         fcmTokens: arrayUnion(token)
     });
 };
-
-    

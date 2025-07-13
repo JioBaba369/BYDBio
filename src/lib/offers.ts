@@ -134,7 +134,9 @@ export const getOfferAndAuthor = async (offerId: string): Promise<{ offer: Offer
         return null;
     }
 
-    const author = { uid: userDoc.id, ...userDoc.data() } as User;
+    const author = serializeDocument<User>(userDoc);
+    if (!author) return null;
+
     return { offer, author };
 }
 

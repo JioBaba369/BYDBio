@@ -64,7 +64,7 @@ export type Post = {
 
 export type PostWithAuthor = Post & {
   author: User;
-  isLiked: boolean;
+  isLiked?: boolean;
   quotedPost?: EmbeddedPostInfoWithAuthor;
   repostedPost?: EmbeddedPostInfoWithAuthor;
 };
@@ -80,7 +80,7 @@ export const getPost = async (id: string): Promise<Post | null> => {
 };
 
 // Function to fetch all posts for a specific user.
-export const getPostsByUser = async (userId: string): Promise<PostWithAuthor[]> => {
+export const getPostsByUser = async (userId: string, viewerId?: string | null): Promise<PostWithAuthor[]> => {
   const postsRef = collection(db, 'posts');
   const q = query(postsRef, where('authorId', '==', userId), orderBy('createdAt', 'desc'));
   const querySnapshot = await getDocs(q);
@@ -89,7 +89,7 @@ export const getPostsByUser = async (userId: string): Promise<PostWithAuthor[]> 
     .map(doc => serializeDocument<Post>(doc))
     .filter((post): post is Post => post !== null);
   
-  return populatePostAuthors(posts, userId);
+  return populatePostAuthors(posts, viewerId);
 };
 
 // Function to create a new post
