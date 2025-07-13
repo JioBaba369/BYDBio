@@ -314,13 +314,14 @@ export default function ProfilePage() {
   );
 
   const handleSaveAll = async () => {
-    const [isPublicValid, isCardValid, isBookingValid] = await Promise.all([
+    const [isPublicValid, isCardValid, isLinksValid, isBookingValid] = await Promise.all([
         publicProfileForm.trigger(),
         businessCardForm.trigger(),
+        linksForm.trigger(),
         bookingForm.trigger(),
     ]);
 
-    if (!isPublicValid || !isCardValid || !isBookingValid) {
+    if (!isPublicValid || !isCardValid || !isLinksValid || !isBookingValid) {
         toast({ title: "Validation Error", description: "Please correct the errors before saving.", variant: "destructive" });
         return;
     }
@@ -331,12 +332,14 @@ export default function ProfilePage() {
     try {
         const publicData = publicProfileForm.getValues();
         const cardData = businessCardForm.getValues();
+        const linksData = linksForm.getValues();
         const bookingData = bookingForm.getValues();
         
         let dataToUpdate: Partial<AppUser> = {
             name: publicData.name,
             bio: publicData.bio,
             businessCard: cardData,
+            links: linksData.links.map(({id, ...rest}) => rest),
             bookingSettings: bookingData,
         };
 
@@ -345,9 +348,11 @@ export default function ProfilePage() {
         }
 
         await updateUser(firebaseUser.uid, dataToUpdate);
-
+        
+        // After successful update, reset forms to their new state to clear dirty flags
         publicProfileForm.reset(publicData);
         businessCardForm.reset(cardData);
+        linksForm.reset(linksData);
         bookingForm.reset(bookingData);
 
         toast({ title: "Profile Saved", description: "Your information has been successfully updated." });
@@ -360,21 +365,6 @@ export default function ProfilePage() {
        }
     } finally {
         setIsSaving(false);
-    }
-  }
-
-  async function onLinksSubmit(data: LinksFormValues) {
-     if (!firebaseUser) return;
-     setIsSaving(true);
-     try {
-      const linksToSave = data.links.map(({id, ...rest}) => rest);
-      await updateUser(firebaseUser.uid, { links: linksToSave });
-      toast({ title: "Links Saved", description: "Your link-in-bio page has been updated." });
-      linksForm.reset(data);
-    } catch(error) {
-       toast({ title: "Error saving links", variant: 'destructive'});
-    } finally {
-       setIsSaving(false);
     }
   }
 
@@ -428,16 +418,22 @@ export default function ProfilePage() {
     return <ProfilePageSkeleton />;
   }
   
-  const isProfileDirty = publicProfileForm.formState.isDirty || businessCardForm.formState.isDirty || bookingForm.formState.isDirty;
+  const isAnyFormDirty = publicProfileForm.formState.isDirty || businessCardForm.formState.isDirty || linksForm.formState.isDirty || bookingForm.formState.isDirty;
 
   return (
     <>
       <ImageCropper imageSrc={imageToCrop} open={isCropperOpen} onOpenChange={setIsCropperOpen} onCropComplete={handleCropComplete} isRound={true} aspectRatio={1} />
       <AIBioGenerator open={isBioGeneratorOpen} onOpenChange={setIsBioGeneratorOpen} onSelectBio={(bio) => { publicProfileForm.setValue('bio', bio, { shouldDirty: true }); }} />
       <div className="space-y-6">
-        <div>
-            <h1 className="text-2xl sm:text-3xl font-bold font-headline">Profile Editor</h1>
-            <p className="text-muted-foreground">Manage your public presence and connections.</p>
+        <div className="flex items-center justify-between">
+            <div>
+                <h1 className="text-2xl sm:text-3xl font-bold font-headline">Profile Editor</h1>
+                <p className="text-muted-foreground">Manage your public presence and connections.</p>
+            </div>
+            <Button type="button" onClick={handleSaveAll} disabled={!isAnyFormDirty || isSaving || isUploadingAvatar}>
+                {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                {isSaving ? "Saving..." : "Save All Changes"}
+            </Button>
         </div>
         <Tabs defaultValue="profile" className="w-full">
             <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3">
@@ -478,12 +474,6 @@ export default function ProfilePage() {
                                     </form>
                                 </Form>
                             </CardContent>
-                            <CardFooter>
-                                <Button type="button" onClick={handleSaveAll} disabled={!isProfileDirty || isSaving || isUploadingAvatar}>
-                                    {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                                    {isSaving ? "Saving..." : "Save Changes"}
-                                </Button>
-                            </CardFooter>
                         </Card>
                     </div>
                     <div className="md:col-span-1">
@@ -504,13 +494,13 @@ export default function ProfilePage() {
 
             <TabsContent value="links">
             <FormProvider {...linksForm}>
-                <form onSubmit={linksForm.handleSubmit(onLinksSubmit)}>
+                <form>
                 <div className="grid md:grid-cols-3 gap-8 mt-4">
                     <div className="md:col-span-2">
                     <Card>
                         <CardHeader>
                         <CardTitle>Manage Links</CardTitle>
-                        <CardDescription>Add, edit, or remove links for your link-in-bio page. Drag to reorder.</CardDescription>
+                        <CardDescription>Add, edit, or remove links for your link-in-bio page. Drag to reorder. Changes are saved with the "Save All Changes" button.</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-6">
                         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
@@ -523,12 +513,6 @@ export default function ProfilePage() {
                         </DndContext>
                         <Button type="button" variant="outline" className="w-full" onClick={() => append({ icon: 'Link', title: '', url: '' })}> <PlusCircle className="mr-2 h-4 w-4" /> Add Link </Button>
                         </CardContent>
-                        <CardFooter>
-                        <Button type="submit" disabled={isSaving || !linksForm.formState.isDirty}>
-                            {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                            {isSaving ? "Saving..." : "Save Links"}
-                        </Button>
-                        </CardFooter>
                     </Card>
                     </div>
 
@@ -547,11 +531,11 @@ export default function ProfilePage() {
             
             <TabsContent value="booking">
                  <Form {...bookingForm}>
-                     <form onSubmit={bookingForm.handleSubmit(() => handleSaveAll())}>
+                     <form>
                         <Card>
                             <CardHeader>
                                 <CardTitle>Appointment Bookings</CardTitle>
-                                <CardDescription>Allow others to book meetings with you directly from your profile.</CardDescription>
+                                <CardDescription>Allow others to book meetings with you directly from your profile. Changes are saved with the "Save All Changes" button.</CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-8">
                                 <FormField
@@ -599,12 +583,6 @@ export default function ProfilePage() {
                                     </div>
                                 </div>
                             </CardContent>
-                             <CardFooter>
-                                <Button type="submit" disabled={!isProfileDirty || isSaving}>
-                                    {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                                    {isSaving ? "Saving..." : "Save Booking Settings"}
-                                </Button>
-                            </CardFooter>
                         </Card>
                      </form>
                  </Form>

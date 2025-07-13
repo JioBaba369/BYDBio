@@ -153,7 +153,7 @@ export const createUserProfileIfNotExists = async (user: FirebaseUser, additiona
         name: name,
         username: username,
         avatarUrl: user.photoURL || `https://placehold.co/200x200.png`,
-        avatarFallback: name.charAt(0).toUpperCase(),
+        avatarFallback: name ? name.charAt(0).toUpperCase() : '?',
         bio: "",
         following: [],
         followerCount: 0,
@@ -227,7 +227,7 @@ export const updateUser = async (uid: string, data: Partial<User>) => {
                 ...newName.toLowerCase().split(' ').filter(Boolean),
                 newUsername
             ])];
-            if(data.name) {
+            if(data.name && data.name.length > 0) {
                 dataToUpdate.avatarFallback = data.name.charAt(0).toUpperCase();
             }
         }
