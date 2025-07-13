@@ -1,4 +1,5 @@
 
+'use server';
 import {
   doc,
   arrayUnion,
@@ -15,9 +16,14 @@ import {
 import { db } from '@/lib/firebase';
 import type { User } from './users';
 import { createNotification } from './notifications';
+import { serializeDocument } from './firestore-utils';
 
 // Follow a user
 export const followUser = async (currentUserId: string, targetUserId: string) => {
+  if (currentUserId === targetUserId) {
+    throw new Error("You cannot follow yourself.");
+  }
+
   const batch = writeBatch(db);
   
   const currentUserRef = doc(db, 'users', currentUserId);
@@ -65,7 +71,7 @@ export const getFollowing = async (userId: string): Promise<User[]> => {
     const usersRef = collection(db, 'users');
     const q = query(usersRef, where('uid', 'in', followingIds));
     const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() } as User));
+    return querySnapshot.docs.map(doc => serializeDocument<User>(doc)).filter((user): user is User => user !== null);
 };
 
 // Get list of users who are following the current user
@@ -73,7 +79,7 @@ export const getFollowers = async (userId: string): Promise<User[]> => {
     const usersRef = collection(db, 'users');
     const q = query(usersRef, where('following', 'array-contains', userId));
     const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() } as User));
+    return querySnapshot.docs.map(doc => serializeDocument<User>(doc)).filter((user): user is User => user !== null);
 };
 
 // Get suggested users to follow
@@ -83,7 +89,7 @@ export const getSuggestedUsers = async (userId: string, count: number = 10): Pro
     const q = query(usersRef, limit(100));
     const querySnapshot = await getDocs(q);
     
-    const users = querySnapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() } as User));
+    const users = querySnapshot.docs.map(doc => serializeDocument<User>(doc)).filter((user): user is User => user !== null);
 
     const userDoc = await getDoc(doc(db, 'users', userId));
     const followingIds = userDoc.exists() ? userDoc.data().following || [] : [];

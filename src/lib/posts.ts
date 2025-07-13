@@ -1,4 +1,6 @@
 
+'use server';
+
 import {
   collection,
   query,
@@ -58,7 +60,6 @@ export type Post = {
   quotedPost?: EmbeddedPostInfo;
   repostedPost?: EmbeddedPostInfo;
   searchableKeywords?: string[];
-  type?: 'post'; // To distinguish from other content types
 };
 
 export type PostWithAuthor = Post & {
@@ -78,15 +79,9 @@ export const getPost = async (id: string): Promise<Post | null> => {
 };
 
 // Function to fetch all posts for a specific user.
-export const getPostsByUser = async (userId: string, publicOnly = false): Promise<PostWithAuthor[]> => {
+export const getPostsByUser = async (userId: string): Promise<PostWithAuthor[]> => {
   const postsRef = collection(db, 'posts');
-  let q;
-  if (publicOnly) {
-    q = query(postsRef, where('authorId', '==', userId), where('privacy', '==', 'public'), orderBy('createdAt', 'desc'));
-  } else {
-    q = query(postsRef, where('authorId', '==', userId), orderBy('createdAt', 'desc'));
-  }
-  
+  const q = query(postsRef, where('authorId', '==', userId), orderBy('createdAt', 'desc'));
   const querySnapshot = await getDocs(q);
   
   const posts = querySnapshot.docs
@@ -95,24 +90,6 @@ export const getPostsByUser = async (userId: string, publicOnly = false): Promis
   
   return populatePostAuthors(posts);
 };
-
-// Fetches a user's private ('followers' or 'me') posts. To be called from the client when authorized.
-export const getPrivatePostsByUser = async (userId: string): Promise<PostWithAuthor[]> => {
-    const postsRef = collection(db, 'posts');
-    const q = query(
-        postsRef, 
-        where('authorId', '==', userId), 
-        where('privacy', 'in', ['followers', 'me']),
-        orderBy('createdAt', 'desc')
-    );
-    const querySnapshot = await getDocs(q);
-
-    const posts = querySnapshot.docs
-        .map(doc => serializeDocument<Post>(doc))
-        .filter((post): post is Post => post !== null);
-
-    return populatePostAuthors(posts);
-}
 
 // Function to create a new post
 export const createPost = async (userId: string, data: Pick<Post, 'content' | 'imageUrl' | 'privacy' | 'category'> & { quotedPost?: EmbeddedPostInfo }): Promise<Post> => {
@@ -146,7 +123,6 @@ export const createPost = async (userId: string, data: Pick<Post, 'content' | 'i
     comments: 0,
     repostCount: 0,
     searchableKeywords: keywords,
-    type: 'post',
   };
 
   if (data.quotedPost) {
@@ -180,7 +156,7 @@ export const toggleLikePost = async (postId: string, userId: string) => {
     }
 
     const postData = postDoc.data() as Post;
-    const isLiked = (postData.likedBy || []).includes(userId);
+    const isLiked = postData.likedBy.includes(userId);
 
     if (isLiked) {
         // Unlike the post
@@ -252,7 +228,6 @@ export const repostPost = async (originalPostId: string, reposterId: string): Pr
         postNumber: 0, // Reposts don't get a number
         category: originalPostData.category,
         searchableKeywords: keywords,
-        type: 'post',
     };
     batch.set(newPostRef, newPostData);
     
@@ -326,12 +301,11 @@ export const populatePostAuthors = async (posts: Post[]): Promise<PostWithAuthor
 // Function to fetch posts for the user's feed
 export const getFeedPosts = async (userId: string, followingIds: string[]): Promise<PostWithAuthor[]> => {
     // A user's feed should only contain posts from people they follow.
-    // If they aren't following anyone, there's no need to query.
     if (followingIds.length === 0) {
         return [];
     }
     
-    // Firestore 'in' queries are limited to 30 items.
+    // Firestore 'in' queries are limited to 30 items. We'll chunk the query.
     const chunkArray = <T>(array: T[], size: number): T[][] => {
         const chunks: T[][] = [];
         if (!array) return chunks;
