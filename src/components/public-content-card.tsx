@@ -64,11 +64,20 @@ export function PublicContentCard({ item }: { item: PublicContentItem }) {
     const itemLink = getLink(item);
 
     return (
-        <Card className="shadow-sm flex flex-col hover:shadow-lg transition-shadow duration-200">
+        <Card className="shadow-sm flex flex-col group hover:shadow-lg transition-shadow duration-200">
             {item.imageUrl && (
-                <Link href={itemLink} className="block overflow-hidden rounded-t-lg">
-                    <Image src={item.imageUrl} alt={title} width={600} height={400} className="w-full object-cover aspect-video transition-transform hover:scale-105" data-ai-hint="office laptop" />
-                </Link>
+                <div className="overflow-hidden rounded-t-lg">
+                    <Link href={itemLink} className="block">
+                        <Image 
+                            src={item.imageUrl} 
+                            alt={title} 
+                            width={600} 
+                            height={400} 
+                            className="w-full object-cover aspect-video transition-transform duration-300 group-hover:scale-105" 
+                            data-ai-hint="office laptop" 
+                        />
+                    </Link>
+                </div>
             )}
             <CardHeader className="p-4 pb-2">
                 <div className="flex justify-between items-center text-xs text-muted-foreground">
