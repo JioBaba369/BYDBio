@@ -290,6 +290,7 @@ export default function BydTagDesignPage() {
         onCropComplete={handleBgCropComplete}
         aspectRatio={cropperAspectRatio}
         isRound={false}
+        maxSize={{ width: 1200, height: 1200 }}
       />
       <div className="space-y-6">
           <div>

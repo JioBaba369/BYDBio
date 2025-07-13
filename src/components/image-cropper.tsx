@@ -15,6 +15,7 @@ interface ImageCropperProps {
   onCropComplete: (croppedImageUrl: string) => void;
   aspectRatio?: number;
   isRound?: boolean;
+  maxSize?: { width: number; height: number };
 }
 
 export default function ImageCropper({ 
@@ -24,6 +25,7 @@ export default function ImageCropper({
   onCropComplete, 
   aspectRatio = 1,
   isRound = true,
+  maxSize = { width: 1200, height: 1200 }
 }: ImageCropperProps) {
   const [crop, setCrop] = useState({ x: 0, y: 0 })
   const [zoom, setZoom] = useState(1)
@@ -43,7 +45,8 @@ export default function ImageCropper({
         imageSrc,
         croppedAreaPixels,
         outputType,
-        0.9 // Specify quality for JPEG
+        0.9,
+        maxSize
       )
       if (croppedImage) {
         onCropComplete(croppedImage)
@@ -52,7 +55,7 @@ export default function ImageCropper({
     } catch (e) {
       console.error('Error cropping image:', e);
     }
-  }, [imageSrc, croppedAreaPixels, onCropComplete, onOpenChange, isRound])
+  }, [imageSrc, croppedAreaPixels, onCropComplete, onOpenChange, isRound, maxSize])
   
   const handleOpenChange = (isOpen: boolean) => {
     if (!isOpen) {

@@ -1,4 +1,3 @@
-
 import { type Area } from 'react-easy-crop';
 
 export const createImage = (url: string): Promise<HTMLImageElement> =>
@@ -11,11 +10,21 @@ export const createImage = (url: string): Promise<HTMLImageElement> =>
     image.src = url;
   });
 
+/**
+ * Crops and resizes an image on the client side.
+ * @param imageSrc The source of the image to crop.
+ * @param pixelCrop The area to crop in pixels.
+ * @param outputType The desired output format.
+ * @param quality The quality for JPEG compression (0 to 1).
+ * @param maxSize The maximum dimensions (width/height) for the output image.
+ * @returns A base64 data URL of the cropped and resized image.
+ */
 export default async function getCroppedImg(
   imageSrc: string,
   pixelCrop: Area,
   outputType: 'image/jpeg' | 'image/png' = 'image/png',
-  quality = 0.9
+  quality = 0.9,
+  maxSize: { width: number; height: number } = { width: 4096, height: 4096 }
 ): Promise<string | null> {
   const image = await createImage(imageSrc);
   const canvas = document.createElement('canvas');
@@ -25,11 +34,24 @@ export default async function getCroppedImg(
     return null;
   }
 
-  // set canvas size to match the crop size
-  canvas.width = pixelCrop.width;
-  canvas.height = pixelCrop.height;
+  // Calculate final dimensions while maintaining aspect ratio
+  let outputWidth = pixelCrop.width;
+  let outputHeight = pixelCrop.height;
+  const aspectRatio = pixelCrop.width / pixelCrop.height;
 
-  // draw the cropped image
+  if (outputWidth > maxSize.width) {
+    outputWidth = maxSize.width;
+    outputHeight = outputWidth / aspectRatio;
+  }
+  if (outputHeight > maxSize.height) {
+    outputHeight = maxSize.height;
+    outputWidth = outputHeight * aspectRatio;
+  }
+  
+  canvas.width = outputWidth;
+  canvas.height = outputHeight;
+
+  // Draw the cropped image onto the canvas at the new, resized dimensions
   ctx.drawImage(
     image,
     pixelCrop.x,
@@ -38,8 +60,8 @@ export default async function getCroppedImg(
     pixelCrop.height,
     0,
     0,
-    pixelCrop.width,
-    pixelCrop.height
+    outputWidth,
+    outputHeight
   );
 
   // Return as data URL

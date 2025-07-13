@@ -15,7 +15,6 @@ import { UnifiedProfileFormValues } from '@/app/profile/page';
 import { useState, useRef } from 'react';
 import ImageCropper from '../image-cropper';
 import { useToast } from '@/hooks/use-toast';
-import { uploadImage } from '@/lib/storage';
 import { useAuth } from '../auth-provider';
 import { AIBioGenerator } from '../ai/bio-generator';
 import { suggestHashtags, type HashtagSuggestInput } from '@/ai/flows/hashtag-suggester-flow';
@@ -24,12 +23,11 @@ import { AIAvatarGenerator } from '../ai/avatar-generator';
 
 export function ProfileForm() {
   const form = useFormContext<UnifiedProfileFormValues>();
-  const { firebaseUser, user } = useAuth();
+  const { user } = useAuth();
   const { toast } = useToast();
   
   const [imageToCrop, setImageToCrop] = useState<string | null>(null);
   const [isCropperOpen, setIsCropperOpen] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [isBioGeneratorOpen, setIsBioGeneratorOpen] = useState(false);
@@ -97,7 +95,15 @@ export function ProfileForm() {
 
   return (
     <>
-      <ImageCropper imageSrc={imageToCrop} open={isCropperOpen} onOpenChange={setIsCropperOpen} onCropComplete={handleCropComplete} isRound={true} aspectRatio={1} />
+      <ImageCropper 
+        imageSrc={imageToCrop} 
+        open={isCropperOpen} 
+        onOpenChange={setIsCropperOpen} 
+        onCropComplete={handleCropComplete} 
+        isRound={true} 
+        aspectRatio={1}
+        maxSize={{ width: 800, height: 800 }}
+      />
       <AIBioGenerator open={isBioGeneratorOpen} onOpenChange={setIsBioGeneratorOpen} onSelectBio={(bio) => { form.setValue('bio', bio, { shouldDirty: true }); }} />
       <AIAvatarGenerator open={isAvatarGeneratorOpen} onOpenChange={setIsAvatarGeneratorOpen} onSelectAvatar={handleAvatarSelect} />
       
@@ -119,7 +125,7 @@ export function ProfileForm() {
                   <AvatarFallback>{user?.avatarFallback}</AvatarFallback>
                 </Avatar>
                 <div className="flex flex-col gap-2">
-                  <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={isUploading}>
+                  <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}>
                     <Upload className="mr-2 h-4 w-4" />
                     Upload Photo
                   </Button>
