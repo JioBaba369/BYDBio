@@ -11,7 +11,7 @@ import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import Image from "next/image";
-import type { User } from '@/lib/users';
+import type { User, PostWithAuthor } from '@/lib/users';
 import { useAuth } from '@/components/auth-provider';
 import { searchUsers, getUsersByIds } from '@/lib/users';
 import { followUser, unfollowUser } from '@/lib/connections';
@@ -24,7 +24,7 @@ import type { Offer } from '@/lib/offers';
 import type { Job } from '@/lib/jobs';
 import type { Event } from '@/lib/events';
 import type { PromoPage } from '@/lib/promo-pages';
-import type { Post, PostWithAuthor } from '@/lib/posts';
+import type { Post, EmbeddedPostInfoWithAuthor } from '@/lib/posts';
 import { ClientFormattedDate } from '@/components/client-formatted-date';
 import { ClientFormattedCurrency } from '@/components/client-formatted-currency';
 import { PostCard } from '@/components/post-card';
@@ -270,7 +270,7 @@ export default function SearchPage() {
       </div>
 
       <Tabs defaultValue="users" className="w-full">
-        <TabsList className="flex flex-wrap h-auto justify-center gap-1">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-7">
             <TabsTrigger value="users">Users ({results.users.length})</TabsTrigger>
             <TabsTrigger value="posts">Posts ({results.posts.length})</TabsTrigger>
             <TabsTrigger value="promoPages">Business Pages ({results.promoPages.length})</TabsTrigger>

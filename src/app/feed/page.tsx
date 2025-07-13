@@ -54,7 +54,7 @@ export default function FeedPage() {
     if (!user) return;
     setIsLoading(true);
     try {
-        const items = await getFeedPosts(user.following);
+        const items = await getFeedPosts(user.uid, user.following);
         setFollowingPosts(items.map(p => ({ ...p, isLiked: (p.likedBy || []).includes(user.uid) })));
     } catch (error) {
         console.error("Feed fetch error:", error);
@@ -85,10 +85,10 @@ export default function FeedPage() {
   }, [user?.uid, fetchFollowingFeed]);
 
   useEffect(() => {
-    if (activeTab === 'discovery' && discoveryPosts.length === 0) {
+    if (activeTab === 'discovery' && discoveryPosts.length === 0 && !isLoading) {
         fetchDiscoveryFeed();
     }
-  }, [activeTab, discoveryPosts.length, fetchDiscoveryFeed]);
+  }, [activeTab, discoveryPosts.length, fetchDiscoveryFeed, isLoading]);
 
   useEffect(() => {
     const storedPostJson = sessionStorage.getItem('postToQuote');
@@ -233,13 +233,18 @@ export default function FeedPage() {
   const handleConfirmDelete = async () => {
     if (!postToDelete || !user) return;
     setIsDeleting(true);
+
+    const isRepost = !!postToDelete.repostedPost;
+    const idToDelete = isRepost ? postToDelete.repostedPost!.id : postToDelete.id;
+
     const originalFollowing = [...followingPosts];
     const originalDiscovery = [...discoveryPosts];
-    setFollowingPosts(prev => prev.filter(item => item.id !== postToDelete.id));
-    setDiscoveryPosts(prev => prev.filter(item => item.id !== postToDelete.id));
+
+    setFollowingPosts(prev => prev.filter(item => item.id !== idToDelete));
+    setDiscoveryPosts(prev => prev.filter(item => item.id !== idToDelete));
     
     try {
-        await deletePost(postToDelete.id);
+        await deletePost(idToDelete);
         toast({ title: "Post Deleted" });
     } catch (error) {
         toast({ title: "Failed to delete post", variant: "destructive" });
@@ -271,7 +276,7 @@ export default function FeedPage() {
                 {posts.map(item => (
                     <PostCard
                         key={item.id}
-                        item={item}
+                        item={{...item, isLiked: item.likedBy.includes(user.uid)}}
                         onLike={handleLike}
                         onDelete={openDeleteDialog}
                         onRepost={handleRepost}

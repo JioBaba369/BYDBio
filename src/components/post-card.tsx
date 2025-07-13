@@ -84,7 +84,7 @@ export function PostCard({ item, onLike, onDelete, onRepost, onQuote, isLoading 
                             <span className="text-muted-foreground ml-2">@{displayAuthor.username}</span>
                             <span className="text-muted-foreground"> · </span>
                             <Link href={`/u/${displayAuthor.username}`} className="text-muted-foreground hover:underline">
-                                <ClientFormattedDate date={item.createdAt} relative />
+                                <ClientFormattedDate date={isRepost ? displayItem.createdAt : item.createdAt} relative />
                             </Link>
                         </div>
                         <div className="flex items-center gap-1 -mt-2">
@@ -121,20 +121,36 @@ export function PostCard({ item, onLike, onDelete, onRepost, onQuote, isLoading 
                         </div>
                     </div>
                     <div className="mt-2 space-y-3">
-                        {/* Render the quote's content first, if it exists */}
-                        {item.content && <p className="whitespace-pre-wrap">{item.content}</p>}
+                         {item.content && !isRepost && <p className="whitespace-pre-wrap">{item.content}</p>}
+                         {item.quotedPost && item.quotedPost.author && <EmbeddedPostView post={item.quotedPost} />}
 
-                        {/* Render the quoted post, if this is a quote post */}
-                        {item.quotedPost && item.quotedPost.author && <EmbeddedPostView post={item.quotedPost} />}
+                         {isRepost && displayItem.content && (
+                            <div className="p-4 border rounded-md">
+                                <div className="flex items-center gap-2 text-sm">
+                                    <Link href={`/u/${displayAuthor.username}`} className="flex items-center gap-2 hover:underline">
+                                        <Avatar className="h-5 w-5">
+                                            <AvatarImage src={displayAuthor.avatarUrl} />
+                                            <AvatarFallback>{displayAuthor.name.charAt(0)}</AvatarFallback>
+                                        </Avatar>
+                                        <span className="font-semibold text-foreground">{displayAuthor.name}</span>
+                                        <span className="text-muted-foreground">@{displayAuthor.username}</span>
+                                    </Link>
+                                </div>
+                                <p className="mt-2 text-sm whitespace-pre-wrap">{displayItem.content}</p>
+                                {displayItem.imageUrl && (
+                                    <div className="mt-2 rounded-lg overflow-hidden border">
+                                        <Image src={displayItem.imageUrl} alt="Post image" width={600} height={400} className="object-cover w-full" />
+                                    </div>
+                                )}
+                            </div>
+                         )}
 
-                        {/* If it's a pure repost, render the content of the reposted item */}
-                        {isRepost && displayItem.content && <p className="whitespace-pre-wrap">{displayItem.content}</p>}
-                        
-                        {displayItem.imageUrl && (
+                        {item.imageUrl && !isRepost && (
                             <div className="mt-2 rounded-lg overflow-hidden border">
-                                <Image src={displayItem.imageUrl} alt="Post image" width={600} height={400} className="object-cover w-full" />
+                                <Image src={item.imageUrl} alt="Post image" width={600} height={400} className="object-cover w-full" />
                             </div>
                         )}
+
                         {item.category && !isRepost && (
                             <div className="pt-2">
                                 <Badge variant="outline">{item.category}</Badge>
@@ -143,7 +159,7 @@ export function PostCard({ item, onLike, onDelete, onRepost, onQuote, isLoading 
                     </div>
                      <CardFooter className="flex justify-between items-center p-0 pt-3 -ml-2">
                         <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground hover:text-primary" onClick={() => onLike(item.id)} disabled={isLoading || !user}>
-                            {isLoading && loadingAction === 'like' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Heart className={cn("h-4 w-4", (item as any).isLiked && "fill-red-500 text-red-500")} />}
+                            {isLoading && loadingAction === 'like' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Heart className={cn("h-4 w-4", item.isLiked && "fill-red-500 text-red-500")} />}
                             <span className="text-xs">{item.likes || 0}</span>
                         </Button>
                         <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground" disabled>
@@ -154,7 +170,7 @@ export function PostCard({ item, onLike, onDelete, onRepost, onQuote, isLoading 
                             {isLoading && loadingAction === 'repost' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Repeat className="h-4 w-4" />}
                             <span className="text-xs">{displayItem.repostCount || 0}</span>
                         </Button>
-                        <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground hover:text-blue-500" onClick={() => onQuote(item as PostWithAuthor)} disabled={isLoading || !user}>
+                        <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground hover:text-blue-500" onClick={() => onQuote(item)} disabled={isLoading || !user}>
                             <QuoteIcon className="h-4 w-4" />
                             <span className="text-xs hidden sm:inline">Quote</span>
                         </Button>

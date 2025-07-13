@@ -300,10 +300,8 @@ export const populatePostAuthors = async (posts: Post[]): Promise<PostWithAuthor
 
 // Function to fetch posts for the user's feed
 export const getFeedPosts = async (userId: string, followingIds: string[]): Promise<PostWithAuthor[]> => {
-    // A user's feed should only contain posts from people they follow.
-    if (followingIds.length === 0) {
-        return [];
-    }
+    // A user's feed should contain their own posts plus posts from people they follow.
+    const authorsToFetch = [...new Set([userId, ...followingIds])];
     
     // Firestore 'in' queries are limited to 30 items. We'll chunk the query.
     const chunkArray = <T>(array: T[], size: number): T[][] => {
@@ -314,7 +312,7 @@ export const getFeedPosts = async (userId: string, followingIds: string[]): Prom
         }
         return chunks;
     };
-    const idChunks = chunkArray(followingIds, 30);
+    const idChunks = chunkArray(authorsToFetch, 30);
 
     const postPromises = idChunks.map(chunk => {
         const postsQuery = query(
@@ -332,6 +330,8 @@ export const getFeedPosts = async (userId: string, followingIds: string[]): Prom
 
     const postsData = uniquePostDocs.map(doc => serializeDocument<Post>(doc)).filter((p): p is Post => {
         if (!p) return false;
+        // Logic for filtering based on privacy
+        if (p.authorId === userId) return true; // Always show user's own posts
         // For others, only show public or followers posts
         return p.privacy === 'public' || p.privacy === 'followers';
     });
