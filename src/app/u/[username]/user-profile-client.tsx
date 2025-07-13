@@ -5,7 +5,7 @@ import { useState, useEffect, useMemo } from "react";
 import type { User } from '@/lib/users';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { UserCheck, UserPlus, Edit, Loader2, Link as LinkIcon, Rss, Info, MessageSquare, Briefcase, QrCode, Mail } from "lucide-react";
+import { UserCheck, UserPlus, Edit, Loader2, Link as LinkIcon, Rss, Info, MessageSquare, Briefcase, QrCode, Mail, Users as UsersIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { useAuth } from "@/components/auth-provider";
@@ -15,7 +15,7 @@ import { useRouter } from "next/navigation";
 import type { PostWithAuthor, UserProfilePayload } from "@/lib/users";
 import { deletePost, toggleLikePost, repostPost } from "@/lib/posts";
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import QRCode from "qrcode.react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -23,8 +23,8 @@ import { PublicContentCard } from "@/components/public-content-card";
 import { linkIcons } from "@/lib/link-icons";
 import { generateVCard } from "@/lib/vcard";
 import { BookingDialog } from "@/components/booking-dialog";
-import { Badge } from "@/components/ui/badge";
 import { ContactForm } from "@/components/contact-form";
+import { AboutTab } from "@/components/profile/about-tab";
 
 interface UserProfilePageProps {
   userProfileData: UserProfilePayload;
@@ -240,28 +240,24 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
                       </Dialog>
                     </div>
                 </div>
-                {user.bio && <p className="mt-4 max-w-2xl text-center sm:text-left">{user.bio}</p>}
                 <div className="flex items-center justify-center sm:justify-start gap-4 mt-4 text-sm border-t pt-4">
                     <p><span className="font-bold">{followerCount.toLocaleString()}</span> Followers</p>
                     <p><span className="font-bold">{user.following.length.toLocaleString()}</span> Following</p>
                     <p><span className="font-bold">{user.postCount || 0}</span> Posts</p>
                 </div>
-                 {user.hashtags && user.hashtags.length > 0 && (
-                    <div className="flex flex-wrap gap-2 justify-center sm:justify-start mt-4 border-t pt-4">
-                        {user.hashtags.map(tag => (
-                            <Badge key={tag} variant="secondary">{tag}</Badge>
-                        ))}
-                    </div>
-                )}
             </CardContent>
         </Card>
         
-        <Tabs defaultValue="posts" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
+        <Tabs defaultValue="about" className="w-full">
+            <TabsList className="grid w-full grid-cols-4">
+                <TabsTrigger value="about">About</TabsTrigger>
                 <TabsTrigger value="posts">Posts</TabsTrigger>
                 <TabsTrigger value="content">Content</TabsTrigger>
                 <TabsTrigger value="links">Links</TabsTrigger>
             </TabsList>
+            <TabsContent value="about" className="mt-6">
+                <AboutTab user={user} />
+            </TabsContent>
             <TabsContent value="posts" className="mt-6">
                 {visiblePosts.length > 0 ? (
                     <div className="space-y-6 max-w-2xl mx-auto">
