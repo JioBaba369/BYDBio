@@ -8,11 +8,15 @@ export const FeedSkeleton = () => (
             <CardHeader>
                 <div className="flex gap-4">
                     <Skeleton className="h-10 w-10 rounded-full" />
-                    <Skeleton className="h-10 w-full" />
+                    <div className="w-full space-y-2">
+                        <Skeleton className="h-4 w-3/4" />
+                        <Skeleton className="h-20 w-full" />
+                    </div>
                 </div>
             </CardHeader>
-            <CardFooter className="flex justify-end">
-                 <Skeleton className="h-10 w-24" />
+            <CardFooter className="flex justify-between items-center">
+                 <Skeleton className="h-9 w-40" />
+                 <Skeleton className="h-9 w-24" />
             </CardFooter>
         </Card>
         
@@ -22,20 +26,26 @@ export const FeedSkeleton = () => (
                     <Skeleton className="h-10 w-10 rounded-full" />
                     <div className="w-full space-y-3">
                         <div className="flex justify-between">
-                            <Skeleton className="h-4 w-32" />
-                            <Skeleton className="h-4 w-4" />
+                            <div className="space-y-1.5">
+                                <Skeleton className="h-4 w-24" />
+                                <Skeleton className="h-3 w-32" />
+                            </div>
+                            <Skeleton className="h-4 w-4 rounded-full" />
                         </div>
                          <div className="space-y-2">
                             <Skeleton className="h-4 w-full" />
                             <Skeleton className="h-4 w-3/4" />
                         </div>
-                        <div className="h-8 flex justify-between">
-                            <Skeleton className="h-full w-40" />
-                            <Skeleton className="h-full w-8" />
+                        <Skeleton className="w-full aspect-video rounded-lg" />
+                        <div className="h-8 flex justify-start gap-2 pt-2">
+                            <Skeleton className="h-full w-16" />
+                            <Skeleton className="h-full w-16" />
+                            <Skeleton className="h-full w-16" />
                         </div>
                     </div>
                 </div>
             </Card>
+        </Card>
         ))}
     </div>
 );

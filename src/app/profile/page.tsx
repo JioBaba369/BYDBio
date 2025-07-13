@@ -23,7 +23,6 @@ import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalList
 import { CSS } from '@dnd-kit/utilities';
 import ImageCropper from "@/components/image-cropper";
 import { useAuth } from "@/components/auth-provider";
-import { Skeleton } from "@/components/ui/skeleton";
 import { updateUser, type User as AppUser, type BookingSettings } from "@/lib/users";
 import { Label } from "@/components/ui/label";
 import { uploadImage } from "@/lib/storage";
@@ -33,6 +32,7 @@ import { AIBioGenerator } from "@/components/ai/bio-generator";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { generateVCard } from "@/lib/vcard";
+import { ProfilePageSkeleton } from "@/components/profile-skeleton";
 
 const publicProfileSchema = z.object({
   name: z.string().min(1, "Name cannot be empty.").max(50, "Name cannot be longer than 50 characters."),
@@ -194,49 +194,6 @@ const SortableLinkItem = ({ field, index, remove }: { field: { id: string }, ind
     </Card>
   );
 };
-
-const ProfilePageSkeleton = () => (
-    <div className="space-y-6">
-      <div>
-        <Skeleton className="h-9 w-64" />
-        <Skeleton className="h-4 w-80 mt-2" />
-      </div>
-      <div className="flex gap-2">
-        <Skeleton className="h-10 w-28" />
-        <Skeleton className="h-10 w-28" />
-      </div>
-       <Card>
-        <CardHeader>
-            <Skeleton className="h-7 w-48" />
-            <Skeleton className="h-4 w-full max-w-lg mt-1" />
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="space-y-2">
-            <Skeleton className="h-4 w-16" />
-            <Skeleton className="h-10 w-full" />
-          </div>
-           <div className="space-y-2">
-            <Skeleton className="h-4 w-16" />
-            <Skeleton className="h-10 w-full" />
-          </div>
-           <div className="space-y-2">
-            <Skeleton className="h-4 w-16" />
-            <div className="flex items-center gap-4">
-              <Skeleton className="h-20 w-20 rounded-full" />
-              <Skeleton className="h-10 w-36" />
-            </div>
-          </div>
-          <div className="space-y-2">
-            <Skeleton className="h-4 w-16" />
-            <Skeleton className="h-20 w-full" />
-          </div>
-        </CardContent>
-        <CardFooter>
-            <Skeleton className="h-10 w-24" />
-        </CardFooter>
-       </Card>
-    </div>
-)
 
 const daysOfWeek: (keyof BookingSettings['availability'])[] = [
   'sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'

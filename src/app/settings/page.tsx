@@ -16,40 +16,10 @@ import { useState, useEffect, useMemo } from "react";
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/components/auth-provider";
-import { Skeleton } from "@/components/ui/skeleton";
 import { deleteUserAccount, updateUser, type NotificationSettings } from "@/lib/users";
 import { useSearchParams, useRouter } from 'next/navigation';
 import { ChangePasswordDialog } from "@/components/change-password-dialog";
-
-const SettingsPageSkeleton = () => (
-    <div className="space-y-6">
-        <Skeleton className="h-9 w-48" />
-        <div className="flex gap-2">
-            <Skeleton className="h-10 w-28" />
-            <Skeleton className="h-10 w-28" />
-            <Skeleton className="h-10 w-28" />
-        </div>
-        <Card>
-            <CardHeader>
-                <Skeleton className="h-7 w-48" />
-                <Skeleton className="h-4 w-full max-w-lg mt-1" />
-            </CardHeader>
-            <CardContent className="space-y-6">
-                <div className="space-y-2">
-                    <Skeleton className="h-4 w-16" />
-                    <Skeleton className="h-10 w-full" />
-                </div>
-                <div className="space-y-2">
-                    <Skeleton className="h-4 w-16" />
-                    <Skeleton className="h-10 w-full" />
-                </div>
-            </CardContent>
-            <CardFooter>
-                <Skeleton className="h-10 w-24" />
-            </CardFooter>
-        </Card>
-    </div>
-);
+import { SettingsPageSkeleton } from "@/components/settings-skeleton";
 
 const areSettingsEqual = (a: NotificationSettings | null, b: NotificationSettings | null): boolean => {
     if (!a || !b) return a === b;
