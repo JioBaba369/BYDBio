@@ -46,7 +46,7 @@ const generateAvatarFlow = ai.defineFlow(
           { text: input.prompt },
         ],
         config: {
-          responseModalities: ['IMAGE'],
+          responseModalities: ['IMAGE', 'TEXT'],
         },
       })
     );
