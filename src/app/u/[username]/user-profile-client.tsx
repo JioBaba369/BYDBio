@@ -20,7 +20,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import QRCode from "qrcode.react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PublicContentCard } from "@/components/public-content-card";
-import { AuthorCard } from "@/components/author-card";
 import { linkIcons } from "@/lib/link-icons";
 import { generateVCard } from "@/lib/vcard";
 import { BookingDialog } from "@/components/booking-dialog";
@@ -189,25 +188,27 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
         itemName="post"
         confirmationText="DELETE"
       />
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
-        <div className="md:col-span-1 md:sticky top-20 space-y-6">
-            <AuthorCard author={{...user, followerCount}} isOwner={isOwner} />
-            {user.hashtags && user.hashtags.length > 0 && (
-                <Card>
-                    <CardContent className="p-4">
-                        <div className="flex flex-wrap gap-2">
-                            {user.hashtags.map(tag => (
-                                <Badge key={tag} variant="secondary">{tag}</Badge>
-                            ))}
-                        </div>
-                    </CardContent>
-                </Card>
-            )}
-             <div className="flex items-center gap-2">
+      <div className="space-y-8">
+        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
+          <Avatar className="w-28 h-28 border-4 border-background shadow-md">
+            <AvatarImage src={user.avatarUrl} alt={user.name} />
+            <AvatarFallback>{user.avatarFallback}</AvatarFallback>
+          </Avatar>
+          <div className="flex-1 text-center sm:text-left">
+            <h1 className="text-3xl font-bold font-headline">{user.name}</h1>
+            <p className="text-muted-foreground">@{user.username}</p>
+            {user.bio && <p className="mt-2 max-w-xl">{user.bio}</p>}
+            <div className="flex items-center justify-center sm:justify-start gap-4 mt-3 text-sm">
+                <p><span className="font-bold">{followerCount.toLocaleString()}</span> Followers</p>
+                <p><span className="font-bold">{user.following.length.toLocaleString()}</span> Following</p>
+                <p><span className="font-bold">{user.postCount || 0}</span> Posts</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
                 {isOwner ? (
-                    <Button asChild className="w-full"><Link href="/profile"><Edit className="mr-2 h-4 w-4" />Edit Profile</Link></Button>
+                    <Button asChild><Link href="/profile"><Edit className="mr-2 h-4 w-4" />Edit Profile</Link></Button>
                 ) : (
-                    <Button onClick={handleFollowToggle} disabled={isFollowLoading} className="w-full">
+                    <Button onClick={handleFollowToggle} disabled={isFollowLoading}>
                         {isFollowLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : isFollowing ? <UserCheck className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
                         {isFollowing ? 'Following' : 'Follow'}
                     </Button>
@@ -235,85 +236,92 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
                 </Dialog>
             </div>
         </div>
-        <div className="md:col-span-2 space-y-6">
-           <Tabs defaultValue="posts" className="w-full">
-                <TabsList className="grid w-full grid-cols-3">
-                    <TabsTrigger value="posts">Posts</TabsTrigger>
-                    <TabsTrigger value="content">Content</TabsTrigger>
-                    <TabsTrigger value="links">Links</TabsTrigger>
-                </TabsList>
-                <TabsContent value="posts" className="mt-6">
-                    {visiblePosts.length > 0 ? (
-                        <div className="space-y-6">
-                        {visiblePosts.map(item => (
-                            <PostCard
-                                key={`${item.id}-${item.author.uid}`}
-                                item={item}
-                                onLike={handleLike}
-                                onDelete={openDeleteDialog}
-                                onRepost={handleRepost}
-                                onQuote={handleQuote}
-                                isLoading={loadingAction?.postId === item.id}
-                                loadingAction={loadingAction && loadingAction.postId === item.id ? loadingAction.action : null}
-                            />
+        
+         {user.hashtags && user.hashtags.length > 0 && (
+            <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
+                {user.hashtags.map(tag => (
+                    <Badge key={tag} variant="secondary">{tag}</Badge>
+                ))}
+            </div>
+        )}
+
+        <Tabs defaultValue="posts" className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="posts">Posts</TabsTrigger>
+                <TabsTrigger value="content">Content</TabsTrigger>
+                <TabsTrigger value="links">Links</TabsTrigger>
+            </TabsList>
+            <TabsContent value="posts" className="mt-6">
+                {visiblePosts.length > 0 ? (
+                    <div className="space-y-6 max-w-2xl mx-auto">
+                    {visiblePosts.map(item => (
+                        <PostCard
+                            key={`${item.id}-${item.author.uid}`}
+                            item={item}
+                            onLike={handleLike}
+                            onDelete={openDeleteDialog}
+                            onRepost={handleRepost}
+                            onQuote={handleQuote}
+                            isLoading={loadingAction?.postId === item.id}
+                            loadingAction={loadingAction && loadingAction.postId === item.id ? loadingAction.action : null}
+                        />
+                    ))}
+                    </div>
+                ) : (
+                    <Card>
+                        <CardContent className="p-10 text-center text-muted-foreground">
+                            <Rss className="h-10 w-10 mx-auto" />
+                            <h3 className="mt-4 font-semibold">No Posts Yet</h3>
+                            <p>This user hasn't posted anything yet.</p>
+                        </CardContent>
+                    </Card>
+                )}
+            </TabsContent>
+            <TabsContent value="content" className="mt-6">
+                {userProfileData.otherContent && userProfileData.otherContent.length > 0 ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {userProfileData.otherContent.map(item => (
+                            <PublicContentCard key={item.id} item={{...item, author: user}} />
                         ))}
-                        </div>
-                    ) : (
-                        <Card>
-                            <CardContent className="p-10 text-center text-muted-foreground">
-                                <Rss className="h-10 w-10 mx-auto" />
-                                <h3 className="mt-4 font-semibold">No Posts Yet</h3>
-                                <p>This user hasn't posted anything yet.</p>
-                            </CardContent>
-                        </Card>
-                    )}
-                </TabsContent>
-                <TabsContent value="content" className="mt-6">
-                    {userProfileData.otherContent && userProfileData.otherContent.length > 0 ? (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                            {userProfileData.otherContent.map(item => (
-                                <PublicContentCard key={item.id} item={{...item, author: user}} />
-                            ))}
-                        </div>
-                    ) : (
-                         <Card>
-                            <CardContent className="p-10 text-center text-muted-foreground">
-                                <Briefcase className="h-10 w-10 mx-auto" />
-                                <h3 className="mt-4 font-semibold">No Content Yet</h3>
-                                <p>This user hasn't created any public content yet.</p>
-                            </CardContent>
-                        </Card>
-                    )}
-                </TabsContent>
-                <TabsContent value="links" className="mt-6">
-                    {user.links && user.links.length > 0 ? (
-                        <div className="space-y-3">
-                            {user.links.map(link => {
-                                const Icon = linkIcons[link.icon as keyof typeof linkIcons] || LinkIcon;
-                                return (
-                                <a key={link.id || link.url} href={link.url} target="_blank" rel="noopener noreferrer">
-                                    <Card className="hover:bg-accent transition-colors">
-                                        <CardContent className="p-4 flex items-center justify-center font-semibold gap-3">
-                                            <Icon className="h-5 w-5" />
-                                            <span>{link.title}</span>
-                                        </CardContent>
-                                    </Card>
-                                </a>
-                                )
-                            })}
-                        </div>
-                    ) : (
-                         <Card>
-                            <CardContent className="p-10 text-center text-muted-foreground">
-                                <LinkIcon className="h-10 w-10 mx-auto" />
-                                <h3 className="mt-4 font-semibold">No Links Available</h3>
-                                <p>This user hasn't added any links to their profile yet.</p>
-                            </CardContent>
-                        </Card>
-                    )}
-                </TabsContent>
-            </Tabs>
-        </div>
+                    </div>
+                ) : (
+                      <Card>
+                        <CardContent className="p-10 text-center text-muted-foreground">
+                            <Briefcase className="h-10 w-10 mx-auto" />
+                            <h3 className="mt-4 font-semibold">No Content Yet</h3>
+                            <p>This user hasn't created any public content yet.</p>
+                        </CardContent>
+                    </Card>
+                )}
+            </TabsContent>
+            <TabsContent value="links" className="mt-6">
+                {user.links && user.links.length > 0 ? (
+                    <div className="space-y-3 max-w-2xl mx-auto">
+                        {user.links.map(link => {
+                            const Icon = linkIcons[link.icon as keyof typeof linkIcons] || LinkIcon;
+                            return (
+                            <a key={link.id || link.url} href={link.url} target="_blank" rel="noopener noreferrer">
+                                <Card className="hover:bg-accent transition-colors">
+                                    <CardContent className="p-4 flex items-center justify-center font-semibold gap-3">
+                                        <Icon className="h-5 w-5" />
+                                        <span>{link.title}</span>
+                                    </CardContent>
+                                </Card>
+                            </a>
+                            )
+                        })}
+                    </div>
+                ) : (
+                      <Card>
+                        <CardContent className="p-10 text-center text-muted-foreground">
+                            <LinkIcon className="h-10 w-10 mx-auto" />
+                            <h3 className="mt-4 font-semibold">No Links Available</h3>
+                            <p>This user hasn't added any links to their profile yet.</p>
+                        </CardContent>
+                    </Card>
+                )}
+            </TabsContent>
+        </Tabs>
       </div>
     </>
   );
