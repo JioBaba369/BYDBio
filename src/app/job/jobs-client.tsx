@@ -102,7 +102,7 @@ export default function JobsClient({ initialJobs }: { initialJobs: JobWithAuthor
               <CardHeader className="p-4">
                 <div className="flex items-center gap-2">
                     <Badge variant="destructive">{job.type}</Badge>
-                    <div className="text-xs text-muted-foreground"><ClientFormattedDate date={job.postingDate as string} relative /></div>
+                    <div className="text-xs text-muted-foreground"><ClientFormattedDate date={job.postingDate as string} formatStr="MMM d, yyyy" /></div>
                 </div>
                 <CardTitle className="text-lg pt-1"><Link href={`/job/${job.id}`} className="hover:underline">{job.title}</Link></CardTitle>
                 <CardDescription className="flex items-center gap-1.5 text-sm"><Building2 className="h-4 w-4" />{job.company}</CardDescription>
