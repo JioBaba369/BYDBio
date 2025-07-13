@@ -2,7 +2,7 @@
 'use client';
 
 import { Progress } from "@/components/ui/progress";
-import { Eye, Zap } from "lucide-react";
+import { Eye, Zap, Users, Gift, MousePointerClick } from "lucide-react";
 
 interface KillChainTrackerProps {
     views: number;
@@ -12,6 +12,16 @@ interface KillChainTrackerProps {
 
 export function KillChainTracker({ views, interactions, interactionLabel }: KillChainTrackerProps) {
   const conversionRate = views > 0 ? (interactions / views) * 100 : 0;
+  
+  const Icon = () => {
+    switch(interactionLabel) {
+        case 'RSVPs': return <Users className="h-4 w-4" />;
+        case 'Claims': return <Gift className="h-4 w-4" />;
+        case 'Applicants': return <Users className="h-4 w-4" />;
+        case 'Clicks': return <MousePointerClick className="h-4 w-4" />;
+        default: return <Zap className="h-4 w-4" />;
+    }
+  }
 
   return (
     <div className="w-full space-y-2 text-sm">
@@ -21,7 +31,7 @@ export function KillChainTracker({ views, interactions, interactionLabel }: Kill
                 <span>{views.toLocaleString()} Views</span>
             </div>
              <div className="flex items-center gap-1.5">
-                <Zap className="h-4 w-4" />
+                <Icon />
                 <span>{interactions.toLocaleString()} {interactionLabel}</span>
             </div>
         </div>

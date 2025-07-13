@@ -98,3 +98,16 @@
     -webkit-backface-visibility: hidden;
   }
 }
+
+.rdp-day_selected, .rdp-day_selected:focus-visible, .rdp-day_selected:hover {
+    background-color: hsl(var(--primary)) !important;
+    color: hsl(var(--primary-foreground)) !important;
+}
+
+.day-with-event.rdp-day_selected::after {
+    background-color: hsl(var(--primary-foreground)) !important;
+}
+
+.day-with-event:hover::after {
+    background-color: hsl(var(--primary)) !important;
+}
