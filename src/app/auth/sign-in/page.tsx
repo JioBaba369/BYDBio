@@ -66,6 +66,8 @@ export default function SignInPage() {
         description: description,
         variant: "destructive",
       });
+      // Clear the password field on a failed attempt
+      form.setValue('password', '');
     } finally {
       setIsSubmitting(false);
     }
