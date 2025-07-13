@@ -58,6 +58,14 @@ const TagPreview = forwardRef<HTMLDivElement, { values: DesignFormValues; user: 
         backgroundSize: 'cover',
         backgroundPosition: 'center',
     } : {};
+
+    const [qrCodeUrl, setQrCodeUrl] = useState('');
+
+    useEffect(() => {
+        if (user?.username) {
+            setQrCodeUrl(`${window.location.origin}/u/${user.username}`);
+        }
+    }, [user?.username]);
     
     // BACK OF CARD
     if (side === 'back') {
@@ -67,12 +75,12 @@ const TagPreview = forwardRef<HTMLDivElement, { values: DesignFormValues; user: 
                  {values.backgroundImageUrl && <div className="absolute inset-0 bg-black/60 rounded-2xl" />}
                  <div className="relative z-10 w-full flex flex-col items-center justify-between h-full">
                     <div />
-                    {values.showQrCode && user ? (
+                    {(values.showQrCode && qrCodeUrl) ? (
                         <div className="flex flex-col items-center gap-2">
                             <Logo className={cn("text-xl mb-1", textColor)} />
                             <div className="bg-white p-2 rounded-md shadow-md">
                                 <QRCode
-                                    value={`${window.location.origin}/u/${user.username}`}
+                                    value={qrCodeUrl}
                                     size={100}
                                     bgColor="#ffffff"
                                     fgColor="#000000"
