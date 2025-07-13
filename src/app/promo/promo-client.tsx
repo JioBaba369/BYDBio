@@ -24,39 +24,30 @@ const PromoPageSkeleton = () => (
             </div>
             <Skeleton className="h-10 w-48" />
         </div>
-        <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
-            <Card>
-                <Skeleton className="h-52 w-full rounded-t-lg" />
-                <CardHeader>
-                    <Skeleton className="h-6 w-3/4" />
-                    <Skeleton className="h-4 w-1/2" />
-                </CardHeader>
-                <CardContent>
-                    <div className="space-y-2">
-                        <Skeleton className="h-4 w-full" />
-                        <Skeleton className="h-4 w-2/3" />
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+             {[...Array(3)].map((_, i) => (
+                <Card key={i}>
+                    <div className="relative">
+                        <Skeleton className="h-36 w-full rounded-t-lg" />
+                        <div className="absolute -bottom-10 left-4">
+                            <Skeleton className="h-20 w-20 rounded-full border-4" />
+                        </div>
                     </div>
-                </CardContent>
-                <CardFooter>
-                    <Skeleton className="h-10 w-full" />
-                </CardFooter>
-            </Card>
-            <Card>
-                <Skeleton className="h-52 w-full rounded-t-lg" />
-                <CardHeader>
-                    <Skeleton className="h-6 w-3/4" />
-                    <Skeleton className="h-4 w-1/2" />
-                </CardHeader>
-                <CardContent>
-                    <div className="space-y-2">
-                        <Skeleton className="h-4 w-full" />
-                        <Skeleton className="h-4 w-2/3" />
-                    </div>
-                </CardContent>
-                <CardFooter>
-                    <Skeleton className="h-10 w-full" />
-                </CardFooter>
-            </Card>
+                    <CardHeader className="pt-14">
+                        <Skeleton className="h-6 w-3/4" />
+                        <Skeleton className="h-4 w-1/2" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="space-y-2">
+                            <Skeleton className="h-4 w-full" />
+                            <Skeleton className="h-4 w-2/3" />
+                        </div>
+                    </CardContent>
+                    <CardFooter>
+                        <Skeleton className="h-10 w-full" />
+                    </CardFooter>
+                </Card>
+            ))}
         </div>
     </div>
 );
@@ -133,57 +124,39 @@ export default function PromoClient({ initialPromoPages }: { initialPromoPages: 
         
         {promoPages.length > 0 ? (
           view === 'grid' ? (
-          <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {promoPages.map((item) => (
-              <Card key={item.id} className="flex flex-col shadow-sm hover:shadow-md transition-shadow duration-200">
-                {item.imageUrl &&
-                  <div className="overflow-hidden rounded-t-lg">
-                    <Link href={`/p/${item.id}`}><Image src={item.imageUrl} alt={item.name} width={600} height={300} className="w-full object-cover aspect-[2/1]" /></Link>
-                  </div>
-                }
-                <CardHeader className="p-4">
-                  <div className="flex justify-between items-start gap-4">
-                      <div className="flex-1">
-                          <CardTitle className="text-lg"><Link href={`/p/${item.id}`} className="hover:underline">{item.name}</Link></CardTitle>
-                          <CardDescription className="pt-2">
-                              <Link href={`/u/${item.author.username}`} className="flex items-center gap-2 hover:underline">
-                                  <Avatar className="h-6 w-6">
-                                      <AvatarImage src={item.author.avatarUrl} />
-                                      <AvatarFallback>{item.author.name.charAt(0)}</AvatarFallback>
-                                  </Avatar>
-                                  <span className="text-xs">by {item.author.name}</span>
-                              </Link>
-                          </CardDescription>
-                      </div>
-                      {user?.uid === item.author.uid && (
-                          <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                  <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0">
-                                      <MoreHorizontal className="h-4 w-4" />
-                                  </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                  <DropdownMenuItem asChild><Link href={`/promo/${item.id}/edit`} className="cursor-pointer"><Edit className="mr-2 h-4 w-4" />Edit</Link></DropdownMenuItem>
-                                  <DropdownMenuItem onClick={() => openDeleteDialog(item)} className="text-destructive cursor-pointer"><Trash2 className="mr-2 h-4 w-4" />Delete</DropdownMenuItem>
-                              </DropdownMenuContent>
-                          </DropdownMenu>
-                      )}
-                  </div>
+               <Card key={item.id} className="flex flex-col shadow-sm hover:shadow-lg transition-shadow duration-200">
+                <div className="relative">
+                  {item.imageUrl ? (
+                    <Image src={item.imageUrl} alt={item.name} width={600} height={240} className="w-full object-cover aspect-[5/2] rounded-t-lg bg-muted" />
+                  ) : (
+                    <div className="h-36 bg-muted rounded-t-lg"></div>
+                  )}
+                  {item.logoUrl && (
+                    <div className="absolute -bottom-10 left-4 bg-background p-1 rounded-full">
+                       <Image src={item.logoUrl} alt={`${item.name} logo`} width={80} height={80} className="h-20 w-20 rounded-full object-contain border-2 border-background" />
+                    </div>
+                  )}
+                </div>
+                <CardHeader className="pt-14 px-4 pb-2">
+                    <CardTitle className="text-lg"><Link href={`/p/${item.id}`} className="hover:underline">{item.name}</Link></CardTitle>
+                    <CardDescription className="text-xs">
+                        by <Link href={`/u/${item.author.username}`} className="hover:underline text-foreground">{item.author.name}</Link>
+                    </CardDescription>
                 </CardHeader>
                 <CardContent className="flex-grow px-4 pb-4">
-                    <p className="text-sm text-muted-foreground line-clamp-2">{item.description}</p>
+                    <p className="text-sm text-muted-foreground line-clamp-3 h-[60px]">{item.description}</p>
                 </CardContent>
-                <CardFooter className="flex-col items-start gap-3 p-4 border-t">
-                    <div className="flex justify-between w-full text-xs text-muted-foreground">
-                        <div className="flex items-center gap-1.5"><Eye className="h-3.5 w-3.5" />{item.views?.toLocaleString() ?? 0} Views</div>
-                        <div className="flex items-center gap-1.5"><MousePointerClick className="h-3.5 w-3.5" />{item.clicks?.toLocaleString() ?? 0} Clicks</div>
-                        <div className="flex items-center gap-1.5"><Bell className="h-3.5 w-3.5" />{item.followerCount?.toLocaleString() ?? 0} Following</div>
-                    </div>
-                    <Button asChild variant="secondary" className="w-full">
-                        <Link href={`/p/${item.id}`}>
-                            View Details
-                        </Link>
-                    </Button>
+                <CardFooter className="flex-col items-start gap-4 p-4 border-t">
+                  <div className="flex justify-between w-full text-xs text-muted-foreground">
+                      <div className="flex items-center gap-1.5"><Eye className="h-3.5 w-3.5" />{item.views?.toLocaleString() ?? 0} Views</div>
+                      <div className="flex items-center gap-1.5"><MousePointerClick className="h-3.5 w-3.5" />{item.clicks?.toLocaleString() ?? 0} Clicks</div>
+                      <div className="flex items-center gap-1.5"><Bell className="h-3.5 w-3.5" />{item.followerCount?.toLocaleString() ?? 0} Following</div>
+                  </div>
+                  <Button asChild variant="secondary" className="w-full">
+                      <Link href={`/p/${item.id}`}>View Details</Link>
+                  </Button>
                 </CardFooter>
               </Card>
             ))}
