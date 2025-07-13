@@ -5,7 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { cookies } from 'next/headers';
-import { auth } from '@/lib/firebase-admin';
+import type { auth as adminAuth } from 'firebase-admin';
 import UserProfileClientPage from './user-profile-client';
 
 export async function generateMetadata({ params }: { params: { username: string } }): Promise<Metadata> {
@@ -46,13 +46,20 @@ export async function generateMetadata({ params }: { params: { username: string 
 export default async function PublicProfilePageWrapper({ params }: { params: { username: string } }) {
     const sessionCookie = cookies().get('session')?.value || '';
     let viewerId: string | null = null;
-    try {
-        const decodedClaims = await auth.verifySessionCookie(sessionCookie, true);
-        viewerId = decodedClaims.uid;
-    } catch (error) {
-        // Session cookie is invalid or expired. User is not logged in.
-        viewerId = null;
+    
+    // Conditionally import and use firebase-admin only if credentials are set
+    if (process.env.FIREBASE_PRIVATE_KEY) {
+        try {
+            const { auth } = (await import('@/lib/firebase-admin')) as { auth: typeof adminAuth };
+            const decodedClaims = await auth.verifySessionCookie(sessionCookie, true);
+            viewerId = decodedClaims.uid;
+        } catch (error) {
+            // Session cookie is invalid, expired, or admin SDK failed to initialize.
+            // In any case, the user is not authenticated on the server.
+            viewerId = null;
+        }
     }
+
 
     const userProfileData = await getUserProfileData(params.username, viewerId);
 
