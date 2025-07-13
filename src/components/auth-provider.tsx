@@ -42,7 +42,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         
         userSnapshotUnsubscribe = onSnapshot(userDocRef, async (doc) => {
             if (doc.exists()) {
-                setUser({ ...doc.data(), email: fbUser.email } as AppUser);
+                const userData = doc.data() as AppUser;
+                const notificationsQuery = query(collection(db, 'notifications'), where('userId', '==', fbUser.uid));
+                
+                notificationUnsubscribe = onSnapshot(notificationsQuery, (snapshot) => {
+                    const count = snapshot.docs.filter(doc => !doc.data().read && doc.data().type !== 'contact_form_submission').length;
+                    setUnreadNotificationCount(count);
+                });
+
+                setUser({ ...userData, email: fbUser.email });
             } else {
                 try {
                     await createUserProfileIfNotExists(fbUser);
@@ -54,12 +62,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }, (error) => {
             setUser(null);
             setLoading(false);
-        });
-
-        const notificationsQuery = query(collection(db, 'notifications'), where('userId', '==', fbUser.uid));
-        notificationUnsubscribe = onSnapshot(notificationsQuery, (snapshot) => {
-            const count = snapshot.docs.filter(doc => !doc.data().read && doc.data().type !== 'contact_form_submission').length;
-            setUnreadNotificationCount(count);
         });
 
       } else {

@@ -1,91 +1,79 @@
-
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Default deny all reads and writes
+
+    // Deny all reads and writes by default.
     match /{document=**} {
       allow read, write: if false;
     }
 
-    // Users: Publicly readable, but only the user can write to their own profile.
+    // --- Users Collection ---
+    // Anyone can read a user's public profile.
+    // A user can create their own profile and update/delete their own document.
     match /users/{userId} {
       allow read: if true;
-      allow create: if request.auth.uid == userId;
-      allow update: if request.auth.uid == userId;
-      allow delete: if request.auth.uid == userId;
-    }
-    
-    // Notifications: Only the recipient can read/write.
-    match /notifications/{notificationId} {
-      allow read, update, delete: if request.auth.uid == resource.data.userId;
-      // Allow authenticated users to create notifications (e.g., for follows, likes)
-      allow create: if request.auth.uid != null;
-    }
-    
-    // Shared rules for all user-generated content types
-    function isOwner(contentId, collectionName) {
-      return request.auth.uid == get(/databases/$(database)/documents/$(collectionName)/$(contentId)).data.authorId;
-    }
-    
-    function canUpdateContent(collectionName) {
-      return request.auth.uid == resource.data.authorId;
-    }
-    
-    // Events: Publicly readable, owner-writable.
-    match /events/{eventId} {
-      allow read: if resource.data.status == 'active';
-      allow create: if request.auth.uid == request.resource.data.authorId;
-      allow update: if canUpdateContent('events')
-                    || (request.auth.uid != null && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['rsvps']));
-      allow delete: if isOwner(eventId, 'events');
-    }
-    
-    // Jobs: Publicly readable, owner-writable.
-    match /jobs/{jobId} {
-       allow read: if resource.data.status == 'active';
-       allow create: if request.auth.uid == request.resource.data.authorId;
-       allow update: if canUpdateContent('jobs')
-                     || (request.auth.uid != null && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['applicants']));
-       allow delete: if isOwner(jobId, 'jobs');
-    }
-    
-    // Listings: Publicly readable, owner-writable.
-    match /listings/{listingId} {
-      allow read: if resource.data.status == 'active';
-      allow create: if request.auth.uid == request.resource.data.authorId;
-      allow update: if canUpdateContent('listings');
-      allow delete: if isOwner(listingId, 'listings');
+      allow create, delete: if request.auth != null && request.auth.uid == userId;
+      allow update: if request.auth != null && request.auth.uid == userId;
     }
 
-    // Offers: Publicly readable, owner-writable.
-    match /offers/{offerId} {
-      allow read: if resource.data.status == 'active';
-      allow create: if request.auth.uid == request.resource.data.authorId;
-      allow update: if canUpdateContent('offers')
-                     || (request.auth.uid != null && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['claims']));
-      allow delete: if isOwner(offerId, 'offers');
-    }
-    
-    // Promo Pages: Publicly readable, owner-writable.
-    match /promoPages/{promoId} {
-      allow read: if resource.data.status == 'active';
-      allow create: if request.auth.uid == request.resource.data.authorId;
-      allow update: if canUpdateContent('promoPages');
-      allow delete: if isOwner(promoId, 'promoPages');
-    }
-
-    // Posts: Readable based on privacy, owner-writable.
+    // --- Posts Collection ---
+    // Users can read public posts.
+    // Users can read posts from people they follow.
+    // A user can read their own private posts.
     match /posts/{postId} {
       allow read: if resource.data.privacy == 'public'
-                  || (resource.data.privacy == 'followers' && request.auth.uid in get(/databases/$(database)/documents/users/$(resource.data.authorId)).data.followers)
-                  || (resource.data.privacy == 'me' && request.auth.uid == resource.data.authorId)
-                  || request.auth.uid == resource.data.authorId; // Always let owner read
-      allow create: if request.auth.uid == request.resource.data.authorId;
-      allow update: if canUpdateContent('posts')
-                    || (request.auth.uid != null && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes', 'likedBy']));
-      allow delete: if isOwner(postId, 'posts');
+                   || (resource.data.privacy == 'followers' && exists(/databases/$(database)/documents/users/$(resource.data.authorId)) && request.auth.uid in get(/databases/$(database)/documents/users/$(resource.data.authorId)).data.following)
+                   || (request.auth != null && request.auth.uid == resource.data.authorId);
+      allow create, update, delete: if request.auth != null && request.auth.uid == request.resource.data.authorId;
+    }
+
+    // --- Public Content Collections (Listings, Jobs, Events, Offers, PromoPages) ---
+    function isOwner() {
+      return request.auth != null && request.auth.uid == resource.data.authorId;
+    }
+
+    function isCreating() {
+        return request.auth != null && request.auth.uid == request.resource.data.authorId;
+    }
+    
+    // Generic rules for all public content types
+    match /listings/{listingId} {
+      allow read: if resource.data.status == 'active';
+      allow create: if isCreating();
+      allow update, delete: if isOwner();
+    }
+    match /jobs/{jobId} {
+      allow read: if resource.data.status == 'active';
+      allow create: if isCreating();
+      allow update, delete: if isOwner();
+    }
+     match /events/{eventId} {
+      allow read: if resource.data.status == 'active';
+      allow create: if isCreating();
+      allow update(update, resource): if isOwner(); // Custom logic for RSVPs
+      allow delete: if isOwner();
+      
+      // Allow any authenticated user to update the 'rsvps' array
+      allow update: if request.auth != null && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['rsvps']);
+    }
+    match /offers/{offerId} {
+      allow read: if resource.data.status == 'active';
+      allow create: if isCreating();
+      allow update, delete: if isOwner();
+    }
+    match /promoPages/{promoId} {
+      allow read: if resource.data.status == 'active';
+      allow create: if isCreating();
+      allow update, delete: if isOwner();
+    }
+    
+    // --- Notifications Collection ---
+    // Users can only read their own notifications.
+    // Notifications can be created by the system (server-side logic).
+    match /notifications/{notificationId} {
+        allow read, update, delete: if request.auth != null && request.auth.uid == resource.data.userId;
+        allow create: if true; // Allow backend functions to create notifications
     }
   }
 }
