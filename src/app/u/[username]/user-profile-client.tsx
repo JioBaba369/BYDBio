@@ -199,7 +199,7 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
         itemName="post"
         confirmationText="DELETE"
       />
-      <div className="space-y-8">
+      <div className="space-y-6">
         <Card className="overflow-hidden">
             <div className="h-28 bg-gradient-to-br from-primary via-secondary to-accent" />
             <CardContent className="p-4 sm:p-6 pt-0">
@@ -258,70 +258,70 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
             </CardContent>
         </Card>
         
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-1 space-y-6 lg:sticky top-20 self-start">
+        <Tabs defaultValue="about" className="w-full" onValueChange={(value) => {
+            if (value === 'posts') {
+                loadPosts();
+            }
+        }}>
+            <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="about">About</TabsTrigger>
+                <TabsTrigger value="content">Content</TabsTrigger>
+                <TabsTrigger value="posts">Posts</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="about" className="mt-6">
                 <AboutTab user={user} />
-            </div>
-            <div className="lg:col-span-2">
-                 <Tabs defaultValue="content" className="w-full" onValueChange={(value) => {
-                     if (value === 'posts') {
-                         loadPosts();
-                     }
-                 }}>
-                    <TabsList className="grid w-full grid-cols-2">
-                        <TabsTrigger value="content">Content</TabsTrigger>
-                        <TabsTrigger value="posts">Posts</TabsTrigger>
-                    </TabsList>
-                    <TabsContent value="posts" className="mt-6">
-                        {postsLoading ? (
-                            <div className="flex justify-center items-center h-48">
-                                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                            </div>
-                        ) : visiblePosts.length > 0 ? (
-                            <div className="space-y-6">
-                            {visiblePosts.map(item => (
-                                <PostCard
-                                    key={`${item.id}-${item.author.uid}`}
-                                    item={item}
-                                    onLike={handleLike}
-                                    onDelete={openDeleteDialog}
-                                    onRepost={handleRepost}
-                                    onQuote={handleQuote}
-                                    isLoading={loadingAction?.postId === item.id}
-                                    loadingAction={loadingAction && loadingAction.postId === item.id ? loadingAction.action : null}
-                                />
-                            ))}
-                            </div>
-                        ) : (
-                            <Card>
-                                <CardContent className="p-10 text-center text-muted-foreground">
-                                    <Rss className="h-10 w-10 mx-auto" />
-                                    <h3 className="mt-4 font-semibold">No Posts Yet</h3>
-                                    <p>This user hasn't posted anything yet.</p>
-                                </CardContent>
-                            </Card>
-                        )}
-                    </TabsContent>
-                    <TabsContent value="content" className="mt-6">
-                        {userProfileData.otherContent && userProfileData.otherContent.length > 0 ? (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                                {userProfileData.otherContent.map(item => (
-                                    <PublicContentCard key={item.id} item={{...item, author: user}} />
-                                ))}
-                            </div>
-                        ) : (
-                            <Card>
-                                <CardContent className="p-10 text-center text-muted-foreground">
-                                    <Briefcase className="h-10 w-10 mx-auto" />
-                                    <h3 className="mt-4 font-semibold">No Content Yet</h3>
-                                    <p>This user hasn't created any public content yet.</p>
-                                </CardContent>
-                            </Card>
-                        )}
-                    </TabsContent>
-                </Tabs>
-            </div>
-        </div>
+            </TabsContent>
+
+            <TabsContent value="content" className="mt-6">
+                {userProfileData.otherContent && userProfileData.otherContent.length > 0 ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {userProfileData.otherContent.map(item => (
+                            <PublicContentCard key={item.id} item={{...item, author: user}} />
+                        ))}
+                    </div>
+                ) : (
+                    <Card>
+                        <CardContent className="p-10 text-center text-muted-foreground">
+                            <Briefcase className="h-10 w-10 mx-auto" />
+                            <h3 className="mt-4 font-semibold">No Content Yet</h3>
+                            <p>This user hasn't created any public content yet.</p>
+                        </CardContent>
+                    </Card>
+                )}
+            </TabsContent>
+
+            <TabsContent value="posts" className="mt-6">
+                {postsLoading ? (
+                    <div className="flex justify-center items-center h-48">
+                        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                    </div>
+                ) : visiblePosts.length > 0 ? (
+                    <div className="space-y-6">
+                    {visiblePosts.map(item => (
+                        <PostCard
+                            key={`${item.id}-${item.author.uid}`}
+                            item={item}
+                            onLike={handleLike}
+                            onDelete={openDeleteDialog}
+                            onRepost={handleRepost}
+                            onQuote={handleQuote}
+                            isLoading={loadingAction?.postId === item.id}
+                            loadingAction={loadingAction && loadingAction.postId === item.id ? loadingAction.action : null}
+                        />
+                    ))}
+                    </div>
+                ) : (
+                    <Card>
+                        <CardContent className="p-10 text-center text-muted-foreground">
+                            <Rss className="h-10 w-10 mx-auto" />
+                            <h3 className="mt-4 font-semibold">No Posts Yet</h3>
+                            <p>This user hasn't posted anything yet.</p>
+                        </CardContent>
+                    </Card>
+                )}
+            </TabsContent>
+        </Tabs>
       </div>
     </>
   );

@@ -1,3 +1,4 @@
+
 import type { LucideIcon } from 'lucide-react';
 import { Globe, Linkedin, Github, Twitter, Instagram, Facebook, Youtube, Link, Mail, Phone } from 'lucide-react';
 
@@ -14,7 +15,7 @@ export const linkIconData: Record<string, LinkIconInfo> = {
   Phone: { icon: Phone, title: 'Phone', urlPrefix: 'tel:' },
   Linkedin: { icon: Linkedin, title: 'LinkedIn', urlPrefix: 'https://www.linkedin.com/in/' },
   Github: { icon: Github, title: 'GitHub', urlPrefix: 'https://github.com/' },
-  Twitter: { icon: Twitter, title: 'Twitter / X', urlPrefix: 'https://twitter.com/' },
+  Twitter: { icon: Twitter, title: 'Twitter / X', urlPrefix: 'https://x.com/' },
   Instagram: { icon: Instagram, title: 'Instagram', urlPrefix: 'https://www.instagram.com/' },
   Facebook: { icon: Facebook, title: 'Facebook', urlPrefix: 'https://www.facebook.com/' },
   Youtube: { icon: Youtube, title: 'YouTube', urlPrefix: 'https://www.youtube.com/@' },
