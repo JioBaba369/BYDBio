@@ -63,7 +63,7 @@ const TagPreview = forwardRef<HTMLDivElement, { values: DesignFormValues; user: 
     if (side === 'back') {
         const backCardBg = cardBgClass || (values.textColor === 'light' ? 'bg-gray-900' : 'bg-white');
         return (
-            <div ref={ref} className={cn("w-full h-full rounded-2xl flex flex-col items-center justify-center p-6 transition-colors relative", backCardBg)} style={cardStyle}>
+            <div ref={ref} className={cn("w-full h-full rounded-2xl flex flex-col items-center p-6 transition-colors relative", backCardBg)} style={cardStyle}>
                  {values.backgroundImageUrl && <div className="absolute inset-0 bg-black/60 rounded-2xl" />}
                  <div className="relative z-10 w-full flex flex-col items-center justify-between h-full">
                     <div />
@@ -84,7 +84,7 @@ const TagPreview = forwardRef<HTMLDivElement, { values: DesignFormValues; user: 
                     ) : <div />}
                     <div className={cn("flex items-center justify-center gap-2 rounded-full px-3 py-1.5", values.textColor === 'light' ? 'bg-black/30' : 'bg-white/30')}>
                         <Nfc className={cn("h-4 w-4", subtitleColor)} />
-                        <p className={cn("text-xs font-semibold leading-tight", subtitleColor)}>Tap or Scan to Connect</p>
+                        <p className={cn("text-xs font-semibold leading-tight whitespace-nowrap", subtitleColor)}>Tap or Scan to Connect</p>
                     </div>
                 </div>
             </div>
