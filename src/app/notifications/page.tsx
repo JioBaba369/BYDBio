@@ -129,7 +129,7 @@ export default function NotificationsPage() {
                 <div className="flex-1 text-sm">
                 {message}
                 <p className="text-xs text-muted-foreground mt-1">
-                    <ClientFormattedDate date={(notification.createdAt as unknown as Timestamp).toDate()} relative />
+                    <ClientFormattedDate date={notification.createdAt} relative />
                 </p>
                 </div>
             </div>
