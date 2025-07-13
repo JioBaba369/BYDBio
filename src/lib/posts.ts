@@ -97,6 +97,10 @@ export const createPost = async (userId: string, data: Pick<Post, 'content' | 'i
   const userRef = doc(db, "users", userId);
   const postRef = doc(collection(db, "posts")); // New post ref with auto-generated ID
 
+  if (data.quotedPost && data.quotedPost.authorId === userId) {
+    throw new Error("You cannot quote your own post.");
+  }
+
   const batch = writeBatch(db);
 
   const userDoc = await getDoc(userRef);
@@ -143,9 +147,31 @@ export const createPost = async (userId: string, data: Pick<Post, 'content' | 'i
 
 // Function to delete a post
 export const deletePost = async (id: string) => {
-  const postDocRef = doc(db, 'posts', id);
-  await deleteDoc(postDocRef);
+  const postRef = doc(db, 'posts', id);
+  const postDoc = await getDoc(postRef);
+
+  if (!postDoc.exists()) {
+    throw new Error("Post not found.");
+  }
+  
+  const postData = postDoc.data() as Post;
+  // Non-reposts affect the user's post count
+  const isOriginalPost = !postData.repostedPost;
+  
+  const batch = writeBatch(db);
+
+  // Delete the post itself
+  batch.delete(postRef);
+  
+  // If it was an original post, decrement the author's post count
+  if (isOriginalPost) {
+    const authorRef = doc(db, 'users', postData.authorId);
+    batch.update(authorRef, { postCount: increment(-1) });
+  }
+
+  await batch.commit();
 };
+
 
 // Function to toggle a like on a post
 export const toggleLikePost = async (postId: string, userId: string) => {
@@ -189,6 +215,17 @@ export const repostPost = async (originalPostId: string, reposterId: string): Pr
 
     if (!postDoc.exists()) {
         throw new Error("Cannot repost a post that does not exist.");
+    }
+    
+    // Check if this user has already reposted this specific post.
+    const repostQuery = query(
+        collection(db, 'posts'),
+        where('authorId', '==', reposterId),
+        where('repostedPost.id', '==', originalPostId)
+    );
+    const existingRepost = await getDocs(repostQuery);
+    if (!existingRepost.empty) {
+        throw new Error("You have already reposted this.");
     }
 
     const originalPostData = postDoc.data() as Post;
@@ -299,46 +336,36 @@ export const populatePostAuthors = async (posts: Post[], viewerId?: string): Pro
     }).filter((post): post is PostWithAuthor => post !== null);
 }
 
+// Reusable function to fetch and process posts from a given query
+const fetchAndProcessPosts = async (q: any, viewerId: string) => {
+    const postSnapshots = await getDocs(q);
+    const uniquePosts = Array.from(new Map(postSnapshots.docs.map(doc => [doc.id, doc])).values());
+    const postsData = uniquePosts.map(doc => serializeDocument<Post>(doc)).filter((p): p is Post => !!p);
+    postsData.sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return populatePostAuthors(postsData.slice(0, FEED_POST_LIMIT), viewerId);
+}
 
 // Function to fetch posts for the user's feed
 export const getFeedPosts = async (userId: string, followingIds: string[]): Promise<PostWithAuthor[]> => {
-    // A user's feed should contain their own posts plus posts from people they follow.
     const authorsToFetch = [...new Set([userId, ...followingIds])];
     
     if (authorsToFetch.length === 0) {
         return [];
     }
 
-    // Firestore 'in' queries are limited to 30 items. We'll chunk the query.
-    const chunkArray = <T>(array: T[], size: number): T[][] => {
-        const chunks: T[][] = [];
-        for (let i = 0; i < array.length; i += size) {
-            chunks.push(array.slice(i, i + size));
-        }
-        return chunks;
-    };
-    const idChunks = chunkArray(authorsToFetch, 30);
+    // Firestore 'in' queries are limited to 30 items.
+    if (authorsToFetch.length > 30) {
+        authorsToFetch.splice(30);
+    }
 
-    const postPromises = idChunks.map(chunk => {
-        const postsQuery = query(
-            collection(db, 'posts'), 
-            where('authorId', 'in', chunk),
-            orderBy('createdAt', 'desc'),
-            limit(FEED_POST_LIMIT)
-        );
-        return getDocs(postsQuery);
-    });
+    const postsQuery = query(
+        collection(db, 'posts'), 
+        where('authorId', 'in', authorsToFetch),
+        orderBy('createdAt', 'desc'),
+        limit(FEED_POST_LIMIT)
+    );
 
-    const postSnapshots = await Promise.all(postPromises);
-    const allPostDocs = postSnapshots.flatMap(snap => snap.docs);
-    
-    const uniquePosts = Array.from(new Map(allPostDocs.map(doc => [doc.id, doc])).values());
-
-    const postsData = uniquePosts.map(doc => serializeDocument<Post>(doc)).filter((p): p is Post => !!p);
-    
-    postsData.sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-
-    return populatePostAuthors(postsData.slice(0, FEED_POST_LIMIT), userId);
+    return fetchAndProcessPosts(postsQuery, userId);
 };
 
 /**
@@ -348,20 +375,25 @@ export const getFeedPosts = async (userId: string, followingIds: string[]): Prom
  * @returns A promise that resolves to an array of posts for the discovery feed.
  */
 export const getDiscoveryPosts = async (userId: string, followingIds: string[]): Promise<PostWithAuthor[]> => {
-    const postsRef = collection(db, 'posts');
-    const q = query(postsRef, where('privacy', '==', 'public'), orderBy('createdAt', 'desc'), limit(100));
+    const usersToExclude = [...new Set([userId, ...followingIds])];
+    
+    const q = query(
+        collection(db, 'posts'), 
+        where('privacy', '==', 'public'),
+        orderBy('createdAt', 'desc'),
+        limit(100)
+    );
     const querySnapshot = await getDocs(q);
 
-    const discoveryDocs = querySnapshot.docs.filter(doc => {
-        const authorId = doc.data().authorId;
-        return authorId !== userId && !followingIds.includes(authorId);
-    }).slice(0, 25);
+    // Manual filtering for "not-in" behavior
+    const discoveryDocs = querySnapshot.docs
+        .filter(doc => !usersToExclude.includes(doc.data().authorId))
+        .slice(0, 25);
 
     if (discoveryDocs.length === 0) {
         return [];
     }
 
     const postsData = discoveryDocs.map(doc => serializeDocument<Post>(doc)).filter((p): p is Post => !!p);
-
     return populatePostAuthors(postsData, userId);
 };
