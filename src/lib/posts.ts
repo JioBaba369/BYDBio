@@ -325,8 +325,9 @@ export const populatePostAuthors = async (posts: Post[]): Promise<PostWithAuthor
 
 // Function to fetch posts for the user's feed
 export const getFeedPosts = async (userId: string, followingIds: string[]): Promise<PostWithAuthor[]> => {
-    const allIdsToFetch = [...new Set([userId, ...followingIds])];
-    if (allIdsToFetch.length === 0) {
+    // A user's feed should only contain posts from people they follow.
+    // If they aren't following anyone, there's no need to query.
+    if (followingIds.length === 0) {
         return [];
     }
     
@@ -339,7 +340,7 @@ export const getFeedPosts = async (userId: string, followingIds: string[]): Prom
         }
         return chunks;
     };
-    const idChunks = chunkArray(allIdsToFetch, 30);
+    const idChunks = chunkArray(followingIds, 30);
 
     const postPromises = idChunks.map(chunk => {
         const postsQuery = query(
@@ -357,8 +358,6 @@ export const getFeedPosts = async (userId: string, followingIds: string[]): Prom
 
     const postsData = uniquePostDocs.map(doc => serializeDocument<Post>(doc)).filter((p): p is Post => {
         if (!p) return false;
-        // If the post belongs to the current user, show it regardless of privacy
-        if (p.authorId === userId) return true;
         // For others, only show public or followers posts
         return p.privacy === 'public' || p.privacy === 'followers';
     });
