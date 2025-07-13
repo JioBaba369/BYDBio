@@ -192,6 +192,7 @@ export const createUserProfileIfNotExists = async (user: FirebaseUser, additiona
 
 /**
  * Updates a user's profile document in Firestore and returns the updated document.
+ * This is a more robust version that handles missing data gracefully.
  * @param uid The user's unique ID.
  * @param data The data to update. This will be merged with existing data.
  * @returns The full, updated user object.
@@ -216,29 +217,32 @@ export const updateUser = async (uid: string, data: Partial<User>): Promise<User
         }
     }
 
-    if (data.name || dataToUpdate.username || data.bio !== undefined || data.businessCard || data.hashtags) {
+    // Always recalculate searchableKeywords if any relevant field changes
+    const keywordFieldsChanged = 'name' in data || 'username' in data || 'bio' in data || 'businessCard' in data || 'hashtags' in data;
+
+    if (keywordFieldsChanged) {
         const userDoc = await getDoc(userDocRef);
-        if (userDoc.exists()) {
-            const existingData = userDoc.data() as User;
-            const newName = data.name ?? existingData.name;
-            const newUsername = dataToUpdate.username ?? existingData.username;
-            const newBio = data.bio ?? existingData.bio ?? ''; // Ensure newBio is always a string
-            const newTitle = data.businessCard?.title ?? existingData.businessCard?.title;
-            const newCompany = data.businessCard?.company ?? existingData.businessCard?.company;
-            const newHashtags = (data.hashtags || existingData.hashtags || []).map(h => h.replace('#', '').toLowerCase());
-            
-            dataToUpdate.searchableKeywords = [...new Set([
-                ...newName.toLowerCase().split(' ').filter(Boolean),
-                newUsername,
-                ...newBio.toLowerCase().split(' ').filter(Boolean),
-                ...(newTitle ? newTitle.toLowerCase().split(' ').filter(Boolean) : []),
-                ...(newCompany ? newCompany.toLowerCase().split(' ').filter(Boolean) : []),
-                ...newHashtags,
-            ])];
-            
-            if(data.name && data.name.length > 0) {
-                dataToUpdate.avatarFallback = data.name.charAt(0).toUpperCase();
-            }
+        const existingData = userDoc.exists() ? userDoc.data() as User : {};
+        
+        // Use new data if available, otherwise fall back to existing data, or finally to an empty state.
+        const newName = data.name ?? existingData.name ?? '';
+        const newUsername = dataToUpdate.username ?? existingData.username ?? '';
+        const newBio = data.bio ?? existingData.bio ?? '';
+        const newTitle = data.businessCard?.title ?? existingData.businessCard?.title ?? '';
+        const newCompany = data.businessCard?.company ?? existingData.businessCard?.company ?? '';
+        const newHashtags = (data.hashtags ?? existingData.hashtags ?? []).map(h => h.replace('#', '').toLowerCase());
+        
+        dataToUpdate.searchableKeywords = [...new Set([
+            ...newName.toLowerCase().split(' ').filter(Boolean),
+            newUsername,
+            ...newBio.toLowerCase().split(' ').filter(Boolean),
+            ...newTitle.toLowerCase().split(' ').filter(Boolean),
+            ...newCompany.toLowerCase().split(' ').filter(Boolean),
+            ...newHashtags,
+        ])];
+        
+        if (data.name && data.name.length > 0) {
+            dataToUpdate.avatarFallback = data.name.charAt(0).toUpperCase();
         }
     }
     

@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Upload, Sparkles, Loader2, X } from 'lucide-react';
-import { UnifiedProfileFormValues } from '@/app/profile/page';
+import { ProfileFormValues } from '@/lib/schemas/profile';
 import { useState, useRef } from 'react';
 import ImageCropper from '../image-cropper';
 import { useToast } from '@/hooks/use-toast';
@@ -22,7 +22,7 @@ import { Badge } from '../ui/badge';
 import { AIAvatarGenerator } from '../ai/avatar-generator';
 
 export function ProfileForm() {
-  const form = useFormContext<UnifiedProfileFormValues>();
+  const form = useFormContext<ProfileFormValues>();
   const { user } = useAuth();
   const { toast } = useToast();
   

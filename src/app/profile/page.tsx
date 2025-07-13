@@ -4,11 +4,11 @@
 import { useEffect, useState } from 'react';
 import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 
 import { useAuth } from '@/components/auth-provider';
 import { useToast } from '@/hooks/use-toast';
-import { updateUser, type User as AppUser, type BookingSettings } from '@/lib/users';
+import { updateUser, type User as AppUser } from '@/lib/users';
+import { profileSchema, type ProfileFormValues, type BookingSettings } from '@/lib/schemas/profile';
 import { ProfilePageSkeleton } from '@/components/profile-skeleton';
 
 import { Button } from '@/components/ui/button';
@@ -19,62 +19,6 @@ import { ProfileForm } from '@/components/profile/profile-form';
 import { LinksForm } from '@/components/profile/links-form';
 import { BookingsForm } from '@/components/profile/bookings-form';
 import { ProfilePreview } from '@/components/profile/profile-preview';
-
-// --- Schemas ---
-const publicProfileSchema = z.object({
-  name: z.string().min(1, "Name cannot be empty.").max(50, "Name cannot be longer than 50 characters."),
-  username: z.string()
-    .toLowerCase()
-    .min(3, "Username must be at least 3 characters long.")
-    .max(30, "Username cannot be longer than 30 characters.")
-    .regex(/^[a-z0-9_]+$/, "Username can only contain lowercase letters, numbers, and underscores."),
-  bio: z.string().max(160, "Bio must be 160 characters or less.").optional(),
-  avatarUrl: z.string().url().optional(),
-  hashtags: z.array(z.string()).max(10, "You can add up to 10 hashtags.").optional(),
-});
-
-const businessCardSchema = z.object({
-  title: z.string().max(50, "Title cannot be longer than 50 characters.").optional(),
-  company: z.string().max(50, "Company cannot be longer than 50 characters.").optional(),
-  phone: z.string().max(30, "Phone number cannot be longer than 30 characters.").optional(),
-  email: z.string().email({ message: "Please enter a valid email." }).optional().or(z.literal('')),
-  website: z.string().url({ message: "Please enter a valid URL." }).optional().or(z.literal('')),
-  linkedin: z.string().url({ message: "Please enter a valid URL." }).optional().or(z.literal('')),
-  location: z.string().max(100, "Location cannot be longer than 100 characters.").optional(),
-});
-
-const linksFormSchema = z.object({
-  links: z.array(
-    z.object({
-      id: z.string().optional(),
-      icon: z.string(),
-      title: z.string().min(1, "Title cannot be empty.").max(50, "Title must be 50 characters or less."),
-      url: z.string().url("Please enter a valid URL."),
-    })
-  ),
-});
-
-const bookingSettingsSchema = z.object({
-  acceptingAppointments: z.boolean().default(false),
-  availability: z.object({
-    sunday: z.object({ enabled: z.boolean(), startTime: z.string(), endTime: z.string() }),
-    monday: z.object({ enabled: z.boolean(), startTime: z.string(), endTime: z.string() }),
-    tuesday: z.object({ enabled: z.boolean(), startTime: z.string(), endTime: z.string() }),
-    wednesday: z.object({ enabled: z.boolean(), startTime: z.string(), endTime: z.string() }),
-    thursday: z.object({ enabled: z.boolean(), startTime: z.string(), endTime: z.string() }),
-    friday: z.object({ enabled: z.boolean(), startTime: z.string(), endTime: z.string() }),
-    saturday: z.object({ enabled: z.boolean(), startTime: z.string(), endTime: z.string() }),
-  }),
-});
-
-// --- Unified Schema ---
-const unifiedProfileSchema = publicProfileSchema.extend({
-  businessCard: businessCardSchema,
-  links: linksFormSchema.shape.links,
-  bookingSettings: bookingSettingsSchema,
-});
-export type UnifiedProfileFormValues = z.infer<typeof unifiedProfileSchema>;
-
 
 // --- Main Component ---
 export default function ProfilePage() {
@@ -95,8 +39,8 @@ export default function ProfilePage() {
       },
   };
 
-  const form = useForm<UnifiedProfileFormValues>({
-    resolver: zodResolver(unifiedProfileSchema),
+  const form = useForm<ProfileFormValues>({
+    resolver: zodResolver(profileSchema),
     mode: 'onChange',
   });
 
@@ -118,7 +62,7 @@ export default function ProfilePage() {
   }, [user, reset]);
 
 
-  const handleSaveAll = async (data: UnifiedProfileFormValues) => {
+  const handleSaveAll = async (data: ProfileFormValues) => {
     if (!firebaseUser) return;
     setIsSaving(true);
     
