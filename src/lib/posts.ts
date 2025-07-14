@@ -155,7 +155,7 @@ export const deletePost = async (id: string) => {
   }
   
   const postData = postDoc.data() as Post;
-  // Non-reposts affect the user's post count
+  // A post is considered "original" if it's not a repost. Reposts don't affect post count.
   const isOriginalPost = !postData.repostedPost;
   
   const batch = writeBatch(db);
@@ -169,6 +169,12 @@ export const deletePost = async (id: string) => {
     batch.update(authorRef, { postCount: increment(-1) });
   }
 
+  // If this was a repost, decrement the original post's repost count
+  if (postData.repostedPost) {
+    const originalPostRef = doc(db, 'posts', postData.repostedPost.id);
+    batch.update(originalPostRef, { repostCount: increment(-1) });
+  }
+  
   await batch.commit();
 };
 
@@ -275,7 +281,7 @@ export const repostPost = async (originalPostId: string, reposterId: string): Pr
     return serializeDocument<Post>(newDoc) as Post;
 };
 
-export const populatePostAuthors = async (posts: Post[], viewerId?: string): Promise<PostWithAuthor[]> => {
+export const populatePostAuthors = async (posts: Post[], viewerId?: string | null): Promise<PostWithAuthor[]> => {
     if (posts.length === 0) return [];
 
     const authorIds = new Set<string>();
@@ -383,17 +389,6 @@ export const getDiscoveryPosts = async (userId: string, followingIds: string[]):
         orderBy('createdAt', 'desc'),
         limit(100) // Fetch more initially to allow for filtering
     );
-    const querySnapshot = await getDocs(q);
-
-    // Manual filtering for "not-in" behavior
-    const discoveryDocs = querySnapshot.docs
-        .filter(doc => !usersToExclude.includes(doc.data().authorId))
-        .slice(0, 25);
-
-    if (discoveryDocs.length === 0) {
-        return [];
-    }
-
-    const postsData = discoveryDocs.map(doc => serializeDocument<Post>(doc)).filter((p): p is Post => !!p);
-    return populatePostAuthors(postsData, userId);
+    
+    return fetchAndProcessPosts(q, userId);
 };

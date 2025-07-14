@@ -174,7 +174,7 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
   }, [posts, canViewPrivateContent, isOwner]);
 
   const loadPosts = useCallback(async () => {
-    if (posts.length > 0 || postsLoading) return; // Don't refetch if already loaded
+    if (posts.length > 0 && !currentUser) return; // Don't refetch if posts are loaded and user is guest
     setPostsLoading(true);
     try {
         const fetchedPosts = await getPostsByUser(user.uid, currentUser?.uid);
@@ -187,7 +187,7 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
     } finally {
         setPostsLoading(false);
     }
-  }, [posts.length, postsLoading, user.uid, currentUser?.uid, toast]);
+  }, [posts.length, user.uid, currentUser, toast]);
 
   return (
     <>

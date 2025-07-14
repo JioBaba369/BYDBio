@@ -3,7 +3,7 @@
 
 import type { PostWithAuthor } from '@/lib/posts';
 import { useAuth } from '@/components/auth-provider';
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
+import { Card, CardFooter } from "@/components/ui/card";
 import Link from "next/link";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { ClientFormattedDate } from "@/components/client-formatted-date";
@@ -37,17 +37,22 @@ export function PostCard({ item, onLike, onDelete, onRepost, onQuote, isLoading 
     const isRepost = !!item.repostedPost;
     
     // Determine the content to display. If it's a repost, use the nested post's data.
-    const displayItem = isRepost ? item.repostedPost! : item;
-    const displayAuthor = isRepost ? displayItem.author : item.author;
+    const displayItem = isRepost && item.repostedPost ? item.repostedPost : item;
+    const displayAuthor = isRepost && item.repostedPost ? displayItem.author : item.author;
+
+    // A fallback in case the original author of a reposted post is deleted
+    const authorName = displayAuthor?.name || "Original author deleted";
+    const authorUsername = displayAuthor?.username || "unknown";
+    const authorAvatarUrl = displayAuthor?.avatarUrl || "https://placehold.co/100x100.png";
 
     const handleShare = async () => {
-        const shareUrl = `${window.location.origin}/u/${displayAuthor.username}`;
+        const shareUrl = `${window.location.origin}/u/${authorUsername}`;
         const shareText = displayItem.content.substring(0, 100) + (displayItem.content.length > 100 ? '...' : '');
 
         if (navigator.share) {
             try {
                 await navigator.share({
-                    title: `Post by ${displayAuthor.name}`,
+                    title: `Post by ${authorName}`,
                     text: shareText,
                     url: shareUrl,
                 });
@@ -71,19 +76,19 @@ export function PostCard({ item, onLike, onDelete, onRepost, onQuote, isLoading 
                 </div>
             )}
             <div className="flex items-start gap-4 p-4">
-                <Link href={`/u/${displayAuthor.username}`}>
+                <Link href={`/u/${authorUsername}`}>
                     <Avatar>
-                        <AvatarImage src={displayAuthor.avatarUrl} />
-                        <AvatarFallback>{displayAuthor.name.charAt(0)}</AvatarFallback>
+                        <AvatarImage src={authorAvatarUrl} />
+                        <AvatarFallback>{authorName.charAt(0)}</AvatarFallback>
                     </Avatar>
                 </Link>
                 <div className="w-full">
                     <div className="flex justify-between items-start">
                          <div className="text-sm">
-                            <Link href={`/u/${displayAuthor.username}`} className="font-semibold hover:underline">{displayAuthor.name}</Link>
-                            <span className="text-muted-foreground ml-2">@{displayAuthor.username}</span>
+                            <Link href={`/u/${authorUsername}`} className="font-semibold hover:underline">{authorName}</Link>
+                            <span className="text-muted-foreground ml-2">@{authorUsername}</span>
                             <span className="text-muted-foreground"> · </span>
-                            <Link href={`/u/${displayAuthor.username}`} className="text-muted-foreground hover:underline">
+                            <Link href={`/u/${authorUsername}`} className="text-muted-foreground hover:underline">
                                 <ClientFormattedDate date={isRepost ? displayItem.createdAt : item.createdAt} relative />
                             </Link>
                         </div>
@@ -124,16 +129,16 @@ export function PostCard({ item, onLike, onDelete, onRepost, onQuote, isLoading 
                         {item.content && !isRepost && <p className="whitespace-pre-wrap">{item.content}</p>}
                         {item.quotedPost && item.quotedPost.author && <EmbeddedPostView post={item.quotedPost} />}
 
-                        {isRepost && displayItem.content && (
+                        {isRepost && displayItem.author && (
                             <div className="p-4 border rounded-md">
                                 <div className="flex items-center gap-2 text-sm">
-                                    <Link href={`/u/${displayAuthor.username}`} className="flex items-center gap-2 hover:underline">
+                                    <Link href={`/u/${displayItem.author.username}`} className="flex items-center gap-2 hover:underline">
                                         <Avatar className="h-5 w-5">
-                                            <AvatarImage src={displayAuthor.avatarUrl} />
-                                            <AvatarFallback>{displayAuthor.name.charAt(0)}</AvatarFallback>
+                                            <AvatarImage src={displayItem.author.avatarUrl} />
+                                            <AvatarFallback>{displayItem.author.name.charAt(0)}</AvatarFallback>
                                         </Avatar>
-                                        <span className="font-semibold text-foreground">{displayAuthor.name}</span>
-                                        <span className="text-muted-foreground">@{displayAuthor.username}</span>
+                                        <span className="font-semibold text-foreground">{displayItem.author.name}</span>
+                                        <span className="text-muted-foreground">@{displayItem.author.username}</span>
                                     </Link>
                                 </div>
                                 <p className="mt-2 text-sm whitespace-pre-wrap">{displayItem.content}</p>
