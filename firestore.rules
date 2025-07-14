@@ -4,116 +4,101 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
   
-    // =================================================================
-    // Helper Functions
-    // =================================================================
-
-    // Is the user authenticated?
-    function isSignedIn() {
+    // --- Helper Functions ---
+    // Checks if a user is authenticated.
+    function isAuthenticated() {
       return request.auth != null;
     }
 
-    // Is the user the owner of the resource?
+    // Checks if the user making the request is the owner of a document.
     function isOwner(userId) {
-      return request.auth.uid == userId;
-    }
-
-    // Is the incoming data for a create operation owned by the user?
-    function isCreatingOwned(userIdKey) {
-        return isSignedIn() && request.resource.data[userIdKey] == request.auth.uid;
+      return isAuthenticated() && request.auth.uid == userId;
     }
     
-    // Does the incoming data have all the required fields for creation?
-    function hasRequiredFields(fields) {
-      return request.resource.data.keys().hasAll(fields);
+    // Checks if a user's profile is being created for the first time.
+    function isCreatingUser(userId) {
+      return isOwner(userId) && !exists(/databases/$(database)/documents/users/$(userId));
     }
     
-    // Is the user updating only the allowed fields?
-    function isUpdatingAllowedFields(allowedFields) {
+    // Checks if a user is updating only their own allowed fields.
+    // Disallows changing followerCount, postCount, etc. directly.
+    function isUpdatingOwnAllowedFields() {
+      let allowedFields = ['name', 'username', 'bio', 'avatarUrl', 'links', 'businessCard', 'notificationSettings', 'fcmTokens', 'searchableKeywords', 'bookingSettings', 'avatarFallback', 'hashtags'];
       return request.resource.data.keys().hasOnly(allowedFields);
     }
+    
+    // Checks if a user is only updating their 'following' array.
+    function isUpdatingFollowing() {
+      return request.resource.data.keys().hasOnly(['following']);
+    }
+    
+    // --- Collection Rules ---
 
-    // =================================================================
-    // Users Collection
-    // =================================================================
+    // ** Users Collection **
+    // Users can be read by anyone.
+    // A user can only be created if they are the authenticated user.
+    // A user can only update their own profile, and only specific fields.
+    // Deletion of user profiles is disallowed from client-side requests for safety.
     match /users/{userId} {
-      // Anyone can read a user's public profile
-      allow get: if true;
-      
-      // Users can list other users (for search/connections)
-      allow list: if isSignedIn();
-
-      // A user can create their own profile document
-      allow create: if isOwner(userId);
-
-      // A user can only update their own profile
-      allow update: if isOwner(userId);
-      
-      // A user can only delete their own profile
-      allow delete: if isOwner(userId);
+      allow read: if true;
+      allow create: if isCreatingUser(userId);
+      allow update: if isOwner(userId) && (isUpdatingOwnAllowedFields() || isUpdatingFollowing());
+      allow delete: if false; 
     }
-    
-    // =================================================================
-    // Posts Collection
-    // =================================================================
+
+    // ** Posts Collection **
+    // Public posts can be read by anyone.
+    // Posts can only be created by an authenticated user, as themself.
+    // A user can only update their own posts.
+    // A user can only delete their own posts.
     match /posts/{postId} {
-      // Allow reading posts based on their privacy setting
-      allow get: if resource.data.privacy == 'public' || 
-                    (resource.data.privacy == 'followers' && isSignedIn() && resource.data.authorId in get(/databases/$(database)/documents/users/$(request.auth.uid)).data.following) ||
-                    (resource.data.privacy == 'me' && isSignedIn() && isOwner(resource.data.authorId));
-      
-      // Allow listing public posts
-      allow list: if isSignedIn();
-      
-      // Any authenticated user can create a post
-      allow create: if isCreatingOwned('authorId');
-      
-      // Only the author can update or delete their post
-      allow update, delete: if isSignedIn() && isOwner(resource.data.authorId);
+      allow read: if resource.data.privacy == 'public';
+      allow create: if isAuthenticated() && isOwner(request.resource.data.authorId);
+      allow update, delete: if isAuthenticated() && isOwner(resource.data.authorId);
     }
 
-    // =================================================================
-    // Generic Content Collections (Events, Jobs, Listings, Offers, PromoPages)
-    // =================================================================
-    match /{collection}/{docId} {
-      // Anyone can view any specific content item
-      allow get: if true;
-      
-      // Anyone can list active content
-      allow list: if true;
-
-      // Authenticated users can create content they own
-      allow create: if isCreatingOwned('authorId');
-
-      // Only the author can update or delete their content
-      allow update, delete: if isSignedIn() && isOwner(resource.data.authorId);
+    // ** Content Collections (Listings, Jobs, Events, Offers, PromoPages) **
+    // Common rules for all user-generated content types.
+    function contentRules(collectionName) {
+      match /$(collectionName)/{contentId} {
+        allow read: if resource.data.status == 'active';
+        allow create: if isAuthenticated() && isOwner(request.resource.data.authorId);
+        allow update, delete: if isAuthenticated() && isOwner(resource.data.authorId);
+      }
     }
-
-    // =================================================================
-    // Notifications Collection
-    // =================================================================
+    
+    // Apply the common rules to each content collection.
+    {
+      contentRules('listings');
+      contentRules('jobs');
+      contentRules('events');
+      contentRules('offers');
+      contentRules('promoPages');
+    }
+    
+    // ** Notifications Collection **
+    // Users can only read their own notifications.
+    // Notifications cannot be created, updated, or deleted directly by clients;
+    // this must be handled by server-side logic (e.g., Cloud Functions or Server Actions).
     match /notifications/{notificationId} {
-        // A user can only access their own notifications
-        allow read, write, delete: if isSignedIn() && isOwner(resource.data.userId);
-        
-        // A user can only create notifications for themselves (e.g. contact form)
-        // or other server-side processes can create them for the user
-        allow create: if request.auth == null || isOwner(request.resource.data.userId);
+      allow read: if isOwner(resource.data.userId);
+      allow create, update, delete: if false;
     }
     
-    // =================================================================
-    // Appointments Collection
-    // =================================================================
+    // ** Appointments Collection **
+    // Authenticated users can create appointments.
+    // The owner of the appointment (the person being booked) can read it.
+    // Appointments cannot be updated or deleted from the client for simplicity and safety.
     match /appointments/{appointmentId} {
-        // Only the owner of the appointment (the person being booked) or the booker can view it.
-        allow get: if isSignedIn() && (isOwner(resource.data.ownerId) || isOwner(resource.data.bookerId));
-
-        // Authenticated users can create appointments
-        allow create: if isSignedIn();
-        
-        // Only the owner or booker can update/delete (e.g., cancel)
-        allow update, delete: if isSignedIn() && (isOwner(resource.data.ownerId) || isOwner(resource.data.bookerId));
+      allow read: if isAuthenticated() && isOwner(resource.data.ownerId);
+      allow create: if isAuthenticated();
+      allow update, delete: if false;
     }
     
+    // ** Reminders Collection **
+    // Reminders are managed server-side and should not be accessible from the client.
+    match /reminders/{reminderId} {
+        allow read, write: if false;
+    }
   }
 }

@@ -28,7 +28,7 @@ import { ClientFormattedDate } from '@/components/client-formatted-date';
 import { ClientFormattedCurrency } from '@/components/client-formatted-currency';
 import { DayPicker } from 'react-day-picker';
 import 'react-day-picker/dist/style.css';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, isSameDay } from 'date-fns';
 import * as ics from 'ics';
 import { saveAs } from 'file-saver';
 import { KillChainTracker } from '@/components/kill-chain-tracker';
@@ -274,8 +274,7 @@ export default function CalendarPage() {
 
   const selectedDayItems = useMemo(() => {
     if (!selectedDate) return [];
-    const day = format(selectedDate, 'yyyy-MM-dd');
-    return allItems.filter(item => format(new Date(item.date), 'yyyy-MM-dd') === day);
+    return allItems.filter(item => isSameDay(new Date(item.date), selectedDate));
   }, [selectedDate, allItems]);
   
   const CalendarItemCard = ({item}: {item: CalendarItem}) => (

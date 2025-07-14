@@ -306,7 +306,7 @@ export async function getUsersByIds(uids: string[]): Promise<User[]> {
             if(serialized) users.push(serialized);
         });
     }
-    return users;
+    return users.filter(user => user !== null);
 }
 
 export async function searchUsers(searchText: string): Promise<User[]> {
