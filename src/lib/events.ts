@@ -203,17 +203,20 @@ export const toggleRsvp = async (eventId: string, userId: string) => {
 
 // Helper function for public page to get event and its author
 export const getEventAndAuthor = async (eventId: string): Promise<{ event: Event; author: User } | null> => {
-    const event = await getEvent(eventId);
+    const eventDoc = await getDoc(doc(db, 'events', eventId));
+
+    if (!eventDoc.exists()) {
+        return null;
+    }
+    const event = serializeDocument<Event>(eventDoc);
     if (!event) return null;
 
-    const userDocRef = doc(db, "users", event.authorId);
-    const userDoc = await getDoc(userDocRef);
-
-    if (!userDoc.exists()) {
+    const authorDoc = await getDoc(doc(db, "users", event.authorId));
+    if (!authorDoc.exists()) {
         return null;
     }
 
-    const author = serializeDocument<User>(userDoc);
+    const author = serializeDocument<User>(authorDoc);
     if (!author) return null;
 
     // Fetch attendee avatars and names

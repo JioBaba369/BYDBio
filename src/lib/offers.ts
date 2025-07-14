@@ -124,17 +124,18 @@ export const deleteOffer = async (id: string) => {
 
 // Helper function for public page to get offer and its author
 export const getOfferAndAuthor = async (offerId: string): Promise<{ offer: Offer; author: User } | null> => {
-    const offer = await getOffer(offerId);
-    if (!offer) return null;
-
-    const userDocRef = doc(db, "users", offer.authorId);
-    const userDoc = await getDoc(userDocRef);
-
-    if (!userDoc.exists()) {
+    const offerDoc = await getDoc(doc(db, 'offers', offerId));
+    if (!offerDoc.exists()) {
         return null;
     }
+    const offer = serializeDocument<Offer>(offerDoc);
+    if (!offer) return null;
 
-    const author = serializeDocument<User>(userDoc);
+    const authorDoc = await getDoc(doc(db, "users", offer.authorId));
+    if (!authorDoc.exists()) {
+        return null;
+    }
+    const author = serializeDocument<User>(authorDoc);
     if (!author) return null;
 
     return { offer, author };

@@ -131,17 +131,18 @@ export const deletePromoPage = async (id: string) => {
 
 // Helper function for public page to get promo page and its author
 export const getPromoPageAndAuthor = async (promoPageId: string): Promise<{ promoPage: PromoPage; author: User } | null> => {
-    const promoPage = await getPromoPage(promoPageId);
-    if (!promoPage) return null;
-
-    const userDocRef = doc(db, "users", promoPage.authorId);
-    const userDoc = await getDoc(userDocRef);
-
-    if (!userDoc.exists()) {
+    const promoPageDoc = await getDoc(doc(db, 'promoPages', promoPageId));
+    if (!promoPageDoc.exists()) {
         return null;
     }
-    
-    const author = serializeDocument<User>(userDoc);
+    const promoPage = serializeDocument<PromoPage>(promoPageDoc);
+    if (!promoPage) return null;
+
+    const authorDoc = await getDoc(doc(db, "users", promoPage.authorId));
+    if (!authorDoc.exists()) {
+        return null;
+    }
+    const author = serializeDocument<User>(authorDoc);
     if (!author) return null;
 
     return { promoPage, author };
