@@ -11,7 +11,8 @@ const AUTH_PATHS = [
 const PROTECTED_ROUTE_BASES = [
     '/profile',
     '/settings',
-    '/calendar', // "My Content" hub
+    '/my-content',
+    '/diary',
     '/connections',
     '/feed',
     '/notifications',

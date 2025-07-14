@@ -46,7 +46,7 @@ export default function CreateOfferPage() {
             const offerId = await createOffer(user.uid, dataToSave);
             
             toast({ title: "Offer Created!", description: "Your new offer has been created. Image is processing." });
-            router.push('/calendar');
+            router.push('/my-content');
 
             if (imageUrl && imageUrl.startsWith('data:image')) {
                 uploadImage(imageUrl, `offers/${user.uid}/${offerId}/image`)

@@ -37,6 +37,7 @@ import {
   Calendar,
   Nfc,
   Link as LinkIcon,
+  BookUser
 } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -201,10 +202,18 @@ export function MainSidebar() {
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Inbox" isActive={isActive('/inbox')}>
-                <Link href="/inbox">
-                  <Mail />
-                  <span>Inbox</span>
+              <SidebarMenuButton asChild tooltip="Diary" isActive={isActive('/diary')}>
+                <Link href="/diary">
+                  <BookUser />
+                  <span>My Diary</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild tooltip="My Content" isActive={isActive('/my-content')}>
+                <Link href="/my-content">
+                  <Package />
+                  <span>My Content</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -227,6 +236,14 @@ export function MainSidebar() {
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
+             <SidebarMenuItem>
+              <SidebarMenuButton asChild tooltip="Inbox" isActive={isActive('/inbox')}>
+                <Link href="/inbox">
+                  <Mail />
+                  <span>Inbox</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
           </SidebarMenu>
         </SidebarGroup>
 
@@ -238,14 +255,6 @@ export function MainSidebar() {
                   <Link href="/profile">
                     <User />
                     <span>Profile Editor</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip="My Content" isActive={isActive('/calendar')}>
-                  <Link href="/calendar">
-                    <Package />
-                    <span>My Content</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>

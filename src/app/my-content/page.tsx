@@ -26,13 +26,12 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ClientFormattedDate } from '@/components/client-formatted-date';
 import { ClientFormattedCurrency } from '@/components/client-formatted-currency';
-import { DayPicker } from 'react-day-picker';
 import 'react-day-picker/dist/style.css';
-import { format, isSameDay } from 'date-fns';
-import { generateIcsContent } from '@/lib/appointments';
 import { saveAs } from 'file-saver';
 import { KillChainTracker } from '@/components/kill-chain-tracker';
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import { generateIcsContent } from '@/lib/appointments';
+
 
 const ContentHubSkeleton = () => (
     <div className="space-y-6 animate-pulse">
@@ -65,7 +64,7 @@ const ContentHubSkeleton = () => (
 );
 
 
-export default function CalendarPage() {
+export default function MyContentPage() {
   const { user, loading: authLoading } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [locationFilter, setLocationFilter] = useState('');
@@ -78,25 +77,15 @@ export default function CalendarPage() {
   const { toast } = useToast();
   const [allItems, setAllItems] = useState<CalendarItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [view, setView] = useState<'grid' | 'list' | 'calendar'>('grid');
-  
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>();
-  const [month, setMonth] = useState<Date | undefined>();
-
-  useEffect(() => {
-    // Initialize date states on the client to avoid hydration errors
-    const today = new Date();
-    setSelectedDate(today);
-    setMonth(today);
-  }, []);
+  const [view, setView] = useState<'grid' | 'list'>('grid');
   
   useEffect(() => {
     if (user?.uid) {
         setIsLoading(true);
-        getCalendarItems(user.uid)
+        getCalendarItems(user.uid, 'author')
             .then(setAllItems)
             .catch(err => {
-                toast({ title: "Error", description: "Could not load calendar items.", variant: "destructive" });
+                toast({ title: "Error", description: "Could not load content.", variant: "destructive" });
             })
             .finally(() => setIsLoading(false));
     }
@@ -219,7 +208,6 @@ export default function CalendarPage() {
     { name: 'Job', icon: Briefcase, variant: 'destructive' },
     { name: 'Listing', icon: Tags, variant: 'outline' },
     { name: 'Business Page', icon: Megaphone, variant: 'default' },
-    { name: 'Appointment', icon: UserCheck, variant: 'secondary' },
   ];
   
   const getStatsValue = (item: CalendarItem): number => {
@@ -257,66 +245,6 @@ export default function CalendarPage() {
         toast({ title: "Error creating calendar file", variant: "destructive" });
     }
   };
-  
-  const eventDays = useMemo(() => {
-    return allItems.map(item => new Date(item.date));
-  }, [allItems]);
-
-  const selectedDayItems = useMemo(() => {
-    if (!selectedDate) return [];
-    return allItems.filter(item => isSameDay(new Date(item.date), selectedDate));
-  }, [selectedDate, allItems]);
-  
-  const CalendarItemCard = ({item}: {item: CalendarItem}) => (
-    <Card className="shadow-sm">
-        <CardHeader className="p-3">
-            <div className="flex justify-between items-start">
-                <div className="flex-1 min-w-0">
-                    <Badge variant={getBadgeVariant(item.type)}>{item.type}</Badge>
-                     <TooltipProvider>
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <CardTitle className="text-base mt-1 truncate" title={item.title}>{item.title}</CardTitle>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                                <p>{item.title}</p>
-                            </TooltipContent>
-                        </Tooltip>
-                    </TooltipProvider>
-                </div>
-                 <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-7 w-7 flex-shrink-0">
-                        <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                        {item.type === 'Appointment' ? (
-                            <DropdownMenuItem onClick={() => handleAddToCalendar(item)} className="cursor-pointer">
-                                <CalendarPlus className="mr-2 h-4 w-4" /> Add to Calendar
-                            </DropdownMenuItem>
-                        ) : (
-                            <DropdownMenuItem asChild>
-                            <Link href={item.editPath} className="cursor-pointer">
-                                <Edit className="mr-2 h-4 w-4" /> {item.isExternal ? 'View Details' : 'Edit'}
-                            </Link>
-                            </DropdownMenuItem>
-                        )}
-                        <DropdownMenuItem onClick={() => openDeleteDialog(item)} className="text-destructive cursor-pointer">
-                        <Trash2 className="mr-2 h-4 w-4" /> {item.isExternal ? 'Remove from Calendar' : 'Delete'}
-                        </DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
-            </div>
-        </CardHeader>
-        <CardContent className="p-3 pt-0 space-y-1 text-xs text-muted-foreground">
-            {item.type === 'Appointment' && item.startTime && <div className="flex items-center gap-2"><Clock className="h-3 w-3" /><span><ClientFormattedDate date={item.startTime} formatStr="p"/></span></div>}
-            {item.location && <div className="flex items-center gap-2"><MapPin className="h-3 w-3" /><span>{item.location}</span></div>}
-            {item.company && <div className="flex items-center gap-2"><Briefcase className="h-3 w-3" /><span>{item.company}</span></div>}
-            {item.price && <div className="flex items-center gap-2"><DollarSign className="h-3 w-3" /><span className="font-semibold"><ClientFormattedCurrency value={item.price} /></span></div>}
-        </CardContent>
-    </Card>
-  )
 
   if (authLoading || isLoading) {
     return <ContentHubSkeleton />;
@@ -451,9 +379,6 @@ export default function CalendarPage() {
                     All Content ({filteredItems.length})
                 </h2>
                 <div className="flex items-center gap-1 rounded-md bg-muted p-1">
-                    <Button variant={view === 'calendar' ? 'secondary' : 'ghost'} size="icon" className="h-8 w-8" onClick={() => setView('calendar')}>
-                        <CalendarIconLucide className="h-4 w-4" />
-                    </Button>
                     <Button variant={view === 'list' ? 'secondary' : 'ghost'} size="icon" className="h-8 w-8" onClick={() => setView('list')}>
                         <List className="h-4 w-4" />
                     </Button>
@@ -462,35 +387,7 @@ export default function CalendarPage() {
                     </Button>
                 </div>
               </div>
-              {view === 'calendar' ? (
-                <div className="grid lg:grid-cols-2 gap-6 items-start">
-                    <Card className="flex justify-center">
-                        <DayPicker
-                            mode="single"
-                            selected={selectedDate}
-                            onSelect={setSelectedDate}
-                            month={month}
-                            onMonthChange={setMonth}
-                            modifiers={{ event: eventDays }}
-                            modifiersClassNames={{ event: 'day-with-event' }}
-                        />
-                    </Card>
-                    <div className="space-y-4">
-                        <h3 className="text-lg font-bold">
-                            {selectedDate ? format(selectedDate, 'PPP') : 'Select a day'}
-                        </h3>
-                        {selectedDayItems.length > 0 ? (
-                            selectedDayItems.map(item => <CalendarItemCard key={`${item.type}-${item.id}`} item={item} />)
-                        ) : (
-                            <Card className="border-dashed">
-                                <CardContent className="p-6 text-center text-muted-foreground">
-                                    No items on this day.
-                                </CardContent>
-                            </Card>
-                        )}
-                    </div>
-                </div>
-              ) : filteredItems.length > 0 ? (
+              {filteredItems.length > 0 ? (
                   view === 'grid' ? (
                   <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                       {filteredItems.map((item) => {

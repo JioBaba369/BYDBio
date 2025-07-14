@@ -265,53 +265,62 @@ export const getAllEvents = async (): Promise<EventWithAuthor[]> => {
     }).filter((event): event is EventWithAuthor => !!event);
 };
 
-// This function fetches ALL content types for a user for the Content Calendar.
-export const getCalendarItems = async (userId: string): Promise<CalendarItem[]> => {
+// This function fetches items for a user's calendar/diary or content hub.
+export const getCalendarItems = async (userId: string, type: 'schedule' | 'author'): Promise<CalendarItem[]> => {
     const collectionsToFetch = ['events', 'offers', 'jobs', 'listings', 'promoPages'];
+    let allPromises: Promise<any>[] = [];
     
-    const userContentPromises = collectionsToFetch.map(c => 
-        getDocs(query(
-            collection(db, c), 
-            where('authorId', '==', userId), 
-            where('status', '==', 'active')
-        ))
-    );
-    
-    const rsvpedEventsPromise = getDocs(
-        query(collection(db, 'events'), where('rsvps', 'array-contains', userId), where('status', '==', 'active'))
-    );
-    
-    const appointmentsPromise = getDocs(
-        query(collection(db, 'appointments'), where('ownerId', '==', userId))
-    );
+    if (type === 'author') {
+        // Fetch all content created by the user
+        allPromises = collectionsToFetch.map(c => 
+            getDocs(query(collection(db, c), where('authorId', '==', userId), where('status', '==', 'active')))
+        );
+    } else { // type === 'schedule'
+        const userDocRef = doc(db, 'users', userId);
+        const userDoc = await getDoc(userDocRef);
+        const userData = userDoc.exists() ? userDoc.data() : {};
+        const subscriptions = userData.subscriptions || {};
 
-    const snapshots = await Promise.all([...userContentPromises, rsvpedEventsPromise, appointmentsPromise]);
+        // Authored events
+        allPromises.push(getDocs(query(collection(db, 'events'), where('authorId', '==', userId), where('status', '==', 'active'))));
+        // RSVP'd events
+        allPromises.push(getDocs(query(collection(db, 'events'), where('rsvps', 'array-contains', userId), where('status', '==', 'active'))));
+        // Subscribed events
+        if (subscriptions.events?.length > 0) {
+            allPromises.push(getDocs(query(collection(db, 'events'), where('__name__', 'in', subscriptions.events))));
+        }
+        // Appointments
+        allPromises.push(getDocs(query(collection(db, 'appointments'), where('ownerId', '==', userId))));
+    }
+
+    const snapshots = await Promise.all(allPromises);
     
     const allItems = new Map<string, any>();
 
-    const processSnapshot = (snapshot: any, type: string, isExternal = false) => {
+    const processSnapshot = (snapshot: any, itemType: string, isExternal = false) => {
         snapshot.forEach((doc: any) => {
             const serializedData = serializeDocument<any>(doc);
             if (!serializedData) return;
-
-            const key = `${type}-${doc.id}`;
+            const key = `${itemType}-${doc.id}`;
             // If it's an external event, only add it if the user isn't the author
-            if (isExternal && serializedData.authorId === userId) {
-                return;
-            }
-            // Add or overwrite item in the map. This ensures that if the user created an event
-            // and also RSVP'd, we get the authored version (not marked as external).
-            allItems.set(key, { ...serializedData, type, isExternal });
+            if (isExternal && serializedData.authorId === userId) return;
+            // Add or overwrite item in the map.
+            allItems.set(key, { ...serializedData, type: itemType, isExternal });
         });
     };
 
-    processSnapshot(snapshots[0], 'event');
-    processSnapshot(snapshots[1], 'offer');
-    processSnapshot(snapshots[2], 'job');
-    processSnapshot(snapshots[3], 'listing');
-    processSnapshot(snapshots[4], 'promoPage');
-    processSnapshot(snapshots[5], 'event', true); // RSVP'd events are processed as external
-    processSnapshot(snapshots[6], 'appointment'); // Process appointments
+    if (type === 'author') {
+        processSnapshot(snapshots[0], 'event');
+        processSnapshot(snapshots[1], 'offer');
+        processSnapshot(snapshots[2], 'job');
+        processSnapshot(snapshots[3], 'listing');
+        processSnapshot(snapshots[4], 'promoPage');
+    } else {
+        processSnapshot(snapshots[0], 'event'); // Authored
+        processSnapshot(snapshots[1], 'event', true); // RSVP'd
+        if (snapshots[2]) processSnapshot(snapshots[2], 'event', true); // Subscribed
+        processSnapshot(snapshots.pop(), 'appointment'); // Appointments
+    }
     
     const formattedItems = Array.from(allItems.values()).map((item: any) => {
         let primaryDate: string | undefined;
@@ -322,11 +331,7 @@ export const getCalendarItems = async (userId: string): Promise<CalendarItem[]> 
                 primaryDate = item.startTime;
                 title = `Meeting with ${item.bookerName}`;
                 break;
-            case 'event':
-                primaryDate = item.startDate;
-                title = item.title;
-                break;
-            case 'offer':
+            case 'event': case 'offer':
                 primaryDate = item.startDate;
                 title = item.title;
                 break;
@@ -342,23 +347,16 @@ export const getCalendarItems = async (userId: string): Promise<CalendarItem[]> 
         if (!primaryDate || !title) return null;
 
         const typeMap: { [key: string]: CalendarItem['type'] } = {
-            'event': 'Event',
-            'offer': 'Offer',
-            'job': 'Job',
-            'listing': 'Listing',
-            'promoPage': 'Business Page',
-            'appointment': 'Appointment',
+            'event': 'Event', 'offer': 'Offer', 'job': 'Job',
+            'listing': 'Listing', 'promoPage': 'Business Page', 'appointment': 'Appointment',
         };
 
         const getEditPath = (itemType: string, id: string): string => {
             const pathMap: { [key: string]: string } = {
-                'event': `/events/${id}/edit`,
-                'offer': `/offers/${id}/edit`,
-                'job': `/job/${id}/edit`,
-                'listing': `/listings/${id}/edit`,
-                'promoPage': `/promo/${id}/edit`,
+                'event': `/events/${id}/edit`, 'offer': `/offers/${id}/edit`, 'job': `/job/${id}/edit`,
+                'listing': `/listings/${id}/edit`, 'promoPage': `/promo/${id}/edit`,
             };
-            return pathMap[itemType] || '/calendar';
+            return pathMap[itemType] || '/my-content';
         };
 
         return {
@@ -376,14 +374,9 @@ export const getCalendarItems = async (userId: string): Promise<CalendarItem[]> 
             editPath: item.isExternal ? `/events/${item.id}` : getEditPath(item.type, item.id),
             isExternal: item.isExternal || false,
             status: item.status || 'active',
-            views: item.views,
-            clicks: item.clicks,
-            claims: item.claims,
-            applicants: item.applicants,
-            rsvps: item.rsvps,
-            bookerName: item.bookerName,
-            startTime: item.startTime,
-            endTime: item.endTime,
+            views: item.views, clicks: item.clicks, claims: item.claims,
+            applicants: item.applicants, rsvps: item.rsvps,
+            bookerName: item.bookerName, startTime: item.startTime, endTime: item.endTime,
         };
     }).filter((item): item is CalendarItem => item !== null);
 

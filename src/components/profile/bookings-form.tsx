@@ -8,14 +8,14 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import type { BookingSettings } from '@/lib/users';
-import { UnifiedProfileFormValues } from '@/app/profile/page';
+import { ProfileFormValues } from '@/lib/schemas/profile';
 
 const daysOfWeek: (keyof BookingSettings['availability'])[] = [
   'sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'
 ];
 
 export function BookingsForm() {
-  const { control, watch } = useFormContext<UnifiedProfileFormValues>();
+  const { control, watch } = useFormContext<ProfileFormValues>();
   const isAcceptingAppointments = watch("bookingSettings.acceptingAppointments");
 
   return (

@@ -49,19 +49,19 @@ export default function EditListingPage() {
             .then((listingData) => {
                 if (!listingData) {
                     toast({ title: "Not Found", description: "This listing does not exist.", variant: "destructive" });
-                    router.push('/calendar');
+                    router.push('/my-content');
                     return;
                 }
                 if (listingData.authorId !== user.uid) {
                     toast({ title: "Unauthorized", description: "You do not have permission to edit this item.", variant: "destructive" });
-                    router.push('/calendar');
+                    router.push('/my-content');
                     return;
                 }
                 setListingToEdit(listingData);
             })
             .catch((err) => {
                 toast({ title: "Error", description: "Could not load item for editing.", variant: "destructive" });
-                router.push('/calendar');
+                router.push('/my-content');
             })
             .finally(() => {
                 setIsLoading(false);
@@ -92,7 +92,7 @@ export default function EditListingPage() {
             
             if (imageUrl && imageUrl.startsWith('data:image')) {
                 toast({ title: "Listing Updated!", description: "Your listing has been updated. Image is uploading." });
-                router.push('/calendar');
+                router.push('/my-content');
 
                 uploadImage(imageUrl, `listings/${user.uid}/${listingId}/image`)
                     .then(newImageUrl => {
@@ -104,7 +104,7 @@ export default function EditListingPage() {
                     });
             } else {
                  toast({ title: "Listing Updated!", description: "Your listing has been updated successfully." });
-                 router.push('/calendar');
+                 router.push('/my-content');
             }
         } catch (error) {
             toast({
@@ -128,7 +128,7 @@ export default function EditListingPage() {
                     <p className="text-muted-foreground">Modify the details of your listing below.</p>
                 </div>
                  <Button asChild variant="outline">
-                    <Link href="/calendar">
+                    <Link href="/my-content">
                         <ArrowLeft className="mr-2 h-4 w-4" />
                         Back to My Content
                     </Link>

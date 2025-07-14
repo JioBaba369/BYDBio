@@ -30,7 +30,7 @@ export default function CreateJobPage() {
                 title: "Job Created!",
                 description: "Your new job has been created. Image is processing if added.",
             });
-            router.push('/calendar');
+            router.push('/my-content');
 
             if (imageUrl && imageUrl.startsWith('data:image')) {
                 uploadImage(imageUrl, `jobs/${user.uid}/${jobId}/image`)

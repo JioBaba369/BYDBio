@@ -35,7 +35,8 @@ function Header() {
             case 'connections': return 'Connections';
             case 'notifications': return 'Notifications';
             case 'inbox': return 'Inbox';
-            case 'calendar': return 'My Content';
+            case 'my-content': return 'My Content';
+            case 'diary': return 'My Diary';
             case 'profile': return 'Profile Editor';
             case 'settings': return 'Settings';
             case 'promo': return 'Business Pages';
