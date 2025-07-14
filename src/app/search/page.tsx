@@ -14,7 +14,6 @@ import Image from "next/image";
 import type { User, PostWithAuthor } from '@/lib/users';
 import { useAuth } from '@/components/auth-provider';
 import { searchUsers, getUsersByIds } from '@/lib/users';
-import { followUser, unfollowUser } from '@/lib/connections';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getDocs, collection, query, where, limit } from 'firebase/firestore';
@@ -29,6 +28,8 @@ import { ClientFormattedDate } from '@/components/client-formatted-date';
 import { ClientFormattedCurrency } from '@/components/client-formatted-currency';
 import { PostCard } from '@/components/post-card';
 import { populatePostAuthors, toggleLikePost, repostPost, deletePost } from '@/lib/posts';
+import { toggleFollowAction } from '@/app/actions/follow';
+import { usePathname } from 'next/navigation';
 
 type ItemWithAuthor<T> = T & { author: User };
 type SearchResults = {
@@ -85,6 +86,7 @@ export default function SearchPage() {
   const queryParam = searchParams.get('q');
   const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
+  const pathname = usePathname();
 
   const [isLoading, setIsLoading] = useState(false);
   const [results, setResults] = useState<SearchResults>({ users: [], listings: [], jobs: [], events: [], offers: [], promoPages: [], posts: [] });
@@ -191,12 +193,10 @@ export default function SearchPage() {
 
   const handleToggleFollow = async (targetUser: User) => {
     if (!user || togglingFollowId) return;
-    
     setTogglingFollowId(targetUser.uid);
     const isCurrentlyFollowing = user.following.includes(targetUser.uid);
-    const previousResults = { ...results };
-
-    // Optimistic update
+    
+    // Optimistic UI update
     setResults(prev => ({
         ...prev,
         users: prev.users.map(u => 
@@ -208,20 +208,15 @@ export default function SearchPage() {
             : u)
     }));
 
-    try {
-      if (isCurrentlyFollowing) {
-        await unfollowUser(user.uid, targetUser.uid);
-        toast({ title: "Unfollowed" });
-      } else {
-        await followUser(user.uid, targetUser.uid);
-        toast({ title: "Followed" });
-      }
-    } catch (error) {
-        setResults(previousResults);
-        toast({ title: "Something went wrong", variant: "destructive" });
-    } finally {
-        setTogglingFollowId(null);
-    }
+    const formData = new FormData();
+    formData.append('currentUserId', user.uid);
+    formData.append('targetUserId', targetUser.uid);
+    formData.append('isFollowing', String(isCurrentlyFollowing));
+    formData.append('path', pathname);
+    
+    await toggleFollowAction(formData);
+
+    setTogglingFollowId(null);
   };
   
     const handleLike = async (postId: string) => {
@@ -591,3 +586,5 @@ export default function SearchPage() {
     </div>
   );
 }
+
+    

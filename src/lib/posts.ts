@@ -32,6 +32,7 @@ export type EmbeddedPostInfo = {
   content: string;
   imageUrl: string | null;
   authorId: string;
+  createdAt: string; // Store as ISO string
 };
 
 // This is the structure used on the client, with author details populated.
@@ -58,7 +59,7 @@ export type Post = {
   repostCount?: number;
   privacy: 'public' | 'followers' | 'me';
   quotedPost?: EmbeddedPostInfo;
-  repostedPost?: EmbeddedPostInfo;
+  repostedPost?: EmbeddedPostInfo; // An embedded version of the ORIGINAL post
   searchableKeywords?: string[];
 };
 
@@ -155,8 +156,7 @@ export const deletePost = async (id: string) => {
   }
   
   const postData = postDoc.data() as Post;
-  // A post is considered "original" if it's not a repost. Reposts don't affect post count.
-  const isOriginalPost = !postData.repostedPost;
+  const isRepost = !!postData.repostedPost;
   
   const batch = writeBatch(db);
 
@@ -164,7 +164,7 @@ export const deletePost = async (id: string) => {
   batch.delete(postRef);
   
   // If it was an original post (not a repost), decrement the author's post count
-  if (isOriginalPost) {
+  if (!isRepost) {
     const authorRef = doc(db, 'users', postData.authorId);
     batch.update(authorRef, { postCount: increment(-1) });
   }
@@ -234,13 +234,14 @@ export const repostPost = async (originalPostId: string, reposterId: string): Pr
         throw new Error("You have already reposted this.");
     }
 
-    const originalPostData = postDoc.data() as Post;
+    const originalPostData = serializeDocument<Post>(postDoc)!;
     // If original post is a repost, we want to repost the *original* content, not the repost itself
     const contentToRepost = originalPostData.repostedPost || { 
         id: originalPostId, 
         content: originalPostData.content, 
         imageUrl: originalPostData.imageUrl, 
-        authorId: originalPostData.authorId
+        authorId: originalPostData.authorId,
+        createdAt: originalPostData.createdAt,
     };
     
     const keywords = [...new Set(contentToRepost.content.toLowerCase().split(' ').filter(Boolean))];
@@ -395,3 +396,5 @@ export const getDiscoveryPosts = async (userId: string, followingIds: string[]):
 
     return populatePostAuthors(postsData, userId);
 };
+
+    

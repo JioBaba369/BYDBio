@@ -69,6 +69,18 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
         toggleFollowAction(formData);
     });
   };
+  
+  const loadPosts = useCallback(async () => {
+    setPostsLoading(true);
+    try {
+        const fetchedPosts = await getPostsByUser(user.uid, currentUser?.uid);
+        setPosts(fetchedPosts);
+    } catch (error) {
+        toast({ title: "Error loading posts", variant: "destructive" });
+    } finally {
+        setPostsLoading(false);
+    }
+  }, [user.uid, currentUser?.uid, toast]);
 
   const handleLike = async (postId: string) => {
     if (!currentUser || loadingAction) return;
@@ -152,18 +164,6 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
         return false;
     });
   }, [posts, canViewPrivateContent, isOwner]);
-
-  const loadPosts = useCallback(async () => {
-    setPostsLoading(true);
-    try {
-        const fetchedPosts = await getPostsByUser(user.uid, currentUser?.uid);
-        setPosts(fetchedPosts);
-    } catch (error) {
-        toast({ title: "Error loading posts", variant: "destructive" });
-    } finally {
-        setPostsLoading(false);
-    }
-  }, [user.uid, currentUser?.uid, toast]);
   
   useEffect(() => {
     loadPosts();
@@ -312,3 +312,5 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
     </>
   );
 }
+
+    

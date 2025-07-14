@@ -1,7 +1,7 @@
 
 'use client';
 
-import type { PostWithAuthor } from '@/lib/posts';
+import type { PostWithAuthor, EmbeddedPostInfoWithAuthor } from '@/lib/posts';
 import { useAuth } from '@/components/auth-provider';
 import { Card, CardFooter } from "@/components/ui/card";
 import Link from "next/link";
@@ -15,17 +15,70 @@ import { cn } from "@/lib/utils";
 import { useToast } from '@/hooks/use-toast';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
-import { EmbeddedPostView } from './feed/embedded-post-view';
 import React from 'react';
 
-type FeedItem = PostWithAuthor & { isLiked?: boolean; };
+// A sub-component for rendering a quoted post.
+const QuotedPostView = ({ post }: { post: EmbeddedPostInfoWithAuthor }) => (
+    <div className="mt-2 border rounded-lg overflow-hidden transition-colors hover:bg-muted/30">
+        <Link href={`/u/${post.author.username}`}>
+            <div className="p-4">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Avatar className="h-5 w-5">
+                        <AvatarImage src={post.author.avatarUrl} />
+                        <AvatarFallback>{post.author.name.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <span className="font-semibold text-foreground hover:underline">{post.author.name}</span>
+                    <span>@{post.author.username}</span>
+                </div>
+                <p className="mt-2 text-sm whitespace-pre-wrap">{post.content}</p>
+            </div>
+            {post.imageUrl && (
+                <div className="mt-2 aspect-video relative bg-muted">
+                    <Image src={post.imageUrl} alt="Quoted post image" fill className="object-cover" />
+                </div>
+            )}
+        </Link>
+    </div>
+);
 
+// A sub-component for rendering a repost.
+const RepostView = ({ post }: { post: PostWithAuthor }) => {
+    const displayItem = post.repostedPost!;
+    const author = displayItem.author;
+
+    if (!author) return null; // Or show a placeholder for deleted authors
+
+    return (
+        <div className="p-4 border rounded-md">
+            <div className="flex items-center gap-2 text-sm">
+                <Link href={`/u/${author.username}`} className="flex items-center gap-2 hover:underline">
+                    <Avatar className="h-5 w-5">
+                        <AvatarImage src={author.avatarUrl} />
+                        <AvatarFallback>{author.name.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <span className="font-semibold text-foreground">{author.name}</span>
+                    <span className="text-muted-foreground">@{author.username}</span>
+                </Link>
+                 <span className="text-muted-foreground">·</span>
+                 <ClientFormattedDate date={displayItem.createdAt} relative />
+            </div>
+            {displayItem.content && <p className="mt-2 text-sm whitespace-pre-wrap">{displayItem.content}</p>}
+            {displayItem.imageUrl && (
+                <div className="mt-2 rounded-lg overflow-hidden border">
+                    <Image src={displayItem.imageUrl} alt="Post image" width={600} height={400} className="object-cover w-full" />
+                </div>
+            )}
+        </div>
+    );
+};
+
+// Main Post Card Component
 interface PostCardProps {
-    item: FeedItem;
+    item: PostWithAuthor;
     onLike: (postId: string) => void;
-    onDelete: (post: FeedItem) => void;
+    onDelete: (post: PostWithAuthor) => void;
     onRepost: (postId: string) => void;
-    onQuote: (post: FeedItem) => void;
+    onQuote: (post: PostWithAuthor) => void;
     isLoading?: boolean;
     loadingAction?: 'like' | 'repost' | 'quote' | null;
 }
@@ -35,33 +88,16 @@ export function PostCard({ item, onLike, onDelete, onRepost, onQuote, isLoading 
     const { toast } = useToast();
     const isOwner = user?.uid === item.author.uid;
     const isRepost = !!item.repostedPost;
-    
-    // Determine the content to display. If it's a repost, use the nested post's data.
-    const displayItem = isRepost && item.repostedPost ? item.repostedPost : item;
-    const displayAuthor = isRepost && item.repostedPost ? displayItem.author : item.author;
-
-    // A fallback in case the original author of a reposted post is deleted
-    const authorName = displayAuthor?.name || "Original author deleted";
-    const authorUsername = displayAuthor?.username || "unknown";
-    const authorAvatarUrl = displayAuthor?.avatarUrl || "https://placehold.co/100x100.png";
 
     const handleShare = async () => {
-        const shareUrl = `${window.location.origin}/u/${authorUsername}`;
-        const shareText = displayItem.content.substring(0, 100) + (displayItem.content.length > 100 ? '...' : '');
+        const shareUrl = `${window.location.origin}/u/${item.author.username}`;
+        const shareText = item.content.substring(0, 100) + (item.content.length > 100 ? '...' : '');
 
         if (navigator.share) {
-            try {
-                await navigator.share({
-                    title: `Post by ${authorName}`,
-                    text: shareText,
-                    url: shareUrl,
-                });
-            } catch (error) {/* Ignore user cancellation */}
+            try { await navigator.share({ title: `Post by ${item.author.name}`, text: shareText, url: shareUrl }); } catch (error) {}
         } else {
             navigator.clipboard.writeText(shareUrl);
-            toast({
-                title: "Link to author's profile copied!",
-            });
+            toast({ title: "Link to author's profile copied!" });
         }
     };
 
@@ -71,96 +107,46 @@ export function PostCard({ item, onLike, onDelete, onRepost, onQuote, isLoading 
                 <div className="px-4 pt-3 pb-0 text-sm text-muted-foreground font-semibold flex items-center gap-2">
                     <Repeat className="h-4 w-4"/>
                     <Link href={`/u/${item.author.username}`} className="hover:underline">
-                        {user?.uid === item.author.uid ? "You" : item.author.name} reposted
+                        {isOwner ? "You" : item.author.name} reposted
                     </Link>
                 </div>
             )}
             <div className="flex items-start gap-4 p-4">
-                <Link href={`/u/${authorUsername}`}>
+                <Link href={`/u/${item.author.username}`}>
                     <Avatar>
-                        <AvatarImage src={authorAvatarUrl} />
-                        <AvatarFallback>{authorName.charAt(0)}</AvatarFallback>
+                        <AvatarImage src={item.author.avatarUrl} />
+                        <AvatarFallback>{item.author.name.charAt(0)}</AvatarFallback>
                     </Avatar>
                 </Link>
                 <div className="w-full">
                     <div className="flex justify-between items-start">
-                         <div className="text-sm">
-                            <Link href={`/u/${authorUsername}`} className="font-semibold hover:underline">{authorName}</Link>
-                            <span className="text-muted-foreground ml-2">@{authorUsername}</span>
+                        <div className="text-sm">
+                            <Link href={`/u/${item.author.username}`} className="font-semibold hover:underline">{item.author.name}</Link>
+                            <span className="text-muted-foreground ml-2">@{item.author.username}</span>
                             <span className="text-muted-foreground"> · </span>
-                            <Link href={`/u/${authorUsername}`} className="text-muted-foreground hover:underline">
-                                <ClientFormattedDate date={isRepost ? displayItem.createdAt : item.createdAt} relative />
+                            <Link href={`/u/${item.author.username}`} className="text-muted-foreground hover:underline">
+                                <ClientFormattedDate date={item.createdAt} relative />
                             </Link>
                         </div>
                         <div className="flex items-center gap-1 -mt-2">
-                             {item.privacy === 'followers' && (
-                                <TooltipProvider>
-                                    <Tooltip>
-                                        <TooltipTrigger><Users className="h-4 w-4 text-muted-foreground" /></TooltipTrigger>
-                                        <TooltipContent><p>Visible to followers only</p></TooltipContent>
-                                    </Tooltip>
-                                </TooltipProvider>
-                            )}
-                            {item.privacy === 'public' && (
-                                <TooltipProvider>
-                                    <Tooltip>
-                                        <TooltipTrigger><Globe className="h-4 w-4 text-muted-foreground" /></TooltipTrigger>
-                                        <TooltipContent><p>Visible to everyone</p></TooltipContent>
-                                    </Tooltip>
-                                </TooltipProvider>
-                            )}
+                            {item.privacy === 'followers' && (<TooltipProvider><Tooltip><TooltipTrigger><Users className="h-4 w-4 text-muted-foreground" /></TooltipTrigger><TooltipContent><p>Visible to followers only</p></TooltipContent></Tooltip></TooltipProvider>)}
+                            {item.privacy === 'public' && (<TooltipProvider><Tooltip><TooltipTrigger><Globe className="h-4 w-4 text-muted-foreground" /></TooltipTrigger><TooltipContent><p>Visible to everyone</p></TooltipContent></Tooltip></TooltipProvider>)}
                             {isOwner && (
                                 <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                        <Button variant="ghost" size="icon" className="h-7 w-7">
-                                            <MoreHorizontal className="h-4 w-4" />
-                                        </Button>
-                                    </DropdownMenuTrigger>
+                                    <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
                                     <DropdownMenuContent align="end">
-                                        <DropdownMenuItem onClick={() => onDelete(item)} className="text-destructive cursor-pointer">
-                                            <Trash2 className="mr-2 h-4 w-4" /> Delete Post
-                                        </DropdownMenuItem>
+                                        <DropdownMenuItem onClick={() => onDelete(item)} className="text-destructive cursor-pointer"><Trash2 className="mr-2 h-4 w-4" /> Delete Post</DropdownMenuItem>
                                     </DropdownMenuContent>
                                 </DropdownMenu>
                             )}
                         </div>
                     </div>
                     <div className="mt-2 space-y-3">
-                        {item.content && !isRepost && <p className="whitespace-pre-wrap">{item.content}</p>}
-                        {item.quotedPost && item.quotedPost.author && <EmbeddedPostView post={item.quotedPost} />}
-
-                        {isRepost && displayItem.author && (
-                            <div className="p-4 border rounded-md">
-                                <div className="flex items-center gap-2 text-sm">
-                                    <Link href={`/u/${displayItem.author.username}`} className="flex items-center gap-2 hover:underline">
-                                        <Avatar className="h-5 w-5">
-                                            <AvatarImage src={displayItem.author.avatarUrl} />
-                                            <AvatarFallback>{displayItem.author.name.charAt(0)}</AvatarFallback>
-                                        </Avatar>
-                                        <span className="font-semibold text-foreground">{displayItem.author.name}</span>
-                                        <span className="text-muted-foreground">@{displayItem.author.username}</span>
-                                    </Link>
-                                </div>
-                                <p className="mt-2 text-sm whitespace-pre-wrap">{displayItem.content}</p>
-                                {displayItem.imageUrl && (
-                                    <div className="mt-2 rounded-lg overflow-hidden border">
-                                        <Image src={displayItem.imageUrl} alt="Post image" width={600} height={400} className="object-cover w-full" />
-                                    </div>
-                                )}
-                            </div>
-                         )}
-
-                        {item.imageUrl && !isRepost && (
-                            <div className="mt-2 rounded-lg overflow-hidden border">
-                                <Image src={item.imageUrl} alt="Post image" width={600} height={400} className="object-cover w-full" />
-                            </div>
-                        )}
-
-                        {item.category && !isRepost && (
-                            <div className="pt-2">
-                                <Badge variant="outline">{item.category}</Badge>
-                            </div>
-                        )}
+                        {item.content && <p className="whitespace-pre-wrap">{item.content}</p>}
+                        {item.quotedPost && <QuotedPostView post={item.quotedPost} />}
+                        {item.repostedPost && <RepostView post={item} />}
+                        {item.imageUrl && <div className="mt-2 rounded-lg overflow-hidden border"><Image src={item.imageUrl} alt="Post image" width={600} height={400} className="object-cover w-full" /></div>}
+                        {item.category && <div className="pt-2"><Badge variant="outline">{item.category}</Badge></div>}
                     </div>
                      <CardFooter className="flex justify-between items-center p-0 pt-3 -ml-2">
                         <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground hover:text-primary" onClick={() => onLike(item.id)} disabled={isLoading || !user}>
@@ -171,9 +157,9 @@ export function PostCard({ item, onLike, onDelete, onRepost, onQuote, isLoading 
                             <MessageCircle className="h-4 w-4" />
                             <span className="text-xs">{item.comments || 0}</span>
                         </Button>
-                        <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground hover:text-green-500" onClick={() => onRepost(displayItem.id)} disabled={isLoading || !user}>
+                        <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground hover:text-green-500" onClick={() => onRepost(item.repostedPost ? item.repostedPost.id : item.id)} disabled={isLoading || !user}>
                             {isLoading && loadingAction === 'repost' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Repeat className="h-4 w-4" />}
-                            <span className="text-xs">{displayItem.repostCount || 0}</span>
+                            <span className="text-xs">{item.repostCount || 0}</span>
                         </Button>
                         <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground hover:text-blue-500" onClick={() => onQuote(item)} disabled={isLoading || !user}>
                             <QuoteIcon className="h-4 w-4" />
@@ -188,3 +174,5 @@ export function PostCard({ item, onLike, onDelete, onRepost, onQuote, isLoading 
         </Card>
     );
 }
+
+    
