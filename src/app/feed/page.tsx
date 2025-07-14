@@ -239,6 +239,7 @@ export default function FeedPage() {
     const originalFollowing = [...followingPosts];
     const originalDiscovery = [...discoveryPosts];
 
+    // Correctly filter out the deleted post, whether it's an original or a repost
     setFollowingPosts(prev => prev.filter(item => item.id !== idToDelete));
     setDiscoveryPosts(prev => prev.filter(item => item.id !== idToDelete));
     
@@ -276,7 +277,7 @@ export default function FeedPage() {
                 {posts.map(item => (
                     <PostCard
                         key={item.id}
-                        item={item}
+                        item={{ ...item, isLiked: user ? (item.likedBy || []).includes(user.uid) : false }}
                         onLike={handleLike}
                         onDelete={openDeleteDialog}
                         onRepost={handleRepost}

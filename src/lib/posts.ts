@@ -163,7 +163,7 @@ export const deletePost = async (id: string) => {
   // Delete the post itself
   batch.delete(postRef);
   
-  // If it was an original post, decrement the author's post count
+  // If it was an original post (not a repost), decrement the author's post count
   if (isOriginalPost) {
     const authorRef = doc(db, 'users', postData.authorId);
     batch.update(authorRef, { postCount: increment(-1) });
@@ -235,24 +235,20 @@ export const repostPost = async (originalPostId: string, reposterId: string): Pr
     }
 
     const originalPostData = postDoc.data() as Post;
-    // Prevent reposting a repost
-    if (originalPostData.repostedPost) {
-        throw new Error("Cannot repost a post that is already a repost.");
-    }
-    
-    const repostedPostData: EmbeddedPostInfo = {
-        id: originalPostId,
-        content: originalPostData.content,
-        imageUrl: originalPostData.imageUrl,
-        authorId: originalPostData.authorId,
+    // If original post is a repost, we want to repost the *original* content, not the repost itself
+    const contentToRepost = originalPostData.repostedPost || { 
+        id: originalPostId, 
+        content: originalPostData.content, 
+        imageUrl: originalPostData.imageUrl, 
+        authorId: originalPostData.authorId
     };
     
-    const keywords = [...new Set(originalPostData.content.toLowerCase().split(' ').filter(Boolean))];
+    const keywords = [...new Set(contentToRepost.content.toLowerCase().split(' ').filter(Boolean))];
 
     const batch = writeBatch(db);
 
     // 1. Increment repost count on the original post
-    batch.update(postRef, {
+    batch.update(doc(db, 'posts', contentToRepost.id), {
         repostCount: increment(1)
     });
 
@@ -262,7 +258,7 @@ export const repostPost = async (originalPostId: string, reposterId: string): Pr
         authorId: reposterId,
         content: '', // Reposts have no original content of their own
         imageUrl: null,
-        repostedPost: repostedPostData, // Embed the original post data
+        repostedPost: contentToRepost, // Embed the original post data
         privacy: originalPostData.privacy, // Inherit privacy from original post
         createdAt: serverTimestamp(),
         likes: 0,
@@ -390,5 +386,12 @@ export const getDiscoveryPosts = async (userId: string, followingIds: string[]):
         limit(100) // Fetch more initially to allow for filtering
     );
     
-    return fetchAndProcessPosts(q, userId);
+    const postSnapshots = await getDocs(q);
+    const discoveryDocs = postSnapshots.docs
+        .filter(doc => !usersToExclude.includes(doc.data().authorId))
+        .slice(0, FEED_POST_LIMIT);
+        
+    const postsData = discoveryDocs.map(doc => serializeDocument<Post>(doc)).filter((p): p is Post => !!p);
+
+    return populatePostAuthors(postsData, userId);
 };

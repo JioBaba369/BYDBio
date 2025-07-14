@@ -71,7 +71,7 @@ export const getAvailableSlots = async (userId: string, selectedDate: Date): Pro
   const endTime = new Date(selectedDate);
   endTime.setHours(endHour, endMinute, 0, 0);
 
-  while (currentTime < endTime) {
+  while (new Date(currentTime.getTime() + meetingDuration * 60000) <= endTime) {
     const slotTime = currentTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
     
     // Check if slot is in the future and not already booked
