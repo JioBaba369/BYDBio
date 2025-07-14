@@ -62,7 +62,7 @@ export function AuthorCard({ author, isOwner, authorTypeLabel = "Creator" }: Aut
         </Link>
         <Link href={`/u/${author.username}`} className="font-semibold hover:underline">{author.name}</Link>
         <p className="text-sm text-muted-foreground">@{author.username}</p>
-        <p className="text-sm text-muted-foreground mt-2">{author.followerCount.toLocaleString()} followers</p>
+        <p className="text-sm text-muted-foreground mt-2">{(author.followerCount || 0).toLocaleString()} followers</p>
          {!isOwner && currentUser && (
             <Button onClick={handleFollowToggle} disabled={isPending} className="w-full mt-4">
                 {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : isFollowing ? <UserCheck className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}

@@ -121,7 +121,7 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
     } catch (error: any) {
       toast({ title: error.message || "Failed to repost", variant: "destructive" });
     } finally {
-      setLoadingAction(null);
+        setLoadingAction(null);
     }
   };
 
@@ -199,7 +199,7 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
                             <AvatarImage src={user.avatarUrl} alt={user.name} />
                             <AvatarFallback>{user.avatarFallback}</AvatarFallback>
                         </Avatar>
-                        <div className="sm:pb-2 min-w-0">
+                        <div className="sm:pb-2 min-w-0 flex-1">
                              <h1 className="text-xl sm:text-2xl font-bold font-headline truncate">{user.name}</h1>
                              <p className="text-muted-foreground text-sm truncate">@{user.username}</p>
                         </div>
@@ -241,8 +241,8 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
                     </div>
                 </div>
                  <div className="flex items-center gap-4 mt-4 text-sm">
-                    <p><span className="font-bold">{user.followerCount.toLocaleString()}</span> Followers</p>
-                    <p><span className="font-bold">{user.following.length.toLocaleString()}</span> Following</p>
+                    <p><span className="font-bold">{(user.followerCount || 0).toLocaleString()}</span> Followers</p>
+                    <p><span className="font-bold">{(user.following?.length || 0).toLocaleString()}</span> Following</p>
                     <p><span className="font-bold">{user.postCount || 0}</span> Posts</p>
                 </div>
             </CardContent>
@@ -312,5 +312,3 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
     </>
   );
 }
-
-    
