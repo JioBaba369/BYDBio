@@ -21,9 +21,11 @@ export function BookingDialog({ user }: BookingDialogProps) {
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
 
   useEffect(() => {
-    // Set the initial date only on the client side to avoid hydration mismatches.
-    setDate(new Date());
-  }, []);
+    // This effect runs only on the client, after the initial render.
+    if (!date) {
+        setDate(new Date());
+    }
+  }, [date]);
 
   useEffect(() => {
     if (!date || !user.bookingSettings?.acceptingAppointments) {
@@ -60,7 +62,7 @@ export function BookingDialog({ user }: BookingDialogProps) {
         <DialogTrigger asChild>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button variant="secondary" className="w-full">
+              <Button variant="secondary" size="sm">
                   <CalendarIcon className="mr-2 h-4 w-4" /> Book a Meeting
               </Button>
             </TooltipTrigger>
