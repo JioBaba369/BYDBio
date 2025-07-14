@@ -28,7 +28,7 @@ import type { Post, EmbeddedPostInfoWithAuthor } from '@/lib/posts';
 import { ClientFormattedDate } from '@/components/client-formatted-date';
 import { ClientFormattedCurrency } from '@/components/client-formatted-currency';
 import { PostCard } from '@/components/post-card';
-import { populatePostAuthors } from '@/lib/posts';
+import { populatePostAuthors, toggleLikePost, repostPost, deletePost } from '@/lib/posts';
 
 type ItemWithAuthor<T> = T & { author: User };
 type SearchResults = {
@@ -89,6 +89,7 @@ export default function SearchPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [results, setResults] = useState<SearchResults>({ users: [], listings: [], jobs: [], events: [], offers: [], promoPages: [], posts: [] });
   const [togglingFollowId, setTogglingFollowId] = useState<string | null>(null);
+  const [loadingAction, setLoadingAction] = useState<{ postId: string; action: 'like' | 'repost' } | null>(null);
 
   const performSearch = useCallback(async () => {
     if (!queryParam) return;
@@ -222,6 +223,50 @@ export default function SearchPage() {
         setTogglingFollowId(null);
     }
   };
+  
+    const handleLike = async (postId: string) => {
+    if (!user || loadingAction) return;
+    
+    setLoadingAction({ postId, action: 'like' });
+
+    setResults(prev => ({
+        ...prev,
+        posts: prev.posts.map(p => {
+            if (p.id === postId) {
+                const isLiked = !p.isLiked;
+                return {
+                    ...p,
+                    isLiked,
+                    likes: (p.likes || 0) + (isLiked ? 1 : -1),
+                };
+            }
+            return p;
+        })
+    }));
+
+    try {
+        await toggleLikePost(postId, user.uid);
+    } catch (error) {
+        toast({ title: "Something went wrong", variant: "destructive" });
+        performSearch(); // Re-fetch to be safe
+    } finally {
+        setLoadingAction(null);
+    }
+  };
+  
+  const handleRepost = async (postId: string) => {
+    if (!user || loadingAction) return;
+    setLoadingAction({ postId, action: 'repost' });
+    try {
+      await repostPost(postId, user.uid);
+      toast({ title: "Reposted!" });
+      performSearch();
+    } catch (error: any) {
+      toast({ title: error.message || "Failed to repost", variant: "destructive" });
+    } finally {
+      setLoadingAction(null);
+    }
+  };
 
 
   if (!queryParam) {
@@ -327,10 +372,12 @@ export default function SearchPage() {
                         <PostCard 
                             key={post.id} 
                             item={post} 
-                            onLike={() => {}}
+                            onLike={handleLike}
                             onDelete={() => {}}
-                            onRepost={() => {}}
+                            onRepost={handleRepost}
                             onQuote={() => {}}
+                            isLoading={loadingAction?.postId === post.id}
+                            loadingAction={loadingAction?.postId === post.id ? loadingAction.action : null}
                         />
                     ))}
                 </div>

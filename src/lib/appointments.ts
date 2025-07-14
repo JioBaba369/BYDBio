@@ -1,9 +1,10 @@
 
 'use server';
 
-import { collection, query, where, getDocs, Timestamp, getDoc, doc } from 'firebase/firestore';
+import { collection, query, where, getDocs, Timestamp, getDoc, doc, addDoc } from 'firebase/firestore';
 import { db } from './firebase';
 import type { User } from './users';
+import { createNotification } from './notifications';
 
 // A simplified appointment structure for now
 export type Appointment = {
@@ -83,4 +84,31 @@ export const getAvailableSlots = async (userId: string, selectedDate: Date): Pro
   }
 
   return availableSlots;
+};
+
+export const createAppointment = async (
+  ownerId: string, 
+  bookerId: string, 
+  bookerName: string, 
+  appointmentDate: Date
+) => {
+  if (ownerId === bookerId) {
+    throw new Error("You cannot book an appointment with yourself.");
+  }
+
+  const appointmentsRef = collection(db, 'appointments');
+  const appointment = {
+    ownerId,
+    bookerId,
+    bookerName,
+    startTime: Timestamp.fromDate(appointmentDate),
+    endTime: Timestamp.fromDate(new Date(appointmentDate.getTime() + 30 * 60000)), // 30 mins later
+  };
+
+  await addDoc(appointmentsRef, appointment);
+  
+  // You might want to notify the owner here as well
+  // await createNotification(ownerId, 'new_appointment', bookerId, { ... });
+  
+  return { success: true };
 };
