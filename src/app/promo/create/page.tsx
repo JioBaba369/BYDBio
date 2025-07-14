@@ -31,7 +31,7 @@ export default function CreatePromoPage() {
             });
 
             toast({ title: "Business Page Created!", description: "Your new business page has been created successfully. Images are processing." });
-            router.push('/my-content');
+            router.push('/canvas');
 
             if (imageUrl && imageUrl.startsWith('data:image')) {
                 uploadImage(imageUrl, `promoPages/${user.uid}/${pageId}/header`)

@@ -59,19 +59,19 @@ export default function EditEventPage() {
             .then((eventData) => {
                 if (!eventData) {
                     toast({ title: "Not Found", description: "This event does not exist.", variant: "destructive" });
-                    router.push('/my-content');
+                    router.push('/canvas');
                     return;
                 }
                 if (eventData.authorId !== user.uid) {
                     toast({ title: "Unauthorized", description: "You do not have permission to edit this item.", variant: "destructive" });
-                    router.push('/my-content');
+                    router.push('/canvas');
                     return;
                 }
                 setEventToEdit(eventData);
             })
             .catch((err) => {
                 toast({ title: "Error", description: "Could not load item for editing.", variant: "destructive" });
-                router.push('/my-content');
+                router.push('/canvas');
             })
             .finally(() => {
                 setIsLoading(false);
@@ -117,7 +117,7 @@ export default function EditEventPage() {
                     title: "Event Updated!",
                     description: "Your changes have been saved. Your new image is being uploaded.",
                 });
-                router.push('/my-content');
+                router.push('/canvas');
 
                 uploadImage(imageUrl, `events/${user.uid}/${eventId}/image`)
                     .then(newImageUrl => {
@@ -138,7 +138,7 @@ export default function EditEventPage() {
                     title: "Event Updated!",
                     description: "Your changes have been saved.",
                 });
-                router.push('/my-content');
+                router.push('/canvas');
             }
 
         } catch (error) {
@@ -163,9 +163,9 @@ export default function EditEventPage() {
                     <p className="text-muted-foreground">Modify the details of your event below.</p>
                 </div>
                  <Button asChild variant="outline">
-                    <Link href="/my-content">
+                    <Link href="/canvas">
                         <ArrowLeft className="mr-2 h-4 w-4" />
-                        Back to My Content
+                        Back to My Canvas
                     </Link>
                 </Button>
             </div>

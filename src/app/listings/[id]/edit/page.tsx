@@ -49,19 +49,19 @@ export default function EditListingPage() {
             .then((listingData) => {
                 if (!listingData) {
                     toast({ title: "Not Found", description: "This listing does not exist.", variant: "destructive" });
-                    router.push('/my-content');
+                    router.push('/canvas');
                     return;
                 }
                 if (listingData.authorId !== user.uid) {
                     toast({ title: "Unauthorized", description: "You do not have permission to edit this item.", variant: "destructive" });
-                    router.push('/my-content');
+                    router.push('/canvas');
                     return;
                 }
                 setListingToEdit(listingData);
             })
             .catch((err) => {
                 toast({ title: "Error", description: "Could not load item for editing.", variant: "destructive" });
-                router.push('/my-content');
+                router.push('/canvas');
             })
             .finally(() => {
                 setIsLoading(false);
@@ -92,7 +92,7 @@ export default function EditListingPage() {
             
             if (imageUrl && imageUrl.startsWith('data:image')) {
                 toast({ title: "Listing Updated!", description: "Your listing has been updated. Image is uploading." });
-                router.push('/my-content');
+                router.push('/canvas');
 
                 uploadImage(imageUrl, `listings/${user.uid}/${listingId}/image`)
                     .then(newImageUrl => {
@@ -104,7 +104,7 @@ export default function EditListingPage() {
                     });
             } else {
                  toast({ title: "Listing Updated!", description: "Your listing has been updated successfully." });
-                 router.push('/my-content');
+                 router.push('/canvas');
             }
         } catch (error) {
             toast({
@@ -128,9 +128,9 @@ export default function EditListingPage() {
                     <p className="text-muted-foreground">Modify the details of your listing below.</p>
                 </div>
                  <Button asChild variant="outline">
-                    <Link href="/my-content">
+                    <Link href="/canvas">
                         <ArrowLeft className="mr-2 h-4 w-4" />
-                        Back to My Content
+                        Back to My Canvas
                     </Link>
                 </Button>
             </div>

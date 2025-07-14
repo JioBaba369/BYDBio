@@ -49,19 +49,19 @@ export default function EditJobPage() {
             .then((jobData) => {
                 if (!jobData) {
                     toast({ title: "Not Found", description: "This job does not exist.", variant: "destructive" });
-                    router.push('/my-content');
+                    router.push('/canvas');
                     return;
                 }
                 if (jobData.authorId !== user.uid) {
                     toast({ title: "Unauthorized", description: "You do not have permission to edit this item.", variant: "destructive" });
-                    router.push('/my-content');
+                    router.push('/canvas');
                     return;
                 }
                 setJobToEdit(jobData);
             })
             .catch((err) => {
                 toast({ title: "Error", description: "Could not load item for editing.", variant: "destructive" });
-                router.push('/my-content');
+                router.push('/canvas');
             })
             .finally(() => {
                 setIsLoading(false);
@@ -91,7 +91,7 @@ export default function EditJobPage() {
 
             if (imageUrl && imageUrl.startsWith('data:image')) {
                 toast({ title: "Job Updated!", description: "Your job posting has been saved. Your new image is being uploaded.", });
-                router.push('/my-content');
+                router.push('/canvas');
 
                 uploadImage(imageUrl, `jobs/${user.uid}/${jobId}/image`)
                     .then(newImageUrl => {
@@ -103,7 +103,7 @@ export default function EditJobPage() {
                     });
             } else {
                  toast({ title: "Job Updated!", description: "The job has been updated successfully." });
-                 router.push('/my-content');
+                 router.push('/canvas');
             }
         } catch (error) {
             toast({
@@ -127,9 +127,9 @@ export default function EditJobPage() {
                     <p className="text-muted-foreground">Modify the details of the job below.</p>
                 </div>
                  <Button asChild variant="outline">
-                    <Link href="/my-content">
+                    <Link href="/canvas">
                         <ArrowLeft className="mr-2 h-4 w-4" />
-                        Back to My Content
+                        Back to My Canvas
                     </Link>
                 </Button>
             </div>

@@ -51,19 +51,19 @@ export default function EditPromoPage() {
             .then((promoPageData) => {
                 if (!promoPageData) {
                     toast({ title: "Not Found", description: "This business page does not exist.", variant: "destructive" });
-                    router.push('/my-content');
+                    router.push('/canvas');
                     return;
                 }
                 if (promoPageData.authorId !== user.uid) {
                     toast({ title: "Unauthorized", description: "You do not have permission to edit this item.", variant: "destructive" });
-                    router.push('/my-content');
+                    router.push('/canvas');
                     return;
                 }
                 setPromoPageToEdit(promoPageData);
             })
             .catch((err) => {
                 toast({ title: "Error", description: "Could not load item for editing.", variant: "destructive" });
-                router.push('/my-content');
+                router.push('/canvas');
             })
             .finally(() => {
                 setIsLoading(false);
@@ -82,7 +82,7 @@ export default function EditPromoPage() {
             await updatePromoPage(promoPageId, restOfData);
             
             toast({ title: "Business Page Updated!", description: "Your business page has been saved. Images are uploading." });
-            router.push('/my-content');
+            router.push('/canvas');
 
             if (imageUrl && imageUrl.startsWith('data:image')) {
                 uploadImage(imageUrl, `promoPages/${user.uid}/${promoPageId}/header`)
@@ -117,9 +117,9 @@ export default function EditPromoPage() {
                     <p className="text-muted-foreground">Modify the details of your business page below.</p>
                 </div>
                 <Button asChild variant="outline">
-                    <Link href="/my-content">
+                    <Link href="/canvas">
                         <ArrowLeft className="mr-2 h-4 w-4" />
-                        Back to My Content
+                        Back to My Canvas
                     </Link>
                 </Button>
             </div>

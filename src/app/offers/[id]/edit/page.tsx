@@ -59,19 +59,19 @@ export default function EditOfferPage() {
             .then((offerData) => {
                 if (!offerData) {
                     toast({ title: "Not Found", description: "This offer does not exist.", variant: "destructive" });
-                    router.push('/my-content');
+                    router.push('/canvas');
                     return;
                 }
                 if (offerData.authorId !== user.uid) {
                     toast({ title: "Unauthorized", description: "You do not have permission to edit this item.", variant: "destructive" });
-                    router.push('/my-content');
+                    router.push('/canvas');
                     return;
                 }
                 setOfferToEdit(offerData);
             })
             .catch((err) => {
                 toast({ title: "Error", description: "Could not load item for editing.", variant: "destructive" });
-                router.push('/my-content');
+                router.push('/canvas');
             })
             .finally(() => {
                 setIsLoading(false);
@@ -110,7 +110,7 @@ export default function EditOfferPage() {
             
             if (imageUrl && imageUrl.startsWith('data:image')) {
                 toast({ title: "Offer Updated!", description: "Your offer has been updated. Image is uploading." });
-                router.push('/my-content');
+                router.push('/canvas');
 
                 uploadImage(imageUrl, `offers/${user.uid}/${offerId}/image`)
                     .then(newImageUrl => {
@@ -122,7 +122,7 @@ export default function EditOfferPage() {
                     });
             } else {
                 toast({ title: "Offer Updated!", description: "Your offer has been updated successfully." });
-                router.push('/my-content');
+                router.push('/canvas');
             }
         } catch (error) {
             toast({
@@ -146,9 +146,9 @@ export default function EditOfferPage() {
                     <p className="text-muted-foreground">Modify the details of your offer below.</p>
                 </div>
                  <Button asChild variant="outline">
-                    <Link href="/my-content">
+                    <Link href="/canvas">
                         <ArrowLeft className="mr-2 h-4 w-4" />
-                        Back to My Content
+                        Back to My Canvas
                     </Link>
                 </Button>
             </div>
