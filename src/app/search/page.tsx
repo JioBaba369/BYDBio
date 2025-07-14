@@ -1,12 +1,12 @@
 
 'use client';
 
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, usePathname } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { UserPlus, UserCheck, Search as SearchIcon, Briefcase, MapPin, Tag, Calendar, Users, Tags, DollarSign, Gift, Eye, Building2, ExternalLink, Megaphone, Loader2, Rss, MousePointerClick, Heart, MessageCircle, Repeat, Quote, Share2 } from "lucide-react";
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useTransition } from 'react';
 import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -29,7 +29,6 @@ import { ClientFormattedCurrency } from '@/components/client-formatted-currency'
 import { PostCard } from '@/components/post-card';
 import { populatePostAuthors, toggleLikePost, repostPost, deletePost } from '@/lib/posts';
 import { toggleFollowAction } from '@/app/actions/follow';
-import { usePathname } from 'next/navigation';
 
 type ItemWithAuthor<T> = T & { author: User };
 type SearchResults = {
@@ -92,6 +91,7 @@ export default function SearchPage() {
   const [results, setResults] = useState<SearchResults>({ users: [], listings: [], jobs: [], events: [], offers: [], promoPages: [], posts: [] });
   const [togglingFollowId, setTogglingFollowId] = useState<string | null>(null);
   const [loadingAction, setLoadingAction] = useState<{ postId: string; action: 'like' | 'repost' } | null>(null);
+  const [isFollowPending, startFollowTransition] = useTransition();
 
   const performSearch = useCallback(async () => {
     if (!queryParam) return;
@@ -191,32 +191,17 @@ export default function SearchPage() {
     }
   }, [queryParam, authLoading, performSearch]);
 
-  const handleToggleFollow = async (targetUser: User) => {
-    if (!user || togglingFollowId) return;
-    setTogglingFollowId(targetUser.uid);
-    const isCurrentlyFollowing = user.following.includes(targetUser.uid);
+  const handleToggleFollow = (targetUser: User) => {
+    if (!user || isFollowPending) return;
     
-    // Optimistic UI update
-    setResults(prev => ({
-        ...prev,
-        users: prev.users.map(u => 
-            u.uid === targetUser.uid 
-            ? { 
-                ...u, 
-                followerCount: (u.followerCount || 0) + (isCurrentlyFollowing ? -1 : 1)
-              } 
-            : u)
-    }));
-
-    const formData = new FormData();
-    formData.append('currentUserId', user.uid);
-    formData.append('targetUserId', targetUser.uid);
-    formData.append('isFollowing', String(isCurrentlyFollowing));
-    formData.append('path', pathname);
-    
-    await toggleFollowAction(formData);
-
-    setTogglingFollowId(null);
+    startFollowTransition(async () => {
+        const formData = new FormData();
+        formData.append('currentUserId', user.uid);
+        formData.append('targetUserId', targetUser.uid);
+        formData.append('isFollowing', String(user.following.includes(targetUser.uid)));
+        formData.append('path', pathname);
+        await toggleFollowAction(formData);
+    });
   };
   
     const handleLike = async (postId: string) => {
@@ -327,7 +312,6 @@ export default function SearchPage() {
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     {results.users.map(u => {
                         const isFollowed = user?.following.includes(u.uid);
-                        const isProcessing = togglingFollowId === u.uid;
                         return (
                         <Card key={u.uid} className="transition-all hover:shadow-md">
                         <CardContent className="p-4 flex items-center justify-between gap-4">
@@ -341,8 +325,8 @@ export default function SearchPage() {
                                 <p className="text-sm text-muted-foreground">@{u.username}</p>
                             </div>
                             </Link>
-                            <Button size="sm" variant={isFollowed ? 'secondary' : 'default'} onClick={() => handleToggleFollow(u)} disabled={isProcessing}>
-                            {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : isFollowed ? <UserCheck className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
+                            <Button size="sm" variant={isFollowed ? 'secondary' : 'default'} onClick={() => handleToggleFollow(u)} disabled={isFollowPending}>
+                            {isFollowPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : isFollowed ? <UserCheck className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
                             {isFollowed ? 'Following' : 'Follow'}
                             </Button>
                         </CardContent>
@@ -586,5 +570,3 @@ export default function SearchPage() {
     </div>
   );
 }
-
-    
