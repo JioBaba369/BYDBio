@@ -3,7 +3,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { CheckCheck, Bell, UserPlus, Heart, Calendar, BellRing } from "lucide-react";
+import { CheckCheck, Bell, UserPlus, Heart, Calendar, BellRing, Briefcase } from "lucide-react";
 import { useAuth } from "@/components/auth-provider";
 import { useState, useEffect } from "react";
 import { getNotificationsWithActors, markNotificationsAsRead, markSingleNotificationAsRead, getNotificationLink, type NotificationWithActor } from "@/lib/notifications";
@@ -101,6 +101,10 @@ export default function NotificationsPage() {
             case 'event_rsvp':
                 icon = <Calendar className="h-5 w-5 text-purple-500" />;
                 message = <p><span className="font-semibold">{actor.name}</span> RSVP'd to your event: <span className="font-semibold">{notification.entityTitle}</span>.</p>;
+                break;
+            case 'new_appointment':
+                icon = <Briefcase className="h-5 w-5 text-blue-500" />;
+                message = <p><span className="font-semibold">{actor.name}</span> booked a meeting with you.</p>;
                 break;
             case 'new_content_follower':
                 icon = <BellRing className="h-5 w-5 text-yellow-500" />;

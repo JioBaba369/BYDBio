@@ -1,10 +1,11 @@
+
 'use client';
 
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge, badgeVariants } from '@/components/ui/badge';
-import { getCalendarItems, toggleRsvp, deleteEvent, type CalendarItem, deleteAppointment } from '@/lib/events';
+import { getCalendarItems, toggleRsvp, deleteEvent, type CalendarItem } from '@/lib/events';
 import { useAuth } from '@/components/auth-provider';
 import { Clock, MoreHorizontal, Edit, Trash2, PlusCircle, CalendarPlus, UserCheck, CalendarDays as CalendarIconLucide } from 'lucide-react'; // Changed Calendar to CalendarDays to avoid naming conflict
 import type { VariantProps } from 'class-variance-authority';
@@ -18,7 +19,7 @@ import { DayPicker } from 'react-day-picker';
 import 'react-day-picker/dist/style.css';
 import { format, isSameDay } from 'date-fns';
 import { saveAs } from 'file-saver';
-import { generateIcsContent } from '@/lib/appointments';
+import { generateIcsContent, deleteAppointment } from '@/lib/appointments';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 // --- Components ---
@@ -132,11 +133,17 @@ export default function DiaryPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [selectedItem, setSelectedItem] = useState<CalendarItem | null>(null);
   const [allItems, setAllItems] = useState<CalendarItem[]>([]);
-  const [isLoadingItems, setIsLoadingItems] = useState(true); // Renamed for clarity
+  const [isLoadingItems, setIsLoadingItems] = useState(true);
 
-  // Initialize date states directly to current date
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [month, setMonth] = useState<Date>(new Date());
+  
+  useEffect(() => {
+    // This effect runs only on the client, after the initial render.
+    if (!selectedDate) {
+        setSelectedDate(new Date());
+    }
+  }, [selectedDate]);
 
   /**
    * Fetches calendar items for the current user.
@@ -270,7 +277,7 @@ export default function DiaryPage() {
         <h2 className="text-xl font-semibold">Please log in to view your diary.</h2>
         <p className="mt-2">You need to be authenticated to access this page.</p>
         <Button asChild className="mt-4">
-            <Link href="/signin">Sign In</Link>
+            <Link href="/auth/sign-in">Sign In</Link>
         </Button>
       </div>
     );

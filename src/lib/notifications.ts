@@ -18,7 +18,7 @@ import { db } from '@/lib/firebase';
 import { getUsersByIds, type User } from './users';
 import { serializeDocument } from './firestore-utils';
 
-export type NotificationType = 'new_follower' | 'new_like' | 'event_rsvp' | 'contact_form_submission' | 'new_content_follower';
+export type NotificationType = 'new_follower' | 'new_like' | 'event_rsvp' | 'contact_form_submission' | 'new_content_follower' | 'new_appointment';
 
 export type Notification = {
   id: string; // Document ID
@@ -80,6 +80,7 @@ export const createNotification = async (
     if (type === 'new_like' && settings?.newLikes === false) return;
     if (type === 'event_rsvp' && settings?.eventRsvps === false) return;
     if (type === 'new_content_follower' && settings?.newFollowers === false) return; // Reuse follower setting
+    if (type === 'new_appointment' && settings?.eventRsvps === false) return; // Reuse event rsvp setting for now
   }
   
   // Proceed to create notification for system messages or if user settings allow
@@ -181,6 +182,8 @@ const getNotificationLink = (notification: NotificationWithActor): string => {
             return `/feed`; // A real app would link to `/posts/${notification.entityId}`
         case 'event_rsvp':
             return `/events/${notification.entityId}`;
+        case 'new_appointment':
+            return `/diary`;
         case 'new_content_follower':
             if (notification.entityType && notification.entityId) {
                 const prefix = entityTypePathMap[notification.entityType];

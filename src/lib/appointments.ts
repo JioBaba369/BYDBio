@@ -6,6 +6,7 @@ import { db } from './firebase';
 import type { User } from './users';
 import * as ics from 'ics';
 import { parseISO } from 'date-fns';
+import { createNotification } from './notifications';
 
 // A simplified appointment structure for now
 export type Appointment = {
@@ -57,7 +58,10 @@ export const getAvailableSlots = async (userId: string, selectedDate: Date): Pro
 
   const existingAppointments = await getAppointmentsForDay(userId, selectedDate);
   const bookedSlots = new Set(
-    existingAppointments.map(apt => apt.startTime.toDate().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }).slice(0, 5))
+    existingAppointments.map(apt => {
+        const d = apt.startTime.toDate();
+        return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+    })
   );
   
   const availableSlots: string[] = [];
@@ -73,7 +77,7 @@ export const getAvailableSlots = async (userId: string, selectedDate: Date): Pro
   endTime.setHours(endHour, endMinute, 0, 0);
 
   while (new Date(currentTime.getTime() + meetingDuration * 60000) <= endTime) {
-    const slotTime24h = currentTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }).slice(0, 5);
+    const slotTime24h = `${String(currentTime.getHours()).padStart(2, '0')}:${String(currentTime.getMinutes()).padStart(2, '0')}`;
     
     // Check if slot is in the future and not already booked
     if (currentTime > new Date() && !bookedSlots.has(slotTime24h)) {
@@ -107,10 +111,13 @@ export const createAppointment = async (
     endTime: Timestamp.fromDate(new Date(appointmentDate.getTime() + 30 * 60000)), // 30 mins later
   };
 
-  await addDoc(appointmentsRef, appointment);
+  const newDocRef = await addDoc(appointmentsRef, appointment);
   
-  // You might want to notify the owner here as well
-  // await createNotification(ownerId, 'new_appointment', bookerId, { ... });
+  await createNotification(ownerId, 'new_appointment' as any, bookerId, { // Cast for now, will add to type later
+      entityId: newDocRef.id,
+      entityTitle: `Meeting at ${appointmentDate.toLocaleTimeString('en-us', { timeStyle: 'short' })}`,
+      senderName: bookerName,
+  });
   
   return { success: true };
 };
