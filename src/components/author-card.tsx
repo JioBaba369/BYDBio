@@ -8,24 +8,26 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from './ui/button';
 import { useAuth } from './auth-provider';
 import { UserPlus, UserCheck, Loader2 } from 'lucide-react';
-import { useState } from 'react';
+import { useTransition } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { followUser, unfollowUser } from '@/lib/connections';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
+import { toggleFollowAction } from '@/app/actions/follow';
+
 
 interface AuthorCardProps {
   author: User;
   isOwner: boolean;
-  authorTypeLabel?: string; // e.g., "Host", "Seller", "Poster", "Provider", "Owner"
+  authorTypeLabel?: string;
 }
 
 export function AuthorCard({ author, isOwner, authorTypeLabel = "Creator" }: AuthorCardProps) {
   const { user: currentUser } = useAuth();
-  const [isFollowing, setIsFollowing] = useState(currentUser?.following.includes(author.uid) || false);
-  const [followerCount, setFollowerCount] = useState(author.followerCount || 0);
-  const [isFollowLoading, setIsFollowLoading] = useState(false);
+  const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
   const router = useRouter();
+  const pathname = usePathname();
+
+  const isFollowing = currentUser?.following.includes(author.uid) || false;
   
   const handleFollowToggle = async () => {
     if (!currentUser) {
@@ -35,27 +37,14 @@ export function AuthorCard({ author, isOwner, authorTypeLabel = "Creator" }: Aut
     }
     if (isOwner) return;
 
-    setIsFollowLoading(true);
-    const currentlyFollowing = isFollowing;
-
-    setIsFollowing(!currentlyFollowing);
-    setFollowerCount(prev => prev + (!currentlyFollowing ? 1 : -1));
-
-    try {
-        if (currentlyFollowing) {
-            await unfollowUser(currentUser.uid, author.uid);
-            toast({ title: `Unfollowed ${author.name}` });
-        } else {
-            await followUser(currentUser.uid, author.uid);
-            toast({ title: `You are now following ${author.name}` });
-        }
-    } catch (error) {
-        setIsFollowing(currentlyFollowing);
-        setFollowerCount(prev => prev + (currentlyFollowing ? 1 : -1));
-        toast({ title: "Something went wrong", variant: "destructive" });
-    } finally {
-        setIsFollowLoading(false);
-    }
+    startTransition(() => {
+        const formData = new FormData();
+        formData.append('currentUserId', currentUser.uid);
+        formData.append('targetUserId', author.uid);
+        formData.append('isFollowing', String(isFollowing));
+        formData.append('path', pathname);
+        toggleFollowAction(formData);
+    });
   };
 
 
@@ -73,10 +62,10 @@ export function AuthorCard({ author, isOwner, authorTypeLabel = "Creator" }: Aut
         </Link>
         <Link href={`/u/${author.username}`} className="font-semibold hover:underline">{author.name}</Link>
         <p className="text-sm text-muted-foreground">@{author.username}</p>
-        <p className="text-sm text-muted-foreground mt-2">{followerCount.toLocaleString()} followers</p>
+        <p className="text-sm text-muted-foreground mt-2">{author.followerCount.toLocaleString()} followers</p>
          {!isOwner && currentUser && (
-            <Button onClick={handleFollowToggle} disabled={isFollowLoading} className="w-full mt-4">
-                {isFollowLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : isFollowing ? <UserCheck className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
+            <Button onClick={handleFollowToggle} disabled={isPending} className="w-full mt-4">
+                {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : isFollowing ? <UserCheck className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
                 {isFollowing ? 'Following' : 'Follow'}
             </Button>
          )}

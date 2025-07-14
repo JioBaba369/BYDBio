@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useTransition } from "react";
 import type { User, PostWithAuthor, UserProfilePayload } from '@/lib/users';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -9,9 +9,8 @@ import { UserCheck, UserPlus, Edit, Loader2, Link as LinkIcon, Rss, Info, Messag
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { useAuth } from "@/components/auth-provider";
-import { followUser, unfollowUser } from "@/lib/connections";
 import { PostCard } from "@/components/post-card";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { getPostsByUser, deletePost, toggleLikePost, repostPost } from "@/lib/posts";
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
 import { Card, CardContent } from "@/components/ui/card";
@@ -24,6 +23,7 @@ import { BookingDialog } from "@/components/booking-dialog";
 import { ContactForm } from "@/components/contact-form";
 import { AboutTab } from "@/components/profile/about-tab";
 import Image from "next/image";
+import { toggleFollowAction } from "@/app/actions/follow";
 
 interface UserProfilePageProps {
   userProfileData: UserProfilePayload;
@@ -32,12 +32,10 @@ interface UserProfilePageProps {
 export default function UserProfileClientPage({ userProfileData }: UserProfilePageProps) {
   const { user: currentUser } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
 
-  const { isOwner, user } = userProfileData;
-  
-  const [isFollowing, setIsFollowing] = useState(userProfileData.isFollowedByCurrentUser);
-  const [followerCount, setFollowerCount] = useState(user.followerCount || 0);
-  const [isFollowLoading, setIsFollowLoading] = useState(false);
+  const { isOwner, user, isFollowedByCurrentUser } = userProfileData;
+  const [isFollowPending, startFollowTransition] = useTransition();
   
   const [posts, setPosts] = useState<PostWithAuthor[]>([]);
   const [postsLoading, setPostsLoading] = useState(true);
@@ -54,14 +52,7 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
     return generateVCard(user);
   }, [user]);
 
-
-  useEffect(() => {
-    if (currentUser) {
-      setIsFollowing(currentUser.following.includes(user.uid));
-    }
-  }, [currentUser, user.uid]);
-
-  const handleFollowToggle = async () => {
+  const handleFollowToggle = () => {
     if (!currentUser) {
         toast({ title: "Please sign in to follow users.", variant: "destructive" });
         router.push('/auth/sign-in');
@@ -69,29 +60,14 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
     }
     if (isOwner) return;
 
-    setIsFollowLoading(true);
-    const currentlyFollowing = isFollowing;
-
-    // Optimistic update
-    setIsFollowing(!currentlyFollowing);
-    setFollowerCount(prev => prev + (!currentlyFollowing ? 1 : -1));
-
-    try {
-        if (currentlyFollowing) {
-            await unfollowUser(currentUser.uid, user.uid);
-            toast({ title: `Unfollowed ${user.name}` });
-        } else {
-            await followUser(currentUser.uid, user.uid);
-            toast({ title: `You are now following ${user.name}` });
-        }
-    } catch (error) {
-        // Revert on error
-        setIsFollowing(currentlyFollowing);
-        setFollowerCount(prev => prev + (currentlyFollowing ? 1 : -1));
-        toast({ title: "Something went wrong", variant: "destructive" });
-    } finally {
-        setIsFollowLoading(false);
-    }
+    startFollowTransition(() => {
+        const formData = new FormData();
+        formData.append('currentUserId', currentUser.uid);
+        formData.append('targetUserId', user.uid);
+        formData.append('isFollowing', String(isFollowedByCurrentUser));
+        formData.append('path', pathname);
+        toggleFollowAction(formData);
+    });
   };
 
   const handleLike = async (postId: string) => {
@@ -166,7 +142,7 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
     }
   };
 
-  const canViewPrivateContent = isOwner || isFollowing;
+  const canViewPrivateContent = isOwner || isFollowedByCurrentUser;
 
   const visiblePosts = useMemo(() => {
     return posts.filter(post => {
@@ -232,9 +208,9 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
                         {isOwner ? (
                             <Button asChild><Link href="/profile"><Edit className="mr-2 h-4 w-4" />Edit Profile</Link></Button>
                         ) : (
-                            <Button onClick={handleFollowToggle} disabled={isFollowLoading}>
-                                {isFollowLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : isFollowing ? <UserCheck className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
-                                {isFollowing ? 'Following' : 'Follow'}
+                            <Button onClick={handleFollowToggle} disabled={isFollowPending}>
+                                {isFollowPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : isFollowedByCurrentUser ? <UserCheck className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
+                                {isFollowedByCurrentUser ? 'Following' : 'Follow'}
                             </Button>
                         )}
                         <Dialog>
@@ -265,7 +241,7 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
                     </div>
                 </div>
                  <div className="flex items-center gap-4 mt-4 text-sm">
-                    <p><span className="font-bold">{followerCount.toLocaleString()}</span> Followers</p>
+                    <p><span className="font-bold">{user.followerCount.toLocaleString()}</span> Followers</p>
                     <p><span className="font-bold">{user.following.length.toLocaleString()}</span> Following</p>
                     <p><span className="font-bold">{user.postCount || 0}</span> Posts</p>
                 </div>

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UserPlus, UserCheck, QrCode, Loader2, Users, Search as SearchIcon } from "lucide-react";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useTransition } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import {
   AlertDialog,
@@ -18,15 +18,40 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import QrScanner from "@/components/qr-scanner";
 import Link from "next/link";
 import { saveAs } from "file-saver";
 import { useAuth } from "@/components/auth-provider";
 import type { User } from "@/lib/users";
-import { followUser, unfollowUser, getFollowers, getFollowing, getSuggestedUsers } from "@/lib/connections";
+import { getFollowers, getFollowing, getSuggestedUsers } from "@/lib/connections";
 import { ConnectionsPageSkeleton } from "@/components/connections-skeleton";
+import { toggleFollowAction } from "@/app/actions/follow";
+
+function FollowButton({ targetUser, currentUser, isFollowing }: { targetUser: User; currentUser: User; isFollowing: boolean }) {
+    const [isPending, startTransition] = useTransition();
+    const pathname = usePathname();
+
+    const handleFollow = () => {
+        startTransition(() => {
+            const formData = new FormData();
+            formData.append('currentUserId', currentUser.uid);
+            formData.append('targetUserId', targetUser.uid);
+            formData.append('isFollowing', String(isFollowing));
+            formData.append('path', pathname);
+            toggleFollowAction(formData);
+        });
+    }
+
+    return (
+        <Button size="sm" variant={isFollowing ? 'secondary' : 'default'} onClick={handleFollow} disabled={isPending}>
+            {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : isFollowing ? <UserCheck className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
+            {isFollowing ? 'Following' : 'Follow'}
+        </Button>
+    )
+}
+
 
 export default function ConnectionsPage() {
     const { user, loading: authLoading } = useAuth();
@@ -41,7 +66,6 @@ export default function ConnectionsPage() {
     const [followingList, setFollowingList] = useState<User[]>([]);
     const [suggestedList, setSuggestedList] = useState<User[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [togglingFollowId, setTogglingFollowId] = useState<string | null>(null);
 
     const [isScannerOpen, setIsScannerOpen] = useState(false);
     const [scannedVCardData, setScannedVCardData] = useState<string | null>(null);
@@ -72,29 +96,6 @@ export default function ConnectionsPage() {
         }
     }, [user?.uid, fetchConnections]);
 
-    const handleToggleFollow = async (targetUser: User) => {
-        if (!user || togglingFollowId) return;
-        
-        setTogglingFollowId(targetUser.uid);
-        const isCurrentlyFollowing = followingList.some(u => u.uid === targetUser.uid);
-
-        try {
-            if (isCurrentlyFollowing) {
-                await unfollowUser(user.uid, targetUser.uid);
-                toast({ title: `Unfollowed ${targetUser.name}` });
-            } else {
-                await followUser(user.uid, targetUser.uid);
-                toast({ title: `You are now following ${targetUser.name}` });
-            }
-            // Refetch all connection data to ensure UI consistency
-            await fetchConnections();
-        } catch (error) {
-            toast({ title: "Something went wrong", variant: "destructive" });
-        } finally {
-            setTogglingFollowId(null);
-        }
-    };
-
     const handleSaveVCard = () => {
         if (!scannedVCardData) return;
         const blob = new Blob([scannedVCardData], { type: "text/vcard;charset=utf-8" });
@@ -111,13 +112,11 @@ export default function ConnectionsPage() {
     const handleQrScanSuccess = (decodedText: string) => {
         setIsScannerOpen(false);
 
-        // Check for vCard
         if (decodedText.startsWith('BEGIN:VCARD')) {
             setScannedVCardData(decodedText);
             return;
         }
 
-        // Check for app URL
         try {
             const url = new URL(decodedText);
             if (url.origin === window.location.origin && url.pathname.startsWith('/u/')) {
@@ -126,7 +125,7 @@ export default function ConnectionsPage() {
                 return;
             }
         } catch (error) {
-            // Not a valid URL, do nothing and fall through to the error toast
+            // Not a valid URL
         }
 
         toast({
@@ -145,7 +144,7 @@ export default function ConnectionsPage() {
       return <ConnectionsPageSkeleton />;
     }
     
-    if (!user) return null; // Should be redirected by AuthProvider
+    if (!user) return null;
 
   return (
     <>
@@ -198,8 +197,7 @@ export default function ConnectionsPage() {
               {followersList.length > 0 ? (
                 <div className="flex flex-col gap-4">
                     {followersList.map((followerUser) => {
-                        const isFollowedByCurrentUser = followingList.some(f => f.uid === followerUser.uid);
-                        const isProcessing = togglingFollowId === followerUser.uid;
+                        const isFollowedByCurrentUser = user.following.includes(followerUser.uid);
                         return (
                         <Card key={followerUser.uid}>
                             <CardContent className="p-4">
@@ -215,10 +213,7 @@ export default function ConnectionsPage() {
                                         </div>
                                     </Link>
                                     <div className="flex items-center gap-2 flex-shrink-0">
-                                        <Button size="sm" variant={isFollowedByCurrentUser ? 'secondary' : 'default'} onClick={() => handleToggleFollow(followerUser)} disabled={isProcessing}>
-                                            {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : isFollowedByCurrentUser ? <UserCheck className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
-                                            {isFollowedByCurrentUser ? 'Following' : 'Follow'}
-                                        </Button>
+                                        <FollowButton targetUser={followerUser} currentUser={user} isFollowing={isFollowedByCurrentUser} />
                                     </div>
                                 </div>
                             </CardContent>
@@ -238,31 +233,25 @@ export default function ConnectionsPage() {
           <TabsContent value="following" className="pt-4">
             {followingList.length > 0 ? (
                 <div className="flex flex-col gap-4">
-                    {followingList.map((followingUser) => {
-                        const isProcessing = togglingFollowId === followingUser.uid;
-                        return (
-                            <Card key={followingUser.uid}>
-                                <CardContent className="p-4">
-                                    <div className="flex items-center justify-between gap-4">
-                                        <Link href={`/u/${followingUser.username}`} className="flex items-center gap-4 hover:underline">
-                                            <Avatar>
-                                                <AvatarImage src={followingUser.avatarUrl} />
-                                                <AvatarFallback>{followingUser.name.charAt(0)}</AvatarFallback>
-                                            </Avatar>
-                                            <div>
-                                                <p className="font-semibold">{followingUser.name}</p>
-                                                <p className="text-sm text-muted-foreground">@{followingUser.username}</p>
-                                            </div>
-                                        </Link>
-                                        <Button size="sm" variant="secondary" onClick={() => handleToggleFollow(followingUser)} disabled={isProcessing}>
-                                            {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UserCheck className="mr-2 h-4 w-4" />}
-                                            Following
-                                        </Button>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        )
-                    })}
+                    {followingList.map((followingUser) => (
+                        <Card key={followingUser.uid}>
+                            <CardContent className="p-4">
+                                <div className="flex items-center justify-between gap-4">
+                                    <Link href={`/u/${followingUser.username}`} className="flex items-center gap-4 hover:underline">
+                                        <Avatar>
+                                            <AvatarImage src={followingUser.avatarUrl} />
+                                            <AvatarFallback>{followingUser.name.charAt(0)}</AvatarFallback>
+                                        </Avatar>
+                                        <div>
+                                            <p className="font-semibold">{followingUser.name}</p>
+                                            <p className="text-sm text-muted-foreground">@{followingUser.username}</p>
+                                        </div>
+                                    </Link>
+                                    <FollowButton targetUser={followingUser} currentUser={user} isFollowing={true} />
+                                </div>
+                            </CardContent>
+                        </Card>
+                    ))}
                 </div>
             ) : (
                 <Card>
@@ -280,30 +269,24 @@ export default function ConnectionsPage() {
         <TabsContent value="suggestions" className="pt-4">
             {suggestedList.length > 0 ? (
                 <div className="grid md:grid-cols-2 gap-4">
-                    {suggestedList.map((suggestedUser) => {
-                        const isProcessing = togglingFollowId === suggestedUser.uid;
-                        return (
-                            <Card key={suggestedUser.uid}>
-                                <CardContent className="p-6 flex flex-col items-center text-center gap-2">
-                                    <Link href={`/u/${suggestedUser.username}`} className="hover:underline">
-                                        <Avatar className="h-20 w-20 mb-2">
-                                            <AvatarImage src={suggestedUser.avatarUrl} />
-                                            <AvatarFallback>{suggestedUser.name.charAt(0)}</AvatarFallback>
-                                        </Avatar>
-                                        <p className="font-semibold">{suggestedUser.name}</p>
-                                        <p className="text-sm text-muted-foreground">@{suggestedUser.username}</p>
-                                    </Link>
-                                    <p className="text-sm text-muted-foreground text-center line-clamp-2 h-10 mt-2">
-                                        {suggestedUser.bio}
-                                    </p>
-                                    <Button size="sm" variant="default" onClick={() => handleToggleFollow(suggestedUser)} className="w-full mt-2" disabled={isProcessing}>
-                                        {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UserPlus className="mr-2 h-4 w-4" />}
-                                        Follow
-                                    </Button>
-                                </CardContent>
-                            </Card>
-                        )
-                    })}
+                    {suggestedList.map((suggestedUser) => (
+                        <Card key={suggestedUser.uid}>
+                            <CardContent className="p-6 flex flex-col items-center text-center gap-2">
+                                <Link href={`/u/${suggestedUser.username}`} className="hover:underline">
+                                    <Avatar className="h-20 w-20 mb-2">
+                                        <AvatarImage src={suggestedUser.avatarUrl} />
+                                        <AvatarFallback>{suggestedUser.name.charAt(0)}</AvatarFallback>
+                                    </Avatar>
+                                    <p className="font-semibold">{suggestedUser.name}</p>
+                                    <p className="text-sm text-muted-foreground">@{suggestedUser.username}</p>
+                                </Link>
+                                <p className="text-sm text-muted-foreground text-center line-clamp-2 h-10 mt-2">
+                                    {suggestedUser.bio}
+                                </p>
+                                <FollowButton targetUser={suggestedUser} currentUser={user} isFollowing={false} />
+                            </CardContent>
+                        </Card>
+                    ))}
                 </div>
              ) : (
                 <Card>
