@@ -173,6 +173,11 @@ export const deleteEvent = async (id: string) => {
   await deleteDoc(eventDocRef);
 };
 
+export const deleteAppointment = async (id: string) => {
+  const appointmentDocRef = doc(db, 'appointments', id);
+  await deleteDoc(appointmentDocRef);
+}
+
 // Function for a user to RSVP to an event
 export const toggleRsvp = async (eventId: string, userId: string) => {
     const eventRef = doc(db, 'events', eventId);

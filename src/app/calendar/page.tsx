@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge, badgeVariants } from '@/components/ui/badge';
-import { getCalendarItems, toggleRsvp, deleteEvent, type CalendarItem } from '@/lib/events';
+import { getCalendarItems, toggleRsvp, deleteEvent, type CalendarItem, deleteAppointment } from '@/lib/events';
 import { useAuth } from '@/components/auth-provider';
 import { Search, MapPin, Tag, Briefcase, DollarSign, X, Clock, MoreHorizontal, Edit, Trash2, PlusCircle, Tags, Calendar as CalendarIconLucide, Building2, List, LayoutGrid, Eye, MousePointerClick, Gift, Users, Megaphone, CalendarPlus, UserCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -29,8 +29,7 @@ import { ClientFormattedCurrency } from '@/components/client-formatted-currency'
 import { DayPicker } from 'react-day-picker';
 import 'react-day-picker/dist/style.css';
 import { format, parseISO, isSameDay } from 'date-fns';
-import * as ics from 'ics';
-import { saveAs } from 'file-saver';
+import { generateIcs } from '@/lib/appointments';
 import { KillChainTracker } from '@/components/kill-chain-tracker';
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
@@ -151,11 +150,7 @@ export default function CalendarPage() {
 
   const handleDelete = async () => {
     if (!selectedItem || !user) return;
-    if (selectedItem.type === 'Appointment') {
-        toast({ title: "Action not supported", description: "Appointments cannot be deleted from this view yet." });
-        setIsDeleteDialogOpen(false);
-        return;
-    }
+
     setIsDeleting(true);
 
     const previousItems = [...allItems];
@@ -188,6 +183,10 @@ export default function CalendarPage() {
             case 'Business Page':
                 await deletePromoPage(selectedItem.id);
                 toast({ title: 'Business Page deleted!' });
+                break;
+            case 'Appointment':
+                await deleteAppointment(selectedItem.id);
+                toast({ title: 'Appointment deleted!' });
                 break;
         }
     } catch (error) {
@@ -246,25 +245,10 @@ export default function CalendarPage() {
 
   const handleAddToCalendar = (item: CalendarItem) => {
     if (!user || !item.startTime || !item.endTime) return;
-    const startDate = parseISO(item.startTime);
-    const endDate = parseISO(item.endTime);
-    const icsEvent: ics.EventAttributes = {
-        title: item.title,
-        description: `Appointment with ${item.bookerName}.`,
-        start: [startDate.getFullYear(), startDate.getMonth() + 1, startDate.getDate(), startDate.getHours(), startDate.getMinutes()],
-        end: [endDate.getFullYear(), endDate.getMonth() + 1, endDate.getDate(), endDate.getHours(), endDate.getMinutes()],
-        organizer: { name: user.name, email: user.email || 'noreply@byd.bio' },
-        attendees: [{ name: item.bookerName, rsvp: true }]
-    };
-
-    const { error, value } = ics.createEvent(icsEvent);
-
-    if (error) {
+    try {
+        generateIcs(item.title, item.startTime, item.endTime, user.name, user.email || 'noreply@byd.bio', item.bookerName || 'Guest');
+    } catch(e) {
         toast({ title: "Error creating calendar file", variant: "destructive" });
-        return;
-    }
-    if (value) {
-        saveAs(new Blob([value], { type: 'text/calendar;charset=utf-8' }), `${item.title.replace(/ /g,"_")}.ics`);
     }
   };
   
@@ -294,29 +278,29 @@ export default function CalendarPage() {
                         </Tooltip>
                     </TooltipProvider>
                 </div>
-                {item.type !== 'Appointment' ? (
-                     <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-7 w-7 flex-shrink-0">
-                            <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
+                 <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-7 w-7 flex-shrink-0">
+                        <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                        {item.type === 'Appointment' ? (
+                            <DropdownMenuItem onClick={() => handleAddToCalendar(item)} className="cursor-pointer">
+                                <CalendarPlus className="mr-2 h-4 w-4" /> Add to Calendar
+                            </DropdownMenuItem>
+                        ) : (
                             <DropdownMenuItem asChild>
                             <Link href={item.editPath} className="cursor-pointer">
                                 <Edit className="mr-2 h-4 w-4" /> {item.isExternal ? 'View Details' : 'Edit'}
                             </Link>
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => openDeleteDialog(item)} className="text-destructive cursor-pointer">
-                            <Trash2 className="mr-2 h-4 w-4" /> {item.isExternal ? 'Remove from Calendar' : 'Delete'}
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                ) : (
-                    <Button variant="ghost" size="icon" className="h-7 w-7 flex-shrink-0" onClick={() => handleAddToCalendar(item)}>
-                        <CalendarPlus className="h-4 w-4" />
-                    </Button>
-                )}
+                        )}
+                        <DropdownMenuItem onClick={() => openDeleteDialog(item)} className="text-destructive cursor-pointer">
+                        <Trash2 className="mr-2 h-4 w-4" /> {item.isExternal ? 'Remove from Calendar' : 'Delete'}
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
             </div>
         </CardHeader>
         <CardContent className="p-3 pt-0 space-y-1 text-xs text-muted-foreground">
@@ -508,9 +492,21 @@ export default function CalendarPage() {
                                                 <Badge variant={getBadgeVariant(item.type)}>{item.type}</Badge>
                                                 <CardTitle className="text-base mt-2">{item.title}</CardTitle>
                                             </div>
-                                            <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0" onClick={() => handleAddToCalendar(item)}>
-                                                <CalendarPlus className="h-4 w-4" />
-                                            </Button>
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0">
+                                                    <MoreHorizontal className="h-4 w-4" />
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end" className="w-56">
+                                                    <DropdownMenuItem onClick={() => handleAddToCalendar(item)} className="cursor-pointer">
+                                                        <CalendarPlus className="mr-2 h-4 w-4" /> Add to Calendar
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem onClick={() => openDeleteDialog(item)} className="text-destructive cursor-pointer">
+                                                    <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
                                         </div>
                                      </CardHeader>
                                      <CardContent className="p-4 pt-2 space-y-2 text-sm text-muted-foreground flex-grow">
@@ -601,29 +597,29 @@ export default function CalendarPage() {
                                         <TableCell><ClientFormattedDate date={item.date} formatStr="PPP"/></TableCell>
                                         <TableCell><Badge variant={item.status === 'active' ? 'secondary' : 'outline'}>{item.status}</Badge></TableCell>
                                         <TableCell className="text-right">
-                                            {item.type !== 'Appointment' ? (
-                                                <DropdownMenu>
-                                                    <DropdownMenuTrigger asChild>
-                                                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                                                        <MoreHorizontal className="h-4 w-4" />
-                                                        </Button>
-                                                    </DropdownMenuTrigger>
-                                                    <DropdownMenuContent align="end">
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                                                    <MoreHorizontal className="h-4 w-4" />
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end">
+                                                    {item.type === 'Appointment' ? (
+                                                        <DropdownMenuItem onClick={() => handleAddToCalendar(item)} className="cursor-pointer">
+                                                            <CalendarPlus className="mr-2 h-4 w-4" /> Add to Calendar
+                                                        </DropdownMenuItem>
+                                                    ) : (
                                                         <DropdownMenuItem asChild>
                                                             <Link href={item.editPath} className="cursor-pointer">
                                                                 <Edit className="mr-2 h-4 w-4" /> {item.isExternal ? 'View Details' : 'Edit'}
                                                             </Link>
                                                         </DropdownMenuItem>
-                                                        <DropdownMenuItem onClick={() => openDeleteDialog(item)} className="text-destructive cursor-pointer">
-                                                            <Trash2 className="mr-2 h-4 w-4" /> {item.isExternal ? 'Remove from Calendar' : 'Delete'}
-                                                        </DropdownMenuItem>
-                                                    </DropdownMenuContent>
-                                                </DropdownMenu>
-                                            ) : (
-                                                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleAddToCalendar(item)}>
-                                                    <CalendarPlus className="h-4 w-4" />
-                                                </Button>
-                                            )}
+                                                    )}
+                                                    <DropdownMenuItem onClick={() => openDeleteDialog(item)} className="text-destructive cursor-pointer">
+                                                        <Trash2 className="mr-2 h-4 w-4" /> {item.isExternal ? 'Remove from Calendar' : 'Delete'}
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
                                         </TableCell>
                                     </TableRow>
                                 ))}

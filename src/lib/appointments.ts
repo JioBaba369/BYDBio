@@ -1,10 +1,12 @@
 
 'use server';
 
-import { collection, query, where, getDocs, Timestamp, getDoc, doc, addDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, Timestamp, getDoc, doc, addDoc, deleteDoc } from 'firebase/firestore';
 import { db } from './firebase';
 import type { User } from './users';
-import { createNotification } from './notifications';
+import * as ics from 'ics';
+import { saveAs } from 'file-saver';
+import { parseISO } from 'date-fns';
 
 // A simplified appointment structure for now
 export type Appointment = {
@@ -73,10 +75,10 @@ export const getAvailableSlots = async (userId: string, selectedDate: Date): Pro
 
   while (new Date(currentTime.getTime() + meetingDuration * 60000) <= endTime) {
     const slotTime24h = currentTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }).slice(0, 5);
-    const slotTime12h = currentTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
-
+    
     // Check if slot is in the future and not already booked
     if (currentTime > new Date() && !bookedSlots.has(slotTime24h)) {
+      const slotTime12h = currentTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
       availableSlots.push(slotTime12h);
     }
     
@@ -113,3 +115,29 @@ export const createAppointment = async (
   
   return { success: true };
 };
+
+
+export const generateIcs = (title: string, startTime: string, endTime: string, organizerName: string, organizerEmail: string, attendeeName: string) => {
+    const startDate = parseISO(startTime);
+    const endDate = parseISO(endTime);
+    const icsEvent: ics.EventAttributes = {
+        title: title,
+        description: `Meeting with ${attendeeName}.`,
+        start: [startDate.getFullYear(), startDate.getMonth() + 1, startDate.getDate(), startDate.getHours(), startDate.getMinutes()],
+        end: [endDate.getFullYear(), endDate.getMonth() + 1, endDate.getDate(), endDate.getHours(), endDate.getMinutes()],
+        organizer: { name: organizerName, email: organizerEmail },
+        attendees: [{ name: attendeeName, rsvp: true }]
+    };
+
+    const { error, value } = ics.createEvent(icsEvent);
+
+    if (error) {
+        console.error(error);
+        throw new Error("Error creating ICS file");
+    }
+    if (value) {
+        // This part needs to run on the client to trigger a download
+        const blob = new Blob([value], { type: 'text/calendar;charset=utf-8' });
+        saveAs(blob, `${title.replace(/ /g,"_")}.ics`);
+    }
+}
