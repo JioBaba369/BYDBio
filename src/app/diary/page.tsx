@@ -20,6 +20,7 @@ import 'react-day-picker/dist/style.css';
 import { format, isSameDay } from 'date-fns';
 import { saveAs } from 'file-saver';
 import { generateIcsContent } from '@/lib/appointments';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const DiarySkeleton = () => (
     <div className="space-y-6 animate-pulse">
