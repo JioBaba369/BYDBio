@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -24,7 +23,6 @@ import { FeedSkeleton } from "@/components/feed-skeleton";
 import { QuotedPostPreview } from "@/components/quoted-post-preview";
 
 // --- Helper Components ---
-// This component is well-designed and reusable. Keeping it as is.
 const EmptyFeedState = ({
   icon: Icon,
   title,
@@ -206,7 +204,7 @@ export default function FeedPage() {
 
       let quotedPostData: { id: string; content: string; imageUrl: string | null; authorId: string; } | undefined = undefined;
       if (postToQuote) {
-        // Prepare quoted post data
+        // Prepare quoted post data. Ensure `PostWithAuthor` type correctly maps to this structure.
         quotedPostData = {
           id: postToQuote.id,
           content: postToQuote.content,
@@ -219,6 +217,8 @@ export default function FeedPage() {
       await createPost(user.uid, { content: postContent, imageUrl: imageUrlToPost, quotedPost: quotedPostData, privacy: postPrivacy, category: postCategory });
 
       // Refresh the currently active feed to show the new post immediately
+      // Use Promise.all if refreshing both feeds simultaneously is desired after a new post,
+      // though refreshing only the active one is generally good for UX.
       await fetchFeed(activeTab);
 
       // Reset form fields
@@ -241,12 +241,13 @@ export default function FeedPage() {
    * @param postId - The ID of the post to like/unlike.
    */
   const handleLike = useCallback(async (postId: string) => {
-    if (!user || loadingAction) return; // Prevent action if user not loaded or another action is in progress
+    if (!user || loadingAction) return;
 
     setLoadingAction({ postId, action: 'like' });
 
-    // Optimistic UI update: immediately change the like status and count in the UI
-    const updatePostLikes = (posts: PostWithAuthor[]) => posts.map(p => {
+    // Update both feeds using a functional update to ensure latest state is used
+    // This is a robust way to handle state updates when depending on previous state.
+    const updatePostLikes = (prevPosts: PostWithAuthor[]) => prevPosts.map(p => {
       if (p.id === postId) {
         const isLiked = !p.isLiked;
         return {
@@ -258,32 +259,28 @@ export default function FeedPage() {
       return p;
     });
 
-    const originalFollowing = [...followingPosts]; // Snapshot for rollback
-    const originalDiscovery = [...discoveryPosts]; // Snapshot for rollback
-
     setFollowingPosts(updatePostLikes);
     setDiscoveryPosts(updatePostLikes);
 
     try {
       await toggleLikePost(postId, user.uid);
-      // No toast on success for likes to avoid notification spam
+      // No toast on success for likes to avoid notification spam, as per previous implementation
     } catch (error) {
       console.error("Failed to toggle like:", error);
       toast({ title: "Something went wrong", description: "Could not update like status. Please try again.", variant: "destructive" });
-      // Rollback UI on error
-      setFollowingPosts(originalFollowing);
-      setDiscoveryPosts(originalDiscovery);
+      // Rollback UI on error by re-fetching to ensure data consistency
+      await Promise.all([fetchFeed('following'), fetchFeed('discovery')]); // Re-fetch both just in case
     } finally {
       setLoadingAction(null);
     }
-  }, [user, loadingAction, followingPosts, discoveryPosts, toast]); // Dependencies: user, loadingAction, current feed states, toast
+  }, [user, loadingAction, fetchFeed, toast]); // Removed followingPosts/discoveryPosts from deps as functional update handles it
 
   /**
    * Handles reposting a post.
    * @param postId - The ID of the post to repost.
    */
   const handleRepost = useCallback(async (postId: string) => {
-    if (!user || loadingAction) return; // Prevent action if user not loaded or another action is in progress
+    if (!user || loadingAction) return;
     setLoadingAction({ postId, action: 'repost' });
     try {
       await repostPost(postId, user.uid);
@@ -296,7 +293,7 @@ export default function FeedPage() {
     } finally {
       setLoadingAction(null);
     }
-  }, [user, loadingAction, fetchFeed, toast]); // Dependencies: user, loadingAction, fetchFeed, toast
+  }, [user, loadingAction, fetchFeed, toast]);
 
   /**
    * Sets the post to be quoted in the new post creation area.
@@ -330,8 +327,12 @@ export default function FeedPage() {
     const idToDelete = postToDelete.id;
 
     // Optimistic UI update: filter out the deleted post from both feeds
-    setFollowingPosts(prev => prev.filter(item => item.id !== idToDelete && item.repostedPost?.id !== idToDelete));
-    setDiscoveryPosts(prev => prev.filter(item => item.id !== idToDelete && item.repostedPost?.id !== idToDelete));
+    // Ensure any reposts of this original post are also removed from the UI.
+    const filterDeletedPost = (prevPosts: PostWithAuthor[]) =>
+      prevPosts.filter(item => item.id !== idToDelete && item.originalPostId !== idToDelete);
+
+    setFollowingPosts(filterDeletedPost);
+    setDiscoveryPosts(filterDeletedPost);
 
     try {
       await deletePost(idToDelete);
@@ -346,7 +347,7 @@ export default function FeedPage() {
       setPostToDelete(null); // Clear selected post for deletion
       setIsDeleting(false);
     }
-  }, [postToDelete, user, fetchFeed, toast]); // Dependencies: postToDelete, user, fetchFeed, toast
+  }, [postToDelete, user, fetchFeed, toast]);
 
   // --- Render Logic ---
 

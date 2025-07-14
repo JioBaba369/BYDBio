@@ -1,4 +1,3 @@
-
 'use server';
 
 import {
@@ -23,10 +22,11 @@ import {
 import { db } from '@/lib/firebase';
 import type { User } from './users';
 import { createNotification } from './notifications';
-import { getUsersByIds } from './users';
+import { getUsersByIds, getSuggestedUsers } from './users';
 import { serializeDocument } from './firestore-utils';
 
 // This is the structure stored in Firestore for a quoted or reposted post.
+// It also serves as the structure for the original post when a post is a repost.
 export type EmbeddedPostInfo = {
   id: string;
   content: string;
@@ -59,7 +59,11 @@ export type Post = {
   repostCount?: number;
   privacy: 'public' | 'followers' | 'me';
   quotedPost?: EmbeddedPostInfo;
-  repostedPost?: EmbeddedPostInfo; // An embedded version of the ORIGINAL post
+  // If this post is a repost, this field will contain the *original* post's data.
+  // The top-level authorId will be the user who did the reposting.
+  repostedPost?: EmbeddedPostInfo;
+  // If this post is a repost, this is the ID of the original post document.
+  originalPostId?: string;
   searchableKeywords?: string[];
 };
 
@@ -227,7 +231,7 @@ export const repostPost = async (originalPostId: string, reposterId: string): Pr
     const repostQuery = query(
         collection(db, 'posts'),
         where('authorId', '==', reposterId),
-        where('repostedPost.id', '==', originalPostId)
+        where('originalPostId', '==', originalPostId)
     );
     const existingRepost = await getDocs(repostQuery);
     if (!existingRepost.empty) {
@@ -260,6 +264,7 @@ export const repostPost = async (originalPostId: string, reposterId: string): Pr
         content: '', // Reposts have no original content of their own
         imageUrl: null,
         repostedPost: contentToRepost, // Embed the original post data
+        originalPostId: contentToRepost.id, // Store a direct reference to the original post ID
         privacy: originalPostData.privacy, // Inherit privacy from original post
         createdAt: serverTimestamp(),
         likes: 0,
@@ -339,15 +344,6 @@ export const populatePostAuthors = async (posts: Post[], viewerId?: string | nul
     }).filter((post): post is PostWithAuthor => post !== null);
 }
 
-// Reusable function to fetch and process posts from a given query
-const fetchAndProcessPosts = async (q: any, viewerId: string) => {
-    const postSnapshots = await getDocs(q);
-    const uniquePosts = Array.from(new Map(postSnapshots.docs.map(doc => [doc.id, doc])).values());
-    const postsData = uniquePosts.map(doc => serializeDocument<Post>(doc)).filter((p): p is Post => !!p);
-    postsData.sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-    return populatePostAuthors(postsData.slice(0, FEED_POST_LIMIT), viewerId);
-}
-
 // Function to fetch posts for the user's feed
 export const getFeedPosts = async (userId: string, followingIds: string[]): Promise<PostWithAuthor[]> => {
     const authorsToFetch = [...new Set([userId, ...followingIds])];
@@ -386,29 +382,45 @@ export const getFeedPosts = async (userId: string, followingIds: string[]): Prom
 };
 
 /**
- * Fetches recent posts from users that the current user does not follow.
+ * Fetches recent public posts from users that the current user does not follow.
  * @param userId The UID of the current user.
  * @param followingIds An array of UIDs that the current user follows.
  * @returns A promise that resolves to an array of posts for the discovery feed.
  */
 export const getDiscoveryPosts = async (userId: string, followingIds: string[]): Promise<PostWithAuthor[]> => {
-    const usersToExclude = [...new Set([userId, ...followingIds])];
-    
-    const q = query(
-        collection(db, 'posts'), 
-        where('privacy', '==', 'public'),
-        orderBy('createdAt', 'desc'),
-        limit(100) // Fetch more initially to allow for filtering
-    );
-    
-    const postSnapshots = await getDocs(q);
-    const discoveryDocs = postSnapshots.docs
-        .filter(doc => !usersToExclude.includes(doc.data().authorId))
-        .slice(0, FEED_POST_LIMIT);
-        
-    const postsData = discoveryDocs.map(doc => serializeDocument<Post>(doc)).filter((p): p is Post => !!p);
+    const suggestedUsers = await getSuggestedUsers(userId, 20); // Get up to 20 suggested users
+    if (suggestedUsers.length === 0) {
+        return [];
+    }
 
-    return populatePostAuthors(postsData, userId);
+    const suggestedUserIds = suggestedUsers.map(u => u.uid);
+    
+    // Chunk the user IDs to handle Firestore's 'in' query limit (30)
+    const chunks: string[][] = [];
+    for (let i = 0; i < suggestedUserIds.length; i += 30) {
+        chunks.push(suggestedUserIds.slice(i, i + 30));
+    }
+    
+    const allPosts: Post[] = [];
+
+    for (const chunk of chunks) {
+        const postsQuery = query(
+            collection(db, 'posts'),
+            where('authorId', 'in', chunk),
+            where('privacy', '==', 'public'),
+            orderBy('createdAt', 'desc'),
+            limit(FEED_POST_LIMIT)
+        );
+        const postSnapshots = await getDocs(postsQuery);
+        postSnapshots.forEach(doc => {
+            const post = serializeDocument<Post>(doc);
+            if (post) allPosts.push(post);
+        });
+    }
+
+    allPosts.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    const finalPosts = allPosts.slice(0, FEED_POST_LIMIT);
+    
+    return populatePostAuthors(finalPosts, userId);
 };
 
-    
