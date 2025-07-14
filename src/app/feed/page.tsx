@@ -234,8 +234,7 @@ export default function FeedPage() {
     if (!postToDelete || !user) return;
     setIsDeleting(true);
 
-    const isRepost = !!postToDelete.repostedPost;
-    const idToDelete = isRepost ? postToDelete.repostedPost!.id : postToDelete.id;
+    const idToDelete = postToDelete.id;
 
     const originalFollowing = [...followingPosts];
     const originalDiscovery = [...discoveryPosts];
@@ -270,6 +269,7 @@ export default function FeedPage() {
   
   const renderFeedContent = (posts: PostWithAuthor[], emptyState: React.ReactNode) => {
       if (isLoading) return <FeedSkeleton />;
+      if (!isLoading && posts.length === 0) return emptyState;
       if (posts.length > 0) {
         return (
              <div className="space-y-6">
@@ -288,7 +288,7 @@ export default function FeedPage() {
             </div>
         )
       }
-      return emptyState;
+      return null;
   }
 
   return (

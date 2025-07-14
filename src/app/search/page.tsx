@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { UserPlus, UserCheck, Search as SearchIcon, Briefcase, MapPin, Tag, Calendar, Users, Tags, DollarSign, Gift, Eye, Building2, ExternalLink, Megaphone, Loader2, Rss, MousePointerClick } from "lucide-react";
+import { UserPlus, UserCheck, Search as SearchIcon, Briefcase, MapPin, Tag, Calendar, Users, Tags, DollarSign, Gift, Eye, Building2, ExternalLink, Megaphone, Loader2, Rss, MousePointerClick, Heart, MessageCircle, Repeat, Quote, Share2 } from "lucide-react";
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -170,7 +170,7 @@ export default function SearchPage() {
             }
         });
         
-        newResults.posts = await populatePostAuthors(postsToPopulate);
+        newResults.posts = await populatePostAuthors(postsToPopulate, user?.uid);
 
         setResults(newResults);
 

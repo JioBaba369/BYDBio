@@ -381,7 +381,7 @@ export const getDiscoveryPosts = async (userId: string, followingIds: string[]):
         collection(db, 'posts'), 
         where('privacy', '==', 'public'),
         orderBy('createdAt', 'desc'),
-        limit(100)
+        limit(100) // Fetch more initially to allow for filtering
     );
     const querySnapshot = await getDocs(q);
 
