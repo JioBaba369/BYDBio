@@ -1,3 +1,4 @@
+
 'use server';
 
 import {
@@ -133,11 +134,8 @@ export const createPost = async (userId: string, data: Pick<Post, 'content' | 'i
     comments: 0,
     repostCount: 0,
     searchableKeywords: keywords,
+    quotedPost: data.quotedPost || null, // Ensure quotedPost is included
   };
-
-  if (data.quotedPost) {
-    postData.quotedPost = data.quotedPost;
-  }
   
   // Set the new post document in the batch
   batch.set(postRef, postData);
