@@ -276,7 +276,7 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
             <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="about">About</TabsTrigger>
                 <TabsTrigger value="content">Content</TabsTrigger>
-                <TabsTrigger value="posts">Posts</TabsTrigger>
+                <TabsTrigger value="posts">Status Feed</TabsTrigger>
             </TabsList>
             
             <TabsContent value="about" className="mt-6">
