@@ -37,7 +37,8 @@ import {
   Calendar,
   Nfc,
   Link as LinkIcon,
-  BookUser
+  BookUser,
+  Paintbrush
 } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -212,7 +213,7 @@ export function MainSidebar() {
             <SidebarMenuItem>
               <SidebarMenuButton asChild tooltip="My Canvas" isActive={isActive('/canvas')}>
                 <Link href="/canvas">
-                  <Package />
+                  <Paintbrush />
                   <span>My Canvas</span>
                 </Link>
               </SidebarMenuButton>
