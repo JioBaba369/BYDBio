@@ -82,6 +82,10 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
     }
   }, [user.uid, currentUser?.uid, toast]);
 
+  useEffect(() => {
+    loadPosts();
+  }, [loadPosts]);
+
   const handleLike = async (postId: string) => {
     if (!currentUser || loadingAction) return;
     setLoadingAction({ postId, action: 'like' });
@@ -164,10 +168,6 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
         return false;
     });
   }, [posts, canViewPrivateContent, isOwner]);
-  
-  useEffect(() => {
-    loadPosts();
-  }, [loadPosts]);
 
   return (
     <>
