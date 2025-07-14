@@ -28,8 +28,9 @@ import { ClientFormattedDate } from '@/components/client-formatted-date';
 import { ClientFormattedCurrency } from '@/components/client-formatted-currency';
 import { DayPicker } from 'react-day-picker';
 import 'react-day-picker/dist/style.css';
-import { format, parseISO, isSameDay } from 'date-fns';
-import { generateIcs } from '@/lib/appointments';
+import { format, isSameDay } from 'date-fns';
+import { generateIcsContent } from '@/lib/appointments';
+import { saveAs } from 'file-saver';
 import { KillChainTracker } from '@/components/kill-chain-tracker';
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
@@ -243,10 +244,15 @@ export default function CalendarPage() {
     }
   }
 
-  const handleAddToCalendar = (item: CalendarItem) => {
+  const handleAddToCalendar = async (item: CalendarItem) => {
     if (!user || !item.startTime || !item.endTime) return;
+    
     try {
-        generateIcs(item.title, item.startTime, item.endTime, user.name, user.email || 'noreply@byd.bio', item.bookerName || 'Guest');
+        const icsContent = await generateIcsContent(item.title, item.startTime, item.endTime, user.name, user.email || 'noreply@byd.bio', item.bookerName || 'Guest');
+        if (icsContent) {
+            const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+            saveAs(blob, `${item.title.replace(/ /g,"_")}.ics`);
+        }
     } catch(e) {
         toast({ title: "Error creating calendar file", variant: "destructive" });
     }
@@ -320,7 +326,12 @@ export default function CalendarPage() {
     <>
       <DeleteConfirmationDialog 
         open={isDeleteDialogOpen}
-        onOpenChange={setIsDeleteDialogOpen}
+        onOpenChange={(isOpen) => {
+            if (!isOpen) {
+              setSelectedItem(null);
+            }
+            setIsDeleteDialogOpen(isOpen);
+        }}
         onConfirm={handleDelete}
         isLoading={isDeleting}
         itemName={selectedItem?.type.toLowerCase() ?? 'item'}

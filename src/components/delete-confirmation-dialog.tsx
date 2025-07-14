@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "./ui/button"
 import { buttonVariants } from "./ui/button"
 import { cn } from "@/lib/utils"
@@ -40,6 +40,12 @@ export function DeleteConfirmationDialog({
 }: DeleteConfirmationDialogProps) {
   const [input, setInput] = useState("");
   const isConfirmed = !confirmationText || input === confirmationText;
+  
+  useEffect(() => {
+    if (!open) {
+      setInput("");
+    }
+  }, [open]);
 
   const handleConfirm = () => {
       if (isConfirmed && !isLoading) {
@@ -49,7 +55,7 @@ export function DeleteConfirmationDialog({
 
   const handleOpenChange = (isOpen: boolean) => {
       if (!isOpen) {
-          setInput(""); // Reset on close
+          setInput(""); // Also reset on close for good measure
       }
       onOpenChange(isOpen);
   }

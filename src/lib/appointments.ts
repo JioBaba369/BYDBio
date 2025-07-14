@@ -5,7 +5,6 @@ import { collection, query, where, getDocs, Timestamp, getDoc, doc, addDoc, dele
 import { db } from './firebase';
 import type { User } from './users';
 import * as ics from 'ics';
-import { saveAs } from 'file-saver';
 import { parseISO } from 'date-fns';
 
 // A simplified appointment structure for now
@@ -117,7 +116,7 @@ export const createAppointment = async (
 };
 
 
-export const generateIcs = (title: string, startTime: string, endTime: string, organizerName: string, organizerEmail: string, attendeeName: string) => {
+export const generateIcsContent = (title: string, startTime: string, endTime: string, organizerName: string, organizerEmail: string, attendeeName: string): string | null => {
     const startDate = parseISO(startTime);
     const endDate = parseISO(endTime);
     const icsEvent: ics.EventAttributes = {
@@ -135,9 +134,11 @@ export const generateIcs = (title: string, startTime: string, endTime: string, o
         console.error(error);
         throw new Error("Error creating ICS file");
     }
-    if (value) {
-        // This part needs to run on the client to trigger a download
-        const blob = new Blob([value], { type: 'text/calendar;charset=utf-8' });
-        saveAs(blob, `${title.replace(/ /g,"_")}.ics`);
-    }
+    
+    return value || null;
+}
+
+export const deleteAppointment = async (id: string) => {
+  const appointmentDocRef = doc(db, 'appointments', id);
+  await deleteDoc(appointmentDocRef);
 }
