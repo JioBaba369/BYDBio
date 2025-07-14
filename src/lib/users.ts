@@ -331,19 +331,7 @@ export async function searchUsers(searchText: string): Promise<User[]> {
             if (serialized) usersMap.set(doc.id, serialized);
         });
     }
-
-    const usernameQuery = query(
-        usersRef,
-        where('username', '>=', lowercasedSearchText),
-        where('username', '<=', lowercasedSearchText + '\uf8ff'),
-        limit(25)
-    );
-    const usernameQuerySnapshot = await getDocs(usernameQuery);
-    usernameQuerySnapshot.forEach(doc => {
-        const serialized = serializeDocument<User>(doc);
-        if (serialized) usersMap.set(doc.id, serialized);
-    });
-
+    
     return Array.from(usersMap.values());
 }
 

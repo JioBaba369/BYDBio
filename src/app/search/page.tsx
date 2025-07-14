@@ -89,7 +89,6 @@ export default function SearchPage() {
 
   const [isLoading, setIsLoading] = useState(false);
   const [results, setResults] = useState<SearchResults>({ users: [], listings: [], jobs: [], events: [], offers: [], promoPages: [], posts: [] });
-  const [togglingFollowId, setTogglingFollowId] = useState<string | null>(null);
   const [loadingAction, setLoadingAction] = useState<{ postId: string; action: 'like' | 'repost' } | null>(null);
   const [isFollowPending, startFollowTransition] = useTransition();
 

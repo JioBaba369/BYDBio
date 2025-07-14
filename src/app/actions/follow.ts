@@ -1,3 +1,4 @@
+
 'use server';
 
 import { followUser, unfollowUser } from '@/lib/connections';
@@ -32,14 +33,11 @@ export async function toggleFollowAction(formData: FormData) {
       await followUser(currentUserId, targetUserId);
     }
     
-    // Revalidate all relevant paths
     revalidatePath(path);
     revalidatePath('/connections');
     if (path.startsWith('/u/')) {
-        const username = path.split('/')[2];
-        revalidatePath(`/u/${username}`);
+        revalidatePath(path);
     }
-
 
     return { success: true };
   } catch (error) {

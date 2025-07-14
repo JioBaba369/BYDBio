@@ -58,8 +58,9 @@ export function MainSidebar() {
     setCurrentPath(pathname);
   }, [pathname]);
 
-  const isActive = (path: string) => {
+  const isActive = (path: string, exact: boolean = false) => {
     if (!currentPath) return false;
+    if (exact) return currentPath === path;
     if (path === '/') return currentPath === '/';
     return currentPath.startsWith(path);
   };
@@ -187,7 +188,7 @@ export function MainSidebar() {
           <SidebarGroupLabel>My Hub</SidebarGroupLabel>
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Dashboard" isActive={isActive('/')}>
+              <SidebarMenuButton asChild tooltip="Dashboard" isActive={isActive('/', true)}>
                 <Link href="/">
                   <LayoutDashboard />
                   <span>Dashboard</span>
@@ -203,7 +204,7 @@ export function MainSidebar() {
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Diary" isActive={isActive('/diary')}>
+              <SidebarMenuButton asChild tooltip="My Diary" isActive={isActive('/diary')}>
                 <Link href="/diary">
                   <BookUser />
                   <span>My Diary</span>

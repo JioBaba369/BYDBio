@@ -246,6 +246,10 @@ export const repostPost = async (originalPostId: string, reposterId: string): Pr
         createdAt: originalPostData.createdAt,
     };
     
+    if (contentToRepost.authorId === reposterId) {
+        throw new Error("You cannot repost your own post.");
+    }
+
     const keywords = [...new Set(contentToRepost.content.toLowerCase().split(' ').filter(Boolean))];
 
     const batch = writeBatch(db);
@@ -421,4 +425,3 @@ export const getDiscoveryPosts = async (userId: string, followingIds: string[]):
     
     return populatePostAuthors(finalPosts, userId);
 };
-
