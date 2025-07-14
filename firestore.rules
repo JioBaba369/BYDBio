@@ -1,3 +1,4 @@
+
 rules_version = '2';
 
 service cloud.firestore {
@@ -15,6 +16,11 @@ service cloud.firestore {
     function isContentOwner() {
       return request.auth.uid == resource.data.authorId;
     }
+    
+    function isNewContentOwner() {
+      return request.auth.uid == request.resource.data.authorId;
+    }
+
 
     // --- USERS ---
     match /users/{userId} {
@@ -22,47 +28,71 @@ service cloud.firestore {
       allow read: if true;
       // Only the owner can write to their profile
       allow create, update: if isOwner(userId);
-      // Deletion is handled by a cloud function or admin process, not directly by users
+      // Deleting a user should be a privileged server-side action
       allow delete: if false; 
     }
 
     // --- NOTIFICATIONS ---
     match /notifications/{notificationId} {
-      // Only the user the notification is for can read or write to it
+      // Only the user the notification is for can read or update it
       allow read, update: if isOwner(resource.data.userId);
-      // Notifications are created by the system/server actions, not directly by clients
-      allow create, delete: if false; 
+      // Notifications are created by server-side logic, not directly by clients
+      allow create, delete: if false;
     }
     
     // --- APPOINTMENTS ---
     match /appointments/{appointmentId} {
       allow read: if isOwner(resource.data.ownerId) || isOwner(resource.data.bookerId);
-      // Any signed-in user can create, as long as they are the booker
-      allow create: if isSignedIn() && request.resource.data.bookerId == request.auth.uid;
-      // Only owner or booker can modify/delete (e.g. cancel)
-      allow update, delete: if isOwner(resource.data.ownerId) || isOwner(resource.data.bookerId);
+      allow create: if isSignedIn(); // Any signed-in user can create
+      allow update, delete: if isOwner(resource.data.ownerId); // Only owner can modify/delete
     }
-    
-    // --- GENERIC CONTENT RULE for posts, events, jobs, listings, offers, promoPages ---
-    match /{collection}/{documentId} 
-        where collection in ['posts', 'events', 'jobs', 'listings', 'offers', 'promoPages'] {
-      
-      // Allow read for public content, or if the viewer is the owner.
-      // A more complex followers-only rule would require data duplication or inefficient gets.
-      // This simplified rule is secure and functional for the current data model.
-      allow read: if (resource.data.status == 'active' && resource.data.privacy == 'public')
-                   || (resource.data.status == 'active' && resource.data.privacy == 'followers' && isContentOwner())
-                   || (resource.data.status == 'active' && resource.data.privacy == 'me' && isContentOwner())
-                   || isContentOwner();
 
-      // Allow create if user is signed in and is the author of the new document.
-      allow create: if isSignedIn() && request.resource.data.authorId == request.auth.uid;
-      
-      // Allow update/delete only by the content owner.
+    // --- POSTS ---
+    match /posts/{postId} {
+      allow read: if resource.data.privacy == 'public'
+                   || (resource.data.privacy == 'followers' && isSignedIn() && request.auth.uid in get(/databases/$(database)/documents/users/$(resource.data.authorId)).data.following)
+                   || isOwner(resource.data.authorId);
+      allow create: if isSignedIn() && isNewContentOwner();
       allow update, delete: if isContentOwner();
     }
     
-    // Fallback rule: Deny all other reads and writes by default.
+    // --- EVENTS ---
+    match /events/{eventId} {
+      allow read: if resource.data.status == 'active';
+      allow create: if isSignedIn() && isNewContentOwner();
+      allow update: if isContentOwner();
+      allow delete: if isContentOwner();
+    }
+    
+    // --- JOBS ---
+    match /jobs/{jobId} {
+      allow read: if resource.data.status == 'active';
+      allow create: if isSignedIn() && isNewContentOwner();
+      allow update, delete: if isContentOwner();
+    }
+    
+    // --- LISTINGS ---
+    match /listings/{listingId} {
+      allow read: if resource.data.status == 'active';
+      allow create: if isSignedIn() && isNewContentOwner();
+      allow update, delete: if isContentOwner();
+    }
+    
+    // --- OFFERS ---
+    match /offers/{offerId} {
+      allow read: if resource.data.status == 'active';
+      allow create: if isSignedIn() && isNewContentOwner();
+      allow update, delete: if isContentOwner();
+    }
+    
+    // --- PROMO PAGES ---
+    match /promoPages/{promoPageId} {
+      allow read: if resource.data.status == 'active';
+      allow create: if isSignedIn() && isNewContentOwner();
+      allow update, delete: if isContentOwner();
+    }
+
+    // Default deny all other reads/writes
     match /{document=**} {
       allow read, write: if false;
     }
