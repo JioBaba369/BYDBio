@@ -24,7 +24,10 @@ export default function CreateJobPage() {
         try {
             const { imageUrl, ...restOfData } = data;
 
-            const jobId = await createJob(user.uid, restOfData);
+            const jobId = await createJob(user.uid, {
+                ...restOfData,
+                imageUrl: null, // Save without image first
+            });
             
             toast({
                 title: "Job Created!",

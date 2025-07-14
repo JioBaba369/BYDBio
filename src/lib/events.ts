@@ -203,7 +203,8 @@ export const toggleRsvp = async (eventId: string, userId: string) => {
 
 // Helper function for public page to get event and its author
 export const getEventAndAuthor = async (eventId: string): Promise<{ event: Event; author: User } | null> => {
-    const eventDoc = await getDoc(doc(db, 'events', eventId));
+    const eventPromise = getDoc(doc(db, 'events', eventId));
+    const [eventDoc] = await Promise.all([eventPromise]);
 
     if (!eventDoc.exists()) {
         return null;
@@ -211,7 +212,9 @@ export const getEventAndAuthor = async (eventId: string): Promise<{ event: Event
     const event = serializeDocument<Event>(eventDoc);
     if (!event) return null;
 
-    const authorDoc = await getDoc(doc(db, "users", event.authorId));
+    const authorPromise = getDoc(doc(db, "users", event.authorId));
+    const [authorDoc] = await Promise.all([authorPromise]);
+
     if (!authorDoc.exists()) {
         return null;
     }
@@ -356,7 +359,7 @@ export const getCalendarItems = async (userId: string, type: 'schedule' | 'autho
                 'event': `/events/${id}/edit`, 'offer': `/offers/${id}/edit`, 'job': `/job/${id}/edit`,
                 'listing': `/listings/${id}/edit`, 'promoPage': `/promo/${id}/edit`,
             };
-            return pathMap[itemType] || '/my-content';
+            return pathMap[itemType] || '/canvas';
         };
 
         return {

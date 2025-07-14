@@ -24,7 +24,7 @@ export default function CreateListingPage() {
         try {
             const { imageUrl, ...restOfData } = data;
 
-            const dataToSave: Partial<Omit<Listing, 'id' | 'authorId' | 'createdAt' | 'status' | 'views' | 'clicks' | 'searchableKeywords' | 'followerCount'>> = {
+            const dataToSave: Partial<Omit<Listing, 'id' | 'authorId' | 'createdAt' | 'status' | 'views' | 'clicks' | 'searchableKeywords' | 'followerCount' | 'imageUrl'>> = {
                 ...restOfData,
                 imageUrl: null,
             };

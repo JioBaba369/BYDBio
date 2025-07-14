@@ -140,7 +140,9 @@ export const deleteJob = async (id: string) => {
 
 // Helper function for public page to get job and its author
 export const getJobAndAuthor = async (jobId: string): Promise<{ job: Job; author: User } | null> => {
-    const jobDoc = await getDoc(doc(db, 'jobs', jobId));
+    const jobPromise = getDoc(doc(db, 'jobs', jobId));
+    const [jobDoc] = await Promise.all([jobPromise]);
+
     if (!jobDoc.exists()) {
         return null;
     }
@@ -148,7 +150,9 @@ export const getJobAndAuthor = async (jobId: string): Promise<{ job: Job; author
     const job = serializeDocument<Job>(jobDoc);
     if (!job) return null;
 
-    const authorDoc = await getDoc(doc(db, "users", job.authorId));
+    const authorPromise = getDoc(doc(db, "users", job.authorId));
+    const [authorDoc] = await Promise.all([authorPromise]);
+
     if (!authorDoc.exists()) {
         return null;
     }

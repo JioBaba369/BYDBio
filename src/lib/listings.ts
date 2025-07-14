@@ -119,14 +119,18 @@ export const deleteListing = async (id: string) => {
 
 // Helper function for public page to get listing and its author
 export const getListingAndAuthor = async (listingId: string): Promise<{ listing: Listing; author: User } | null> => {
-    const listingDoc = await getDoc(doc(db, 'listings', listingId));
+    const listingPromise = getDoc(doc(db, 'listings', listingId));
+    const [listingDoc] = await Promise.all([listingPromise]);
+
     if (!listingDoc.exists()) {
         return null;
     }
     const listing = serializeDocument<Listing>(listingDoc);
     if (!listing) return null;
 
-    const authorDoc = await getDoc(doc(db, "users", listing.authorId));
+    const authorPromise = getDoc(doc(db, "users", listing.authorId));
+    const [authorDoc] = await Promise.all([authorPromise]);
+    
     if (!authorDoc.exists()) {
         return null;
     }
