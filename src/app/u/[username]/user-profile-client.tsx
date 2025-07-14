@@ -71,6 +71,7 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
     setIsFollowLoading(true);
     const currentlyFollowing = isFollowing;
 
+    // Optimistic update
     setIsFollowing(!currentlyFollowing);
     setFollowerCount(prev => prev + (!currentlyFollowing ? 1 : -1));
 
@@ -83,6 +84,7 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
             toast({ title: `You are now following ${user.name}` });
         }
     } catch (error) {
+        // Revert on error
         setIsFollowing(currentlyFollowing);
         setFollowerCount(prev => prev + (currentlyFollowing ? 1 : -1));
         toast({ title: "Something went wrong", variant: "destructive" });
@@ -126,6 +128,7 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
     try {
       await repostPost(postId, user.uid);
       toast({ title: "Reposted!" });
+      loadPosts(); // Reload posts after reposting
     } catch (error: any) {
       toast({ title: error.message || "Failed to repost", variant: "destructive" });
     } finally {
@@ -174,7 +177,6 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
   }, [posts, canViewPrivateContent, isOwner]);
 
   const loadPosts = useCallback(async () => {
-    if (posts.length > 0 && !currentUser) return; // Don't refetch if posts are loaded and user is guest
     setPostsLoading(true);
     try {
         const fetchedPosts = await getPostsByUser(user.uid, currentUser?.uid);
@@ -187,7 +189,13 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
     } finally {
         setPostsLoading(false);
     }
-  }, [posts.length, user.uid, currentUser, toast]);
+  }, [user.uid, currentUser, toast]);
+  
+  useEffect(() => {
+      // Only call loadPosts once when the component mounts.
+      // It will be re-called manually on actions like reposting.
+      loadPosts();
+  }, [loadPosts]);
 
   return (
     <>
@@ -258,11 +266,7 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
             </CardContent>
         </Card>
         
-        <Tabs defaultValue="about" className="w-full" onValueChange={(value) => {
-            if (value === 'posts') {
-                loadPosts();
-            }
-        }}>
+        <Tabs defaultValue="about" className="w-full">
             <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="about">About</TabsTrigger>
                 <TabsTrigger value="content">Content</TabsTrigger>

@@ -56,7 +56,7 @@ export const getAvailableSlots = async (userId: string, selectedDate: Date): Pro
 
   const existingAppointments = await getAppointmentsForDay(userId, selectedDate);
   const bookedSlots = new Set(
-    existingAppointments.map(apt => apt.startTime.toDate().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }))
+    existingAppointments.map(apt => apt.startTime.toDate().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }).slice(0, 5))
   );
   
   const availableSlots: string[] = [];
@@ -72,11 +72,12 @@ export const getAvailableSlots = async (userId: string, selectedDate: Date): Pro
   endTime.setHours(endHour, endMinute, 0, 0);
 
   while (new Date(currentTime.getTime() + meetingDuration * 60000) <= endTime) {
-    const slotTime = currentTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
-    
+    const slotTime24h = currentTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }).slice(0, 5);
+    const slotTime12h = currentTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+
     // Check if slot is in the future and not already booked
-    if (currentTime > new Date() && !bookedSlots.has(slotTime)) {
-      availableSlots.push(slotTime);
+    if (currentTime > new Date() && !bookedSlots.has(slotTime24h)) {
+      availableSlots.push(slotTime12h);
     }
     
     // Move to the next slot
