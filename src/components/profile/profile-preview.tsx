@@ -7,14 +7,14 @@ import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Building, Nfc } from 'lucide-react';
-import { UnifiedProfileFormValues } from '@/app/profile/page';
 import { generateVCard } from '@/lib/vcard';
 import { useAuth } from '../auth-provider';
 import { Button } from '../ui/button';
+import type { ProfileFormValues } from '@/lib/schemas/profile';
 
 export function ProfilePreview() {
   const { user } = useAuth();
-  const { watch } = useFormContext<UnifiedProfileFormValues>();
+  const { watch } = useFormContext<ProfileFormValues>();
 
   const watchedValues = watch();
 

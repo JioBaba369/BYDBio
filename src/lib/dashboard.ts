@@ -8,6 +8,7 @@ import type { Job } from './jobs';
 import type { Event } from './events';
 import type { PromoPage } from './promo-pages';
 import type { Post } from './posts';
+import { serializeDocument } from './firestore-utils';
 
 export type ActivityItem = (
     | (Listing & { type: 'Listing' })
@@ -54,14 +55,8 @@ export const getRecentActivity = async (userId: string): Promise<ActivityItem[]>
             const data = doc.data();
             
             // Create a new object and serialize all Timestamp fields
-            const serializedData: { [key: string]: any } = {};
-            for (const key in data) {
-                if (data[key] instanceof Timestamp) {
-                    serializedData[key] = data[key].toDate().toISOString();
-                } else {
-                    serializedData[key] = data[key];
-                }
-            }
+            const serializedData = serializeDocument<any>(doc);
+            if (!serializedData) return;
 
             let title = 'Untitled';
             if (data.title) {
@@ -74,7 +69,6 @@ export const getRecentActivity = async (userId: string): Promise<ActivityItem[]>
 
             allItems.push({
                 ...serializedData,
-                id: doc.id,
                 type: type,
                 title: title
             });

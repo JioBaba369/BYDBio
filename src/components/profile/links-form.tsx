@@ -6,15 +6,15 @@ import { PlusCircle, Trash2, GripVertical } from 'lucide-react';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { UnifiedProfileFormValues } from '@/app/profile/page';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '../ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { cn } from '@/lib/utils';
 import { Input } from '../ui/input';
 import { availableIconNames, linkIconData } from '@/lib/link-icons';
+import type { ProfileFormValues } from '@/lib/schemas/profile';
 
 const SortableLinkItem = ({ index, remove }: { index: number, remove: (index: number) => void }) => {
-  const { control, setValue, getValues } = useFormContext<UnifiedProfileFormValues>();
+  const { control, setValue, getValues } = useFormContext<ProfileFormValues>();
   const fieldId = getValues(`links.${index}.id`) || `link-${index}`;
 
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: fieldId });
@@ -75,7 +75,7 @@ const SortableLinkItem = ({ index, remove }: { index: number, remove: (index: nu
 };
 
 export function LinksForm() {
-  const { control } = useFormContext<UnifiedProfileFormValues>();
+  const { control } = useFormContext<ProfileFormValues>();
   const { fields, append, remove, move } = useFieldArray({ control, name: "links" });
   const sensors = useSensors(useSensor(PointerSensor), useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }));
 
