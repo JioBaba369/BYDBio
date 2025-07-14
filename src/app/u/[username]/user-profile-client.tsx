@@ -23,6 +23,7 @@ import { generateVCard } from "@/lib/vcard";
 import { BookingDialog } from "@/components/booking-dialog";
 import { ContactForm } from "@/components/contact-form";
 import { AboutTab } from "@/components/profile/about-tab";
+import Image from "next/image";
 
 interface UserProfilePageProps {
   userProfileData: UserProfilePayload;
@@ -203,60 +204,70 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
         confirmationText="DELETE"
       />
       <div className="space-y-6">
-        <Card className="overflow-hidden">
-            <div className="h-28 bg-gradient-to-br from-primary via-secondary to-accent" />
+        <Card className="overflow-hidden border-0 shadow-none -m-4 sm:-m-6 rounded-none">
+            <div className="relative h-40 sm:h-48 md:h-56 bg-muted">
+                <Image 
+                    src={user.bannerUrl || 'https://placehold.co/1200x400.png'} 
+                    alt={`${user.name}'s banner`}
+                    fill
+                    className="object-cover"
+                    data-ai-hint="abstract background"
+                    priority
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-background/0 to-background/0" />
+            </div>
             <CardContent className="p-4 sm:p-6 pt-0">
-                <div className="flex flex-col sm:flex-row sm:items-end gap-4 -mt-16">
-                    <Avatar className="w-32 h-32 border-4 border-background bg-background shadow-md shrink-0">
-                        <AvatarImage src={user.avatarUrl} alt={user.name} />
-                        <AvatarFallback>{user.avatarFallback}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex flex-col sm:flex-row justify-between flex-1 w-full gap-4">
-                        <div className="pt-16 sm:pt-0 sm:pb-2">
-                             <h1 className="text-3xl font-bold font-headline">{user.name}</h1>
-                             <p className="text-muted-foreground">@{user.username}</p>
-                             <div className="flex items-center gap-4 mt-2 text-sm">
-                                <p><span className="font-bold">{followerCount.toLocaleString()}</span> Followers</p>
-                                <p><span className="font-bold">{user.following.length.toLocaleString()}</span> Following</p>
-                                <p><span className="font-bold">{user.postCount || 0}</span> Posts</p>
-                            </div>
-                        </div>
-                        <div className="flex flex-wrap items-center justify-start gap-2 shrink-0 w-full sm:w-auto">
-                            {isOwner ? (
-                                <Button asChild><Link href="/profile"><Edit className="mr-2 h-4 w-4" />Edit Profile</Link></Button>
-                            ) : (
-                                <Button onClick={handleFollowToggle} disabled={isFollowLoading}>
-                                    {isFollowLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : isFollowing ? <UserCheck className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
-                                    {isFollowing ? 'Following' : 'Follow'}
-                                </Button>
-                            )}
-                            <Dialog>
-                                <DialogTrigger asChild>
-                                    <Button variant="outline"><Mail className="mr-2 h-4 w-4"/>Contact</Button>
-                                </DialogTrigger>
-                                <DialogContent>
-                                    <ContactForm recipientId={user.uid} />
-                                </DialogContent>
-                            </Dialog>
-                            {user.bookingSettings?.acceptingAppointments && (
-                                <BookingDialog user={user} />
-                            )}
-                            <Dialog>
-                                <DialogTrigger asChild>
-                                    <Button variant="outline" size="icon"><QrCode className="h-4 w-4"/></Button>
-                                </DialogTrigger>
-                                <DialogContent>
-                                    <DialogHeader>
-                                        <DialogTitle>Scan to Save Contact</DialogTitle>
-                                    </DialogHeader>
-                                    <div className="flex flex-col items-center justify-center p-4 gap-4">
-                                        {vCardData ? <QRCode value={vCardData} size={256} level="Q" fgColor="#000000" bgColor="#ffffff" /> : <p>Loading QR Code...</p>}
-                                        <p className="text-sm text-muted-foreground text-center break-all">Scan this code to add {user.name} to your contacts.</p>
-                                    </div>
-                                </DialogContent>
-                            </Dialog>
+                <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 -mt-16 sm:-mt-20">
+                    <div className="flex gap-4 items-end">
+                        <Avatar className="w-28 h-28 sm:w-32 sm:h-32 border-4 border-background bg-background shadow-md shrink-0">
+                            <AvatarImage src={user.avatarUrl} alt={user.name} />
+                            <AvatarFallback>{user.avatarFallback}</AvatarFallback>
+                        </Avatar>
+                        <div className="sm:pb-2">
+                             <h1 className="text-xl sm:text-2xl font-bold font-headline">{user.name}</h1>
+                             <p className="text-muted-foreground text-sm">@{user.username}</p>
                         </div>
                     </div>
+                    <div className="flex flex-wrap items-center justify-start sm:justify-end gap-2 shrink-0 w-full sm:w-auto">
+                        {isOwner ? (
+                            <Button asChild><Link href="/profile"><Edit className="mr-2 h-4 w-4" />Edit Profile</Link></Button>
+                        ) : (
+                            <Button onClick={handleFollowToggle} disabled={isFollowLoading}>
+                                {isFollowLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : isFollowing ? <UserCheck className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
+                                {isFollowing ? 'Following' : 'Follow'}
+                            </Button>
+                        )}
+                        <Dialog>
+                            <DialogTrigger asChild>
+                                <Button variant="outline"><Mail className="mr-2 h-4 w-4"/>Contact</Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                                <ContactForm recipientId={user.uid} />
+                            </DialogContent>
+                        </Dialog>
+                        {user.bookingSettings?.acceptingAppointments && (
+                            <BookingDialog user={user} />
+                        )}
+                        <Dialog>
+                            <DialogTrigger asChild>
+                                <Button variant="outline" size="icon"><QrCode className="h-4 w-4"/></Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                                <DialogHeader>
+                                    <DialogTitle>Scan to Save Contact</DialogTitle>
+                                </DialogHeader>
+                                <div className="flex flex-col items-center justify-center p-4 gap-4">
+                                    {vCardData ? <QRCode value={vCardData} size={256} level="Q" fgColor="#000000" bgColor="#ffffff" /> : <p>Loading QR Code...</p>}
+                                    <p className="text-sm text-muted-foreground text-center break-all">Scan this code to add {user.name} to your contacts.</p>
+                                </div>
+                            </DialogContent>
+                        </Dialog>
+                    </div>
+                </div>
+                 <div className="flex items-center gap-4 mt-4 text-sm">
+                    <p><span className="font-bold">{followerCount.toLocaleString()}</span> Followers</p>
+                    <p><span className="font-bold">{user.following.length.toLocaleString()}</span> Following</p>
+                    <p><span className="font-bold">{user.postCount || 0}</span> Posts</p>
                 </div>
             </CardContent>
         </Card>

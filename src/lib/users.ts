@@ -64,6 +64,7 @@ export type User = {
   username: string;
   email: string | null;
   avatarUrl: string;
+  bannerUrl?: string;
   avatarFallback: string;
   bio: string;
   hashtags?: string[];
@@ -149,6 +150,7 @@ export const createUserProfileIfNotExists = async (user: FirebaseUser, additiona
         name: name,
         username: username,
         avatarUrl: user.photoURL || `https://placehold.co/200x200.png`,
+        bannerUrl: 'https://placehold.co/1200x400.png',
         avatarFallback: name ? name.charAt(0).toUpperCase() : '?',
         bio: "",
         hashtags: [],
