@@ -355,20 +355,34 @@ export const getFeedPosts = async (userId: string, followingIds: string[]): Prom
     if (authorsToFetch.length === 0) {
         return [];
     }
-
-    // Firestore 'in' queries are limited to 30 items.
-    if (authorsToFetch.length > 30) {
-        authorsToFetch.splice(30);
+    
+    // Chunk the authorsToFetch array to handle Firestore's 'in' query limit (30)
+    const chunks: string[][] = [];
+    for (let i = 0; i < authorsToFetch.length; i += 30) {
+        chunks.push(authorsToFetch.slice(i, i + 30));
     }
 
-    const postsQuery = query(
-        collection(db, 'posts'), 
-        where('authorId', 'in', authorsToFetch),
-        orderBy('createdAt', 'desc'),
-        limit(FEED_POST_LIMIT)
-    );
+    const allPosts: Post[] = [];
 
-    return fetchAndProcessPosts(postsQuery, userId);
+    for (const chunk of chunks) {
+        const postsQuery = query(
+            collection(db, 'posts'), 
+            where('authorId', 'in', chunk),
+            orderBy('createdAt', 'desc'),
+            limit(FEED_POST_LIMIT) // Apply limit per chunk
+        );
+        const postSnapshots = await getDocs(postsQuery);
+        postSnapshots.forEach(doc => {
+            const post = serializeDocument<Post>(doc);
+            if (post) allPosts.push(post);
+        });
+    }
+
+    // Sort all combined results by date and take the top N
+    allPosts.sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    const finalPosts = allPosts.slice(0, FEED_POST_LIMIT);
+    
+    return populatePostAuthors(finalPosts, userId);
 };
 
 /**
