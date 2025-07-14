@@ -39,7 +39,7 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
   const [isFollowLoading, setIsFollowLoading] = useState(false);
   
   const [posts, setPosts] = useState<PostWithAuthor[]>([]);
-  const [postsLoading, setPostsLoading] = useState(false);
+  const [postsLoading, setPostsLoading] = useState(true);
 
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [postToDelete, setPostToDelete] = useState<PostWithAuthor | null>(null);
@@ -128,7 +128,7 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
     try {
       await repostPost(postId, user.uid);
       toast({ title: "Reposted!" });
-      loadPosts(); // Reload posts after reposting
+      await loadPosts(); // Reload posts after reposting
     } catch (error: any) {
       toast({ title: error.message || "Failed to repost", variant: "destructive" });
     } finally {
@@ -180,21 +180,16 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
     setPostsLoading(true);
     try {
         const fetchedPosts = await getPostsByUser(user.uid, currentUser?.uid);
-        setPosts(fetchedPosts.map(p => ({
-            ...p,
-            isLiked: currentUser ? (p.likedBy || []).includes(currentUser.uid) : false,
-        })));
+        setPosts(fetchedPosts);
     } catch (error) {
         toast({ title: "Error loading posts", variant: "destructive" });
     } finally {
         setPostsLoading(false);
     }
-  }, [user.uid, currentUser, toast]);
+  }, [user.uid, currentUser?.uid, toast]);
   
   useEffect(() => {
-      // Only call loadPosts once when the component mounts.
-      // It will be re-called manually on actions like reposting.
-      loadPosts();
+    loadPosts();
   }, [loadPosts]);
 
   return (

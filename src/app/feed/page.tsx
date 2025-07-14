@@ -277,7 +277,7 @@ export default function FeedPage() {
                 {posts.map(item => (
                     <PostCard
                         key={item.id}
-                        item={{ ...item, isLiked: user ? (item.likedBy || []).includes(user.uid) : false }}
+                        item={item}
                         onLike={handleLike}
                         onDelete={openDeleteDialog}
                         onRepost={handleRepost}

@@ -66,10 +66,11 @@ export default function SignUpPage() {
     setIsSubmitting(true);
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
-      const user = userCredential.user;
+      
+      // The createUserProfileIfNotExists logic is now handled by the onAuthStateChanged listener
+      // in the AuthProvider to prevent race conditions. We just need to update the display name.
+      await createUserProfileIfNotExists(userCredential.user, { name: data.name });
 
-      // Create a full user profile in Firestore.
-      await createUserProfileIfNotExists(user, { name: data.name });
 
       // Log analytics event for successful sign-up
       if (analytics) {
