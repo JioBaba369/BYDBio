@@ -218,14 +218,14 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
             </div>
             <CardContent className="p-4 sm:p-6 pt-0">
                 <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 -mt-16 sm:-mt-20">
-                    <div className="flex gap-4 items-end">
+                    <div className="flex gap-4 items-end flex-1 min-w-0">
                         <Avatar className="w-28 h-28 sm:w-32 sm:h-32 border-4 border-background bg-background shadow-md shrink-0">
                             <AvatarImage src={user.avatarUrl} alt={user.name} />
                             <AvatarFallback>{user.avatarFallback}</AvatarFallback>
                         </Avatar>
-                        <div className="sm:pb-2">
-                             <h1 className="text-xl sm:text-2xl font-bold font-headline">{user.name}</h1>
-                             <p className="text-muted-foreground text-sm">@{user.username}</p>
+                        <div className="sm:pb-2 min-w-0">
+                             <h1 className="text-xl sm:text-2xl font-bold font-headline truncate">{user.name}</h1>
+                             <p className="text-muted-foreground text-sm truncate">@{user.username}</p>
                         </div>
                     </div>
                     <div className="flex flex-wrap items-center justify-start sm:justify-end gap-2 shrink-0 w-full sm:w-auto">
