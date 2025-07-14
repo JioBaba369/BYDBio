@@ -11,12 +11,14 @@ import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import { Github } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createUserWithEmailAndPassword } from "firebase/auth";
-import { auth } from "@/lib/firebase";
+import { auth, analytics, remoteConfig } from "@/lib/firebase";
 import { createUserProfileIfNotExists } from "@/lib/users";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { fetchAndActivate, getString } from "firebase/remote-config";
+import { logEvent } from "firebase/analytics";
 
 const signUpSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
@@ -30,6 +32,26 @@ export default function SignUpPage() {
     const { toast } = useToast();
     const router = useRouter();
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [buttonText, setButtonText] = useState('Create Account');
+
+    useEffect(() => {
+        if (remoteConfig) {
+            remoteConfig.defaultConfig = {
+                "signup_button_text": "Create Account", // Control (default) value
+            };
+
+            fetchAndActivate(remoteConfig)
+                .then(() => {
+                    const newButtonText = getString(remoteConfig, "signup_button_text");
+                    if (newButtonText) {
+                        setButtonText(newButtonText);
+                    }
+                })
+                .catch((err) => {
+                    console.error("Remote Config fetch failed:", err);
+                });
+        }
+    }, []);
 
   const form = useForm<SignUpFormValues>({
     resolver: zodResolver(signUpSchema),
@@ -48,6 +70,11 @@ export default function SignUpPage() {
 
       // Create a full user profile in Firestore.
       await createUserProfileIfNotExists(user, { name: data.name });
+
+      // Log analytics event for successful sign-up
+      if (analytics) {
+          logEvent(analytics, 'sign_up', { method: 'email' });
+      }
 
       toast({
         title: "Account Created",
@@ -124,7 +151,7 @@ export default function SignUpPage() {
               )}
             />
             <Button type="submit" className="w-full" disabled={isSubmitting}>
-              {isSubmitting ? "Creating Account..." : "Create Account"}
+              {isSubmitting ? "Creating Account..." : buttonText}
             </Button>
           </form>
         </Form>
@@ -140,9 +167,11 @@ export default function SignUpPage() {
           <div className="grid grid-cols-2 gap-4">
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="outline" className="w-full" disabled>
-                  <GoogleIcon /> Google
-                </Button>
+                <span className="w-full" tabIndex={0}>
+                  <Button variant="outline" className="w-full" disabled>
+                    <GoogleIcon /> Google
+                  </Button>
+                </span>
               </TooltipTrigger>
               <TooltipContent>
                 <p>Coming Soon</p>
@@ -150,9 +179,11 @@ export default function SignUpPage() {
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="outline" className="w-full" disabled>
-                  <Github className="mr-2" /> GitHub
-                </Button>
+                <span className="w-full" tabIndex={0}>
+                  <Button variant="outline" className="w-full" disabled>
+                    <Github className="mr-2" /> GitHub
+                  </Button>
+                </span>
               </TooltipTrigger>
               <TooltipContent>
                 <p>Coming Soon</p>
