@@ -34,7 +34,7 @@ export const CONTENT_TYPES: ContentTypeMetadata[] = [
         name: 'Job', 
         label: 'Jobs', 
         icon: Briefcase,
-        variant: 'destructive',
+        variant: 'outline',
         getStatsValue: (item) => item.applicants || 0,
         getInteractionLabel: () => 'Applicants'
     },
@@ -50,7 +50,7 @@ export const CONTENT_TYPES: ContentTypeMetadata[] = [
         name: 'Business Page', 
         label: 'Business Pages', 
         icon: Megaphone,
-        variant: 'default',
+        variant: 'destructive',
         getStatsValue: (item) => item.clicks || 0,
         getInteractionLabel: () => 'Clicks'
     },
