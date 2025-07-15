@@ -259,6 +259,7 @@ export default function BydTagDesignPage() {
             bioTagDesign,
         });
         
+        form.reset(data); // This resets the "dirty" state of the form.
         toast({
             title: "Design Saved!",
             description: "Your BioTAG design has been saved to your profile.",
