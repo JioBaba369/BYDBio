@@ -10,7 +10,6 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import type { VariantProps } from 'class-variance-authority';
-import { cn } from "@/lib/utils";
 import { ClientFormattedDate } from "./client-formatted-date";
 
 const getBadgeVariant = (itemType: string): VariantProps<typeof badgeVariants>['variant'] => {
@@ -47,7 +46,7 @@ const getPopularity = (item: PublicContentItem) => {
 
 const getPrimaryStat = (item: PublicContentItem) => {
     const value = getPopularity(item);
-    let icon = MousePointerClick; // default
+    let icon = MousePointerClick;
     if (item.type === 'event' || item.type === 'job') icon = Users;
     if (item.type === 'offer') icon = Gift;
     return { icon, value };

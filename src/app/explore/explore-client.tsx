@@ -17,11 +17,9 @@ export default function ExploreClient({ initialItems }: { initialItems: PublicCo
 
   const filteredItems = useMemo(() => {
     return initialItems.filter(item => {
-        // Tab filter
         const typeMatch = activeTab === 'all' || item.type === activeTab;
         if (!typeMatch) return false;
 
-        // Search term filter
         if (!searchTerm) return true;
         const lowercasedTerm = searchTerm.toLowerCase();
         
@@ -78,7 +76,7 @@ export default function ExploreClient({ initialItems }: { initialItems: PublicCo
                             <Compass className="h-12 w-12 text-gray-400" />
                             <h3 className="font-semibold text-foreground">No Content Found</h3>
                             <p>
-                                We couldn't find any content matching your search. Try a different term or filter.
+                                We couldn't find any content matching your filters. Try a different term or filter.
                             </p>
                         </CardContent>
                     </Card>

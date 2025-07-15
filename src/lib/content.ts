@@ -55,7 +55,6 @@ export const getAllPublicContent = async (): Promise<PublicContentItem[]> => {
         ...promoPagesSnap.docs.map(doc => ({ ...doc.data(), id: doc.id, type: 'promoPage' })),
     ];
     
-    // De-duplicate authors and fetch them
     const authorIds = [...new Set(allContent.map(item => item.authorId))];
     if (authorIds.length === 0) {
         return [];
@@ -66,7 +65,7 @@ export const getAllPublicContent = async (): Promise<PublicContentItem[]> => {
     const contentWithAuthors = allContent.map(item => {
         const author = authorMap.get(item.authorId);
         if (!author) {
-            return null; // Skip content if author not found
+            return null; 
         }
         
         let primaryDate = item.createdAt; 
@@ -83,7 +82,6 @@ export const getAllPublicContent = async (): Promise<PublicContentItem[]> => {
         const serializedItem = serializeDocument<any>({ data: () => item, id: item.id });
         if (!serializedItem) return null;
         
-        // Normalize the title property
         if (serializedItem.type === 'promoPage' && serializedItem.name) {
             serializedItem.title = serializedItem.name;
         }
@@ -103,13 +101,11 @@ export const getAllPublicContent = async (): Promise<PublicContentItem[]> => {
         };
     }).filter((item): item is PublicContentItem => item !== null && !!item.title);
 
-    // Sort by date descending
     contentWithAuthors.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
     return contentWithAuthors;
 };
 
-// This function is intended to get all public content *except* posts for a specific user profile
 export const getPublicContentByUser = async (userId: string) => {
     const listingsQuery = query(collection(db, 'listings'), where('status', '==', 'active'), where('authorId', '==', userId));
     const jobsQuery = query(collection(db, 'jobs'), where('status', '==', 'active'), where('authorId', '==', userId));
