@@ -38,7 +38,8 @@ import {
   Nfc,
   Link as LinkIcon,
   BookUser,
-  Paintbrush
+  Paintbrush,
+  BadgeHelp
 } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -299,6 +300,14 @@ export function MainSidebar() {
       </SidebarContent>
       <SidebarFooter>
         <SidebarMenu>
+             <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Support" isActive={isActive('/support')}>
+                <Link href="/support">
+                    <BadgeHelp />
+                    <span>Support</span>
+                </Link>
+                </SidebarMenuButton>
+            </SidebarMenuItem>
             <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip="What's New" isActive={isActive('/whats-new')}>
                 <Link href="/whats-new">
