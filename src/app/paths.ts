@@ -26,7 +26,12 @@ const EXPLICIT_PUBLIC_PATHS = [
     '/creators',
     '/whats-new',
     '/url-tree',
-    '/bydtag'
+    '/bydtag',
+    '/listings',
+    '/job',
+    '/events',
+    '/offers',
+    '/promo'
 ]
 
 /**
