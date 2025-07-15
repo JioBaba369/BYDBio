@@ -1,97 +1,121 @@
-
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // --- Helper Functions ---
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
     function isOwner(userId) {
-      return request.auth != null && request.auth.uid == userId;
+      return request.auth.uid == userId;
     }
 
-    function isIncomingData() {
-      return request.resource.data;
+    // Validation helpers
+    function isString(value, min, max) {
+      return value is string && value.size() >= min && value.size() <= max;
+    }
+
+    function isOptionalString(value, max) {
+      return value == null || (value is string && value.size() <= max);
     }
     
-    function isCreating() {
-      return request.method == 'create';
+    function isUrl(value) {
+       return value is string && value.matches('https?://[^\\s/$.?#].[^\\s]*');
     }
 
-    function isUpdating() {
-      return request.method == 'update';
+    function isOptionalUrl(value) {
+        return value == null || value == '' || isUrl(value);
     }
     
-    function isPublic() {
-      return resource.data.status == 'active' || resource.data.privacy == 'public';
-    }
-
-    function canListPublicContent() {
-      // Allow list queries only if they filter by status or privacy
-      return request.query.get('status') == 'active' || request.query.get('privacy') == 'public';
+    function isList(value, max) {
+        return value is list && value.size() <= max;
     }
     
-    function validateUserFields(user) {
-      return user.name is string && user.name.size() > 0 && user.name.size() <= 50
-          && user.username is string && user.username.size() >= 3 && user.username.size() <= 30
-          && user.bio is string && user.bio.size() <= 160
-          && user.avatarUrl is string
-          && user.email is string
-          && user.followerCount is number && user.postCount is number
-          && user.following is list && user.hashtags is list
-          && user.links is list && user.businessCard is map
-          && user.notificationSettings is map && user.subscriptions is map;
+    function isValidTimestamp(value) {
+      return value is timestamp;
     }
     
-    function validateContentFields(data) {
-        return data.title is string && data.title.size() > 0 && data.title.size() <= 100
-            && data.description is string && data.description.size() > 0 && data.description.size() <= 5000
-            && data.authorId == request.auth.uid
-            && data.status == 'active'
-            && data.createdAt is timestamp
-            && (!('followerCount' in data) || data.followerCount == 0); // Can only be set to 0 on create
+    function isValidStatus(value) {
+      return value == 'active' || value == 'archived';
     }
 
+    // --- Start of rules ---
 
-    // --- User Profiles ---
+    // Users:
+    // - Anyone can read user profiles
+    // - Only the owner can create/update their own profile
+    // - Nobody can delete a user profile directly through Firestore rules (handled by server function)
     match /users/{userId} {
-      allow read: if true;
-      allow list: if true;
-      
-      // A user can only create their own profile
+      allow get: if true;
+      allow list: if request.query.limit <= 50;
       allow create: if isOwner(userId)
-                      && validateUserFields(isIncomingData())
-                      && isIncomingData().uid == userId;
-                      
-      // A user can only update their own profile, and cannot change their follower/post count
+                    && isString(request.resource.data.name, 1, 50)
+                    && isString(request.resource.data.username, 3, 30)
+                    && request.resource.data.email == request.auth.token.email;
       allow update: if isOwner(userId)
-                       && validateUserFields(isIncomingData())
-                       && isIncomingData().followerCount == resource.data.followerCount
-                       && isIncomingData().postCount == resource.data.postCount;
+                     && isString(request.resource.data.name, 1, 50)
+                     && isString(request.resource.data.username, 3, 30);
+      allow delete: if false; // Deletion should be a server-side process
+    }
+    
+    // Generic rule for public content collections (jobs, events, listings, offers, promoPages)
+    function publicContentRules(collectionName) {
+      return {
+        // Anyone can get a document if its status is active
+        'allow get': if resource.data.status == 'active',
+        // Anyone can list documents, but limited to 50 per query
+        'allow list': if request.query.limit <= 50,
+        // Only authenticated owners can create, update, or delete their own documents
+        'allow write': if isSignedIn() && isOwner(request.resource.data.authorId)
+      };
+    }
+    
+    match /listings/{listingId} {
+      rules: publicContentRules('listings');
+    }
+    
+    match /jobs/{jobId} {
+       rules: publicContentRules('jobs');
     }
 
-    // --- Posts ---
+    match /events/{eventId} {
+       rules: publicContentRules('events');
+    }
+    
+    match /offers/{offerId} {
+       rules: publicContentRules('offers');
+    }
+    
+    match /promoPages/{promoId} {
+       rules: publicContentRules('promoPages');
+    }
+    
+    // Posts:
+    // - Public posts are readable by anyone.
+    // - Follower-only posts are readable by followers.
+    // - "Me only" posts are readable only by the owner.
     match /posts/{postId} {
-        allow read: if isPublic() || isOwner(resource.data.authorId);
-        allow list: if canListPublicContent();
-        allow create, update, delete: if isOwner(resource.data.authorId);
+      allow get: if resource.data.privacy == 'public'
+                  || (resource.data.privacy == 'followers' && exists(/databases/$(database)/documents/users/$(resource.data.authorId)) && request.auth.uid in get(/databases/$(database)/documents/users/$(resource.data.authorId)).data.followers)
+                  || (isSignedIn() && isOwner(resource.data.authorId));
+      allow list: if request.query.limit <= 50;
+      allow write: if isSignedIn() && isOwner(request.resource.data.authorId);
     }
     
-    // --- Generic Public Content (Listings, Jobs, Events, Offers, Business Pages) ---
-    match /{collectionName}/{docId} 
-      where collectionName in ['listings', 'jobs', 'events', 'offers', 'promoPages'] {
-        allow read: if isPublic();
-        allow list: if canListPublicContent();
-        allow create: if request.auth != null && validateContentFields(isIncomingData());
-        allow update, delete: if isOwner(resource.data.authorId);
+    // Notifications & Appointments (Private collections)
+    match /notifications/{notificationId} {
+      allow read, write: if isSignedIn() && isOwner(resource.data.userId);
     }
 
-    // --- Private Collections ---
-    match /notifications/{notificationId} {
-        allow read, create, update, delete: if isOwner(resource.data.userId);
+    match /appointments/{appointmentId} {
+      allow read, write: if isSignedIn() && (isOwner(resource.data.ownerId) || isOwner(resource.data.bookerId));
     }
     
-    match /appointments/{appointmentId} {
-        allow read, create, update, delete: if isOwner(resource.data.ownerId) || isOwner(resource.data.bookerId);
+    // Default deny all other collections
+    match /{path=**} {
+      allow read, write: if false;
     }
   }
 }
