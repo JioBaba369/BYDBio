@@ -131,7 +131,7 @@ export function MainSidebar() {
               <SidebarMenuButton asChild tooltip="Explore" isActive={isActive('/explore')}>
                 <Link href="/explore">
                   <Compass />
-                  <span>Explore Content</span>
+                  <span>Explore</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
