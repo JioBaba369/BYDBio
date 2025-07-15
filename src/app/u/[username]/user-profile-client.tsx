@@ -2,7 +2,7 @@
 
 'use client';
 
-import { useState, useMemo, useCallback, useTransition, useEffect } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import type { User, PostWithAuthor, UserProfilePayload } from '@/lib/users';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -164,15 +164,29 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
             </CardContent>
         </Card>
         
-        <Tabs defaultValue="about" className="w-full">
+        <Tabs defaultValue="gallery" className="w-full">
             <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="about">About</TabsTrigger>
-                <TabsTrigger value="posts">Posts</TabsTrigger>
                 <TabsTrigger value="gallery">Content Gallery</TabsTrigger>
+                <TabsTrigger value="posts">Posts</TabsTrigger>
+                <TabsTrigger value="about">About</TabsTrigger>
             </TabsList>
             
-            <TabsContent value="about" className="mt-6">
-                <AboutTab user={user} />
+            <TabsContent value="gallery" className="mt-6">
+                {userProfileData.otherContent && userProfileData.otherContent.length > 0 ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        {userProfileData.otherContent.map(item => (
+                            <PublicContentCard key={item.id} item={{...item, author: user}} />
+                        ))}
+                    </div>
+                ) : (
+                     <Card>
+                        <CardContent className="p-10 text-center text-muted-foreground">
+                            <Briefcase className="h-10 w-10 mx-auto" />
+                            <h3 className="mt-4 font-semibold">No Content Yet</h3>
+                            <p>This user hasn't created any listings, jobs, or events yet.</p>
+                        </CardContent>
+                    </Card>
+                )}
             </TabsContent>
 
             <TabsContent value="posts" className="mt-6">
@@ -202,22 +216,8 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
                 )}
             </TabsContent>
 
-            <TabsContent value="gallery" className="mt-6">
-                {userProfileData.otherContent && userProfileData.otherContent.length > 0 ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                        {userProfileData.otherContent.map(item => (
-                            <PublicContentCard key={item.id} item={{...item, author: user}} />
-                        ))}
-                    </div>
-                ) : (
-                     <Card>
-                        <CardContent className="p-10 text-center text-muted-foreground">
-                            <Briefcase className="h-10 w-10 mx-auto" />
-                            <h3 className="mt-4 font-semibold">No Content Yet</h3>
-                            <p>This user hasn't created any listings, jobs, or events yet.</p>
-                        </CardContent>
-                    </Card>
-                )}
+            <TabsContent value="about" className="mt-6">
+                <AboutTab user={user} />
             </TabsContent>
         </Tabs>
       </div>
