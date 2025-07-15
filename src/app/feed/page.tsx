@@ -1,5 +1,4 @@
 
-// src/app/feed/page.tsx
 'use client';
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -281,7 +280,7 @@ export default function FeedPage() {
         ))}
       </div>
     );
-  }, [isLoadingFeed, handleQuote, onPostDeleted]);
+  }, [isLoadingFeed, onPostDeleted]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
