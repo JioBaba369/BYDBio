@@ -222,10 +222,10 @@ export function MainSidebar() {
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="My Canvas" isActive={isActive('/canvas')}>
-                <Link href="/canvas">
+              <SidebarMenuButton asChild tooltip="My Content" isActive={isActive('/my-content')}>
+                <Link href="/my-content">
                   <Paintbrush />
-                  <span>My Canvas</span>
+                  <span>My Content</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
