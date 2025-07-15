@@ -4,7 +4,7 @@
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BadgeHelp, BookUser, ShieldAlert, Star, TrendingUp, Zap, HelpCircle } from 'lucide-react';
+import { BadgeHelp, BookUser, ShieldAlert, Star, Zap, HelpCircle } from 'lucide-react';
 import { Card, CardContent } from "@/components/ui/card";
 
 const supportNavItems = [
