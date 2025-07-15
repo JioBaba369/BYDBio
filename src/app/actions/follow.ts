@@ -4,6 +4,8 @@
 import { followUser, unfollowUser } from '@/lib/connections';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 const followSchema = z.object({
   currentUserId: z.string(),
@@ -12,7 +14,7 @@ const followSchema = z.object({
   path: z.string(),
 });
 
-export async function toggleFollowAction(formData: FormData) {
+export async function toggleFollowAction(formData: FormData): Promise<{ success: boolean; error?: string; newFollowerCount?: number }> {
   const validatedFields = followSchema.safeParse({
     currentUserId: formData.get('currentUserId'),
     targetUserId: formData.get('targetUserId'),
@@ -21,7 +23,7 @@ export async function toggleFollowAction(formData: FormData) {
   });
 
   if (!validatedFields.success) {
-    return { error: 'Invalid input.' };
+    return { success: false, error: 'Invalid input.' };
   }
 
   const { currentUserId, targetUserId, isFollowing, path } = validatedFields.data;
@@ -33,15 +35,18 @@ export async function toggleFollowAction(formData: FormData) {
       await followUser(currentUserId, targetUserId);
     }
     
+    // Revalidate paths to update follower lists on other pages
     revalidatePath(path);
     revalidatePath('/connections');
-    if (path.startsWith('/u/')) {
-        revalidatePath(path);
-    }
 
-    return { success: true };
+    // Fetch the new follower count to return to the client
+    const targetUserRef = doc(db, 'users', targetUserId);
+    const userDoc = await getDoc(targetUserRef);
+    const newFollowerCount = userDoc.exists() ? userDoc.data().followerCount : 0;
+
+    return { success: true, newFollowerCount };
   } catch (error) {
     console.error('Toggle follow error:', error);
-    return { error: 'Something went wrong.' };
+    return { success: false, error: 'Something went wrong.' };
   }
 }

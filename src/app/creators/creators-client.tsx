@@ -1,50 +1,18 @@
 
 'use client';
 
-import { useState, useMemo, useTransition } from 'react';
+import { useState, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { useAuth } from '@/components/auth-provider';
 import type { User } from '@/lib/users';
-import { Search, Compass, Users, UserPlus, UserCheck, Loader2 } from 'lucide-react';
+import { Search, Compass } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { toggleFollowAction } from '@/app/actions/follow';
-
-
-const FollowButton = ({ targetUser, currentUser, isFollowing }: { targetUser: User; currentUser: User | null; isFollowing: boolean }) => {
-    const [isPending, startTransition] = useTransition();
-    const pathname = usePathname();
-
-    const handleFollow = () => {
-        if (!currentUser) return;
-        startTransition(() => {
-            const formData = new FormData();
-            formData.append('currentUserId', currentUser.uid);
-            formData.append('targetUserId', targetUser.uid);
-            formData.append('isFollowing', String(isFollowing));
-            formData.append('path', pathname);
-            toggleFollowAction(formData);
-        });
-    }
-
-    if (!currentUser || currentUser.uid === targetUser.uid) {
-        return null;
-    }
-
-    return (
-        <Button size="sm" variant={isFollowing ? 'secondary' : 'default'} onClick={handleFollow} disabled={isPending} className="w-full mt-4">
-            {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : isFollowing ? <UserCheck className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
-            {isFollowing ? 'Following' : 'Follow'}
-        </Button>
-    )
-}
-
+import { FollowButton } from '@/components/follow-button';
+import { useAuth } from '@/components/auth-provider';
 
 export default function CreatorsClient({ initialUsers }: { initialUsers: User[] }) {
-  const { user: currentUser, loading: authLoading } = useAuth();
+  const { user: currentUser } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
 
   const filteredUsers = useMemo(() => {
@@ -90,12 +58,14 @@ export default function CreatorsClient({ initialUsers }: { initialUsers: User[] 
                                 <p className="text-sm text-muted-foreground">@{user.username}</p>
                                 <p className="text-sm text-muted-foreground mt-2 h-10 line-clamp-2">{user.bio}</p>
                             </Link>
-                            {!authLoading && (
-                                <FollowButton 
-                                    targetUser={user} 
-                                    currentUser={currentUser} 
-                                    isFollowing={currentUser?.following.includes(user.uid) || false} 
-                                />
+                            {currentUser && currentUser.uid !== user.uid && (
+                                <div className="mt-4">
+                                    <FollowButton
+                                        targetUserId={user.uid}
+                                        initialIsFollowing={currentUser.following.includes(user.uid)}
+                                        initialFollowerCount={user.followerCount}
+                                    />
+                                </div>
                             )}
                         </CardContent>
                     </Card>

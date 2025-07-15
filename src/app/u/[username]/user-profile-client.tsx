@@ -1,29 +1,26 @@
 
-
 'use client';
 
-import { useState, useMemo, useEffect, useTransition } from "react";
-import type { User, PostWithAuthor, UserProfilePayload } from '@/lib/users';
+import { useState, useMemo, useEffect } from "react";
+import type { PostWithAuthor, UserProfilePayload } from '@/lib/users';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { UserCheck, UserPlus, Edit, Loader2, Link as LinkIcon, Rss, Info, MessageSquare, Briefcase, QrCode, Mail, Users as UsersIcon } from "lucide-react";
+import { Edit, Link as LinkIcon, QrCode, Mail } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/components/auth-provider";
 import { PostCard } from "@/components/post-card";
-import { useRouter, usePathname } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import QRCode from "qrcode.react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { PublicContentCard } from "@/components/public-content-card";
 import { generateVCard } from "@/lib/vcard";
 import { BookingDialog } from "@/components/booking-dialog";
 import { ContactForm } from "@/components/contact-form";
 import { AboutTab } from "@/components/profile/about-tab";
 import Image from "next/image";
 import { usePostActions } from "@/hooks/use-post-actions";
-import { toggleFollowAction } from "@/app/actions/follow";
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
+import { FollowButton } from "@/components/follow-button";
 
 interface UserProfilePageProps {
   userProfileData: UserProfilePayload;
@@ -31,20 +28,15 @@ interface UserProfilePageProps {
 
 export default function UserProfileClientPage({ userProfileData }: UserProfilePageProps) {
   const { user: currentUser } = useAuth();
-  const router = useRouter();
-  const pathname = usePathname();
-
+  
   const { isOwner, user, isFollowedByCurrentUser } = userProfileData;
-  const [isFollowPending, startFollowTransition] = useTransition();
   
   const [posts, setPosts] = useState<PostWithAuthor[]>([]);
   
   useEffect(() => {
-    // This effect runs only on the client, after initial render, to prevent hydration errors.
     setPosts(userProfileData.posts || []);
   }, [userProfileData.posts]);
 
-  // Hook for post actions is now initialized client-side only
   const { handleLike, handleDelete, handleRepost, handleQuote, loadingAction, dialogProps } = usePostActions({
     posts,
     setPosts,
@@ -55,23 +47,6 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
     if (!user) return '';
     return generateVCard(user);
   }, [user]);
-
-  const handleFollowToggle = () => {
-    if (!currentUser) {
-      router.push('/auth/sign-in');
-      return;
-    }
-    if (isOwner) return;
-
-    startFollowTransition(() => {
-        const formData = new FormData();
-        formData.append('currentUserId', currentUser.uid);
-        formData.append('targetUserId', user.uid);
-        formData.append('isFollowing', String(isFollowedByCurrentUser));
-        formData.append('path', pathname);
-        toggleFollowAction(formData);
-    });
-  };
 
   const canViewPrivateContent = isOwner || isFollowedByCurrentUser;
 
@@ -116,10 +91,11 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
                         {isOwner ? (
                             <Button asChild><Link href="/profile"><Edit className="mr-2 h-4 w-4" />Edit Profile</Link></Button>
                         ) : (
-                            <Button onClick={handleFollowToggle} disabled={isFollowPending}>
-                                {isFollowPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : isFollowedByCurrentUser ? <UserCheck className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
-                                {isFollowedByCurrentUser ? 'Following' : 'Follow'}
-                            </Button>
+                            <FollowButton
+                                targetUserId={user.uid}
+                                initialIsFollowing={isFollowedByCurrentUser}
+                                initialFollowerCount={user.followerCount}
+                            />
                         )}
                         <Dialog>
                             <DialogTrigger asChild>
@@ -164,21 +140,7 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
             </TabsList>
             
             <TabsContent value="gallery" className="mt-6">
-                {userProfileData.otherContent && userProfileData.otherContent.length > 0 ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                        {userProfileData.otherContent.map(item => (
-                            <PublicContentCard key={item.id} item={{...item, author: user}} />
-                        ))}
-                    </div>
-                ) : (
-                     <Card>
-                        <CardContent className="p-10 text-center text-muted-foreground">
-                            <Briefcase className="h-10 w-10 mx-auto" />
-                            <h3 className="mt-4 font-semibold">No Content Yet</h3>
-                            <p>This user hasn't created any listings, jobs, or events yet.</p>
-                        </CardContent>
-                    </Card>
-                )}
+                <AboutTab user={user} contentOnly={true} />
             </TabsContent>
 
             <TabsContent value="posts" className="mt-6">
@@ -198,13 +160,7 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
                     ))}
                     </div>
                 ) : (
-                    <Card>
-                        <CardContent className="p-10 text-center text-muted-foreground">
-                            <Rss className="h-10 w-10 mx-auto" />
-                            <h3 className="mt-4 font-semibold">No Posts Yet</h3>
-                            <p>This user hasn't posted anything yet.</p>
-                        </CardContent>
-                    </Card>
+                    <AboutTab user={user} noContentMode="posts" />
                 )}
             </TabsContent>
 

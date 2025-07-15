@@ -5,8 +5,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { UserPlus, UserCheck, QrCode, Loader2, Users, Search as SearchIcon } from "lucide-react";
-import { useState, useEffect, useCallback, useTransition } from "react";
+import { Users, Search as SearchIcon, QrCode } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import {
   AlertDialog,
@@ -18,7 +18,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useRouter, useSearchParams, usePathname } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import QrScanner from "@/components/qr-scanner";
 import Link from "next/link";
@@ -27,30 +27,7 @@ import { useAuth } from "@/components/auth-provider";
 import type { User } from "@/lib/users";
 import { getFollowers, getFollowing, getSuggestedUsers } from "@/lib/connections";
 import { ConnectionsPageSkeleton } from "@/components/connections-skeleton";
-import { toggleFollowAction } from "@/app/actions/follow";
-
-function FollowButton({ targetUser, currentUser, isFollowing }: { targetUser: User; currentUser: User; isFollowing: boolean }) {
-    const [isPending, startTransition] = useTransition();
-    const pathname = usePathname();
-
-    const handleFollow = () => {
-        startTransition(() => {
-            const formData = new FormData();
-            formData.append('currentUserId', currentUser.uid);
-            formData.append('targetUserId', targetUser.uid);
-            formData.append('isFollowing', String(isFollowing));
-            formData.append('path', pathname);
-            toggleFollowAction(formData);
-        });
-    }
-
-    return (
-        <Button size="sm" variant={isFollowing ? 'secondary' : 'default'} onClick={handleFollow} disabled={isPending}>
-            {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : isFollowing ? <UserCheck className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
-            {isFollowing ? 'Following' : 'Follow'}
-        </Button>
-    )
-}
+import { FollowButton } from "@/components/follow-button";
 
 
 export default function ConnectionsPage() {
@@ -213,7 +190,7 @@ export default function ConnectionsPage() {
                                         </div>
                                     </Link>
                                     <div className="flex items-center gap-2 flex-shrink-0">
-                                        <FollowButton targetUser={followerUser} currentUser={user} isFollowing={isFollowedByCurrentUser} />
+                                        <FollowButton targetUserId={followerUser.uid} initialIsFollowing={isFollowedByCurrentUser} initialFollowerCount={followerUser.followerCount} />
                                     </div>
                                 </div>
                             </CardContent>
@@ -247,7 +224,7 @@ export default function ConnectionsPage() {
                                             <p className="text-sm text-muted-foreground">@{followingUser.username}</p>
                                         </div>
                                     </Link>
-                                    <FollowButton targetUser={followingUser} currentUser={user} isFollowing={true} />
+                                    <FollowButton targetUserId={followingUser.uid} initialIsFollowing={true} initialFollowerCount={followingUser.followerCount} />
                                 </div>
                             </CardContent>
                         </Card>
@@ -283,7 +260,7 @@ export default function ConnectionsPage() {
                                 <p className="text-sm text-muted-foreground text-center line-clamp-2 h-10 mt-2">
                                     {suggestedUser.bio}
                                 </p>
-                                <FollowButton targetUser={suggestedUser} currentUser={user} isFollowing={false} />
+                                <FollowButton targetUserId={suggestedUser.uid} initialIsFollowing={false} initialFollowerCount={suggestedUser.followerCount} />
                             </CardContent>
                         </Card>
                     ))}

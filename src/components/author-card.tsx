@@ -5,14 +5,8 @@ import type { User } from '@/lib/users';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Button } from './ui/button';
 import { useAuth } from './auth-provider';
-import { UserPlus, UserCheck, Loader2 } from 'lucide-react';
-import { useTransition } from 'react';
-import { useToast } from '@/hooks/use-toast';
-import { useRouter, usePathname } from 'next/navigation';
-import { toggleFollowAction } from '@/app/actions/follow';
-
+import { FollowButton } from './follow-button';
 
 interface AuthorCardProps {
   author: User;
@@ -22,31 +16,7 @@ interface AuthorCardProps {
 
 export function AuthorCard({ author, isOwner, authorTypeLabel = "Creator" }: AuthorCardProps) {
   const { user: currentUser } = useAuth();
-  const [isPending, startTransition] = useTransition();
-  const { toast } = useToast();
-  const router = useRouter();
-  const pathname = usePathname();
-
   const isFollowing = currentUser?.following.includes(author.uid) || false;
-  
-  const handleFollowToggle = async () => {
-    if (!currentUser) {
-        toast({ title: "Please sign in to follow users.", variant: "destructive" });
-        router.push('/auth/sign-in');
-        return;
-    }
-    if (isOwner) return;
-
-    startTransition(() => {
-        const formData = new FormData();
-        formData.append('currentUserId', currentUser.uid);
-        formData.append('targetUserId', author.uid);
-        formData.append('isFollowing', String(isFollowing));
-        formData.append('path', pathname);
-        toggleFollowAction(formData);
-    });
-  };
-
 
   return (
     <Card>
@@ -62,12 +32,14 @@ export function AuthorCard({ author, isOwner, authorTypeLabel = "Creator" }: Aut
         </Link>
         <Link href={`/u/${author.username}`} className="font-semibold hover:underline">{author.name}</Link>
         <p className="text-sm text-muted-foreground">@{author.username}</p>
-        <p className="text-sm text-muted-foreground mt-2">{(author.followerCount || 0).toLocaleString()} followers</p>
          {!isOwner && currentUser && (
-            <Button onClick={handleFollowToggle} disabled={isPending} className="w-full mt-4">
-                {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : isFollowing ? <UserCheck className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
-                {isFollowing ? 'Following' : 'Follow'}
-            </Button>
+            <div className="w-full mt-4">
+              <FollowButton
+                targetUserId={author.uid}
+                initialIsFollowing={isFollowing}
+                initialFollowerCount={author.followerCount}
+              />
+            </div>
          )}
       </CardContent>
     </Card>
