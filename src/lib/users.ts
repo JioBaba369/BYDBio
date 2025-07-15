@@ -233,30 +233,30 @@ export const createUserProfileIfNotExists = async (user: FirebaseUser, additiona
  */
 export const updateUser = async (uid: string, data: Partial<User>): Promise<User | null> => {
     const userDocRef = doc(db, "users", uid);
+    
+    // Fetch the document first to ensure we have the latest state
+    const userDoc = await getDoc(userDocRef);
+    if (!userDoc.exists()) {
+        throw new Error("User document not found.");
+    }
+    
+    const existingData = userDoc.data() as User;
     const dataToUpdate: { [key: string]: any } = { ...data };
 
     // If username is being updated, ensure it's lowercase and check for uniqueness
-    if (data.username) {
+    if (data.username && data.username.toLowerCase() !== existingData.username) {
         const newUsername = data.username.toLowerCase();
         
         if (isUsernameReserved(newUsername)) {
             throw new Error("This username is reserved and cannot be used.");
         }
-
         dataToUpdate.username = newUsername;
 
-        const userDoc = await getDoc(userDocRef);
-        if (userDoc.exists() && newUsername !== userDoc.data().username) {
-            const usersRef = collection(db, "users");
-            const q = query(usersRef, where("username", "==", newUsername), limit(1));
-            const querySnapshot = await getDocs(q);
-            if (!querySnapshot.empty) {
-                // Ensure the found user is not the current user, just in case.
-                const foundUser = querySnapshot.docs[0];
-                if (foundUser.id !== uid) {
-                    throw new Error("Username is already taken.");
-                }
-            }
+        const usersRef = collection(db, "users");
+        const q = query(usersRef, where("username", "==", newUsername), limit(1));
+        const querySnapshot = await getDocs(q);
+        if (!querySnapshot.empty && querySnapshot.docs[0].id !== uid) {
+            throw new Error("Username is already taken.");
         }
     }
 
@@ -264,23 +264,20 @@ export const updateUser = async (uid: string, data: Partial<User>): Promise<User
     const keywordFieldsChanged = 'name' in data || 'username' in data || 'bio' in data || 'businessCard' in data || 'hashtags' in data;
 
     if (keywordFieldsChanged) {
-        const userDoc = await getDoc(userDocRef);
-        const existingData = userDoc.exists() ? userDoc.data() as User : {};
-        
-        // Use new data if available, otherwise fall back to existing data, or finally to an empty state.
-        const newName = data.name ?? existingData.name ?? '';
-        const newUsername = dataToUpdate.username ?? existingData.username ?? '';
-        const newBio = data.bio ?? existingData.bio ?? '';
-        const newTitle = data.businessCard?.title ?? existingData.businessCard?.title ?? '';
-        const newCompany = data.businessCard?.company ?? existingData.businessCard?.company ?? '';
+        // Use new data if available, otherwise fall back to existing data
+        const newName = data.name ?? existingData.name;
+        const newUsername = dataToUpdate.username ?? existingData.username;
+        const newBio = data.bio ?? existingData.bio;
+        const newTitle = data.businessCard?.title ?? existingData.businessCard?.title;
+        const newCompany = data.businessCard?.company ?? existingData.businessCard?.company;
         const newHashtags = (data.hashtags ?? existingData.hashtags ?? []).map(h => h.replace('#', '').toLowerCase());
         
         dataToUpdate.searchableKeywords = [...new Set([
             ...newName.toLowerCase().split(' ').filter(Boolean),
             newUsername,
             ...(newBio || '').toLowerCase().split(' ').filter(Boolean),
-            ...newTitle.toLowerCase().split(' ').filter(Boolean),
-            ...newCompany.toLowerCase().split(' ').filter(Boolean),
+            ...(newTitle || '').toLowerCase().split(' ').filter(Boolean),
+            ...(newCompany || '').toLowerCase().split(' ').filter(Boolean),
             ...newHashtags,
         ])];
         
@@ -547,3 +544,4 @@ export const getAllPublicContent = async (): Promise<PublicContentItem[]> => {
 
     return contentWithAuthors;
 };
+
