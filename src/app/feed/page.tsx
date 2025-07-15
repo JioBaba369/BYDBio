@@ -1,19 +1,20 @@
+// src/app/feed/page.tsx
 'use client';
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
-import { Textarea } from "@/components/ui/textarea"
-import { Image as ImageIcon, Send, X, Users, Compass, Loader2, Globe, Lock } from "lucide-react"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
+import { Image as ImageIcon, Send, X, Users, Compass, Loader2, Globe, Lock } from "lucide-react";
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
-import { useAuth } from "@/components/auth-provider"
-import { useToast } from "@/hooks/use-toast"
-import Link from "next/link"
-import ImageCropper from "@/components/image-cropper"
-import { uploadImage } from "@/lib/storage"
+import { useAuth } from "@/components/auth-provider";
+import { useToast } from "@/hooks/use-toast";
+import Link from "next/link";
+import ImageCropper from "@/components/image-cropper";
+import { uploadImage } from "@/lib/storage";
 import { PostCard } from "@/components/post-card";
 import Image from "next/image";
-import type { PostWithAuthor } from "@/lib/posts";
+import type { PostWithAuthor, EmbeddedPostInfo } from "@/lib/posts";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { createPost, getFeedPosts, getDiscoveryPosts } from "@/lib/posts";
 import { Input } from "@/components/ui/input";
@@ -21,7 +22,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FeedSkeleton } from "@/components/feed-skeleton";
 import { usePostActions } from "@/hooks/use-post-actions";
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
+import type { DocumentData } from 'firebase/firestore';
 
+const FEED_PAGE_SIZE = 10;
 
 const EmptyFeedState = ({
   icon: Icon,
@@ -48,7 +51,7 @@ const EmptyFeedState = ({
   </Card>
 );
 
-const QuotedPostPreview = ({ post, onRemove }: { post: any, onRemove: () => void }) => (
+const QuotedPostPreview = ({ post, onRemove }: { post: PostWithAuthor, onRemove: () => void }) => (
     <div className="mt-2 p-3 border rounded-lg relative">
         <Button variant="ghost" size="icon" className="absolute top-1 right-1 h-6 w-6" onClick={onRemove}>
             <X className="h-4 w-4" />
@@ -80,6 +83,15 @@ export default function FeedPage() {
   const [activeTab, setActiveTab] = useState('following');
   const [isLoadingFeed, setIsLoadingFeed] = useState(true);
 
+  // Pagination state
+  const [lastVisibleFollowingPost, setLastVisibleFollowingPost] = useState<DocumentData | null>(null);
+  const [lastVisibleDiscoveryPost, setLastVisibleDiscoveryPost] = useState<DocumentData | null>(null);
+  const [hasMoreFollowing, setHasMoreFollowing] = useState(true);
+  const [hasMoreDiscovery, setHasMoreDiscovery] = useState(true);
+  const [isFetchingMore, setIsFetchingMore] = useState(false);
+
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
   const [imageToCrop, setImageToCrop] = useState<string | null>(null);
   const [croppedImageUrl, setCroppedImageUrl] = useState<string | null>(null);
   const [isCropperOpen, setIsCropperOpen] = useState(false);
@@ -87,22 +99,54 @@ export default function FeedPage() {
 
   const [postToQuote, setPostToQuote] = useState<PostWithAuthor | null>(null);
 
-  const fetchFeed = useCallback(async (type: 'following' | 'discovery') => {
+  const combinedPosts = useMemo(() => {
+    return activeTab === 'following' ? followingPosts : discoveryPosts;
+  }, [activeTab, followingPosts, discoveryPosts]);
+
+  const hasMorePosts = useMemo(() => {
+    return activeTab === 'following' ? hasMoreFollowing : hasMoreDiscovery;
+  }, [activeTab, hasMoreFollowing, hasMoreDiscovery]);
+
+
+  const fetchFeed = useCallback(async (type: 'following' | 'discovery', loadMore: boolean = false) => {
     if (!user) {
       setIsLoadingFeed(false);
       return;
     }
 
-    setIsLoadingFeed(true);
+    if (loadMore) {
+        if (!hasMorePosts || isFetchingMore) return;
+        setIsFetchingMore(true);
+    } else {
+        setIsLoadingFeed(true);
+    }
+    
+    const lastVisibleDoc = loadMore ? (type === 'following' ? lastVisibleFollowingPost : lastVisibleDiscoveryPost) : null;
+    
     try {
-      let items: PostWithAuthor[];
-      if (type === 'following') {
-        items = await getFeedPosts(user.uid, user.following);
-        setFollowingPosts(items);
-      } else {
-        items = await getDiscoveryPosts(user.uid, user.following);
-        setDiscoveryPosts(items);
-      }
+        const fetchFunction = type === 'following' ? getFeedPosts : getDiscoveryPosts;
+        const { posts: newPosts, lastVisible } = await fetchFunction(user.uid, user.following, lastVisibleDoc, FEED_PAGE_SIZE);
+
+        const updatePosts = (setter: React.Dispatch<React.SetStateAction<PostWithAuthor[]>>) => {
+            setter(prev => loadMore ? [...prev, ...newPosts] : newPosts);
+        };
+        const updateLastVisible = (setter: React.Dispatch<React.SetStateAction<DocumentData | null>>) => {
+            setter(lastVisible);
+        };
+        const updateHasMore = (setter: React.Dispatch<React.SetStateAction<boolean>>) => {
+            setter(newPosts.length === FEED_PAGE_SIZE);
+        };
+
+        if (type === 'following') {
+            updatePosts(setFollowingPosts);
+            updateLastVisible(setLastVisibleFollowingPost);
+            updateHasMore(setHasMoreFollowing);
+        } else {
+            updatePosts(setDiscoveryPosts);
+            updateLastVisible(setLastVisibleDiscoveryPost);
+            updateHasMore(setHasMoreDiscovery);
+        }
+
     } catch (error) {
       console.error(`Error fetching ${type} feed:`, error);
       toast({
@@ -110,14 +154,13 @@ export default function FeedPage() {
         description: `There was an issue fetching posts for ${type}. Please try again.`,
         variant: "destructive"
       });
+      if (type === 'following') setHasMoreFollowing(false);
+      else setHasMoreDiscovery(false);
     } finally {
       setIsLoadingFeed(false);
+      setIsFetchingMore(false);
     }
-  }, [user, toast]);
-  
-  const combinedPosts = useMemo(() => {
-    return activeTab === 'following' ? followingPosts : discoveryPosts;
-  }, [activeTab, followingPosts, discoveryPosts]);
+  }, [user, toast, hasMorePosts, isFetchingMore, lastVisibleFollowingPost, lastVisibleDiscoveryPost]);
 
   const {
     handleLike,
@@ -130,7 +173,7 @@ export default function FeedPage() {
     posts: combinedPosts,
     setPosts: activeTab === 'following' ? setFollowingPosts : setDiscoveryPosts,
     currentUser: user,
-    onAfterAction: () => fetchFeed(activeTab as 'following' | 'discovery'),
+    onAfterAction: () => fetchFeed(activeTab as 'following' | 'discovery', false),
     onQuoteAction: (post) => {
         setPostToQuote(post);
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -138,18 +181,17 @@ export default function FeedPage() {
     }
   });
 
-
   useEffect(() => {
-    if (user?.uid) {
+    if (user?.uid && followingPosts.length === 0 && !isLoadingFeed && hasMoreFollowing) {
       fetchFeed('following');
     }
-  }, [user?.uid, fetchFeed]);
+  }, [user?.uid, fetchFeed, followingPosts.length, isLoadingFeed, hasMoreFollowing]);
 
   useEffect(() => {
-    if (activeTab === 'discovery' && discoveryPosts.length === 0 && !isLoadingFeed) {
+    if (activeTab === 'discovery' && discoveryPosts.length === 0 && !isLoadingFeed && hasMoreDiscovery) {
       fetchFeed('discovery');
     }
-  }, [activeTab, discoveryPosts.length, fetchFeed, isLoadingFeed]);
+  }, [activeTab, discoveryPosts.length, fetchFeed, isLoadingFeed, hasMoreDiscovery]);
 
   useEffect(() => {
     const storedPostJson = sessionStorage.getItem('postToQuote');
@@ -161,7 +203,6 @@ export default function FeedPage() {
         window.scrollTo({ top: 0, behavior: 'smooth' });
         document.getElementById('new-post')?.focus();
       } catch (error) {
-        console.error("Failed to parse quoted post from session storage:", error);
         sessionStorage.removeItem('postToQuote');
       }
     }
@@ -171,10 +212,7 @@ export default function FeedPage() {
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];
       const reader = new FileReader();
-      reader.addEventListener('load', () => {
-        setImageToCrop(reader.result as string);
-        setIsCropperOpen(true);
-      });
+      reader.addEventListener('load', () => { setImageToCrop(reader.result as string); setIsCropperOpen(true); });
       reader.readAsDataURL(file);
       e.target.value = '';
     }
@@ -193,7 +231,7 @@ export default function FeedPage() {
     if (!user || isPosting) return;
 
     if (!postContent.trim() && !croppedImageUrl && !postToQuote) {
-      toast({ title: "Cannot post empty update", description: "Please add some text, an image, or a quoted post.", variant: "destructive" });
+      toast({ title: "Cannot post empty update", variant: "destructive" });
       return;
     }
 
@@ -203,36 +241,39 @@ export default function FeedPage() {
       if (croppedImageUrl) {
         imageUrlToPost = await uploadImage(croppedImageUrl, `posts/${user.uid}/${Date.now()}`);
       }
-
-      let quotedPostData: { id: string; content: string; imageUrl: string | null; authorId: string; } | undefined = undefined;
-      if (postToQuote) {
-        quotedPostData = {
+      
+      const quotedPostData: EmbeddedPostInfo | undefined = postToQuote ? {
           id: postToQuote.id,
           content: postToQuote.content,
           imageUrl: postToQuote.imageUrl,
           authorId: postToQuote.author.uid,
-        };
-      }
+          createdAt: postToQuote.createdAt,
+      } : undefined;
       
-      await createPost(user.uid, { content: postContent, imageUrl: imageUrlToPost, quotedPost: quotedPostData, privacy: postPrivacy, category: postCategory });
-      await fetchFeed(activeTab as 'following' | 'discovery');
-
+      await createPost(user.uid, {
+        content: postContent,
+        imageUrl: imageUrlToPost,
+        quotedPost: quotedPostData,
+        privacy: postPrivacy,
+        category: postCategory
+      });
+      
       setPostContent('');
       setCroppedImageUrl(null);
       setPostToQuote(null);
       setPostCategory('');
       setPostPrivacy('public');
-      toast({ title: "Update Posted!", description: "Your post has been successfully published." });
+      toast({ title: "Update Posted!" });
+      fetchFeed(activeTab as 'following' | 'discovery'); // Refetch after posting
     } catch (error) {
-      console.error("Failed to create post:", error);
-      toast({ title: "Failed to post update", description: "An error occurred while publishing your update. Please try again.", variant: "destructive" });
+      toast({ title: "Failed to post update", variant: "destructive" });
     } finally {
       setIsPosting(false);
     }
   }, [user, isPosting, postContent, croppedImageUrl, postToQuote, postPrivacy, postCategory, fetchFeed, activeTab, toast]);
-  
+
   const renderFeedContent = useCallback((posts: PostWithAuthor[], emptyState: React.ReactNode) => {
-    if (isLoadingFeed) return <FeedSkeleton />;
+    if (isLoadingFeed && posts.length === 0) return <FeedSkeleton />;
     if (posts.length === 0) return emptyState;
 
     return (
@@ -252,6 +293,28 @@ export default function FeedPage() {
       </div>
     );
   }, [isLoadingFeed, handleLike, handleDelete, handleRepost, handleQuote, loadingAction]);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !isLoadingFeed && !isFetchingMore && hasMorePosts) {
+          fetchFeed(activeTab as 'following' | 'discovery', true);
+        }
+      },
+      { rootMargin: '200px', threshold: 0.1 }
+    );
+
+    const currentRef = scrollContainerRef.current;
+    if (currentRef) {
+      observer.observe(currentRef);
+    }
+
+    return () => {
+      if (currentRef) {
+        observer.unobserve(currentRef);
+      }
+    };
+  }, [isLoadingFeed, isFetchingMore, hasMorePosts, activeTab, fetchFeed]);
 
   if (authLoading) {
     return (
@@ -343,26 +406,42 @@ export default function FeedPage() {
             <TabsTrigger value="discovery">Discovery</TabsTrigger>
           </TabsList>
           <TabsContent value="following" className="pt-6">
-            {renderFeedContent(followingPosts, (
-              <EmptyFeedState
-                icon={Compass}
-                title="Your Feed is Empty"
-                description="Follow other users to see their status updates here."
-                buttonText="Find People to Follow"
-                buttonHref="/connections?tab=suggestions"
-              />
-            ))}
+            <div className="space-y-6">
+              {renderFeedContent(followingPosts, (
+                <EmptyFeedState
+                  icon={Compass}
+                  title="Your Feed is Empty"
+                  description="Follow other users to see their status updates here."
+                  buttonText="Find People to Follow"
+                  buttonHref="/connections?tab=suggestions"
+                />
+              ))}
+              {hasMorePosts && !isLoadingFeed && (
+                <div ref={scrollContainerRef} className="h-10" />
+              )}
+            </div>
           </TabsContent>
           <TabsContent value="discovery" className="pt-6">
-            {renderFeedContent(discoveryPosts, (
-              <EmptyFeedState
-                icon={Compass}
-                title="Nothing to discover yet"
-                description="As more people join and post, you'll see interesting public updates here."
-              />
-            ))}
+            <div className="space-y-6">
+              {renderFeedContent(discoveryPosts, (
+                <EmptyFeedState
+                  icon={Compass}
+                  title="Nothing to discover yet"
+                  description="As more people join and post, you'll see interesting public updates here."
+                />
+              ))}
+              {hasMorePosts && !isLoadingFeed && (
+                <div ref={scrollContainerRef} className="h-10" />
+              )}
+            </div>
           </TabsContent>
         </Tabs>
+        
+        {isFetchingMore && <FeedSkeleton count={1} />}
+        {!hasMorePosts && combinedPosts.length > 0 && (
+          <p className="text-center text-muted-foreground mt-4 py-4">You've reached the end of the feed.</p>
+        )}
+
       </div>
     </>
   );

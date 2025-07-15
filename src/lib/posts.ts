@@ -1,3 +1,4 @@
+// src/lib/posts.ts
 
 'use server';
 
@@ -19,6 +20,8 @@ import {
   arrayRemove,
   increment,
   writeBatch,
+  startAfter,
+  type DocumentData,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { User } from './users';
@@ -75,8 +78,6 @@ export type PostWithAuthor = Post & {
   repostedPost?: EmbeddedPostInfoWithAuthor;
 };
 
-const FEED_POST_LIMIT = 50;
-
 // Function to fetch a single post by its ID
 export const getPost = async (id: string): Promise<Post | null> => {
   const postDocRef = doc(db, 'posts', id);
@@ -101,7 +102,7 @@ export const getPostsByUser = async (userId: string, viewerId?: string | null): 
 // Function to create a new post
 export const createPost = async (userId: string, data: Pick<Post, 'content' | 'imageUrl' | 'privacy' | 'category'> & { quotedPost?: EmbeddedPostInfo }): Promise<Post> => {
   const userRef = doc(db, "users", userId);
-  const postRef = doc(collection(db, "posts")); // New post ref with auto-generated ID
+  const postRef = doc(collection(db, "posts"));
 
   if (data.quotedPost && data.quotedPost.authorId === userId) {
     throw new Error("You cannot quote your own post.");
@@ -134,12 +135,10 @@ export const createPost = async (userId: string, data: Pick<Post, 'content' | 'i
     comments: 0,
     repostCount: 0,
     searchableKeywords: keywords,
-    quotedPost: data.quotedPost || null, // Ensure quotedPost is included
+    quotedPost: data.quotedPost || null,
   };
   
-  // Set the new post document in the batch
   batch.set(postRef, postData);
-  // Update the user's post count in the batch
   batch.update(userRef, { postCount: increment(1) });
   
   await batch.commit();
@@ -162,26 +161,21 @@ export const deletePost = async (id: string) => {
   
   const batch = writeBatch(db);
 
-  // Delete the post itself
   batch.delete(postRef);
   
-  // If it was an original post (not a repost), decrement the author's post count
   if (!isRepost) {
     const authorRef = doc(db, 'users', postData.authorId);
     batch.update(authorRef, { postCount: increment(-1) });
   }
 
-  // If this was a repost, decrement the original post's repost count
-  if (postData.repostedPost) {
-    const originalPostRef = doc(db, 'posts', postData.repostedPost.id);
+  if (postData.originalPostId) {
+    const originalPostRef = doc(db, 'posts', postData.originalPostId);
     batch.update(originalPostRef, { repostCount: increment(-1) });
   }
   
   await batch.commit();
 };
 
-
-// Function to toggle a like on a post
 export const toggleLikePost = async (postId: string, userId: string) => {
     const postRef = doc(db, 'posts', postId);
     const postDoc = await getDoc(postRef);
@@ -194,29 +188,25 @@ export const toggleLikePost = async (postId: string, userId: string) => {
     const isLiked = postData.likedBy.includes(userId);
 
     if (isLiked) {
-        // Unlike the post
         await updateDoc(postRef, {
             likedBy: arrayRemove(userId),
             likes: increment(-1)
         });
     } else {
-        // Like the post
         await updateDoc(postRef, {
             likedBy: arrayUnion(userId),
             likes: increment(1)
         });
         
-        // Use reposted content for notification if it's a repost, otherwise use main content
         const contentForNotification = postData.repostedPost?.content || postData.content;
         const contentSnippet = contentForNotification.substring(0, 40) + (contentForNotification.length > 40 ? '...' : '');
 
         await createNotification(postData.authorId, 'new_like', userId, { entityId: postId, entityTitle: contentSnippet });
     }
 
-    return !isLiked; // Return the new like status
+    return !isLiked;
 }
 
-// A repost is a new post that links to an original post.
 export const repostPost = async (originalPostId: string, reposterId: string): Promise<Post> => {
     const postRef = doc(db, 'posts', originalPostId);
     const postDoc = await getDoc(postRef);
@@ -225,7 +215,6 @@ export const repostPost = async (originalPostId: string, reposterId: string): Pr
         throw new Error("Cannot repost a post that does not exist.");
     }
     
-    // Check if this user has already reposted this specific post.
     const repostQuery = query(
         collection(db, 'posts'),
         where('authorId', '==', reposterId),
@@ -237,43 +226,41 @@ export const repostPost = async (originalPostId: string, reposterId: string): Pr
     }
 
     const originalPostData = serializeDocument<Post>(postDoc)!;
-    // If original post is a repost, we want to repost the *original* content, not the repost itself
-    const contentToRepost = originalPostData.repostedPost || { 
-        id: originalPostId, 
-        content: originalPostData.content, 
-        imageUrl: originalPostData.imageUrl, 
+    const ultimateOriginalPostId = originalPostData.originalPostId || originalPostId;
+    const ultimateOriginalPostContent = originalPostData.repostedPost || {
+        id: originalPostId,
+        content: originalPostData.content,
+        imageUrl: originalPostData.imageUrl,
         authorId: originalPostData.authorId,
         createdAt: originalPostData.createdAt,
     };
     
-    if (contentToRepost.authorId === reposterId) {
+    if (ultimateOriginalPostContent.authorId === reposterId) {
         throw new Error("You cannot repost your own post.");
     }
 
-    const keywords = [...new Set(contentToRepost.content.toLowerCase().split(' ').filter(Boolean))];
+    const keywords = [...new Set(ultimateOriginalPostContent.content.toLowerCase().split(' ').filter(Boolean))];
 
     const batch = writeBatch(db);
 
-    // 1. Increment repost count on the original post
-    batch.update(doc(db, 'posts', contentToRepost.id), {
+    batch.update(doc(db, 'posts', ultimateOriginalPostId), {
         repostCount: increment(1)
     });
 
-    // 2. Create the new post document for the reposter
-    const newPostRef = doc(collection(db, 'posts')); // auto-generate ID
+    const newPostRef = doc(collection(db, 'posts'));
     const newPostData = {
         authorId: reposterId,
-        content: '', // Reposts have no original content of their own
+        content: '',
         imageUrl: null,
-        repostedPost: contentToRepost, // Embed the original post data
-        originalPostId: contentToRepost.id, // Store a direct reference to the original post ID
-        privacy: originalPostData.privacy, // Inherit privacy from original post
+        repostedPost: ultimateOriginalPostContent,
+        originalPostId: ultimateOriginalPostId,
+        privacy: originalPostData.privacy,
         createdAt: serverTimestamp(),
         likes: 0,
         likedBy: [],
         comments: 0,
         repostCount: 0,
-        postNumber: 0, // Reposts don't get a number
+        postNumber: 0,
         category: originalPostData.category,
         searchableKeywords: keywords,
     };
@@ -304,7 +291,7 @@ export const populatePostAuthors = async (posts: Post[], viewerId?: string | nul
 
     return posts.map(post => {
         const author = authorMap.get(post.authorId);
-        if (!author) return null; // Skip post if main author not found
+        if (!author) return null;
 
         const populatedPost: PostWithAuthor = {
             ...post,
@@ -346,74 +333,64 @@ export const populatePostAuthors = async (posts: Post[], viewerId?: string | nul
     }).filter((post): post is PostWithAuthor => post !== null);
 }
 
-// Function to fetch posts for the user's feed
-export const getFeedPosts = async (userId: string, followingIds: string[]): Promise<PostWithAuthor[]> => {
+export const getFeedPosts = async (userId: string, followingIds: string[], lastVisible: DocumentData | null, pageSize: number) => {
     const authorsToFetch = [...new Set([userId, ...followingIds])];
     
     if (authorsToFetch.length === 0) {
-        return [];
+        return { posts: [], lastVisible: null };
     }
     
-    // Chunk the authorsToFetch array to handle Firestore's 'in' query limit (30)
-    const chunks: string[][] = [];
-    for (let i = 0; i < authorsToFetch.length; i += 30) {
-        chunks.push(authorsToFetch.slice(i, i + 30));
+    const queryConstraints = [
+        where('authorId', 'in', authorsToFetch),
+        orderBy('createdAt', 'desc'),
+        limit(pageSize)
+    ];
+
+    if (lastVisible) {
+        queryConstraints.push(startAfter(lastVisible));
     }
-
-    const allPosts: Post[] = [];
-
-    for (const chunk of chunks) {
-        const postsQuery = query(
-            collection(db, 'posts'), 
-            where('authorId', 'in', chunk),
-            orderBy('createdAt', 'desc'),
-            limit(FEED_POST_LIMIT) // Apply limit per chunk
-        );
-        const postSnapshots = await getDocs(postsQuery);
-        postSnapshots.forEach(doc => {
-            const post = serializeDocument<Post>(doc);
-            if (post) allPosts.push(post);
-        });
-    }
-
-    // Sort all combined results by date and take the top N
-    allPosts.sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-    const finalPosts = allPosts.slice(0, FEED_POST_LIMIT);
     
-    return populatePostAuthors(finalPosts, userId);
+    const postsQuery = query(collection(db, 'posts'), ...queryConstraints);
+    const postSnapshots = await getDocs(postsQuery);
+
+    const posts = postSnapshots.docs
+        .map(doc => serializeDocument<Post>(doc))
+        .filter((post): post is Post => post !== null);
+    
+    const populatedPosts = await populatePostAuthors(posts, userId);
+    
+    return {
+        posts: populatedPosts,
+        lastVisible: postSnapshots.docs[postSnapshots.docs.length - 1] || null
+    };
 };
 
-/**
- * Fetches recent public posts from users that the current user does not follow.
- * @param userId The UID of the current user.
- * @param followingIds An array of UIDs that the current user follows.
- * @returns A promise that resolves to an array of posts for the discovery feed.
- */
-export const getDiscoveryPosts = async (userId: string, followingIds: string[]): Promise<PostWithAuthor[]> => {
-    // Get a list of users the current user does NOT follow.
-    const suggestedUsers = await getSuggestedUsers(userId, 20);
-    const suggestedUserIds = suggestedUsers.map(u => u.uid);
+export const getDiscoveryPosts = async (userId: string, followingIds: string[], lastVisible: DocumentData | null, pageSize: number) => {
+    const usersToExclude = [...new Set([userId, ...followingIds])];
+    
+    const queryConstraints = [
+        where('authorId', 'not-in', usersToExclude.length > 0 ? usersToExclude : ['']), // 'not-in' with empty array is invalid
+        where('privacy', '==', 'public'),
+        orderBy('authorId'), // First order by a field not in the inequality
+        orderBy('createdAt', 'desc'),
+        limit(pageSize)
+    ];
 
-    if (suggestedUserIds.length === 0) {
-        return [];
+    if (lastVisible) {
+        queryConstraints.push(startAfter(lastVisible));
     }
     
-    const allPosts: Post[] = [];
-
-    const postsQuery = query(
-        collection(db, 'posts'),
-        where('authorId', 'in', suggestedUserIds),
-        where('privacy', '==', 'public'),
-        orderBy('createdAt', 'desc'),
-        limit(FEED_POST_LIMIT)
-    );
+    const postsQuery = query(collection(db, 'posts'), ...queryConstraints);
     const postSnapshots = await getDocs(postsQuery);
-    postSnapshots.forEach(doc => {
-        const post = serializeDocument<Post>(doc);
-        if (post) allPosts.push(post);
-    });
 
-    allPosts.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-    
-    return populatePostAuthors(allPosts, userId);
+    const posts = postSnapshots.docs
+        .map(doc => serializeDocument<Post>(doc))
+        .filter((post): post is Post => post !== null);
+        
+    const populatedPosts = await populatePostAuthors(posts, userId);
+
+    return {
+        posts: populatedPosts,
+        lastVisible: postSnapshots.docs[postSnapshots.docs.length - 1] || null
+    };
 };

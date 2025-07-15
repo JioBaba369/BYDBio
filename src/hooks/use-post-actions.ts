@@ -92,22 +92,19 @@ export function usePostActions({
         setIsDeleting(true);
         setLoadingAction({ postId: postToDelete.id, action: 'delete' });
 
-        const originalPosts = [...posts];
-        setPosts(prev => prev.filter(item => item.id !== postToDelete.id));
-
         try {
             await deletePost(postToDelete.id);
             toast({ title: "Post Deleted" });
+            if (onAfterAction) await onAfterAction();
         } catch (error) {
             toast({ title: "Failed to delete post", variant: "destructive" });
-            setPosts(originalPosts);
         } finally {
             setIsDeleteDialogOpen(false);
             setPostToDelete(null);
             setIsDeleting(false);
             setLoadingAction(null);
         }
-    }, [postToDelete, currentUser, posts, setPosts, toast]);
+    }, [postToDelete, currentUser, onAfterAction, toast]);
     
     // Props to be spread onto the DeleteConfirmationDialog component
     const dialogProps: Omit<DeleteConfirmationDialogProps, 'children'> = {
