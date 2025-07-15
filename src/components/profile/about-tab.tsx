@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Building2, Globe, Linkedin, Mail, MapPin, Phone, Link as LinkIcon, Briefcase } from 'lucide-react';
 import { linkIconData } from '@/lib/link-icons';
 import { PublicContentCard } from '../public-content-card';
+import { Button } from '../ui/button';
 
 interface AboutTabProps {
   user: User;
