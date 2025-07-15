@@ -1,3 +1,4 @@
+
 import type {Config} from 'tailwindcss';
 import {fontFamily} from 'tailwindcss/defaultTheme';
 
@@ -11,8 +12,8 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['var(--font-geist-sans)', ...fontFamily.sans],
-        headline: ['var(--font-geist-sans)', ...fontFamily.sans],
+        sans: ['var(--font-pt-sans)', ...fontFamily.sans],
+        headline: ['var(--font-poppins)', ...fontFamily.sans],
         mono: ['var(--font-geist-mono)', ...fontFamily.mono],
       },
       colors: {

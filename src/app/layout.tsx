@@ -6,9 +6,6 @@ import { SidebarProvider } from '@/components/ui/sidebar';
 import { ThemeProvider } from '@/components/theme-provider';
 import { AuthProvider } from '@/components/auth-provider';
 import { AppLayout } from '@/components/app-layout';
-import { GeistSans } from 'geist/font/sans';
-import { GeistMono } from 'geist/font/mono';
-
 
 export const metadata: Metadata = {
   title: 'BYD.Bio - Build Your Dream Bio',
@@ -21,7 +18,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning className={`${GeistSans.variable} ${GeistMono.variable}`}>
+    <html lang="en" suppressHydrationWarning>
       <body className={cn('font-sans antialiased min-h-screen bg-background')}>
         <ThemeProvider
           attribute="class"
