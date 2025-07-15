@@ -341,7 +341,7 @@ export default function MyContentPage() {
                         />
                     </div>
                     {areFiltersActive ? (
-                        <Button variant="outline" onClick={handleClearFilters} className="w-full md:col-span-1">
+                        <Button variant="ghost" onClick={handleClearFilters} className="w-full md:col-span-1">
                             <X className="mr-2 h-4 w-4" />
                             Clear All Filters
                         </Button>
