@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useTransition } from "react";
 import type { PostWithAuthor, UserProfilePayload } from '@/lib/users';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -30,6 +30,7 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
   const { user: currentUser } = useAuth();
   
   const { isOwner, user, isFollowedByCurrentUser } = userProfileData;
+  const [isFollowPending, startFollowTransition] = useTransition();
   
   const [posts, setPosts] = useState<PostWithAuthor[]>([]);
   
@@ -134,7 +135,7 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
         
         <Tabs defaultValue="gallery" className="w-full">
             <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="gallery">Content Gallery</TabsTrigger>
+                <TabsTrigger value="gallery">Gallery</TabsTrigger>
                 <TabsTrigger value="posts">Posts</TabsTrigger>
                 <TabsTrigger value="about">About</TabsTrigger>
             </TabsList>
