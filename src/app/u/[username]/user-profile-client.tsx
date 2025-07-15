@@ -38,8 +38,8 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
   const { isOwner, user, isFollowedByCurrentUser } = userProfileData;
   const [isFollowPending, startFollowTransition] = useTransition();
   
-  const [posts, setPosts] = useState<PostWithAuthor[]>([]);
-  const [postsLoading, setPostsLoading] = useState(true);
+  const [posts, setPosts] = useState<PostWithAuthor[]>(userProfileData.posts || []);
+  const [postsLoading, setPostsLoading] = useState(false);
 
   const vCardData = useMemo(() => {
     if (!user) return '';
@@ -74,10 +74,6 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
         setPostsLoading(false);
     }
   }, [user.uid, currentUser?.uid]);
-
-  useEffect(() => {
-    loadPosts();
-  }, [loadPosts]);
   
   const {
     handleLike,

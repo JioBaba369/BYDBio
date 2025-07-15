@@ -1,4 +1,5 @@
 
+
 import type { Metadata } from 'next';
 import { getUserProfileData, type UserProfilePayload } from '@/lib/users';
 import { Card, CardContent } from '@/components/ui/card';

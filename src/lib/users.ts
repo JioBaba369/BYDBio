@@ -1,8 +1,9 @@
 
+
 import { collection, query, where, getDocs, limit, doc, getDoc, setDoc, updateDoc, deleteDoc, arrayUnion, orderBy, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { deleteUser, type User as FirebaseUser } from "firebase/auth";
-import type { PostWithAuthor } from "./posts";
+import { getPostsByUser, type PostWithAuthor } from "./posts";
 import { serializeDocument } from "./firestore-utils";
 import { RESERVED_USERNAMES } from "./reserved-usernames";
 import type { Listing } from './listings';
@@ -105,6 +106,7 @@ export type PublicContentItem = (
 
 export type UserProfilePayload = {
     user: User;
+    posts: PostWithAuthor[];
     otherContent: PublicContentItem[];
     isOwner: boolean;
     isFollowedByCurrentUser: boolean;
@@ -305,7 +307,10 @@ export async function getUserProfileData(username: string, viewerId: string | nu
         return null;
     }
     
-    const otherContent = await getPublicContentByUser(user.uid);
+    const [posts, otherContent] = await Promise.all([
+        getPostsByUser(user.uid, viewerId),
+        getPublicContentByUser(user.uid)
+    ]);
     
     let isFollowedByCurrentUser = false;
     if (viewerId && viewerId !== user.uid) {
@@ -318,6 +323,7 @@ export async function getUserProfileData(username: string, viewerId: string | nu
     
     return {
         user,
+        posts,
         otherContent,
         isOwner: viewerId === user.uid,
         isFollowedByCurrentUser
@@ -412,7 +418,7 @@ export const getSuggestedUsers = async (userId: string | null, count: number = 2
     return users.slice(0, count);
 };
 
-export const getPublicContentByUser = async (userId: string) => {
+export const getPublicContentByUser = async (userId: string): Promise<PublicContentItem[]> => {
     const listingsQuery = query(collection(db, 'listings'), where('status', '==', 'active'), where('authorId', '==', userId));
     const jobsQuery = query(collection(db, 'jobs'), where('status', '==', 'active'), where('authorId', '==', userId));
     const eventsQuery = query(collection(db, 'events'), where('status', '==', 'active'), where('authorId', '==', userId));
@@ -458,7 +464,7 @@ export const getPublicContentByUser = async (userId: string) => {
 
     serializedContent.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
-    return serializedContent;
+    return serializedContent as PublicContentItem[];
 };
 
 export const getAllPublicContent = async (): Promise<PublicContentItem[]> => {
