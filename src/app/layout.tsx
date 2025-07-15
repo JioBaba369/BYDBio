@@ -6,17 +6,11 @@ import { SidebarProvider } from '@/components/ui/sidebar';
 import { ThemeProvider } from '@/components/theme-provider';
 import { AuthProvider } from '@/components/auth-provider';
 import { AppLayout } from '@/components/app-layout';
-import { Inter, Poppins } from 'next/font/google'
+import { Inter } from 'next/font/google'
 
 const fontSans = Inter({
   subsets: ['latin'],
   variable: '--font-inter',
-})
-
-const fontHeadline = Poppins({
-  subsets: ['latin'],
-  weight: ['600', '700'],
-  variable: '--font-poppins',
 })
 
 export const metadata: Metadata = {
@@ -31,7 +25,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={cn('font-sans antialiased min-h-screen bg-background', fontSans.variable, fontHeadline.variable)}>
+      <body className={cn('font-sans antialiased min-h-screen bg-background', fontSans.variable)}>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
