@@ -17,17 +17,26 @@ import { CONTENT_TYPES, getContentTypeMetadata, type ContentTypeMetadata } from 
 type ContentType = 'listing' | 'job' | 'event' | 'offer' | 'promoPage';
 const ALL_CONTENT_TYPES = CONTENT_TYPES.filter(t => t.name !== 'Appointment').map(t => t.name as ContentType);
 
+// Color mapping for active filter buttons.
+const TYPE_COLORS: Record<string, string> = {
+    Event: 'bg-primary text-primary-foreground hover:bg-primary/90',
+    Offer: 'bg-info text-info-foreground hover:bg-info/90',
+    Job: 'bg-success text-success-foreground hover:bg-success/90',
+    Listing: 'bg-warning text-warning-foreground hover:bg-warning/90',
+    'Business Page': 'bg-destructive text-destructive-foreground hover:bg-destructive/90',
+};
+
 const FilterButton = ({ typeMeta, isSelected, onClick }: { typeMeta: ContentTypeMetadata, isSelected: boolean, onClick: () => void }) => {
     const Icon = typeMeta.icon;
+    const activeColorClass = TYPE_COLORS[typeMeta.name] || 'bg-primary text-primary-foreground hover:bg-primary/90';
 
     return (
         <Button
-            variant={isSelected ? typeMeta.variant : 'outline'}
+            variant={'outline'}
             onClick={onClick}
             className={cn(
                 'transition-all',
-                !isSelected && 'hover:bg-accent/50',
-                typeMeta.variant === 'outline' && isSelected && 'bg-foreground text-background border-transparent hover:bg-foreground/90'
+                isSelected ? `border-transparent ${activeColorClass}` : 'hover:bg-accent/50',
             )}
         >
             <Icon className="mr-2 h-4 w-4" /> {typeMeta.label}

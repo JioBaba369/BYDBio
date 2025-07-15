@@ -1,14 +1,11 @@
 
 import { Gift, Briefcase, Tags, Megaphone, Calendar, Users, MousePointerClick } from 'lucide-react';
-import type { VariantProps } from 'class-variance-authority';
-import { badgeVariants } from '@/components/ui/badge';
 import type { CalendarItem } from './events';
 
 export type ContentTypeMetadata = {
   name: string;
   label: string;
   icon: React.ElementType;
-  variant: VariantProps<typeof badgeVariants>['variant'];
   getStatsValue: (item: CalendarItem) => number;
   getInteractionLabel: (type: string) => string;
 };
@@ -18,7 +15,6 @@ export const CONTENT_TYPES: ContentTypeMetadata[] = [
         name: 'Event', 
         label: 'Events', 
         icon: Calendar,
-        variant: 'default', // Blue
         getStatsValue: (item) => item.rsvps?.length || 0,
         getInteractionLabel: () => 'RSVPs'
     },
@@ -26,7 +22,6 @@ export const CONTENT_TYPES: ContentTypeMetadata[] = [
         name: 'Offer', 
         label: 'Offers', 
         icon: Gift,
-        variant: 'info', // Teal/Cyan
         getStatsValue: (item) => item.claims || 0,
         getInteractionLabel: () => 'Claims'
     },
@@ -34,7 +29,6 @@ export const CONTENT_TYPES: ContentTypeMetadata[] = [
         name: 'Job', 
         label: 'Jobs', 
         icon: Briefcase,
-        variant: 'success', // Green
         getStatsValue: (item) => item.applicants || 0,
         getInteractionLabel: () => 'Applicants'
     },
@@ -42,7 +36,6 @@ export const CONTENT_TYPES: ContentTypeMetadata[] = [
         name: 'Listing', 
         label: 'Listings', 
         icon: Tags,
-        variant: 'warning', // Yellow/Orange
         getStatsValue: (item) => item.clicks || 0,
         getInteractionLabel: () => 'Clicks'
     },
@@ -50,7 +43,6 @@ export const CONTENT_TYPES: ContentTypeMetadata[] = [
         name: 'Business Page', 
         label: 'Business Pages', 
         icon: Megaphone,
-        variant: 'destructive', // Red
         getStatsValue: (item) => item.clicks || 0,
         getInteractionLabel: () => 'Clicks'
     },
@@ -58,7 +50,6 @@ export const CONTENT_TYPES: ContentTypeMetadata[] = [
         name: 'Appointment', 
         label: 'Appointments', 
         icon: Users,
-        variant: 'secondary',
         getStatsValue: () => 0, // No specific stat for appointments
         getInteractionLabel: () => 'Booked'
     },
