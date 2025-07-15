@@ -6,8 +6,8 @@ import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/components/auth-provider';
 import type { PostWithAuthor } from '@/lib/posts';
-import { toggleLikePost, repostPost, deletePost } from '@/lib/posts';
 import type { DeleteConfirmationDialogProps } from '@/components/delete-confirmation-dialog';
+import { handleDeletePost } from '@/app/actions/posts';
 
 interface UsePostActionsProps {
     posts: PostWithAuthor[];
@@ -28,49 +28,6 @@ export function usePostActions({
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [postToDelete, setPostToDelete] = useState<PostWithAuthor | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
-    const [loadingAction, setLoadingAction] = useState<{ postId: string; action: 'like' | 'repost' | 'quote' | 'delete' } | null>(null);
-
-    const handleLike = useCallback(async (postId: string) => {
-        if (!currentUser || loadingAction) return;
-        setLoadingAction({ postId, action: 'like' });
-
-        const originalPosts = [...posts];
-        setPosts(prevPosts =>
-            prevPosts.map(p => {
-                if (p.id === postId) {
-                    const isLiked = !p.isLiked;
-                    return { ...p, isLiked, likes: (p.likes || 0) + (isLiked ? 1 : -1) };
-                }
-                return p;
-            })
-        );
-
-        try {
-            await toggleLikePost(postId, currentUser.uid);
-        } catch (error) {
-            toast({ title: "Something went wrong", variant: "destructive" });
-            setPosts(originalPosts);
-        } finally {
-            setLoadingAction(null);
-        }
-    }, [currentUser, loadingAction, posts, setPosts, toast]);
-
-    const handleRepost = useCallback(async (originalPostId: string) => {
-        if (!currentUser || loadingAction) return;
-        setLoadingAction({ postId: originalPostId, action: 'repost' });
-
-        try {
-            await repostPost(originalPostId, currentUser.uid);
-            toast({ title: "Reposted!" });
-            // A full refetch would be ideal here if feeds need reordering.
-            // For now, we rely on optimistic updates and manual refresh if needed.
-        } catch (error: any) {
-            toast({ title: error.message || "Failed to repost", variant: "destructive" });
-        } finally {
-            setLoadingAction(null);
-        }
-    }, [currentUser, loadingAction, toast]);
-
 
     const handleQuote = useCallback((post: PostWithAuthor) => {
         if (onQuoteAction) {
@@ -89,21 +46,19 @@ export function usePostActions({
     const handleConfirmDelete = useCallback(async () => {
         if (!postToDelete || !currentUser) return;
         setIsDeleting(true);
-        setLoadingAction({ postId: postToDelete.id, action: 'delete' });
 
-        try {
-            await deletePost(postToDelete.id);
+        const result = await handleDeletePost(postToDelete.id, `/u/${postToDelete.author.username}`);
+
+        if (result.success) {
             toast({ title: "Post Deleted" });
-            // Optimistically remove the post from the local state
             setPosts(prev => prev.filter(p => p.id !== postToDelete.id));
-        } catch (error) {
-            toast({ title: "Failed to delete post", variant: "destructive" });
-        } finally {
-            setIsDeleteDialogOpen(false);
-            setPostToDelete(null);
-            setIsDeleting(false);
-            setLoadingAction(null);
+        } else {
+            toast({ title: "Failed to delete post", description: result.error, variant: "destructive" });
         }
+
+        setIsDeleteDialogOpen(false);
+        setPostToDelete(null);
+        setIsDeleting(false);
     }, [postToDelete, currentUser, setPosts, toast]);
     
     // Props to be spread onto the DeleteConfirmationDialog component
@@ -117,11 +72,8 @@ export function usePostActions({
     };
 
     return {
-        handleLike,
-        handleRepost,
         handleQuote,
         handleDelete,
-        loadingAction,
         dialogProps
     };
 }

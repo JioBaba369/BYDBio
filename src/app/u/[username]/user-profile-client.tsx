@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useMemo, useEffect, useTransition } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import type { PostWithAuthor, UserProfilePayload } from '@/lib/users';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -18,7 +18,7 @@ import { BookingDialog } from "@/components/booking-dialog";
 import { ContactForm } from "@/components/contact-form";
 import { AboutTab } from "@/components/profile/about-tab";
 import Image from "next/image";
-import { usePostActions } from "@/hooks/use-post-actions";
+import { usePostActions } from '@/hooks/use-post-actions';
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
 import { FollowButton } from "@/components/follow-button";
 
@@ -30,7 +30,6 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
   const { user: currentUser } = useAuth();
   
   const { isOwner, user, isFollowedByCurrentUser } = userProfileData;
-  const [isFollowPending, startFollowTransition] = useTransition();
   
   const [posts, setPosts] = useState<PostWithAuthor[]>([]);
   
@@ -38,11 +37,12 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
     setPosts(userProfileData.posts || []);
   }, [userProfileData.posts]);
 
-  const postActions = usePostActions({
+  const { dialogProps, handleDelete, handleQuote } = usePostActions({
     posts,
     setPosts,
     currentUser,
   });
+
 
   const vCardData = useMemo(() => {
     if (!user) return '';
@@ -62,7 +62,7 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
 
   return (
     <>
-      <DeleteConfirmationDialog {...postActions.dialogProps} />
+      <DeleteConfirmationDialog {...dialogProps} />
       <div className="space-y-6">
         <Card className="overflow-hidden border-0 shadow-none -m-4 sm:-m-6 rounded-none">
             <div className="relative h-40 sm:h-48 md:h-56 bg-muted">
@@ -151,12 +151,8 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
                         <PostCard
                             key={`${item.id}-${item.author.uid}`}
                             item={item}
-                            onLike={postActions.handleLike}
-                            onDelete={() => postActions.handleDelete(item)}
-                            onRepost={postActions.handleRepost}
-                            onQuote={postActions.handleQuote}
-                            isLoading={postActions.loadingAction?.postId === item.id}
-                            loadingAction={postActions.loadingAction && postActions.loadingAction.postId === item.id ? postActions.loadingAction.action : undefined}
+                            onDelete={() => handleDelete(item)}
+                            onQuote={handleQuote}
                         />
                     ))}
                     </div>
