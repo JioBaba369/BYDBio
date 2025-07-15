@@ -14,7 +14,6 @@ interface UsePostActionsProps {
     posts: PostWithAuthor[];
     setPosts: React.Dispatch<React.SetStateAction<PostWithAuthor[]>>;
     currentUser: ReturnType<typeof useAuth>['user'];
-    onAfterAction?: () => void | Promise<void>;
     onQuoteAction?: (post: PostWithAuthor) => void;
 }
 
@@ -22,7 +21,6 @@ export function usePostActions({
     posts,
     setPosts,
     currentUser,
-    onAfterAction,
     onQuoteAction,
 }: UsePostActionsProps) {
     const { toast } = useToast();
@@ -65,13 +63,12 @@ export function usePostActions({
         try {
             await repostPost(postId, currentUser.uid);
             toast({ title: "Reposted!" });
-            if (onAfterAction) await onAfterAction();
         } catch (error: any) {
             toast({ title: error.message || "Failed to repost", variant: "destructive" });
         } finally {
             setLoadingAction(null);
         }
-    }, [currentUser, loadingAction, toast, onAfterAction]);
+    }, [currentUser, loadingAction, toast]);
 
     const handleQuote = useCallback((post: PostWithAuthor) => {
         if (onQuoteAction) {
