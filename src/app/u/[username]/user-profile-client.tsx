@@ -2,7 +2,7 @@
 
 'use client';
 
-import { useState, useEffect, useMemo, useCallback, useTransition } from "react";
+import { useState, useMemo, useCallback, useTransition } from "react";
 import type { User, PostWithAuthor, UserProfilePayload } from '@/lib/users';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -174,32 +174,13 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
         </Card>
         
         <Tabs defaultValue="about" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="about">About</TabsTrigger>
-                <TabsTrigger value="content">Content</TabsTrigger>
-                <TabsTrigger value="posts">Status Feed</TabsTrigger>
+                <TabsTrigger value="posts">Posts</TabsTrigger>
             </TabsList>
             
             <TabsContent value="about" className="mt-6">
-                <AboutTab user={user} />
-            </TabsContent>
-
-            <TabsContent value="content" className="mt-6">
-                {userProfileData.otherContent && userProfileData.otherContent.length > 0 ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {userProfileData.otherContent.map(item => (
-                            <PublicContentCard key={item.id} item={{...item, author: user}} />
-                        ))}
-                    </div>
-                ) : (
-                    <Card>
-                        <CardContent className="p-10 text-center text-muted-foreground">
-                            <Briefcase className="h-10 w-10 mx-auto" />
-                            <h3 className="mt-4 font-semibold">No Content Yet</h3>
-                            <p>This user hasn't created any public content yet.</p>
-                        </CardContent>
-                    </Card>
-                )}
+                <AboutTab user={user} otherContent={userProfileData.otherContent} />
             </TabsContent>
 
             <TabsContent value="posts" className="mt-6">

@@ -1,5 +1,6 @@
 
 
+
 import { collection, query, where, getDocs, limit, doc, getDoc, setDoc, updateDoc, deleteDoc, arrayUnion, orderBy, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { deleteUser, type User as FirebaseUser } from "firebase/auth";
@@ -301,6 +302,56 @@ export async function getUserByUsername(username: string): Promise<User | null> 
     return serializeDocument<User>(querySnapshot.docs[0]);
 }
 
+export const getPublicContentByUser = async (userId: string): Promise<PublicContentItem[]> => {
+    const listingsQuery = query(collection(db, 'listings'), where('status', '==', 'active'), where('authorId', '==', userId));
+    const jobsQuery = query(collection(db, 'jobs'), where('status', '==', 'active'), where('authorId', '==', userId));
+    const eventsQuery = query(collection(db, 'events'), where('status', '==', 'active'), where('authorId', '==', userId));
+    const offersQuery = query(collection(db, 'offers'), where('status', '==', 'active'), where('authorId', '==', userId));
+    const promoPagesQuery = query(collection(db, 'promoPages'), where('status', '==', 'active'), where('authorId', '==', userId));
+
+     const [
+        listingsSnap,
+        jobsSnap,
+        eventsSnap,
+        offersSnap,
+        promoPagesSnap,
+    ] = await Promise.all([
+        getDocs(listingsQuery),
+        getDocs(jobsQuery),
+        getDocs(eventsQuery),
+        getDocs(offersQuery),
+        getDocs(promoPagesQuery),
+    ]);
+
+    const allContent: any[] = [
+        ...listingsSnap.docs.map(doc => ({ ...doc.data(), id: doc.id, type: 'listing' })),
+        ...jobsSnap.docs.map(doc => ({ ...doc.data(), id: doc.id, type: 'job' })),
+        ...eventsSnap.docs.map(doc => ({ ...doc.data(), id: doc.id, type: 'event' })),
+        ...offersSnap.docs.map(doc => ({ ...doc.data(), id: doc.id, type: 'offer' })),
+        ...promoPagesSnap.docs.map(doc => ({ ...doc.data(), id: doc.id, type: 'promoPage' })),
+    ];
+
+    const serializedContent = allContent.map(item => {
+        const serializedItem = serializeDocument<any>({ data: () => item, id: item.id });
+        if (!serializedItem) return null;
+        
+        if (serializedItem.type === 'promoPage' && serializedItem.name) {
+            serializedItem.title = serializedItem.name;
+        }
+
+        let primaryDate = serializedItem.createdAt; 
+        if (item.type === 'event' || item.type === 'offer') primaryDate = serializedItem.startDate;
+        else if (item.type === 'job') primaryDate = serializedItem.postingDate;
+
+        return {...serializedItem, date: primaryDate};
+    }).filter(item => !!item);
+
+    serializedContent.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    return serializedContent as PublicContentItem[];
+};
+
+
 export async function getUserProfileData(username: string, viewerId: string | null): Promise<UserProfilePayload | null> {
     const user = await getUserByUsername(username);
     if (!user) {
@@ -416,55 +467,6 @@ export const getSuggestedUsers = async (userId: string | null, count: number = 2
     
     // For logged-out users, just return a slice of all users.
     return users.slice(0, count);
-};
-
-export const getPublicContentByUser = async (userId: string): Promise<PublicContentItem[]> => {
-    const listingsQuery = query(collection(db, 'listings'), where('status', '==', 'active'), where('authorId', '==', userId));
-    const jobsQuery = query(collection(db, 'jobs'), where('status', '==', 'active'), where('authorId', '==', userId));
-    const eventsQuery = query(collection(db, 'events'), where('status', '==', 'active'), where('authorId', '==', userId));
-    const offersQuery = query(collection(db, 'offers'), where('status', '==', 'active'), where('authorId', '==', userId));
-    const promoPagesQuery = query(collection(db, 'promoPages'), where('status', '==', 'active'), where('authorId', '==', userId));
-
-     const [
-        listingsSnap,
-        jobsSnap,
-        eventsSnap,
-        offersSnap,
-        promoPagesSnap,
-    ] = await Promise.all([
-        getDocs(listingsQuery),
-        getDocs(jobsQuery),
-        getDocs(eventsQuery),
-        getDocs(offersQuery),
-        getDocs(promoPagesQuery),
-    ]);
-
-    const allContent: any[] = [
-        ...listingsSnap.docs.map(doc => ({ ...doc.data(), id: doc.id, type: 'listing' })),
-        ...jobsSnap.docs.map(doc => ({ ...doc.data(), id: doc.id, type: 'job' })),
-        ...eventsSnap.docs.map(doc => ({ ...doc.data(), id: doc.id, type: 'event' })),
-        ...offersSnap.docs.map(doc => ({ ...doc.data(), id: doc.id, type: 'offer' })),
-        ...promoPagesSnap.docs.map(doc => ({ ...doc.data(), id: doc.id, type: 'promoPage' })),
-    ];
-
-    const serializedContent = allContent.map(item => {
-        const serializedItem = serializeDocument<any>({ data: () => item, id: item.id });
-        if (!serializedItem) return null;
-        
-        if (serializedItem.type === 'promoPage' && serializedItem.name) {
-            serializedItem.title = serializedItem.name;
-        }
-
-        let primaryDate = serializedItem.createdAt; 
-        if (item.type === 'event' || item.type === 'offer') primaryDate = serializedItem.startDate;
-        else if (item.type === 'job') primaryDate = serializedItem.postingDate;
-
-        return {...serializedItem, date: primaryDate};
-    }).filter(item => !!item);
-
-    serializedContent.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-
-    return serializedContent as PublicContentItem[];
 };
 
 export const getAllPublicContent = async (): Promise<PublicContentItem[]> => {
