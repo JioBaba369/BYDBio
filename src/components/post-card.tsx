@@ -131,7 +131,7 @@ export function PostCard({ item, onQuote, onDeleted }: PostCardProps) {
         );
     }
 
-    const handleLikeClick = async () => {
+    const onLikeClick = async () => {
         if (!user || isLikePending) return;
         
         startLikeTransition(async () => {
@@ -142,7 +142,6 @@ export function PostCard({ item, onQuote, onDeleted }: PostCardProps) {
             try {
                 await handleToggleLike(item.id, user.uid, pathname);
             } catch (error) {
-                 // Revert on failure
                 setIsLiked(wasLiked);
                 setLikeCount(prev => prev + (wasLiked ? 1 : -1));
                 toast({ title: 'Failed to update like', variant: 'destructive'});
@@ -150,21 +149,25 @@ export function PostCard({ item, onQuote, onDeleted }: PostCardProps) {
         });
     }
 
-    const handleRepostClick = async () => {
+    const onRepostClick = async () => {
         if (!user || isRepostPending) return;
         
         startRepostTransition(async () => {
             try {
                 await handleRepost(item.originalPostId || item.id, user.uid, pathname);
                 toast({ title: "Post Reposted" });
-                router.refresh();
             } catch (error: any) {
                 toast({ title: "Failed to repost", description: error.message, variant: 'destructive' });
             }
         });
     }
 
-    const handleDeleteClick = async () => {
+    const onDeleteClick = async () => {
+        if (!isOwner || isDeletePending) return;
+        setIsDeleteDialogOpen(true);
+    };
+
+    const confirmDelete = async () => {
         startDeleteTransition(async () => {
             try {
                 await handleDeletePost(item.id, pathname);
@@ -182,7 +185,7 @@ export function PostCard({ item, onQuote, onDeleted }: PostCardProps) {
             <DeleteConfirmationDialog 
                 open={isDeleteDialogOpen}
                 onOpenChange={setIsDeleteDialogOpen}
-                onConfirm={handleDeleteClick}
+                onConfirm={confirmDelete}
                 isLoading={isDeletePending}
                 itemName="post"
                 confirmationText="DELETE"
@@ -219,7 +222,7 @@ export function PostCard({ item, onQuote, onDeleted }: PostCardProps) {
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
                                         <DropdownMenuContent align="end">
-                                            <DropdownMenuItem onClick={() => setIsDeleteDialogOpen(true)} className="text-destructive cursor-pointer"><Trash2 className="mr-2 h-4 w-4" /> Delete Post</DropdownMenuItem>
+                                            <DropdownMenuItem onClick={onDeleteClick} className="text-destructive cursor-pointer"><Trash2 className="mr-2 h-4 w-4" /> Delete Post</DropdownMenuItem>
                                         </DropdownMenuContent>
                                     </DropdownMenu>
                                 )}
@@ -233,7 +236,7 @@ export function PostCard({ item, onQuote, onDeleted }: PostCardProps) {
                             {item.category && <div className="pt-2"><Badge variant="outline">{item.category}</Badge></div>}
                         </div>
                         <CardFooter className="flex justify-between items-center p-0 pt-3 -ml-2">
-                            <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground hover:text-primary" onClick={handleLikeClick} disabled={isLoading || !user}>
+                            <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground hover:text-primary" onClick={onLikeClick} disabled={isLoading || !user}>
                                 {isLikePending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Heart className={cn("h-4 w-4", isLiked && "fill-red-500 text-red-500")} />}
                                 <span className="text-xs">{likeCount}</span>
                             </Button>
@@ -241,7 +244,7 @@ export function PostCard({ item, onQuote, onDeleted }: PostCardProps) {
                                 <MessageCircle className="h-4 w-4" />
                                 <span className="text-xs">{item.comments || 0}</span>
                             </Button>
-                            <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground hover:text-green-500" onClick={handleRepostClick} disabled={isLoading || !user}>
+                            <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground hover:text-green-500" onClick={onRepostClick} disabled={isLoading || !user}>
                                 {isRepostPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Repeat className="h-4 w-4" />}
                                 <span className="text-xs">{item.repostCount || 0}</span>
                             </Button>
