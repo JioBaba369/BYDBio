@@ -6,6 +6,7 @@ import type { Timestamp } from "firebase/firestore";
 import { getPostsByUser, type PostWithAuthor } from "./posts";
 import { getPublicContentByUser } from "./content";
 import { serializeDocument } from "./firestore-utils";
+import { RESERVED_USERNAMES } from "./reserved-usernames";
 
 export type BusinessCard = {
   title?: string;
@@ -88,6 +89,10 @@ export type UserProfilePayload = {
 }
 
 
+const isUsernameReserved = (username: string): boolean => {
+    return RESERVED_USERNAMES.includes(username.toLowerCase());
+}
+
 const generateUniqueUsername = async (baseUsername: string): Promise<string> => {
     let username = baseUsername;
     let isUnique = false;
@@ -98,11 +103,12 @@ const generateUniqueUsername = async (baseUsername: string): Promise<string> => 
     }
 
     while (!isUnique && attempts < 10) { // Limit attempts to prevent infinite loops
+        const isReserved = isUsernameReserved(username);
         const usersRef = collection(db, "users");
         const q = query(usersRef, where("username", "==", username), limit(1));
         const querySnapshot = await getDocs(q);
 
-        if (querySnapshot.empty) {
+        if (querySnapshot.empty && !isReserved) {
             isUnique = true;
         } else {
             // Append 3 random digits
@@ -205,6 +211,11 @@ export const updateUser = async (uid: string, data: Partial<User>): Promise<User
     // If username is being updated, ensure it's lowercase and check for uniqueness
     if (data.username) {
         const newUsername = data.username.toLowerCase();
+        
+        if (isUsernameReserved(newUsername)) {
+            throw new Error("This username is reserved and cannot be used.");
+        }
+
         dataToUpdate.username = newUsername;
 
         const userDoc = await getDoc(userDocRef);
