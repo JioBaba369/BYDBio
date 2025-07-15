@@ -365,3 +365,26 @@ export const addFcmTokenToUser = async (uid: string, token: string) => {
         fcmTokens: arrayUnion(token)
     });
 };
+
+
+// Get suggested users to follow for the explore page
+export const getSuggestedUsers = async (userId: string, count: number = 20): Promise<User[]> => {
+    const usersRef = collection(db, 'users');
+    // Fetch a larger batch of users to increase the chance of finding suggestions.
+    const q = query(usersRef, limit(100));
+    const querySnapshot = await getDocs(q);
+    
+    const users = querySnapshot.docs.map(doc => serializeDocument<User>(doc)).filter((user): user is User => user !== null);
+
+    if (userId) {
+        const userDoc = await getDoc(doc(db, 'users', userId));
+        const followingIds = userDoc.exists() ? userDoc.data().following || [] : [];
+        
+        // Filter out the current user and anyone they already follow from the fetched batch
+        const suggestions = users.filter(u => u.uid !== userId && !followingIds.includes(u.uid));
+        return suggestions.slice(0, count);
+    }
+    
+    // For logged-out users, just return a slice of all users.
+    return users.slice(0, count);
+};
