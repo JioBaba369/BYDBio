@@ -4,19 +4,37 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import type { PublicContentItem } from '@/lib/content';
+import type { PublicContentItem } from '@/lib/users';
 import { Search, Compass, LayoutGrid, List, X } from 'lucide-react';
 import { PublicContentCard } from '@/components/public-content-card';
 import { ExplorePageSkeleton } from '@/components/explore-skeleton';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import { CONTENT_TYPES } from '@/lib/content-types';
+import { CONTENT_TYPES, getContentTypeMetadata, type ContentTypeMetadata } from '@/lib/content-types';
 
-type ContentType = 'all' | 'listing' | 'job' | 'event' | 'offer' | 'promoPage';
+type ContentType = 'listing' | 'job' | 'event' | 'offer' | 'promoPage';
 const ALL_CONTENT_TYPES = CONTENT_TYPES.filter(t => t.name !== 'Appointment').map(t => t.name as ContentType);
+
+const FilterButton = ({ typeMeta, isSelected, onClick }: { typeMeta: ContentTypeMetadata, isSelected: boolean, onClick: () => void }) => {
+    const Icon = typeMeta.icon;
+
+    return (
+        <Button
+            variant={isSelected ? typeMeta.variant : 'outline'}
+            onClick={onClick}
+            className={cn(
+                'transition-all',
+                !isSelected && 'hover:bg-accent/50',
+                typeMeta.variant === 'outline' && isSelected && 'bg-foreground text-background border-transparent hover:bg-foreground/90'
+            )}
+        >
+            <Icon className="mr-2 h-4 w-4" /> {typeMeta.label}
+        </Button>
+    );
+};
+
 
 export default function ExploreClient({ initialItems }: { initialItems: PublicContentItem[] }) {
   const [searchTerm, setSearchTerm] = useState('');
@@ -32,17 +50,18 @@ export default function ExploreClient({ initialItems }: { initialItems: PublicCo
   const handleTypeFilterChange = (type: string) => {
     setTypeFilters(prev => {
         const newSet = new Set(prev);
-        if (newSet.size === ALL_CONTENT_TYPES.length) {
-            // If all are selected, clicking one selects only that one
+        if (prev.size === ALL_CONTENT_TYPES.length) {
+            // If all are selected, deselect all and select just this one
             newSet.clear();
             newSet.add(type);
-        } else if (newSet.has(type)) {
+        } else if (prev.has(type) && prev.size === 1) {
+            // If it's the only one selected, re-select all
+            ALL_CONTENT_TYPES.forEach(t => newSet.add(t));
+        } else if (prev.has(type)) {
+            // If it's one of many selected, just remove it
             newSet.delete(type);
-            // If last one is deselected, select all
-            if (newSet.size === 0) {
-                ALL_CONTENT_TYPES.forEach(t => newSet.add(t));
-            }
         } else {
+            // If it's not selected, add it
             newSet.add(type);
         }
         return newSet;
@@ -109,24 +128,14 @@ export default function ExploreClient({ initialItems }: { initialItems: PublicCo
                  <div className="space-y-2">
                     <Label className="text-sm font-medium">Filter by type</Label>
                     <div className="flex flex-wrap gap-2">
-                        {CONTENT_TYPES.filter(type => type.name !== 'Appointment').map((typeMeta) => {
-                            const isSelected = typeFilters.has(typeMeta.name as ContentType);
-                            const Icon = typeMeta.icon;
-                            return (
-                                <Badge
-                                    key={typeMeta.name}
-                                    variant={isSelected ? typeMeta.variant : 'outline'}
-                                    onClick={() => handleTypeFilterChange(typeMeta.name as ContentType)}
-                                    className={cn(
-                                        'cursor-pointer transition-all py-1.5 px-3 text-sm',
-                                        !isSelected && 'hover:bg-accent/50',
-                                        typeMeta.variant === 'outline' && isSelected && 'bg-foreground text-background border-transparent hover:bg-foreground/90',
-                                    )}
-                                >
-                                    <Icon className="mr-2 h-4 w-4" /> {typeMeta.label}
-                                </Badge>
-                            )
-                        })}
+                        {CONTENT_TYPES.filter(type => type.name !== 'Appointment').map((typeMeta) => (
+                           <FilterButton 
+                                key={typeMeta.name}
+                                typeMeta={typeMeta}
+                                isSelected={typeFilters.has(typeMeta.name as ContentType)}
+                                onClick={() => handleTypeFilterChange(typeMeta.name as ContentType)}
+                           />
+                        ))}
                     </div>
                 </div>
             </CardContent>
