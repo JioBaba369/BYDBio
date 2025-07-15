@@ -83,12 +83,11 @@ const TagPreview = forwardRef<HTMLDivElement, { values: DesignFormValues; user: 
     if (side === 'back') {
         const backCardBg = cardBgClass || (values.textColor === 'light' ? 'bg-gray-900' : 'bg-white');
         return (
-            <div ref={ref} className={cn("w-full h-full rounded-2xl flex flex-col items-center p-6 transition-colors relative", backCardBg)} style={cardStyle}>
+            <div ref={ref} className={cn("w-full h-full rounded-2xl flex flex-col items-center justify-center p-6 transition-colors relative", backCardBg)} style={cardStyle}>
                  {values.backgroundImageUrl && <div className="absolute inset-0 bg-black/60 rounded-2xl" />}
-                 <div className="relative z-10 w-full flex flex-col items-center justify-between h-full">
-                    <div />
-                    {(values.showQrCode && qrCodeUrl) ? (
-                        <div className="flex flex-col items-center gap-2">
+                 <div className="relative z-10 flex flex-col items-center gap-2">
+                    {(values.showQrCode && qrCodeUrl) && (
+                        <>
                             <Logo className={cn("text-xl mb-1", textColor)} />
                             <div className="bg-white p-2 rounded-md shadow-md">
                                 <QRCode
@@ -100,9 +99,8 @@ const TagPreview = forwardRef<HTMLDivElement, { values: DesignFormValues; user: 
                                 />
                             </div>
                             <p className={cn("text-[10px] font-mono leading-tight", subtitleColor)}>{`byd.bio/u/${user.username}`}</p>
-                        </div>
-                    ) : <div />}
-                    <TapOrScanBanner textColor={values.textColor} />
+                        </>
+                    )}
                 </div>
             </div>
         )
