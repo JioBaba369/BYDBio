@@ -43,6 +43,17 @@ const designSchema = z.object({
 
 type DesignFormValues = z.infer<typeof designSchema>;
 
+const TapOrScanBanner = ({ textColor }: { textColor: 'light' | 'dark' }) => {
+    const subtitleColor = textColor === 'light' ? 'text-white/80' : 'text-gray-500';
+    return (
+        <div className={cn("flex items-center justify-center gap-2 rounded-full px-3 py-1.5", textColor === 'light' ? 'bg-black/30' : 'bg-white/30')}>
+            <Nfc className={cn("h-4 w-4", subtitleColor)} />
+            <p className={cn("text-xs font-semibold leading-tight whitespace-nowrap", subtitleColor)}>Tap or Scan to Connect</p>
+        </div>
+    );
+};
+
+
 const TagPreview = forwardRef<HTMLDivElement, { values: DesignFormValues; user: any; side: 'front' | 'back' }>(({ values, user, side }, ref) => {
     const textColor = values.textColor === 'light' ? 'text-white' : 'text-gray-900';
     const subtitleColor = values.textColor === 'light' ? 'text-white/80' : 'text-gray-500';
@@ -91,10 +102,7 @@ const TagPreview = forwardRef<HTMLDivElement, { values: DesignFormValues; user: 
                             <p className={cn("text-[10px] font-mono leading-tight", subtitleColor)}>{`byd.bio/u/${user.username}`}</p>
                         </div>
                     ) : <div />}
-                    <div className={cn("flex items-center justify-center gap-2 rounded-full px-3 py-1.5", values.textColor === 'light' ? 'bg-black/30' : 'bg-white/30')}>
-                        <Nfc className={cn("h-4 w-4", subtitleColor)} />
-                        <p className={cn("text-xs font-semibold leading-tight whitespace-nowrap", subtitleColor)}>Tap or Scan to Connect</p>
-                    </div>
+                    <TapOrScanBanner textColor={values.textColor} />
                 </div>
             </div>
         )
@@ -304,6 +312,7 @@ export default function BydTagDesignPage() {
   ];
   
   const isPortraitLayout = watchedValues.layout === 'vertical' || watchedValues.layout === 'lanyard';
+  const isHorizontalLayout = watchedValues.layout === 'horizontal-left' || watchedValues.layout === 'horizontal-right';
   const cropperAspectRatio = watchedValues.layout === 'lanyard' || watchedValues.layout === 'vertical' ? 53.98 / 85.6 : 85.6 / 53.98;
 
   return (
@@ -343,6 +352,11 @@ export default function BydTagDesignPage() {
                         </div>
                     </div>
                   </div>
+                  {isHorizontalLayout && !isFlipped && (
+                     <div className="mx-auto max-w-[323px]">
+                        <TapOrScanBanner textColor={watchedValues.textColor} />
+                     </div>
+                  )}
                   <div className="grid grid-cols-2 gap-2 mt-4 max-w-lg mx-auto">
                       <Button type="button" variant="outline" className="w-full" onClick={() => setIsFlipped(f => !f)}>
                           <RefreshCw className="mr-2 h-4 w-4" />
