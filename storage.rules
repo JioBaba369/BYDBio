@@ -1,59 +1,71 @@
-
 rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
-    
-    // Helper function to check ownership
-    function isOwner(userId) {
-      return request.auth != null && request.auth.uid == userId;
-    }
-  
-    // Default deny all
+
+    // Default to denying all access.
     match /{allPaths=**} {
       allow read, write: if false;
     }
-    
-    // Avatars: Publicly readable, only owner can write.
-    match /avatars/{userId} {
-      allow read: if true;
-      allow write: if isOwner(userId);
+
+    // Allow users to read and write to their own directory.
+    // This covers avatars, banners, and other user-specific assets.
+    match /users/{userId}/{allPaths=**} {
+      allow read: if true; // Publicly readable avatars/banners
+      allow write: if request.auth != null && request.auth.uid == userId;
     }
     
-    // Posts: Publicly readable, only owner can write.
-    match /posts/{userId}/{allPaths=**} {
+    // Rules for content-related images
+    // All content images are publically readable but can only be written by the authenticated author.
+    match /listings/{userId}/{listingId}/{allPaths=**} {
       allow read: if true;
-      allow write: if isOwner(userId);
-    }
-    
-    // Events: Publicly readable, only owner can write.
-    match /events/{userId}/{allPaths=**} {
-      allow read: if true;
-      allow write: if isOwner(userId);
-    }
-    
-    // Listings: Publicly readable, only owner can write.
-    match /listings/{userId}/{allPaths=**} {
-      allow read: if true;
-      allow write: if isOwner(userId);
+      allow write: if request.auth != null && request.auth.uid == userId;
     }
 
-    // Jobs: Publicly readable, only owner can write.
-    match /jobs/{userId}/{allPaths=**} {
+    match /jobs/{userId}/{jobId}/{allPaths=**} {
       allow read: if true;
-      allow write: if isOwner(userId);
+      allow write: if request.auth != null && request.auth.uid == userId;
     }
 
-    // Offers: Publicly readable, only owner can write.
-    match /offers/{userId}/{allPaths=**} {
+    match /events/{userId}/{eventId}/{allPaths=**} {
       allow read: if true;
-      allow write: if isOwner(userId);
+      allow write: if request.auth != null && request.auth.uid == userId;
     }
 
-    // Promo Pages: Publicly readable, only owner can write.
-    match /promoPages/{userId}/{allPaths=**} {
+    match /offers/{userId}/{offerId}/{allPaths=**} {
       allow read: if true;
-      allow write: if isOwner(userId);
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    match /promoPages/{userId}/{promoPageId}/{allPaths=**} {
+        allow read: if true;
+        allow write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Rules for post images
+    match /posts/{userId}/{postId}/{allPaths=**} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Generic validation rules for all image uploads
+    match /{path=**}/image {
+      // Apply to any path ending in /image
+      allow write: if request.auth != null
+                    && request.resource.size < 5 * 1024 * 1024 // Max 5MB
+                    && request.resource.contentType.matches('image/.*'); // Must be an image
+    }
+    
+    match /{path=**}/logo {
+      allow write: if request.auth != null
+                    && request.resource.size < 2 * 1024 * 1024 // Max 2MB for logos
+                    && request.resource.contentType.matches('image/.*');
+    }
+    
+    match /{path=**}/header {
+       allow write: if request.auth != null
+                    && request.resource.size < 5 * 1024 * 1024 // Max 5MB
+                    && request.resource.contentType.matches('image/.*');
     }
   }
 }
