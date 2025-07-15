@@ -5,12 +5,13 @@ import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
-import { Briefcase, Calendar, PenSquare, PlusCircle, Tags, Users, UserCheck, Package, Sparkles, Megaphone, Rss, Gift } from "lucide-react"
+import { Briefcase, Calendar, PenSquare, PlusCircle, Tags, Users, UserCheck, Package, Sparkles, Megaphone, Rss, Gift, Edit } from "lucide-react"
 import Link from "next/link"
 import {
   DropdownMenu,
@@ -235,15 +236,23 @@ export default function Dashboard() {
             </p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="flex flex-col">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Profile Completion</CardTitle>
              <Sparkles className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
+          <CardContent className="flex-grow">
             <div className="text-2xl font-bold mb-2">{profileCompletion}%</div>
             <Progress value={profileCompletion} aria-label={`${profileCompletion}% complete`} />
           </CardContent>
+          <CardFooter>
+            <Button asChild variant="secondary" size="sm" className="w-full">
+              <Link href="/profile">
+                <Edit className="mr-2 h-4 w-4" />
+                {profileCompletion < 100 ? "Complete Profile" : "Edit Profile"}
+              </Link>
+            </Button>
+          </CardFooter>
         </Card>
       </div>
       
