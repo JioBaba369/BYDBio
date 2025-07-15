@@ -340,7 +340,7 @@ export const getFeedPosts = async (userId: string, followingIds: string[], lastV
         return { posts: [], lastVisible: null };
     }
     
-    const queryConstraints = [
+    const queryConstraints: any[] = [
         where('authorId', 'in', authorsToFetch),
         orderBy('createdAt', 'desc'),
         limit(pageSize)
@@ -368,7 +368,7 @@ export const getFeedPosts = async (userId: string, followingIds: string[], lastV
 export const getDiscoveryPosts = async (userId: string, followingIds: string[], lastVisible: DocumentData | null, pageSize: number) => {
     const usersToExclude = [...new Set([userId, ...followingIds])];
     
-    const queryConstraints = [
+    const queryConstraints: any[] = [
         where('privacy', '==', 'public'),
         orderBy('createdAt', 'desc'),
         limit(pageSize)
