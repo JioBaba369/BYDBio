@@ -8,7 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from './ui/button';
 import Link from 'next/link';
-import { PublicContentCard } from './public-content-card';
+import { PublicContentCard } from '@/components/public-content-card';
 import { ArrowRight } from 'lucide-react';
 import { useAuth } from './auth-provider';
 
