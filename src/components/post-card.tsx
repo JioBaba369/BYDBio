@@ -139,9 +139,10 @@ export function PostCard({ item, onQuote, onDeleted }: PostCardProps) {
             setIsLiked(!wasLiked);
             setLikeCount(prev => prev + (wasLiked ? -1 : 1));
 
-            const result = await handleToggleLike(item.id, user.uid, pathname);
-            if (!result.success) {
-                // Revert on failure
+            try {
+                await handleToggleLike(item.id, user.uid, pathname);
+            } catch (error) {
+                 // Revert on failure
                 setIsLiked(wasLiked);
                 setLikeCount(prev => prev + (wasLiked ? 1 : -1));
                 toast({ title: 'Failed to update like', variant: 'destructive'});
@@ -153,25 +154,24 @@ export function PostCard({ item, onQuote, onDeleted }: PostCardProps) {
         if (!user || isRepostPending) return;
         
         startRepostTransition(async () => {
-            const result = await handleRepost(item.originalPostId || item.id, user.uid, pathname);
-            if (!result.success) {
-                toast({ title: "Failed to repost", description: result.error, variant: 'destructive' });
-            } else {
+            try {
+                await handleRepost(item.originalPostId || item.id, user.uid, pathname);
                 toast({ title: "Post Reposted" });
-                 // A full refresh might be needed to see the new post in the feed
                 router.refresh();
+            } catch (error: any) {
+                toast({ title: "Failed to repost", description: error.message, variant: 'destructive' });
             }
         });
     }
 
     const handleDeleteClick = async () => {
         startDeleteTransition(async () => {
-            const result = await handleDeletePost(item.id, pathname);
-            if (result.success) {
+            try {
+                await handleDeletePost(item.id, pathname);
                 toast({ title: "Post Deleted" });
                 onDeleted(item.id);
-            } else {
-                toast({ title: "Failed to delete post", description: result.error, variant: 'destructive' });
+            } catch (error: any) {
+                toast({ title: "Failed to delete post", description: error.message, variant: 'destructive' });
             }
             setIsDeleteDialogOpen(false);
         });

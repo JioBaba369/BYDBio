@@ -8,9 +8,8 @@ export async function handleDeletePost(postId: string, postPath: string) {
     try {
         await deletePostDb(postId);
         revalidatePath(postPath);
-        return { success: true };
     } catch (error: any) {
-        return { success: false, error: error.message };
+        throw new Error(error.message || "Failed to delete post.");
     }
 }
 
@@ -18,9 +17,8 @@ export async function handleToggleLike(postId: string, userId: string, postPath:
     try {
         await toggleLikePostDb(postId, userId);
         revalidatePath(postPath);
-        return { success: true };
     } catch (error: any) {
-        return { success: false, error: error.message };
+        throw new Error(error.message || "Failed to toggle like.");
     }
 }
 
@@ -28,8 +26,7 @@ export async function handleRepost(originalPostId: string, reposterId: string, p
      try {
         await repostPostDb(originalPostId, reposterId);
         revalidatePath(postPath);
-        return { success: true };
     } catch (error: any) {
-        return { success: false, error: error.message };
+        throw new Error(error.message || "Failed to repost.");
     }
 }

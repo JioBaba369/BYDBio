@@ -29,8 +29,8 @@ import { ClientFormattedDate } from '@/components/client-formatted-date';
 import { ClientFormattedCurrency } from '@/components/client-formatted-currency';
 import { PostCard } from '@/components/post-card';
 import { populatePostAuthors } from '@/lib/posts';
-import { toggleFollowAction } from '@/app/actions/follow';
 import { useRouter } from 'next/navigation';
+import { FollowButton } from '@/components/follow-button';
 
 type ItemWithAuthor<T> = T & { author: User };
 type SearchResults = {
@@ -92,7 +92,6 @@ export default function SearchPage() {
 
   const [isLoading, setIsLoading] = useState(false);
   const [results, setResults] = useState<SearchResults>({ users: [], listings: [], jobs: [], events: [], offers: [], promoPages: [], posts: [] });
-  const [isFollowPending, startFollowTransition] = useTransition();
 
   const performSearch = useCallback(async () => {
     if (!queryParam) return;
@@ -196,17 +195,8 @@ export default function SearchPage() {
     router.push('/feed');
   };
 
-  const handleToggleFollow = (targetUser: User) => {
-    if (!user || isFollowPending) return;
-    
-    startFollowTransition(async () => {
-        const formData = new FormData();
-        formData.append('currentUserId', user.uid);
-        formData.append('targetUserId', targetUser.uid);
-        formData.append('isFollowing', String(user.following.includes(targetUser.uid)));
-        formData.append('path', pathname);
-        await toggleFollowAction(formData);
-    });
+  const handlePostDeleted = (deletedPostId: string) => {
+    setResults(prev => ({ ...prev, posts: prev.posts.filter(p => p.id !== deletedPostId) }));
   };
 
   if (!queryParam) {
@@ -271,28 +261,29 @@ export default function SearchPage() {
         <TabsContent value="users" className="pt-4">
             {results.users.length > 0 ? (
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    {results.users.map(u => {
-                        const isFollowed = user?.following.includes(u.uid);
-                        return (
+                    {results.users.map(u => (
                         <Card key={u.uid} className="transition-all hover:shadow-md">
-                        <CardContent className="p-4 flex items-center justify-between gap-4">
-                            <Link href={`/u/${u.username}`} className="flex items-center gap-4 hover:underline">
-                            <Avatar>
-                                <AvatarImage src={u.avatarUrl} data-ai-hint="person portrait" />
-                                <AvatarFallback>{u.name.charAt(0)}</AvatarFallback>
-                            </Avatar>
-                            <div>
-                                <p className="font-semibold">{u.name}</p>
-                                <p className="text-sm text-muted-foreground">@{u.username}</p>
-                            </div>
-                            </Link>
-                            <Button size="sm" variant={isFollowed ? 'secondary' : 'default'} onClick={() => handleToggleFollow(u)} disabled={isFollowPending}>
-                            {isFollowPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : isFollowed ? <UserCheck className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
-                            {isFollowed ? 'Following' : 'Follow'}
-                            </Button>
-                        </CardContent>
+                            <CardContent className="p-4 flex items-center justify-between gap-4">
+                                <Link href={`/u/${u.username}`} className="flex items-center gap-4 hover:underline">
+                                <Avatar>
+                                    <AvatarImage src={u.avatarUrl} data-ai-hint="person portrait" />
+                                    <AvatarFallback>{u.name.charAt(0)}</AvatarFallback>
+                                </Avatar>
+                                <div>
+                                    <p className="font-semibold">{u.name}</p>
+                                    <p className="text-sm text-muted-foreground">@{u.username}</p>
+                                </div>
+                                </Link>
+                                {user && user.uid !== u.uid && (
+                                    <FollowButton
+                                        targetUserId={u.uid}
+                                        initialIsFollowing={user.following.includes(u.uid)}
+                                        initialFollowerCount={u.followerCount}
+                                    />
+                                )}
+                            </CardContent>
                         </Card>
-                    )})}
+                    ))}
                 </div>
             ) : (
                 <Card>
@@ -313,7 +304,7 @@ export default function SearchPage() {
                             key={post.id} 
                             item={post} 
                             onQuote={handleQuote}
-                            onDeleted={() => setResults(p => ({ ...p, posts: p.posts.filter(x => x.id !== post.id)}))}
+                            onDeleted={handlePostDeleted}
                         />
                     ))}
                 </div>

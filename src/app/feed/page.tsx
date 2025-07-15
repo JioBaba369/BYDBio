@@ -281,7 +281,7 @@ export default function FeedPage() {
         ))}
       </div>
     );
-  }, [isLoadingFeed, handleQuote]);
+  }, [isLoadingFeed, handleQuote, onPostDeleted]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(

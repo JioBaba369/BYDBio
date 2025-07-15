@@ -11,20 +11,22 @@ const followSchema = z.object({
   currentUserId: z.string(),
   targetUserId: z.string(),
   isFollowing: z.boolean(),
+  path: z.string(),
 });
 
-export async function toggleFollowAction(currentUserId: string, targetUserId: string, isFollowing: boolean): Promise<{ success: boolean; error?: string; newFollowerCount?: number }> {
+export async function toggleFollowAction(currentUserId: string, targetUserId: string, isFollowing: boolean, path: string): Promise<{ success: boolean; error?: string; newFollowerCount?: number }> {
   const validatedFields = followSchema.safeParse({
     currentUserId,
     targetUserId,
     isFollowing,
+    path,
   });
 
   if (!validatedFields.success) {
     return { success: false, error: 'Invalid input.' };
   }
 
-  const { currentUserId: validatedCurrentUserId, targetUserId: validatedTargetUserId, isFollowing: validatedIsFollowing } = validatedFields.data;
+  const { currentUserId: validatedCurrentUserId, targetUserId: validatedTargetUserId, isFollowing: validatedIsFollowing, path: revalidationPath } = validatedFields.data;
 
   try {
     if (validatedIsFollowing) {
@@ -34,6 +36,7 @@ export async function toggleFollowAction(currentUserId: string, targetUserId: st
     }
     
     // Revalidate paths to update follower lists on other pages
+    revalidatePath(revalidationPath);
     revalidatePath(`/u/${validatedTargetUserId}`);
     revalidatePath('/connections');
 
