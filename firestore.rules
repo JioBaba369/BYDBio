@@ -1,3 +1,4 @@
+
 rules_version = '2';
 
 service cloud.firestore {
@@ -6,145 +7,157 @@ service cloud.firestore {
     // =============================================
     // Helper Functions
     // =============================================
-    
-    // Check if the user is authenticated
     function isAuthenticated() {
       return request.auth != null;
     }
     
-    // Check if the user is the owner of a document
     function isOwner(userId) {
-      return request.auth.uid == userId;
+      return isAuthenticated() && request.auth.uid == userId;
     }
 
     // Check if the viewer is a follower of the author
     function isFollower(authorId) {
-        // Ensure the actor is authenticated before checking follower status
-        return isAuthenticated() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) && authorId in get(/databases/$(database)/documents/users/$(request.auth.uid)).data.following;
+      return isAuthenticated() &&
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.following.hasAny([authorId]);
     }
 
-    // Check if required fields exist on create
-    function hasRequiredCreateFields(collectionType) {
-        let data = request.resource.data;
-        let baseFields = data.authorId == request.auth.uid &&
-                         data.createdAt == request.time &&
-                         data.status == 'active' &&
-                         data.views == 0 &&
-                         data.followerCount == 0;
-
-        if (collectionType == 'post') {
-            return baseFields &&
-                   data.content is string &&
-                   data.likes == 0 &&
-                   data.repostCount == 0;
-        }
-        if (collectionType == 'listing') {
-             return baseFields &&
-                    data.title is string && data.title.size() < 101 &&
-                    data.description is string && data.description.size() < 501 &&
-                    data.price is string && data.price.size() > 0 &&
-                    data.category is string && data.category.size() > 1;
-        }
-        // Add other collection types as needed
-        return baseFields;
+    // Check if a document is being created
+    function isCreating() {
+      return resource == null;
     }
 
-    // Check if updated fields are valid
-    function hasValidUpdateFields(collectionType) {
-        let data = request.resource.data;
-        let immutableFields = data.authorId == resource.data.authorId &&
-                              data.createdAt == resource.data.createdAt;
-                              
-        if (collectionType == 'listing') {
-            return immutableFields &&
-                   data.title is string && data.title.size() < 101 &&
-                   data.description is string && data.description.size() < 501 &&
-                   data.price is string && data.price.size() > 0;
-        }
-        // Add other collection types as needed
-        return immutableFields;
+    // =============================================
+    // Generic Content Validation Functions
+    // =============================================
+
+    function hasBaseFields(data) {
+      return data.authorId == request.auth.uid &&
+             data.createdAt == request.time &&
+             data.status == 'active' &&
+             data.views == 0 &&
+             data.followerCount == 0;
+    }
+
+    function cannotUpdateProtectedFields() {
+      return request.resource.data.authorId == resource.data.authorId &&
+             request.resource.data.createdAt == resource.data.createdAt;
+    }
+    
+    function validateListing(data) {
+        return data.title is string && data.title.size() <= 100 &&
+               data.description is string && data.description.size() <= 500 &&
+               data.price is string &&
+               data.category is string;
+    }
+    
+    function validateJob(data) {
+        return data.title is string && data.title.size() <= 100 &&
+               data.company is string &&
+               data.description is string && data.description.size() <= 5000 &&
+               data.location is string &&
+               data.type in ['Full-time', 'Part-time', 'Contract', 'Internship'];
+    }
+
+    function validateEvent(data) {
+        return data.title is string && data.title.size() <= 100 &&
+               data.description is string && data.description.size() <= 2000 &&
+               data.location is string &&
+               data.startDate is timestamp;
+    }
+
+    function validateOffer(data) {
+        return data.title is string && data.title.size() <= 100 &&
+               data.description is string && data.description.size() <= 500 &&
+               data.category is string &&
+               data.startDate is timestamp;
+    }
+    
+    function validatePromoPage(data) {
+        return data.name is string && data.name.size() <= 100 &&
+               data.description is string && data.description.size() <= 500 &&
+               data.email is string;
     }
     
     // =============================================
     // Default Deny
     // =============================================
-    // By default, deny all reads and writes
-    match /{document=**} {
+    match /{path=**} {
       allow read, write: if false;
     }
     
     // =============================================
-    // Users Collection Rules
+    // Collection Rules
     // =============================================
     match /users/{userId} {
+      allow list: if request.query.limit <= 50;
       allow get: if true;
-      allow list: if request.query.limit <= 50; 
       allow create: if isOwner(userId) && request.resource.data.uid == userId;
-      allow update: if isOwner(userId) && request.resource.data.followerCount == resource.data.followerCount;
+      allow update: if isOwner(userId) &&
+                       !('followerCount' in request.resource.data.diff(resource.data).affectedKeys()) &&
+                       !('postCount' in request.resource.data.diff(resource.data).affectedKeys());
     }
 
-    // =============================================
-    // Public Content Rules
-    // =============================================
+    match /posts/{postId} {
+      allow list: if request.query.limit <= 50;
+      allow get: if resource.data.privacy == 'public' || 
+                    (resource.data.privacy == 'followers' && (isOwner(resource.data.authorId) || isFollower(resource.data.authorId))) ||
+                    (resource.data.privacy == 'me' && isOwner(resource.data.authorId));
+      allow create: if isOwner(request.resource.data.authorId);
+      allow delete: if isOwner(resource.data.authorId);
+      allow update: if isAuthenticated() && isOwner(resource.data.authorId) &&
+                       request.resource.data.diff(resource.data).affectedKeys().hasAny(['likedBy', 'likes', 'repostCount']);
+    }
+
     match /listings/{listingId} {
+      allow list: if request.query.limit <= 50;
       allow get: if resource.data.status == 'active';
-      allow list: if request.query.limit <= 50 && request.query.filters.size() > 0 && request.query.filters[0].field.string_value == 'status' && request.query.filters[0].op.string_value == '==' && request.query.filters[0].value.string_value == 'active';
-      allow create: if isAuthenticated() && hasRequiredCreateFields('listing');
-      allow update: if isAuthenticated() && isOwner(resource.data.authorId) && hasValidUpdateFields('listing');
-      allow delete: if isAuthenticated() && isOwner(resource.data.authorId);
+      allow create: if isOwner(request.resource.data.authorId) && validateListing(request.resource.data) && hasBaseFields(request.resource.data);
+      allow update: if isOwner(resource.data.authorId) && validateListing(request.resource.data) && cannotUpdateProtectedFields();
+      allow delete: if isOwner(resource.data.authorId);
     }
     
     match /jobs/{jobId} {
+      allow list: if request.query.limit <= 50;
       allow get: if resource.data.status == 'active';
-      allow list: if request.query.limit <= 50 && request.query.filters.size() > 0 && request.query.filters[0].field.string_value == 'status' && request.query.filters[0].op.string_value == '==' && request.query.filters[0].value.string_value == 'active';
-      allow create, update, delete: if isAuthenticated() && isOwner(resource.data.authorId);
+      allow create: if isOwner(request.resource.data.authorId) && validateJob(request.resource.data) && hasBaseFields(request.resource.data);
+      allow update: if isOwner(resource.data.authorId) && validateJob(request.resource.data) && cannotUpdateProtectedFields();
+      allow delete: if isOwner(resource.data.authorId);
     }
     
     match /events/{eventId} {
+      allow list: if request.query.limit <= 50;
       allow get: if resource.data.status == 'active';
-      allow list: if request.query.limit <= 50 && request.query.filters.size() > 0 && request.query.filters[0].field.string_value == 'status' && request.query.filters[0].op.string_value == '==' && request.query.filters[0].value.string_value == 'active';
-      allow create, delete: if isAuthenticated() && isOwner(resource.data.authorId);
-      allow update: if isAuthenticated() && (
-                      (isOwner(resource.data.authorId) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['title', 'subTitle', 'description', 'location', 'category', 'subCategory', 'startDate', 'startTime', 'endDate', 'endTime', 'imageUrl', 'couponCode', 'ctaLink', 'itinerary', 'searchableKeywords'])) ||
-                      (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['rsvps']))
-                    );
+      allow create: if isOwner(request.resource.data.authorId) && validateEvent(request.resource.data) && hasBaseFields(request.resource.data);
+      allow update: if (isOwner(resource.data.authorId) && validateEvent(request.resource.data) && cannotUpdateProtectedFields()) ||
+                       (isAuthenticated() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['rsvps']));
+      allow delete: if isOwner(resource.data.authorId);
     }
     
     match /offers/{offerId} {
+      allow list: if request.query.limit <= 50;
       allow get: if resource.data.status == 'active';
-      allow list: if request.query.limit <= 50 && request.query.filters.size() > 0 && request.query.filters[0].field.string_value == 'status' && request.query.filters[0].op.string_value == '==' && request.query.filters[0].value.string_value == 'active';
-      allow create, update, delete: if isAuthenticated() && isOwner(resource.data.authorId);
+      allow create: if isOwner(request.resource.data.authorId) && validateOffer(request.resource.data) && hasBaseFields(request.resource.data);
+      allow update: if isOwner(resource.data.authorId) && validateOffer(request.resource.data) && cannotUpdateProtectedFields();
+      allow delete: if isOwner(resource.data.authorId);
     }
     
     match /promoPages/{promoPageId} {
+      allow list: if request.query.limit <= 50;
       allow get: if resource.data.status == 'active';
-      allow list: if request.query.limit <= 50 && request.query.filters.size() > 0 && request.query.filters[0].field.string_value == 'status' && request.query.filters[0].op.string_value == '==' && request.query.filters[0].value.string_value == 'active';
-      allow create, update, delete: if isAuthenticated() && isOwner(resource.data.authorId);
+      allow create: if isOwner(request.resource.data.authorId) && validatePromoPage(request.resource.data) && hasBaseFields(request.resource.data);
+      allow update: if isOwner(resource.data.authorId) && validatePromoPage(request.resource.data) && cannotUpdateProtectedFields();
+      allow delete: if isOwner(resource.data.authorId);
     }
-    
-    match /posts/{postId} {
-      allow read: if resource.data.privacy == 'public' || 
-                     (resource.data.privacy == 'followers' && (isOwner(resource.data.authorId) || isFollower(resource.data.authorId))) ||
-                     (resource.data.privacy == 'me' && isOwner(resource.data.authorId));
-      allow list: if request.query.limit <= 50 && request.query.filters.size() > 0 && request.query.filters[0].field.string_value == 'privacy' && request.query.filters[0].op.string_value == '==' && request.query.filters[0].value.string_value == 'public';
-      allow create: if isAuthenticated() && isOwner(request.resource.data.authorId) && hasRequiredCreateFields('post');
-      allow delete: if isAuthenticated() && isOwner(resource.data.authorId);
-      allow update: if isAuthenticated() &&
-                       (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likedBy', 'likes']));
-    }
-    
-    // =============================================
-    // Private Collections Rules
-    // =============================================
     
     match /notifications/{notificationId} {
       allow read, write: if isAuthenticated() && isOwner(resource.data.userId);
     }
     
     match /appointments/{appointmentId} {
-      allow read, delete: if isAuthenticated() && 
-                    (isOwner(resource.data.ownerId) || isOwner(resource.data.bookerId));
+      allow read: if isAuthenticated() && (isOwner(resource.data.ownerId) || isOwner(resource.data.bookerId));
       allow create: if isAuthenticated() && isOwner(request.resource.data.bookerId);
+      allow delete: if isAuthenticated() && (isOwner(resource.data.ownerId) || isOwner(resource.data.bookerId));
     }
   }
 }
