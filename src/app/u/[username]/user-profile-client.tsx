@@ -1,7 +1,8 @@
 
+
 'use client';
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useTransition } from "react";
 import type { User, PostWithAuthor, UserProfilePayload } from '@/lib/users';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -23,6 +24,7 @@ import { AboutTab } from "@/components/profile/about-tab";
 import Image from "next/image";
 import { usePostActions } from "@/hooks/use-post-actions";
 import { toggleFollowAction } from "@/app/actions/follow";
+import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
 
 interface UserProfilePageProps {
   userProfileData: UserProfilePayload;
@@ -82,9 +84,8 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
     handleDelete,
     handleRepost,
     handleQuote,
-    isDeleteDialogOpen,
-    setIsDeleteDialogOpen,
-    loadingAction
+    loadingAction,
+    dialogProps
   } = usePostActions({
     posts,
     setPosts,
@@ -106,6 +107,7 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
 
   return (
     <>
+      <DeleteConfirmationDialog {...dialogProps} />
       <div className="space-y-6">
         <Card className="overflow-hidden border-0 shadow-none -m-4 sm:-m-6 rounded-none">
             <div className="relative h-40 sm:h-48 md:h-56 bg-muted">

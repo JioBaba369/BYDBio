@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useSearchParams, usePathname } from 'next/navigation';
@@ -30,6 +31,7 @@ import { PostCard } from '@/components/post-card';
 import { populatePostAuthors } from '@/lib/posts';
 import { toggleFollowAction } from '@/app/actions/follow';
 import { usePostActions } from '@/hooks/use-post-actions';
+import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialog';
 
 type ItemWithAuthor<T> = T & { author: User };
 type SearchResults = {
@@ -189,7 +191,7 @@ export default function SearchPage() {
     }
   }, [queryParam, authLoading, performSearch]);
   
-  const { handleLike, handleDelete, handleRepost, handleQuote, loadingAction } = usePostActions({
+  const { handleLike, handleDelete, handleRepost, handleQuote, loadingAction, dialogProps } = usePostActions({
     posts: results.posts,
     setPosts: (updater) => setResults(prev => ({...prev, posts: typeof updater === 'function' ? updater(prev.posts) : updater })),
     currentUser: user,
@@ -236,6 +238,8 @@ export default function SearchPage() {
   }
 
   return (
+    <>
+    <DeleteConfirmationDialog {...dialogProps} />
     <div className="space-y-6">
       <div>
         {queryParam ? (
@@ -529,5 +533,6 @@ export default function SearchPage() {
 
       </Tabs>
     </div>
+    </>
   );
 }

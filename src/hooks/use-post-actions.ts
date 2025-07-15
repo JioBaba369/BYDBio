@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useCallback } from 'react';
@@ -7,7 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/components/auth-provider';
 import type { PostWithAuthor } from '@/lib/posts';
 import { toggleLikePost, repostPost, deletePost } from '@/lib/posts';
-import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialog';
+import type { DeleteConfirmationDialogProps } from '@/components/delete-confirmation-dialog';
 
 interface UsePostActionsProps {
     posts: PostWithAuthor[];
@@ -107,17 +108,16 @@ export function usePostActions({
             setLoadingAction(null);
         }
     }, [postToDelete, currentUser, posts, setPosts, toast]);
-
-    const DeleteDialogComponent = () => (
-      <DeleteConfirmationDialog
-        open={isDeleteDialogOpen}
-        onOpenChange={setIsDeleteDialogOpen}
-        onConfirm={handleConfirmDelete}
-        isLoading={isDeleting}
-        itemName="post"
-        confirmationText="DELETE"
-      />
-    );
+    
+    // Props to be spread onto the DeleteConfirmationDialog component
+    const dialogProps: Omit<DeleteConfirmationDialogProps, 'children'> = {
+        open: isDeleteDialogOpen,
+        onOpenChange: setIsDeleteDialogOpen,
+        onConfirm: handleConfirmDelete,
+        isLoading: isDeleting,
+        itemName: "post",
+        confirmationText: "DELETE"
+    };
 
     return {
         handleLike,
@@ -125,8 +125,6 @@ export function usePostActions({
         handleQuote,
         handleDelete,
         loadingAction,
-        isDeleteDialogOpen,
-        setIsDeleteDialogOpen,
-        DeleteDialogComponent
+        dialogProps
     };
 }

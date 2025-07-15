@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 import { Image as ImageIcon, Send, X, Users, Compass, Loader2, Globe, Lock } from "lucide-react"
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useAuth } from "@/components/auth-provider"
 import { useToast } from "@/hooks/use-toast"
 import Link from "next/link"
@@ -20,6 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FeedSkeleton } from "@/components/feed-skeleton";
 import { usePostActions } from "@/hooks/use-post-actions";
+import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
 
 
 const EmptyFeedState = ({
@@ -123,7 +124,8 @@ export default function FeedPage() {
     handleDelete,
     handleRepost,
     handleQuote,
-    loadingAction
+    loadingAction,
+    dialogProps
   } = usePostActions({
     posts: combinedPosts,
     setPosts: activeTab === 'following' ? setFollowingPosts : setDiscoveryPosts,
@@ -271,6 +273,7 @@ export default function FeedPage() {
         aspectRatio={16 / 9}
         isRound={false}
       />
+      <DeleteConfirmationDialog {...dialogProps} />
       
       <div className="max-w-2xl mx-auto space-y-6">
         <h1 className="text-2xl sm:text-3xl font-bold font-headline">Status Feed</h1>
