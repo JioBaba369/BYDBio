@@ -1,4 +1,3 @@
-
 // src/lib/posts.ts
 
 'use server';
@@ -37,17 +36,18 @@ export type EmbeddedPostInfo = {
   content: string;
   imageUrl: string | null;
   authorId: string;
-  createdAt: string; // Store as ISO string
+  createdAt: Timestamp; // Store as Timestamp
 };
 
 // This is the structure used on the client, with author details populated.
-export type EmbeddedPostInfoWithAuthor = EmbeddedPostInfo & {
+export type EmbeddedPostInfoWithAuthor = Omit<EmbeddedPostInfo, 'createdAt'> & {
   author: {
     uid: string;
     name: string;
     username: string;
     avatarUrl: string;
   };
+  createdAt: string; // Serialized as ISO string for client
 };
 
 export type Post = {
@@ -115,7 +115,7 @@ export const getPostsByUser = async (userId: string, viewerId?: string | null, i
 };
 
 // Function to create a new post
-export const createPost = async (userId: string, data: Pick<Post, 'content' | 'imageUrl' | 'privacy' | 'category'> & { quotedPost?: EmbeddedPostInfo }): Promise<Post> => {
+export const createPost = async (userId: string, data: Pick<Post, 'content' | 'imageUrl' | 'privacy' | 'category'> & { quotedPost?: Omit<EmbeddedPostInfo, 'createdAt'> & { createdAt: string } }): Promise<Post> => {
   const userRef = doc(db, "users", userId);
   const postRef = doc(collection(db, "posts")); // Generate a new ref with a unique ID
 
@@ -150,7 +150,7 @@ export const createPost = async (userId: string, data: Pick<Post, 'content' | 'i
     comments: 0,
     repostCount: 0,
     searchableKeywords: keywords,
-    quotedPost: data.quotedPost || null,
+    quotedPost: data.quotedPost ? { ...data.quotedPost, createdAt: Timestamp.fromDate(new Date(data.quotedPost.createdAt)) } : null,
   };
   
   batch.set(postRef, postData);
@@ -161,6 +161,7 @@ export const createPost = async (userId: string, data: Pick<Post, 'content' | 'i
   const newPostDoc = await getDoc(postRef);
   return serializeDocument<Post>(newPostDoc) as Post;
 };
+
 
 // Function to delete a post
 export const deletePost = async (id: string) => {
@@ -241,13 +242,23 @@ export const repostPost = async (originalPostId: string, reposterId: string): Pr
     }
 
     const originalPostData = serializeDocument<Post>(postDoc)!;
+    
+    let createdAtTimestamp: Timestamp;
+    if (originalPostData.repostedPost?.createdAt instanceof Timestamp) {
+        createdAtTimestamp = originalPostData.repostedPost.createdAt;
+    } else if (typeof originalPostData.repostedPost?.createdAt === 'string') {
+        createdAtTimestamp = Timestamp.fromDate(new Date(originalPostData.repostedPost.createdAt));
+    } else {
+        createdAtTimestamp = Timestamp.fromDate(new Date(originalPostData.createdAt));
+    }
+
     const ultimateOriginalPostId = originalPostData.originalPostId || originalPostId;
-    const ultimateOriginalPostContent = originalPostData.repostedPost || {
+    const ultimateOriginalPostContent: EmbeddedPostInfo = originalPostData.repostedPost || {
         id: originalPostId,
         content: originalPostData.content,
         imageUrl: originalPostData.imageUrl,
         authorId: originalPostData.authorId,
-        createdAt: originalPostData.createdAt,
+        createdAt: createdAtTimestamp,
     };
     
     if (ultimateOriginalPostContent.authorId === reposterId) {
@@ -318,7 +329,7 @@ export const populatePostAuthors = async (posts: Post[], viewerId?: string | nul
             const quotedAuthor = authorMap.get(post.quotedPost.authorId);
             if (quotedAuthor) {
                 populatedPost.quotedPost = {
-                    ...post.quotedPost,
+                    ...(serializeDocument({ data: () => post.quotedPost, id: post.quotedPost.id }) as EmbeddedPostInfoWithAuthor),
                     author: {
                         uid: quotedAuthor.uid,
                         name: quotedAuthor.name,
@@ -333,7 +344,7 @@ export const populatePostAuthors = async (posts: Post[], viewerId?: string | nul
             const repostedAuthor = authorMap.get(post.repostedPost.authorId);
             if (repostedAuthor) {
                 populatedPost.repostedPost = {
-                    ...post.repostedPost,
+                     ...(serializeDocument({ data: () => post.repostedPost, id: post.repostedPost.id }) as EmbeddedPostInfoWithAuthor),
                     author: {
                         uid: repostedAuthor.uid,
                         name: repostedAuthor.name,
@@ -393,16 +404,22 @@ export const getDiscoveryPosts = async (userId: string, followingIds: string[], 
         queryConstraints.push(startAfter(lastVisible));
     }
     
-    const postsQuery = query(collection(db, 'posts'), ...queryConstraints);
+    let postsQuery = query(collection(db, 'posts'), ...queryConstraints);
+    
+    // We may need to fetch more and filter in memory if the user follows a lot of people,
+    // as Firestore's 'not-in' is limited to 10.
+    // For now, this approach is simpler and will work for most cases.
+    if (usersToExclude.length > 0) {
+        const tempQuery = query(collection(db, 'posts'), ...queryConstraints, where('authorId', 'not-in', usersToExclude.slice(0, 10)));
+        postsQuery = tempQuery;
+    }
+
     const postSnapshots = await getDocs(postsQuery);
 
     let posts = postSnapshots.docs
         .map(doc => serializeDocument<Post>(doc))
         .filter((post): post is Post => post !== null);
         
-    // Manual filtering for "not-in" behavior, as Firestore has limitations
-    posts = posts.filter(post => !usersToExclude.includes(post.authorId));
-
     const populatedPosts = await populatePostAuthors(posts, userId);
 
     return {

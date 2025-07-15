@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useCallback } from 'react';
@@ -29,7 +28,7 @@ export function usePostActions({
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [postToDelete, setPostToDelete] = useState<PostWithAuthor | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
-    const [loadingAction, setLoadingAction] = useState<{ postId: string; action: 'like' | 'repost' | 'delete' } | null>(null);
+    const [loadingAction, setLoadingAction] = useState<{ postId: string; action: 'like' | 'repost' | 'quote' | 'delete' } | null>(null);
 
     const handleLike = useCallback(async (postId: string) => {
         if (!currentUser || loadingAction) return;
@@ -56,19 +55,22 @@ export function usePostActions({
         }
     }, [currentUser, loadingAction, posts, setPosts, toast]);
 
-    const handleRepost = useCallback(async (postId: string) => {
+    const handleRepost = useCallback(async (originalPostId: string) => {
         if (!currentUser || loadingAction) return;
-        setLoadingAction({ postId, action: 'repost' });
+        setLoadingAction({ postId: originalPostId, action: 'repost' });
 
         try {
-            await repostPost(postId, currentUser.uid);
+            await repostPost(originalPostId, currentUser.uid);
             toast({ title: "Reposted!" });
+            // A full refetch would be ideal here if feeds need reordering.
+            // For now, we rely on optimistic updates and manual refresh if needed.
         } catch (error: any) {
             toast({ title: error.message || "Failed to repost", variant: "destructive" });
         } finally {
             setLoadingAction(null);
         }
     }, [currentUser, loadingAction, toast]);
+
 
     const handleQuote = useCallback((post: PostWithAuthor) => {
         if (onQuoteAction) {
