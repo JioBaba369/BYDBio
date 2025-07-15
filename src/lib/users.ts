@@ -251,7 +251,11 @@ export const updateUser = async (uid: string, data: Partial<User>): Promise<User
             const q = query(usersRef, where("username", "==", newUsername), limit(1));
             const querySnapshot = await getDocs(q);
             if (!querySnapshot.empty) {
-                throw new Error("Username is already taken.");
+                // Ensure the found user is not the current user, just in case.
+                const foundUser = querySnapshot.docs[0];
+                if (foundUser.id !== uid) {
+                    throw new Error("Username is already taken.");
+                }
             }
         }
     }
@@ -351,11 +355,14 @@ export async function getUserProfileData(username: string, viewerId: string | nu
     
     const [posts, otherContent] = await Promise.all([
         getPostsByUser(user.uid, viewerId, isFollowedByCurrentUser),
-        getPublicContentByUser(user.uid)
+        getCalendarItems(user.uid, 'author'),
     ]);
     
-    const otherContentWithAuthor = otherContent.map(item => ({
+    const otherContentWithAuthor = otherContent
+    .filter(item => item.type !== 'Appointment') // Filter out private appointments
+    .map(item => ({
         ...item,
+        type: item.type === 'Business Page' ? 'promoPage' : item.type.toLowerCase(),
         author: {
             uid: user.uid,
             name: user.name,
@@ -368,7 +375,7 @@ export async function getUserProfileData(username: string, viewerId: string | nu
     return {
         user,
         posts,
-        otherContent: otherContentWithAuthor,
+        otherContent: otherContentWithAuthor as PublicContentItem[],
         isOwner,
         isFollowedByCurrentUser
     }
