@@ -368,7 +368,7 @@ export const addFcmTokenToUser = async (uid: string, token: string) => {
 
 
 // Get suggested users to follow for the explore page
-export const getSuggestedUsers = async (userId: string, count: number = 20): Promise<User[]> => {
+export const getSuggestedUsers = async (userId: string | null, count: number = 20): Promise<User[]> => {
     const usersRef = collection(db, 'users');
     // Fetch a larger batch of users to increase the chance of finding suggestions.
     const q = query(usersRef, limit(100));
