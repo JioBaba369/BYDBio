@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useAuth } from '@/components/auth-provider';
-import { ArrowRight, ArrowLeft, RefreshCw, Download, Upload, Paintbrush, Text, LayoutTemplate, Settings2, Nfc } from 'lucide-react';
+import { ArrowRight, ArrowLeft, RefreshCw, Download, Upload, Paintbrush, Text, LayoutTemplate, Settings2, Nfc, Save, Loader2 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -26,6 +26,7 @@ import { Logo } from '@/components/logo';
 import ImageCropper from '@/components/image-cropper';
 import { Label } from '@/components/ui/label';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { updateUser } from '@/lib/users';
 
 // Schema for the form
 const designSchema = z.object({
@@ -176,6 +177,7 @@ export default function BydTagDesignPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isFlipped, setIsFlipped] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   
   const frontPreviewRef = useRef<HTMLDivElement>(null);
   const backPreviewRef = useRef<HTMLDivElement>(null);
@@ -202,11 +204,15 @@ export default function BydTagDesignPage() {
   useEffect(() => {
     if (user) {
       form.reset({
-        ...form.getValues(),
         name: user.name || '',
         title: user.businessCard?.title || '',
         company: user.businessCard?.company || '',
         logoUrl: user.avatarUrl || '',
+        cardColor: user.bioTagDesign?.cardColor || 'black',
+        backgroundImageUrl: user.bioTagDesign?.backgroundImageUrl || '',
+        textColor: user.bioTagDesign?.textColor || 'light',
+        layout: user.bioTagDesign?.layout || 'vertical',
+        showQrCode: user.bioTagDesign?.showQrCode ?? true,
       });
     }
   }, [user, form]);
@@ -231,19 +237,37 @@ export default function BydTagDesignPage() {
 
   const watchedValues = form.watch();
 
-  const onSubmit = (data: DesignFormValues) => {
+  const handleSaveDesign = async (data: DesignFormValues) => {
     if (!user) {
       toast({
         title: "Create an Account to Continue",
-        description: "You need an account to save and order your design.",
+        description: "You need an account to save your design.",
       });
       router.push('/auth/sign-up');
       return;
     }
-    toast({
-        title: "Order Placed! (Demo)",
-        description: "In a real app, this would redirect you to a checkout page.",
-    });
+    
+    setIsSaving(true);
+    try {
+        const { name, title, company, logoUrl, ...bioTagDesign } = data;
+        const businessCard = { title, company };
+        
+        await updateUser(user.uid, {
+            name,
+            businessCard,
+            avatarUrl: logoUrl,
+            bioTagDesign,
+        });
+        
+        toast({
+            title: "Design Saved!",
+            description: "Your BioTAG design has been saved to your profile.",
+        });
+    } catch (e) {
+        toast({ title: 'Failed to save design', variant: 'destructive' });
+    } finally {
+        setIsSaving(false);
+    }
   };
 
   const handleDownloadCardImage = () => {
@@ -333,7 +357,7 @@ export default function BydTagDesignPage() {
               {/* Form Column */}
               <div className="lg:col-span-1">
                   <FormProvider {...form}>
-                      <form onSubmit={form.handleSubmit(onSubmit)}>
+                      <form onSubmit={form.handleSubmit(handleSaveDesign)}>
                          <Accordion type="multiple" defaultValue={['appearance', 'layout', 'content']} className="w-full">
                             <AccordionItem value="appearance">
                                 <AccordionTrigger className="text-base font-semibold"><Paintbrush className="mr-2 h-4 w-4"/>Appearance</AccordionTrigger>
@@ -486,8 +510,16 @@ export default function BydTagDesignPage() {
                                 </AccordionContent>
                             </AccordionItem>
                          </Accordion>
-                          <Button type="submit" size="lg" className="w-full mt-6">
-                            Proceed to Order <ArrowRight className="ml-2 h-5 w-5" />
+                          <Button type="submit" size="lg" className="w-full mt-6" disabled={isSaving || !form.formState.isDirty}>
+                            {isSaving ? (
+                              <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                            ) : (
+                              <Save className="mr-2 h-5 w-5" />
+                            )}
+                            {isSaving ? "Saving Design..." : "Save Design"}
+                          </Button>
+                          <Button type="button" variant="outline" size="lg" className="w-full mt-2">
+                             Proceed to Order <ArrowRight className="ml-2 h-5 w-5" />
                           </Button>
                       </form>
                   </FormProvider>

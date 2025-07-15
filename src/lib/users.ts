@@ -1,4 +1,6 @@
 
+'use client';
+
 import { collection, query, where, getDocs, limit, doc, getDoc, setDoc, updateDoc, deleteDoc, arrayUnion } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { deleteUser, type User as FirebaseUser } from "firebase/auth";
@@ -17,6 +19,15 @@ export type BusinessCard = {
   linkedin?: string;
   location?: string;
 };
+
+export type BioTagDesign = {
+  cardColor?: 'black' | 'white' | 'blue';
+  backgroundImageUrl?: string;
+  textColor?: 'light' | 'dark';
+  layout?: 'vertical' | 'horizontal-left' | 'horizontal-right' | 'lanyard';
+  showQrCode?: boolean;
+};
+
 
 export type UserLink = {
     id?: string;
@@ -74,6 +85,7 @@ export type User = {
   postCount: number;
   links: UserLink[];
   businessCard?: BusinessCard;
+  bioTagDesign?: BioTagDesign;
   notificationSettings: NotificationSettings;
   subscriptions: Subscriptions;
   fcmTokens?: string[]; // Array of Firebase Cloud Messaging tokens
@@ -165,6 +177,7 @@ export const createUserProfileIfNotExists = async (user: FirebaseUser, additiona
         postCount: 0,
         links: [],
         businessCard: {},
+        bioTagDesign: {},
         notificationSettings: {
             newFollowers: true,
             newLikes: true,
