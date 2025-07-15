@@ -2,7 +2,7 @@
 
 'use client';
 
-import { useState, useMemo, useCallback, useTransition } from "react";
+import { useState, useMemo, useCallback, useTransition, useEffect } from "react";
 import type { User, PostWithAuthor, UserProfilePayload } from '@/lib/users';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -38,8 +38,14 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
   const { isOwner, user, isFollowedByCurrentUser } = userProfileData;
   const [isFollowPending, startFollowTransition] = useTransition();
   
-  const [posts, setPosts] = useState<PostWithAuthor[]>(userProfileData.posts || []);
+  const [posts, setPosts] = useState<PostWithAuthor[]>([]);
   const [postsLoading, setPostsLoading] = useState(false);
+  
+  useEffect(() => {
+    // Safely set the initial state from props on the client side
+    // to avoid potential hydration mismatches.
+    setPosts(userProfileData.posts || []);
+  }, [userProfileData.posts]);
 
   const vCardData = useMemo(() => {
     if (!user) return '';
@@ -66,14 +72,14 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
   const loadPosts = useCallback(async () => {
     setPostsLoading(true);
     try {
-        const fetchedPosts = await getPostsByUser(user.uid, currentUser?.uid);
+        const fetchedPosts = await getPostsByUser(user.uid, currentUser?.uid, isFollowedByCurrentUser);
         setPosts(fetchedPosts);
     } catch (error) {
         // toast({ title: "Error loading posts", variant: "destructive" });
     } finally {
         setPostsLoading(false);
     }
-  }, [user.uid, currentUser?.uid]);
+  }, [user.uid, currentUser?.uid, isFollowedByCurrentUser]);
   
   const {
     handleLike,
