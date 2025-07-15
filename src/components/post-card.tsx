@@ -15,7 +15,11 @@ import { cn } from "@/lib/utils";
 import { useToast } from '@/hooks/use-toast';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
-import React, { useState } from 'react';
+import React, { useState, useTransition } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
+import { handleToggleLike, handleRepost, handleDeletePost } from '@/app/actions/posts';
+import { DeleteConfirmationDialog } from './delete-confirmation-dialog';
+
 
 // A sub-component for rendering a quoted post.
 const QuotedPostView = ({ post }: { post: EmbeddedPostInfoWithAuthor }) => (
@@ -75,18 +79,30 @@ const RepostView = ({ post }: { post: PostWithAuthor }) => {
 // Main Post Card Component
 interface PostCardProps {
     item: PostWithAuthor;
-    onDelete: (post: PostWithAuthor) => void;
     onQuote: (post: PostWithAuthor) => void;
-    onLike: (postId: string, userId: string) => Promise<void>;
-    onRepost: (originalPostId: string, reposterId: string) => Promise<void>;
+    onDeleted: (postId: string) => void;
 }
 
-export function PostCard({ item, onDelete, onQuote, onLike, onRepost }: PostCardProps) {
+export function PostCard({ item, onQuote, onDeleted }: PostCardProps) {
     const { user } = useAuth();
+    const pathname = usePathname();
+    const router = useRouter();
     const { toast } = useToast();
-    const [isLoading, setIsLoading] = useState<{ action: 'like' | 'repost' | null }>({ action: null });
     const isOwner = user?.uid === item.author.uid;
     const isRepost = !!item.repostedPost;
+    
+    // State for optimistic UI updates
+    const [isLiked, setIsLiked] = useState(item.isLiked || false);
+    const [likeCount, setLikeCount] = useState(item.likes || 0);
+
+    const [isLikePending, startLikeTransition] = useTransition();
+    const [isRepostPending, startRepostTransition] = useTransition();
+    const [isDeletePending, startDeleteTransition] = useTransition();
+    
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+
+    const isLoading = isLikePending || isRepostPending || isDeletePending;
+
 
     const handleShare = async () => {
         const shareUrl = `${window.location.origin}/u/${item.author.username}`;
@@ -116,88 +132,130 @@ export function PostCard({ item, onDelete, onQuote, onLike, onRepost }: PostCard
     }
 
     const handleLikeClick = async () => {
-        if (!user) return;
-        setIsLoading({ action: 'like' });
-        await onLike(item.id, user.uid);
-        setIsLoading({ action: null });
+        if (!user || isLikePending) return;
+        
+        startLikeTransition(async () => {
+            const wasLiked = isLiked;
+            setIsLiked(!wasLiked);
+            setLikeCount(prev => prev + (wasLiked ? -1 : 1));
+
+            const result = await handleToggleLike(item.id, user.uid, pathname);
+            if (!result.success) {
+                // Revert on failure
+                setIsLiked(wasLiked);
+                setLikeCount(prev => prev + (wasLiked ? 1 : -1));
+                toast({ title: 'Failed to update like', variant: 'destructive'});
+            }
+        });
     }
 
     const handleRepostClick = async () => {
-        if (!user) return;
-        setIsLoading({ action: 'repost' });
-        await onRepost(item.originalPostId || item.id, user.uid);
-        setIsLoading({ action: null });
+        if (!user || isRepostPending) return;
+        
+        startRepostTransition(async () => {
+            const result = await handleRepost(item.originalPostId || item.id, user.uid, pathname);
+            if (!result.success) {
+                toast({ title: "Failed to repost", description: result.error, variant: 'destructive' });
+            } else {
+                toast({ title: "Post Reposted" });
+                 // A full refresh might be needed to see the new post in the feed
+                router.refresh();
+            }
+        });
+    }
+
+    const handleDeleteClick = async () => {
+        startDeleteTransition(async () => {
+            const result = await handleDeletePost(item.id, pathname);
+            if (result.success) {
+                toast({ title: "Post Deleted" });
+                onDeleted(item.id);
+            } else {
+                toast({ title: "Failed to delete post", description: result.error, variant: 'destructive' });
+            }
+            setIsDeleteDialogOpen(false);
+        });
     }
 
     return (
-        <Card>
-            {isRepost && (
-                <div className="px-4 pt-3 pb-0 text-sm text-muted-foreground font-semibold flex items-center gap-2">
-                    <Repeat className="h-4 w-4"/>
-                    <Link href={`/u/${item.author.username}`} className="hover:underline">
-                        {isOwner ? "You" : item.author.name} reposted
+        <>
+            <DeleteConfirmationDialog 
+                open={isDeleteDialogOpen}
+                onOpenChange={setIsDeleteDialogOpen}
+                onConfirm={handleDeleteClick}
+                isLoading={isDeletePending}
+                itemName="post"
+                confirmationText="DELETE"
+            />
+            <Card>
+                {isRepost && (
+                    <div className="px-4 pt-3 pb-0 text-sm text-muted-foreground font-semibold flex items-center gap-2">
+                        <Repeat className="h-4 w-4"/>
+                        <Link href={`/u/${item.author.username}`} className="hover:underline">
+                            {isOwner ? "You" : item.author.name} reposted
+                        </Link>
+                    </div>
+                )}
+                <div className="flex items-start gap-4 p-4">
+                    <Link href={`/u/${item.author.username}`}>
+                        <Avatar>
+                            <AvatarImage src={item.author.avatarUrl} />
+                            <AvatarFallback>{item.author.name.charAt(0)}</AvatarFallback>
+                        </Avatar>
                     </Link>
-                </div>
-            )}
-            <div className="flex items-start gap-4 p-4">
-                <Link href={`/u/${item.author.username}`}>
-                    <Avatar>
-                        <AvatarImage src={item.author.avatarUrl} />
-                        <AvatarFallback>{item.author.name.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                </Link>
-                <div className="w-full">
-                    <div className="flex justify-between items-start">
-                        <div className="text-sm">
-                            <Link href={`/u/${item.author.username}`} className="font-semibold hover:underline">{item.author.name}</Link>
-                            <span className="text-muted-foreground ml-2">@{item.author.username}</span>
-                            <span className="text-muted-foreground"> · </span>
-                            <Link href={`/u/${item.author.username}`} className="text-muted-foreground hover:underline">
-                                <ClientFormattedDate date={item.createdAt} relative />
-                            </Link>
+                    <div className="w-full">
+                        <div className="flex justify-between items-start">
+                            <div className="text-sm">
+                                <Link href={`/u/${item.author.username}`} className="font-semibold hover:underline">{item.author.name}</Link>
+                                <span className="text-muted-foreground ml-2">@{item.author.username}</span>
+                                <span className="text-muted-foreground"> · </span>
+                                <Link href={`/u/${item.author.username}`} className="text-muted-foreground hover:underline">
+                                    <ClientFormattedDate date={item.createdAt} relative />
+                                </Link>
+                            </div>
+                            <div className="flex items-center gap-1 -mt-2">
+                                <PrivacyIcon />
+                                {isOwner && (
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end">
+                                            <DropdownMenuItem onClick={() => setIsDeleteDialogOpen(true)} className="text-destructive cursor-pointer"><Trash2 className="mr-2 h-4 w-4" /> Delete Post</DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                )}
+                            </div>
                         </div>
-                        <div className="flex items-center gap-1 -mt-2">
-                            <PrivacyIcon />
-                            {isOwner && (
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end">
-                                        <DropdownMenuItem onClick={() => onDelete(item)} className="text-destructive cursor-pointer"><Trash2 className="mr-2 h-4 w-4" /> Delete Post</DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
-                            )}
+                        <div className="mt-2 space-y-3">
+                            {item.content && <p className="whitespace-pre-wrap">{item.content}</p>}
+                            {item.quotedPost && <QuotedPostView post={item.quotedPost} />}
+                            {item.repostedPost && <RepostView post={item} />}
+                            {item.imageUrl && <div className="mt-2 rounded-lg overflow-hidden border"><Image src={item.imageUrl} alt="Post image" width={600} height={400} className="object-cover w-full" /></div>}
+                            {item.category && <div className="pt-2"><Badge variant="outline">{item.category}</Badge></div>}
                         </div>
+                        <CardFooter className="flex justify-between items-center p-0 pt-3 -ml-2">
+                            <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground hover:text-primary" onClick={handleLikeClick} disabled={isLoading || !user}>
+                                {isLikePending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Heart className={cn("h-4 w-4", isLiked && "fill-red-500 text-red-500")} />}
+                                <span className="text-xs">{likeCount}</span>
+                            </Button>
+                            <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground" disabled>
+                                <MessageCircle className="h-4 w-4" />
+                                <span className="text-xs">{item.comments || 0}</span>
+                            </Button>
+                            <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground hover:text-green-500" onClick={handleRepostClick} disabled={isLoading || !user}>
+                                {isRepostPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Repeat className="h-4 w-4" />}
+                                <span className="text-xs">{item.repostCount || 0}</span>
+                            </Button>
+                            <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground hover:text-blue-500" onClick={() => onQuote(item)} disabled={isLoading || !user}>
+                                <QuoteIcon className="h-4 w-4" />
+                                <span className="text-xs hidden sm:inline">Quote</span>
+                            </Button>
+                            <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground" onClick={handleShare} disabled={isLoading}>
+                                <Share2 className="h-4 w-4" />
+                            </Button>
+                        </CardFooter>
                     </div>
-                    <div className="mt-2 space-y-3">
-                        {item.content && <p className="whitespace-pre-wrap">{item.content}</p>}
-                        {item.quotedPost && <QuotedPostView post={item.quotedPost} />}
-                        {item.repostedPost && <RepostView post={item} />}
-                        {item.imageUrl && <div className="mt-2 rounded-lg overflow-hidden border"><Image src={item.imageUrl} alt="Post image" width={600} height={400} className="object-cover w-full" /></div>}
-                        {item.category && <div className="pt-2"><Badge variant="outline">{item.category}</Badge></div>}
-                    </div>
-                     <CardFooter className="flex justify-between items-center p-0 pt-3 -ml-2">
-                        <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground hover:text-primary" onClick={handleLikeClick} disabled={isLoading.action !== null || !user}>
-                            {(isLoading.action === 'like') ? <Loader2 className="h-4 w-4 animate-spin" /> : <Heart className={cn("h-4 w-4", item.isLiked && "fill-red-500 text-red-500")} />}
-                            <span className="text-xs">{item.likes || 0}</span>
-                        </Button>
-                        <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground" disabled>
-                            <MessageCircle className="h-4 w-4" />
-                            <span className="text-xs">{item.comments || 0}</span>
-                        </Button>
-                        <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground hover:text-green-500" onClick={handleRepostClick} disabled={isLoading.action !== null || !user}>
-                            {(isLoading.action === 'repost') ? <Loader2 className="h-4 w-4 animate-spin" /> : <Repeat className="h-4 w-4" />}
-                            <span className="text-xs">{item.repostCount || 0}</span>
-                        </Button>
-                        <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground hover:text-blue-500" onClick={() => onQuote(item)} disabled={isLoading.action !== null || !user}>
-                            <QuoteIcon className="h-4 w-4" />
-                            <span className="text-xs hidden sm:inline">Quote</span>
-                        </Button>
-                        <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground" onClick={handleShare} disabled={isLoading.action !== null}>
-                            <Share2 className="h-4 w-4" />
-                        </Button>
-                    </CardFooter>
                 </div>
-            </div>
-        </Card>
+            </Card>
+        </>
     );
 }

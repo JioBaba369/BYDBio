@@ -1,3 +1,4 @@
+
 // src/app/feed/page.tsx
 'use client';
 
@@ -20,10 +21,8 @@ import { createPost, getFeedPosts, getDiscoveryPosts } from "@/lib/posts";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FeedSkeleton } from "@/components/feed-skeleton";
-import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
 import type { DocumentData } from 'firebase/firestore';
-import { usePathname, useRouter } from "next/navigation";
-import { handleDeletePost, handleRepost, handleToggleLike } from "../actions/posts";
+import { useRouter } from "next/navigation";
 
 const FEED_PAGE_SIZE = 10;
 
@@ -74,7 +73,6 @@ export default function FeedPage() {
   const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
-  const pathname = usePathname();
 
   const [postContent, setPostContent] = useState('');
   const [postCategory, setPostCategory] = useState('');
@@ -109,14 +107,7 @@ export default function FeedPage() {
   const hasMorePosts = useMemo(() => {
     return activeTab === 'following' ? hasMoreFollowing : hasMoreDiscovery;
   }, [activeTab, hasMoreFollowing, hasMoreDiscovery]);
-
-  const setPosts = activeTab === 'following' ? setFollowingPosts : setDiscoveryPosts;
   
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [postToDelete, setPostToDelete] = useState<PostWithAuthor | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
-
-
   const fetchFeed = useCallback(async (type: 'following' | 'discovery', loadMore: boolean = false) => {
     if (!user) {
       setIsLoadingFeed(false);
@@ -176,50 +167,10 @@ export default function FeedPage() {
       window.scrollTo({ top: 0, behavior: 'smooth' });
       document.getElementById('new-post')?.focus();
   };
-
-  const handleDelete = (post: PostWithAuthor) => {
-      setPostToDelete(post);
-      setIsDeleteDialogOpen(true);
-  };
-
-  const handleConfirmDelete = async () => {
-    if (!postToDelete || !user) return;
-    setIsDeleting(true);
-
-    const result = await handleDeletePost(postToDelete.id, pathname);
-
-    if (result.success) {
-        toast({ title: "Post Deleted" });
-        setPosts(prev => prev.filter(p => p.id !== postToDelete.id));
-    } else {
-        toast({ title: "Failed to delete post", description: result.error, variant: "destructive" });
-    }
-
-    setIsDeleteDialogOpen(false);
-    setPostToDelete(null);
-    setIsDeleting(false);
-  };
-
-  const onLike = async (postId: string, userId: string) => {
-    if (!user) return;
-    setPosts(prev => prev.map(p => {
-        if (p.id === postId) {
-            return { ...p, isLiked: !p.isLiked, likes: p.isLiked ? p.likes - 1 : p.likes + 1 };
-        }
-        return p;
-    }));
-    await handleToggleLike(postId, userId, pathname);
-  };
-
-  const onRepost = async (postId: string, userId: string) => {
-    if (!user) return;
-    const result = await handleRepost(postId, userId, pathname);
-    if (result.success) {
-        toast({ title: "Post Reposted" });
-        fetchFeed(activeTab as 'following' | 'discovery', false);
-    } else {
-        toast({ title: "Failed to repost", description: result.error, variant: "destructive" });
-    }
+  
+  const onPostDeleted = (deletedPostId: string) => {
+    setFollowingPosts(prev => prev.filter(p => p.id !== deletedPostId));
+    setDiscoveryPosts(prev => prev.filter(p => p.id !== deletedPostId));
   };
 
 
@@ -324,15 +275,13 @@ export default function FeedPage() {
           <PostCard
             key={item.id}
             item={item}
-            onLike={onLike}
-            onDelete={() => handleDelete(item)}
-            onRepost={onRepost}
             onQuote={handleQuote}
+            onDeleted={onPostDeleted}
           />
         ))}
       </div>
     );
-  }, [isLoadingFeed, onLike, handleDelete, onRepost, handleQuote]);
+  }, [isLoadingFeed, handleQuote]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -375,14 +324,6 @@ export default function FeedPage() {
         onCropComplete={handleCropComplete}
         aspectRatio={16 / 9}
         isRound={false}
-      />
-      <DeleteConfirmationDialog 
-        open={isDeleteDialogOpen}
-        onOpenChange={setIsDeleteDialogOpen}
-        onConfirm={handleConfirmDelete}
-        isLoading={isDeleting}
-        itemName="post"
-        confirmationText="DELETE"
       />
       
       <div className="max-w-2xl mx-auto space-y-6">

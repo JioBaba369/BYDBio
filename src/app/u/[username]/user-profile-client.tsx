@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useMemo, useEffect, useCallback, useTransition } from "react";
+import { useState, useMemo, useEffect } from "react";
 import type { PostWithAuthor, UserProfilePayload } from '@/lib/users';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -18,11 +18,8 @@ import { BookingDialog } from "@/components/booking-dialog";
 import { ContactForm } from "@/components/contact-form";
 import { AboutTab } from "@/components/profile/about-tab";
 import Image from "next/image";
-import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
 import { FollowButton } from "@/components/follow-button";
-import { useToast } from "@/hooks/use-toast";
-import { handleDeletePost, handleToggleLike, handleRepost } from "@/app/actions/posts";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 interface UserProfilePageProps {
   userProfileData: UserProfilePayload;
@@ -32,15 +29,9 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
   const { user: currentUser } = useAuth();
   const { isOwner, user, isFollowedByCurrentUser } = userProfileData;
   const router = useRouter();
-  const pathname = usePathname();
-  const { toast } = useToast();
 
   const [posts, setPosts] = useState<PostWithAuthor[]>([]);
   
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [postToDelete, setPostToDelete] = useState<PostWithAuthor | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
-
   useEffect(() => {
     setPosts(userProfileData.posts || []);
   }, [userProfileData.posts]);
@@ -50,48 +41,10 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
     router.push('/feed');
   };
   
-  const handleDelete = (post: PostWithAuthor) => {
-    setPostToDelete(post);
-    setIsDeleteDialogOpen(true);
+  const onPostDeleted = (deletedPostId: string) => {
+    setPosts(prev => prev.filter(p => p.id !== deletedPostId));
   };
   
-  const handleConfirmDelete = async () => {
-    if (!postToDelete || !currentUser) return;
-    setIsDeleting(true);
-    const result = await handleDeletePost(postToDelete.id, pathname);
-    if (result.success) {
-      toast({ title: "Post Deleted" });
-      setPosts(prev => prev.filter(p => p.id !== postToDelete.id));
-    } else {
-      toast({ title: "Failed to delete post", description: result.error, variant: "destructive" });
-    }
-    setIsDeleteDialogOpen(false);
-    setPostToDelete(null);
-    setIsDeleting(false);
-  };
-  
-  const onLike = async (postId: string, userId: string) => {
-    if (!currentUser) return;
-    setPosts(prev => prev.map(p => {
-        if (p.id === postId) {
-            return { ...p, isLiked: !p.isLiked, likes: p.isLiked ? p.likes - 1 : p.likes + 1 };
-        }
-        return p;
-    }));
-    await handleToggleLike(postId, userId, pathname);
-  };
-
-  const onRepost = async (postId: string, userId: string) => {
-    if (!currentUser) return;
-    const result = await handleRepost(postId, userId, pathname);
-    if (result.success) {
-        toast({ title: "Post Reposted" });
-        // You might want to refresh the feed here if reposts should appear instantly
-    } else {
-        toast({ title: "Failed to repost", description: result.error, variant: "destructive" });
-    }
-  };
-
   const vCardData = useMemo(() => {
     if (!user) return '';
     return generateVCard(user);
@@ -108,22 +61,8 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
     });
   }, [posts, canViewPrivateContent, isOwner]);
   
-  const PrivacyIcon = ({ privacy }: { privacy: 'public' | 'followers' | 'me' }) => {
-    if (privacy === 'followers') return <Users className="h-4 w-4 text-muted-foreground" />;
-    if (privacy === 'me') return <Lock className="h-4 w-4 text-muted-foreground" />;
-    return <Globe className="h-4 w-4 text-muted-foreground" />;
-  };
-
   return (
     <>
-      <DeleteConfirmationDialog 
-        open={isDeleteDialogOpen}
-        onOpenChange={setIsDeleteDialogOpen}
-        onConfirm={handleConfirmDelete}
-        isLoading={isDeleting}
-        itemName="post"
-        confirmationText="DELETE"
-      />
       <div className="space-y-6">
         <Card className="overflow-hidden border-0 shadow-none -m-4 sm:-m-6 rounded-none">
             <div className="relative h-40 sm:h-48 md:h-56 bg-muted">
@@ -212,10 +151,8 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
                         <PostCard
                             key={`${item.id}-${item.author.uid}`}
                             item={item}
-                            onDelete={() => handleDelete(item)}
                             onQuote={handleQuote}
-                            onLike={onLike}
-                            onRepost={onRepost}
+                            onDeleted={onPostDeleted}
                         />
                     ))}
                     </div>

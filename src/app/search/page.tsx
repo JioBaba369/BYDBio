@@ -30,8 +30,7 @@ import { ClientFormattedCurrency } from '@/components/client-formatted-currency'
 import { PostCard } from '@/components/post-card';
 import { populatePostAuthors } from '@/lib/posts';
 import { toggleFollowAction } from '@/app/actions/follow';
-import { usePostActions } from '@/hooks/use-post-actions';
-import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialog';
+import { useRouter } from 'next/navigation';
 
 type ItemWithAuthor<T> = T & { author: User };
 type SearchResults = {
@@ -89,6 +88,7 @@ export default function SearchPage() {
   const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const pathname = usePathname();
+  const router = useRouter();
 
   const [isLoading, setIsLoading] = useState(false);
   const [results, setResults] = useState<SearchResults>({ users: [], listings: [], jobs: [], events: [], offers: [], promoPages: [], posts: [] });
@@ -191,13 +191,10 @@ export default function SearchPage() {
     }
   }, [queryParam, authLoading, performSearch]);
   
-  const { handleLike, handleDelete, handleRepost, handleQuote, loadingAction, dialogProps } = usePostActions({
-    posts: results.posts,
-    setPosts: (updater) => setResults(prev => ({...prev, posts: typeof updater === 'function' ? updater(prev.posts) : updater })),
-    currentUser: user,
-    onAfterAction: performSearch
-  });
-
+  const handleQuote = (post: PostWithAuthor) => {
+    sessionStorage.setItem('postToQuote', JSON.stringify(post));
+    router.push('/feed');
+  };
 
   const handleToggleFollow = (targetUser: User) => {
     if (!user || isFollowPending) return;
@@ -239,7 +236,6 @@ export default function SearchPage() {
 
   return (
     <>
-    <DeleteConfirmationDialog {...dialogProps} />
     <div className="space-y-6">
       <div>
         {queryParam ? (
@@ -316,12 +312,8 @@ export default function SearchPage() {
                         <PostCard 
                             key={post.id} 
                             item={post} 
-                            onLike={handleLike}
-                            onDelete={() => handleDelete(post)}
-                            onRepost={handleRepost}
                             onQuote={handleQuote}
-                            isLoading={loadingAction?.postId === post.id}
-                            loadingAction={loadingAction?.postId === post.id ? loadingAction.action : undefined}
+                            onDeleted={() => setResults(p => ({ ...p, posts: p.posts.filter(x => x.id !== post.id)}))}
                         />
                     ))}
                 </div>
