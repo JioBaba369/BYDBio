@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -144,7 +145,7 @@ export function MainSidebar() {
               </SidebarMenuButton>
             </SidebarMenuItem>
              <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Business Pages" isActive={isActive('/promo') && !pathname.includes('/create')}>
+              <SidebarMenuButton asChild tooltip="Business Pages">
                 <Link href="/promo">
                   <Megaphone />
                   <span>Business Pages</span>
@@ -152,7 +153,7 @@ export function MainSidebar() {
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Listings" isActive={isActive('/listings') && !pathname.includes('/create')}>
+              <SidebarMenuButton asChild tooltip="Listings">
                 <Link href="/listings">
                   <Tags />
                   <span>Listings</span>
@@ -160,7 +161,7 @@ export function MainSidebar() {
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Jobs" isActive={isActive('/job') && !pathname.includes('/create')}>
+              <SidebarMenuButton asChild tooltip="Jobs">
                 <Link href="/job">
                   <Briefcase />
                   <span>Jobs</span>
@@ -168,7 +169,7 @@ export function MainSidebar() {
               </SidebarMenuButton>
             </SidebarMenuItem>
              <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Events" isActive={isActive('/events') && !pathname.includes('/create')}>
+              <SidebarMenuButton asChild tooltip="Events">
                 <Link href="/events">
                   <Calendar />
                   <span>Events</span>
@@ -176,7 +177,7 @@ export function MainSidebar() {
               </SidebarMenuButton>
             </SidebarMenuItem>
              <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Offers" isActive={isActive('/offers') && !pathname.includes('/create')}>
+              <SidebarMenuButton asChild tooltip="Offers">
                 <Link href="/offers">
                   <Gift />
                   <span>Offers</span>

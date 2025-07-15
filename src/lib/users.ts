@@ -1,6 +1,5 @@
 
 
-
 import { collection, query, where, getDocs, limit, doc, getDoc, setDoc, updateDoc, deleteDoc, arrayUnion, orderBy, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { deleteUser, type User as FirebaseUser } from "firebase/auth";
@@ -434,7 +433,6 @@ export async function searchUsers(searchText: string): Promise<User[]> {
  */
 export const deleteUserAccount = async (fbUser: FirebaseUser) => {
     const userDocRef = doc(db, "users", fbUser.uid);
-
     await deleteDoc(userDocRef);
     await deleteUser(fbUser);
 };
