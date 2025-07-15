@@ -2,155 +2,104 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-  
+    
     // =============================================
     // Helper Functions
     // =============================================
-    
+
     function isAuthenticated() {
       return request.auth != null;
     }
-    
+
     function isOwner(userId) {
       return request.auth.uid == userId;
     }
     
-    function isCreating() {
-      return resource == null;
-    }
-    
-    function isUpdating() {
-      return resource != null;
-    }
-    
-    function requestHas(key) {
-      return key in request.resource.data;
+    // Check if the viewer is a follower of the author
+    function isFollower(authorId) {
+        return exists(/databases/$(database)/documents/users/$(authorId)) && request.auth.uid in get(/databases/$(database)/documents/users/$(authorId)).data.following;
     }
 
-    function isString(value) {
-      return value is string;
-    }
-    
-    function isStringOptional(key) {
-      return !requestHas(key) || isString(request.resource.data[key]);
-    }
-    
-    function isNumber(value) {
-      return value is number;
-    }
-
-    function isTimestamp(value) {
-      return value is timestamp;
-    }
-    
-    function isTimestampOptional(key) {
-      return !requestHas(key) || isTimestamp(request.resource.data[key]);
-    }
-
-    function isBooleanOptional(key) {
-      return !requestHas(key) || request.resource.data[key] is bool;
-    }
-    
     // =============================================
     // Default Deny
     // =============================================
     match /{document=**} {
       allow read, write: if false;
     }
-    
+
     // =============================================
     // Users Collection Rules
     // =============================================
     match /users/{userId} {
-      allow read: if true;
-      allow create: if isOwner(userId) && request.resource.data.uid == userId;
-      allow update: if isOwner(userId) && request.resource.data.followerCount == resource.data.followerCount;
-    }
-    
-    // =============================================
-    // Listings Collection Rules
-    // =============================================
-    match /listings/{listingId} {
-        allow get: if resource.data.status == 'active';
-        allow list: if request.query.limit <= 50 && request.query.filters.size() == 1 && request.query.filters[0][0] == 'status' && request.query.filters[0][2] == 'active';
+      allow get: if true;
+      allow list: if request.query.limit <= 50;
 
-        allow create: if isAuthenticated() && isOwner(request.resource.data.authorId);
-        allow update: if isAuthenticated() && isOwner(resource.data.authorId);
-        allow delete: if isAuthenticated() && isOwner(resource.data.authorId);
-    }
-    
-    // =============================================
-    // Jobs Collection Rules
-    // =============================================
-     match /jobs/{jobId} {
-        allow get: if resource.data.status == 'active';
-        allow list: if request.query.limit <= 50 && request.query.filters.size() == 1 && request.query.filters[0][0] == 'status' && request.query.filters[0][2] == 'active';
-
-        allow create: if isAuthenticated() && isOwner(request.resource.data.authorId);
-        allow update: if isAuthenticated() && isOwner(resource.data.authorId);
-        allow delete: if isAuthenticated() && isOwner(resource.data.authorId);
-    }
-    
-    // =============================================
-    // Events Collection Rules
-    // =============================================
-    match /events/{eventId} {
-        allow get: if resource.data.status == 'active';
-        allow list: if request.query.limit <= 50 && request.query.filters.size() == 1 && request.query.filters[0][0] == 'status' && request.query.filters[0][2] == 'active';
-
-        allow create: if isAuthenticated() && isOwner(request.resource.data.authorId);
-        allow delete: if isAuthenticated() && isOwner(resource.data.authorId);
-        
-        allow update: if isAuthenticated() && 
-                      (isOwner(resource.data.authorId) || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['rsvps']));
-    }
-    
-    // =============================================
-    // Offers Collection Rules
-    // =============================================
-    match /offers/{offerId} {
-        allow get: if resource.data.status == 'active';
-        allow list: if request.query.limit <= 50 && request.query.filters.size() == 1 && request.query.filters[0][0] == 'status' && request.query.filters[0][2] == 'active';
-
-        allow create: if isAuthenticated() && isOwner(request.resource.data.authorId);
-        allow update: if isAuthenticated() && isOwner(resource.data.authorId);
-        allow delete: if isAuthenticated() && isOwner(resource.data.authorId);
-    }
-    
-    // =============================================
-    // Promo Pages Collection Rules
-    // =============================================
-     match /promoPages/{promoPageId} {
-        allow get: if resource.data.status == 'active';
-        allow list: if request.query.limit <= 50 && request.query.filters.size() == 1 && request.query.filters[0][0] == 'status' && request.query.filters[0][2] == 'active';
-
-        allow create: if isAuthenticated() && isOwner(request.resource.data.authorId);
-        allow update: if isAuthenticated() && isOwner(resource.data.authorId);
-        allow delete: if isAuthenticated() && isOwner(resource.data.authorId);
-    }
-    
-    // =============================================
-    // Posts (Status Feed) Collection Rules
-    // =============================================
-    match /posts/{postId} {
-      function isFollower(authorId) {
-        return exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
-               get(/databases/$(database)/documents/users/$(request.auth.uid)).data.following.hasAny([authorId]);
-      }
-
-      allow read: if resource.data.privacy == 'public' || 
-                     (resource.data.privacy == 'followers' && (isOwner(resource.data.authorId) || isFollower(resource.data.authorId))) ||
-                     (resource.data.privacy == 'me' && isOwner(resource.data.authorId));
+      allow create: if isOwner(userId)
+                    && request.resource.data.uid == userId;
       
-      allow list: if request.query.limit <= 50 && request.query.filters.size() == 1 && request.query.filters[0][0] == 'privacy' && request.query.filters[0][2] == 'public';
+      allow update: if isOwner(userId)
+                     && !(request.resource.data.keys().hasAny(['followerCount', 'postCount']));
+    }
 
-      allow create: if isAuthenticated() && isOwner(request.resource.data.authorId);
-      allow delete: if isAuthenticated() && isOwner(resource.data.authorId);
+    // =============================================
+    // Content Collections Rules
+    // =============================================
+    
+    // -- LISTINGS --
+    match /listings/{listingId} {
+      allow get: if resource.data.status == 'active';
+      allow list: if request.query.limit <= 50 && request.query.wheres[0][2] == 'active';
+      allow create, update, delete: if isAuthenticated() && isOwner(resource.data.authorId);
+    }
+
+    // -- JOBS --
+    match /jobs/{jobId} {
+      allow get: if resource.data.status == 'active';
+      allow list: if request.query.limit <= 50 && request.query.wheres[0][2] == 'active';
+      allow create, update, delete: if isAuthenticated() && isOwner(resource.data.authorId);
+    }
+
+    // -- OFFERS --
+    match /offers/{offerId} {
+      allow get: if resource.data.status == 'active';
+      allow list: if request.query.limit <= 50 && request.query.wheres[0][2] == 'active';
+      allow create, update, delete: if isAuthenticated() && isOwner(resource.data.authorId);
+    }
+    
+    // -- PROMO PAGES --
+    match /promoPages/{promoPageId} {
+      allow get: if resource.data.status == 'active';
+      allow list: if request.query.limit <= 50 && request.query.wheres[0][2] == 'active';
+      allow create, update, delete: if isAuthenticated() && isOwner(resource.data.authorId);
+    }
+    
+    // -- EVENTS --
+    match /events/{eventId} {
+      allow get: if resource.data.status == 'active';
+      allow list: if request.query.limit <= 50 && request.query.wheres[0][2] == 'active';
+      allow create, delete: if isAuthenticated() && isOwner(resource.data.authorId);
+      
+      // Allow owner to update content, OR any authenticated user to update ONLY the rsvps list.
+      allow update: if isAuthenticated() && 
+                      (isOwner(resource.data.authorId) || 
+                       request.resource.data.diff(resource.data).affectedKeys().hasOnly(['rsvps']));
+    }
+
+    // -- POSTS --
+    match /posts/{postId} {
+      allow get: if resource.data.privacy == 'public' || 
+                   (resource.data.privacy == 'followers' && (isOwner(resource.data.authorId) || isFollower(resource.data.authorId))) ||
+                   (resource.data.privacy == 'me' && isOwner(resource.data.authorId));
+
+      allow list: if request.query.limit <= 50 && 
+                     (request.query.wheres[0][2] == 'public' || (isAuthenticated() && request.auth.uid == request.query.wheres[1][2]));
+
+      allow create, delete: if isAuthenticated() && isOwner(resource.data.authorId);
       
       allow update: if isAuthenticated() &&
                        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likedBy', 'likes']));
     }
-    
+
     // =============================================
     // Private Collections Rules
     // =============================================
@@ -160,9 +109,13 @@ service cloud.firestore {
     }
     
     match /appointments/{appointmentId} {
-      allow read: if isAuthenticated() && (isOwner(resource.data.ownerId) || isOwner(resource.data.bookerId));
+      allow read: if isAuthenticated() && 
+                    (isOwner(resource.data.ownerId) || isOwner(resource.data.bookerId));
+                    
       allow create: if isAuthenticated() && isOwner(request.resource.data.bookerId);
-      allow delete: if isAuthenticated() && (isOwner(resource.data.ownerId) || isOwner(resource.data.bookerId));
+      
+      allow delete: if isAuthenticated() && 
+                      (isOwner(resource.data.ownerId) || isOwner(resource.data.bookerId));
     }
   }
 }

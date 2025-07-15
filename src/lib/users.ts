@@ -4,7 +4,7 @@ import { db } from "@/lib/firebase";
 import { deleteUser, type User as FirebaseUser } from "firebase/auth";
 import type { Timestamp } from "firebase/firestore";
 import { getPostsByUser, type PostWithAuthor } from "./posts";
-import { getPublicContentByUser } from "./content";
+import { getPublicContentByUser, type PublicContentItem } from "./content";
 import { serializeDocument } from "./firestore-utils";
 import { RESERVED_USERNAMES } from "./reserved-usernames";
 
@@ -83,7 +83,7 @@ export type User = {
 
 export type UserProfilePayload = {
     user: User;
-    otherContent: any[];
+    otherContent: PublicContentItem[];
     isOwner: boolean;
     isFollowedByCurrentUser: boolean;
 }
