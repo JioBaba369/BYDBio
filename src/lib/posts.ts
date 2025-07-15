@@ -390,38 +390,30 @@ export const getFeedPosts = async (userId: string, followingIds: string[]): Prom
  * @returns A promise that resolves to an array of posts for the discovery feed.
  */
 export const getDiscoveryPosts = async (userId: string, followingIds: string[]): Promise<PostWithAuthor[]> => {
-    const suggestedUsers = await getSuggestedUsers(userId, 20); // Get up to 20 suggested users
-    if (suggestedUsers.length === 0) {
-        return [];
-    }
-
+    // Get a list of users the current user does NOT follow.
+    const suggestedUsers = await getSuggestedUsers(userId, 20);
     const suggestedUserIds = suggestedUsers.map(u => u.uid);
-    
-    // Chunk the user IDs to handle Firestore's 'in' query limit (30)
-    const chunks: string[][] = [];
-    for (let i = 0; i < suggestedUserIds.length; i += 30) {
-        chunks.push(suggestedUserIds.slice(i, i + 30));
+
+    if (suggestedUserIds.length === 0) {
+        return [];
     }
     
     const allPosts: Post[] = [];
 
-    for (const chunk of chunks) {
-        const postsQuery = query(
-            collection(db, 'posts'),
-            where('authorId', 'in', chunk),
-            where('privacy', '==', 'public'),
-            orderBy('createdAt', 'desc'),
-            limit(FEED_POST_LIMIT)
-        );
-        const postSnapshots = await getDocs(postsQuery);
-        postSnapshots.forEach(doc => {
-            const post = serializeDocument<Post>(doc);
-            if (post) allPosts.push(post);
-        });
-    }
+    const postsQuery = query(
+        collection(db, 'posts'),
+        where('authorId', 'in', suggestedUserIds),
+        where('privacy', '==', 'public'),
+        orderBy('createdAt', 'desc'),
+        limit(FEED_POST_LIMIT)
+    );
+    const postSnapshots = await getDocs(postsQuery);
+    postSnapshots.forEach(doc => {
+        const post = serializeDocument<Post>(doc);
+        if (post) allPosts.push(post);
+    });
 
     allPosts.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-    const finalPosts = allPosts.slice(0, FEED_POST_LIMIT);
     
-    return populatePostAuthors(finalPosts, userId);
+    return populatePostAuthors(allPosts, userId);
 };
