@@ -7,14 +7,14 @@ import { useAuth } from './auth-provider';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from './ui/dropdown-menu';
 import { Button } from './ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar';
-import { ChevronDown, LogOut, Settings, User, Palette, ArrowLeft, Bell } from 'lucide-react';
+import { ChevronDown, LogOut, Settings, User, Palette, Bell } from 'lucide-react';
 import Link from 'next/link';
 import { signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { usePathname, useRouter } from 'next/navigation';
 import { isAuthPath } from '@/lib/paths';
-import React, { useMemo } from 'react';
+import React from 'react';
 import { Skeleton } from './ui/skeleton';
 import { Logo } from './logo';
 
@@ -22,52 +22,6 @@ function Header() {
     const { user, loading, unreadNotificationCount } = useAuth();
     const { toast } = useToast();
     const router = useRouter();
-    const pathname = usePathname();
-
-    const getPageTitle = React.useCallback((path: string): string => {
-        if (path === '/') return 'Dashboard';
-        const pathSegments = path.split('/').filter(Boolean);
-        const base = pathSegments[0];
-
-        switch (base) {
-            case 'feed': return 'Status Feed';
-            case 'explore': return 'Explore Content';
-            case 'creators': return 'Explore Creators';
-            case 'connections': return 'Connections';
-            case 'notifications': return 'Notifications';
-            case 'inbox': return 'Inbox';
-            case 'my-content': return 'My Content';
-            case 'diary': return 'My Diary';
-            case 'profile': return 'Profile Editor';
-            case 'settings': return 'Settings';
-            case 'promo': return 'Business Pages';
-            case 'listings': return 'Listings';
-            case 'job': return 'Job Board';
-            case 'events': return 'Events';
-            case 'offers': return 'Offers';
-            case 'bydtag': return 'BYD BioTAG';
-            case 'search': return 'Search Results';
-            case 'u': return 'User Profile';
-            case 'p': return 'Business Page';
-            case 'l': return 'Listing';
-            case 'offer': return 'Offer';
-            case 'whats-new': return "What's New";
-            case 'url-tree': return "URL Tree";
-            default: return '';
-        }
-    }, []);
-
-    const pageTitle = getPageTitle(pathname);
-    const pathSegments = pathname.split('/').filter(Boolean);
-    
-    const showBackButton = useMemo(() => {
-        if (pathSegments.length === 0) return false;
-        const firstSegment = pathSegments[0];
-        if (firstSegment === 'u') {
-            return pathSegments.length > 2;
-        }
-        return pathSegments.length > 1;
-    }, [pathSegments]);
 
     const handleLogout = async () => {
         try {
@@ -122,15 +76,7 @@ function Header() {
                 <SidebarTrigger />
             </div>
             
-            <div className="flex-1 flex items-center gap-2">
-                {showBackButton && (
-                    <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => router.back()}>
-                        <ArrowLeft className="h-5 w-5" />
-                        <span className="sr-only">Back</span>
-                    </Button>
-                )}
-                <h1 className="text-lg font-semibold truncate">{pageTitle}</h1>
-            </div>
+            <div className="flex-1" />
 
             <Button asChild variant="ghost" size="icon" className="relative">
               <Link href="/notifications">

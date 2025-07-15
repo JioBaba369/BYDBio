@@ -6,19 +6,9 @@ import { SidebarProvider } from '@/components/ui/sidebar';
 import { ThemeProvider } from '@/components/theme-provider';
 import { AuthProvider } from '@/components/auth-provider';
 import { AppLayout } from '@/components/app-layout';
-import { Poppins, PT_Sans } from 'next/font/google';
+import { GeistSans } from 'geist/font/sans';
+import { GeistMono } from 'geist/font/mono';
 
-const fontPoppins = Poppins({
-  subsets: ['latin'],
-  weight: ['600', '700', '800'],
-  variable: '--font-poppins',
-});
-
-const fontPtSans = PT_Sans({
-  subsets: ['latin'],
-  weight: ['400', '700'],
-  variable: '--font-pt-sans',
-});
 
 export const metadata: Metadata = {
   title: 'BYD.Bio - Build Your Dream Bio',
@@ -31,8 +21,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={cn('font-sans antialiased min-h-screen bg-background', fontPoppins.variable, fontPtSans.variable)}>
+    <html lang="en" suppressHydrationWarning className={`${GeistSans.variable} ${GeistMono.variable}`}>
+      <body className={cn('font-sans antialiased min-h-screen bg-background')}>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

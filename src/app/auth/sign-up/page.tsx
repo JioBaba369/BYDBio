@@ -19,6 +19,7 @@ import { createUserProfileIfNotExists } from "@/lib/users";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { fetchAndActivate, getString } from "firebase/remote-config";
 import { logEvent } from "firebase/analytics";
+import { useAuth } from "@/components/auth-provider";
 
 const signUpSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
@@ -33,6 +34,8 @@ export default function SignUpPage() {
     const router = useRouter();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [buttonText, setButtonText] = useState('Create Account');
+    const { loading: authLoading } = useAuth();
+
 
     useEffect(() => {
         if (remoteConfig) {
@@ -151,8 +154,8 @@ export default function SignUpPage() {
                 </FormItem>
               )}
             />
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
-              {isSubmitting ? "Creating Account..." : buttonText}
+            <Button type="submit" className="w-full" disabled={isSubmitting || authLoading}>
+              {isSubmitting || authLoading ? "Creating Account..." : buttonText}
             </Button>
           </form>
         </Form>

@@ -9,6 +9,7 @@ import { Button } from './ui/button';
 import Link from 'next/link';
 import { PublicContentCard } from './public-content-card';
 import { ArrowRight } from 'lucide-react';
+import { useAuth } from './auth-provider';
 
 const LandingPageSkeleton = () => (
     <div className="space-y-16 animate-pulse">
@@ -39,6 +40,7 @@ const LandingPageSkeleton = () => (
 
 
 export function LandingPage() {
+    const { user } = useAuth();
     const [items, setItems] = useState<PublicContentItem[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     
@@ -64,8 +66,8 @@ export function LandingPage() {
                     </p>
                     <div className="mt-8">
                         <Button asChild size="lg">
-                            <Link href="/auth/sign-up">
-                                Get Started for Free
+                            <Link href={user ? "/dashboard" : "/auth/sign-up"}>
+                                {user ? "Go to Dashboard" : "Get Started for Free"}
                             </Link>
                         </Button>
                     </div>

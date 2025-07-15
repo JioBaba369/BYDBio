@@ -28,7 +28,6 @@ import { ClientFormattedCurrency } from '@/components/client-formatted-currency'
 import { DayPicker } from 'react-day-picker';
 import 'react-day-picker/dist/style.css';
 import { saveAs } from 'file-saver';
-import { KillChainTracker } from '@/components/kill-chain-tracker';
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { generateIcsContent, deleteAppointment } from '@/lib/appointments';
 import { CONTENT_TYPES, getContentTypeMetadata, ContentTypeMetadata } from '@/lib/content-types';
@@ -552,13 +551,6 @@ export default function MyContentPage() {
                                   {item.company && <div className="flex items-center gap-2"><Briefcase className="h-4 w-4" /><span>{item.company}</span></div>}
                                   {item.price && <div className="flex items-center gap-2"><DollarSign className="h-4 w-4" /><span className="font-semibold"><ClientFormattedCurrency value={item.price} /></span></div>}
                               </CardContent>
-                              <CardFooter className="border-t pt-3 px-4 pb-3">
-                                <KillChainTracker 
-                                    views={item.views ?? 0}
-                                    interactions={typeMeta.getStatsValue(item)}
-                                    interactionLabel={typeMeta.getInteractionLabel(item.type)}
-                                />
-                              </CardFooter>
                           </Card>
                          )
                       })}

@@ -14,6 +14,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/lib/firebase";
+import { useAuth } from "@/components/auth-provider";
 
 const signInSchema = z.object({
   email: z.string().email("Please enter a valid email address."),
@@ -26,6 +27,8 @@ export default function SignInPage() {
   const { toast } = useToast();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { loading: authLoading } = useAuth();
+
 
   const form = useForm<SignInFormValues>({
     resolver: zodResolver(signInSchema),
@@ -113,8 +116,8 @@ export default function SignInPage() {
                 </FormItem>
               )}
             />
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
-                {isSubmitting ? "Signing In..." : "Sign In"}
+            <Button type="submit" className="w-full" disabled={isSubmitting || authLoading}>
+                {isSubmitting || authLoading ? "Signing In..." : "Sign In"}
             </Button>
           </form>
         </Form>
