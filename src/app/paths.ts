@@ -19,8 +19,8 @@ const PROTECTED_ROUTE_BASES = [
     '/inbox',
 ];
 
-// Explicit public paths that aren't dynamic
-const EXPLICIT_PUBLIC_PATHS = [
+// Base paths for public content directories and dynamic content.
+const PUBLIC_ROUTE_BASES = [
     '/',
     '/explore',
     '/creators',
@@ -31,8 +31,14 @@ const EXPLICIT_PUBLIC_PATHS = [
     '/job',
     '/events',
     '/offers',
-    '/promo'
-]
+    '/promo',
+    '/u', // User profiles
+    '/p', // Promo pages
+    '/l', // Listings detail
+    '/o', // Legacy job pages
+    '/support',
+    '/trust'
+];
 
 /**
  * Checks if a given path is an authentication path.
@@ -53,11 +59,6 @@ export const isPublicPath = (path: string) => {
     if (isAuthPath(path)) {
         return true;
     }
-
-    // Check for explicit public paths.
-    if (EXPLICIT_PUBLIC_PATHS.includes(path)) {
-        return true;
-    }
     
     // Any route that is explicitly a protected "app" route is NOT public.
     if (PROTECTED_ROUTE_BASES.some(base => path.startsWith(base))) {
@@ -70,6 +71,12 @@ export const isPublicPath = (path: string) => {
         return false;
     }
     
-    // All other paths (content pages, user profiles, etc.) are considered public.
-    return true;
+    // Check if the path starts with any of the defined public base paths.
+    // This correctly handles dynamic routes like /u/username, /job/123, etc.
+    if (PUBLIC_ROUTE_BASES.some(base => path.startsWith(base))) {
+        return true;
+    }
+    
+    // If no other rule matches, default to not public for security.
+    return false;
 };
