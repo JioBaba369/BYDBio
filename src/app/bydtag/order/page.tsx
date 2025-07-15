@@ -15,9 +15,11 @@ import { ArrowLeft, CheckCircle, CreditCard, Lock, Loader2 } from 'lucide-react'
 import Image from 'next/image';
 import Link from 'next/link';
 import { useState } from 'react';
+import { placeOrder } from '@/app/actions/order';
+import { useAuth } from '@/components/auth-provider';
+import { useRouter } from 'next/navigation';
 
 const orderFormSchema = z.object({
-  // Shipping
   fullName: z.string().min(3, 'Full name must be at least 3 characters.'),
   address1: z.string().min(5, 'A valid address is required.'),
   address2: z.string().optional(),
@@ -25,7 +27,6 @@ const orderFormSchema = z.object({
   state: z.string().min(2, 'A valid state/province is required.'),
   zip: z.string().min(4, 'A valid postal/ZIP code is required.'),
   country: z.string().min(2, 'A valid country is required.'),
-  // Payment
   cardName: z.string().min(3, 'Name on card is required.'),
   cardNumber: z.string().regex(/^\d{16}$/, 'Please enter a valid 16-digit card number.'),
   expDate: z.string().regex(/^(0[1-9]|1[0-2])\/\d{2}$/, 'Please use MM/YY format.'),
@@ -35,31 +36,46 @@ const orderFormSchema = z.object({
 type OrderFormValues = z.infer<typeof orderFormSchema>;
 
 export default function BydTagOrderPage() {
+  const { user } = useAuth();
+  const router = useRouter();
   const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
   const [isOrderComplete, setIsOrderComplete] = useState(false);
 
   const form = useForm<OrderFormValues>({
     resolver: zodResolver(orderFormSchema),
-    defaultValues: { country: 'US' },
+    defaultValues: { country: 'US', fullName: user?.name || '' },
   });
 
-  const onSubmit = (data: OrderFormValues) => {
+  const onSubmit = async (data: OrderFormValues) => {
+    if (!user) {
+        toast({ title: "Authentication Error", description: "You must be logged in to place an order.", variant: "destructive" });
+        return;
+    }
+
     setIsProcessing(true);
-    // Simulate payment processing
-    setTimeout(() => {
-      toast({
-        title: 'Order Placed!',
-        description: 'Your BYD BioTAG is on its way. Thank you for your purchase!',
-      });
-      setIsOrderComplete(true);
-      setIsProcessing(false);
-    }, 2000);
+    
+    try {
+        const result = await placeOrder(data);
+        if (result.success) {
+            toast({
+                title: 'Order Placed!',
+                description: 'Your BYD BioTAG is on its way. Thank you for your purchase!',
+            });
+            setIsOrderComplete(true);
+        } else {
+            toast({ title: 'Order Failed', description: result.error, variant: 'destructive' });
+        }
+    } catch (e) {
+        toast({ title: 'An unexpected error occurred.', variant: 'destructive' });
+    } finally {
+        setIsProcessing(false);
+    }
   };
 
   if (isOrderComplete) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4">
+      <div className="flex items-center justify-center p-4">
         <Card className="w-full max-w-md text-center">
           <CardHeader>
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-green-100">

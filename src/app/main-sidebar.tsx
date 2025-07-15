@@ -41,6 +41,7 @@ import {
   Paintbrush,
   BadgeHelp,
   Shield,
+  Package,
 } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -66,6 +67,8 @@ export function MainSidebar() {
       router.push(`/search?q=${searchQuery.trim()}`);
     }
   };
+  
+  const isAdmin = user?.email === 'admin@byd.bio';
 
   if (loading) {
      return (
@@ -290,6 +293,22 @@ export function MainSidebar() {
               </SidebarMenuItem>
             </SidebarMenu>
         </SidebarGroup>
+        
+        {isAdmin && (
+            <SidebarGroup>
+                <SidebarGroupLabel>Admin</SidebarGroupLabel>
+                <SidebarMenu>
+                    <SidebarMenuItem>
+                    <SidebarMenuButton asChild tooltip="Orders" isActive={isActive('/admin/orders')}>
+                        <Link href="/admin/orders">
+                        <Package />
+                        <span>Orders</span>
+                        </Link>
+                    </SidebarMenuButton>
+                    </SidebarMenuItem>
+                </SidebarMenu>
+            </SidebarGroup>
+        )}
           
       </SidebarContent>
       <SidebarFooter>
