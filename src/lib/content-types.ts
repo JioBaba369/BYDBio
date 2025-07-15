@@ -18,7 +18,7 @@ export const CONTENT_TYPES: ContentTypeMetadata[] = [
         name: 'Event', 
         label: 'Events', 
         icon: Calendar,
-        variant: 'default',
+        variant: 'default', // Blue
         getStatsValue: (item) => item.rsvps?.length || 0,
         getInteractionLabel: () => 'RSVPs'
     },
@@ -26,7 +26,7 @@ export const CONTENT_TYPES: ContentTypeMetadata[] = [
         name: 'Offer', 
         label: 'Offers', 
         icon: Gift,
-        variant: 'secondary',
+        variant: 'info', // Teal/Cyan
         getStatsValue: (item) => item.claims || 0,
         getInteractionLabel: () => 'Claims'
     },
@@ -34,7 +34,7 @@ export const CONTENT_TYPES: ContentTypeMetadata[] = [
         name: 'Job', 
         label: 'Jobs', 
         icon: Briefcase,
-        variant: 'outline',
+        variant: 'success', // Green
         getStatsValue: (item) => item.applicants || 0,
         getInteractionLabel: () => 'Applicants'
     },
@@ -42,7 +42,7 @@ export const CONTENT_TYPES: ContentTypeMetadata[] = [
         name: 'Listing', 
         label: 'Listings', 
         icon: Tags,
-        variant: 'outline',
+        variant: 'warning', // Yellow/Orange
         getStatsValue: (item) => item.clicks || 0,
         getInteractionLabel: () => 'Clicks'
     },
@@ -50,7 +50,7 @@ export const CONTENT_TYPES: ContentTypeMetadata[] = [
         name: 'Business Page', 
         label: 'Business Pages', 
         icon: Megaphone,
-        variant: 'destructive',
+        variant: 'destructive', // Red
         getStatsValue: (item) => item.clicks || 0,
         getInteractionLabel: () => 'Clicks'
     },
