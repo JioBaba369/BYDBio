@@ -159,7 +159,7 @@ export const updateEvent = async (id: string, data: Partial<Omit<Event, 'id' | '
       ...newDescription.toLowerCase().split(' ').filter(Boolean),
       ...newLocation.toLowerCase().split(' ').filter(Boolean),
       ...(newCategory ? newCategory.toLowerCase().split(' ') : []),
-      ...(newSubCategory ? newSubCategory.toLowerCase().split(' ') : []),
+      ...(newSubCategory ? newSubCategory.toLowerCase().split(' ').filter(Boolean) : []),
       ...(newCouponCode ? newCouponCode.toLowerCase().split(' ') : [])
     ];
     dataToUpdate.searchableKeywords = [...new Set(keywords)];
