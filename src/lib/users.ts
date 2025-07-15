@@ -11,6 +11,7 @@ import type { Offer } from './offers';
 import type { Job } from './jobs';
 import type { Event } from './events';
 import type { PromoPage } from './promo-pages';
+import type { Post } from "./posts";
 
 export type BusinessCard = {
   title?: string;
@@ -357,13 +358,9 @@ export async function getUserProfileData(username: string, viewerId: string | nu
         return null;
     }
     
-    const [posts, otherContent] = await Promise.all([
-        getPostsByUser(user.uid, viewerId),
-        getPublicContentByUser(user.uid)
-    ]);
-    
+    const isOwner = viewerId === user.uid;
     let isFollowedByCurrentUser = false;
-    if (viewerId && viewerId !== user.uid) {
+    if (viewerId && !isOwner) {
         const viewerDoc = await getDoc(doc(db, 'users', viewerId));
         if (viewerDoc.exists()) {
             const viewerData = viewerDoc.data() as User;
@@ -371,11 +368,16 @@ export async function getUserProfileData(username: string, viewerId: string | nu
         }
     }
     
+    const [posts, otherContent] = await Promise.all([
+        getPostsByUser(user.uid, viewerId, isFollowedByCurrentUser),
+        getPublicContentByUser(user.uid)
+    ]);
+    
     return {
         user,
         posts,
         otherContent,
-        isOwner: viewerId === user.uid,
+        isOwner,
         isFollowedByCurrentUser
     }
 }

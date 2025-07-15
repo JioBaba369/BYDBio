@@ -1,3 +1,4 @@
+
 // src/lib/posts.ts
 
 'use server';
@@ -86,10 +87,24 @@ export const getPost = async (id: string): Promise<Post | null> => {
   return serializeDocument<Post>(postDoc);
 };
 
-// Function to fetch all posts for a specific user.
-export const getPostsByUser = async (userId: string, viewerId?: string | null): Promise<PostWithAuthor[]> => {
+// Function to fetch all posts for a specific user, respecting privacy.
+export const getPostsByUser = async (userId: string, viewerId?: string | null, isFollower?: boolean): Promise<PostWithAuthor[]> => {
   const postsRef = collection(db, 'posts');
-  const q = query(postsRef, where('authorId', '==', userId), orderBy('createdAt', 'desc'));
+  
+  const privacyLevels: string[] = ['public'];
+  if (viewerId === userId) {
+    privacyLevels.push('followers', 'me');
+  } else if (isFollower) {
+    privacyLevels.push('followers');
+  }
+
+  const q = query(
+    postsRef, 
+    where('authorId', '==', userId), 
+    where('privacy', 'in', privacyLevels),
+    orderBy('createdAt', 'desc')
+  );
+  
   const querySnapshot = await getDocs(q);
   
   const posts = querySnapshot.docs
