@@ -1,108 +1,308 @@
+
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // --- UTILITY FUNCTIONS ---
-    function isOwner(userId) {
-      return request.auth.uid == userId;
-    }
+    //----------------------------------------------------------------------
+    //  Helper Functions
+    //----------------------------------------------------------------------
 
     function isSignedIn() {
       return request.auth != null;
     }
+
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    // Function to check if a value is a string and within length constraints
+    function isString(value, min, max) {
+      return value is string && value.size() >= min && value.size() <= max;
+    }
+
+    function isOptionalString(value, min, max) {
+      return value == null || isString(value, min, max);
+    }
     
-    function isString(val) { return val is string; }
-    function isStringOrNull(val) { return val == null || val is string; }
-    function isBool(val) { return val is bool; }
-    function isNumber(val) { return val is number; }
-    function isTimestamp(val) { return val is timestamp; }
-    function isTimestampOrNull(val) { return val == null || val is timestamp; }
-    function isList(val) { return val is list; }
-    function isMap(val) { return val is map; }
-    function isMapOrNull(val) { return val == null || val is map; }
+    function isOptionalStringOrEmpty(value, min, max) {
+      return value == null || value == "" || isString(value, min, max);
+    }
+
+    // Function to check if a value is a boolean
+    function isBoolean(value) {
+      return value is bool;
+    }
+    
+    function isOptionalBoolean(value) {
+      return value == null || isBoolean(value);
+    }
+
+    // Function to check if a value is a number
+    function isNumber(value) {
+      return value is number;
+    }
+
+    // Function to check if a value is an integer
+    function isInt(value) {
+      return value is int;
+    }
+
+    // Function to check if a value is a timestamp
+    function isTimestamp(value) {
+        return value is timestamp;
+    }
+
+    function isOptionalTimestamp(value) {
+        return value == null || isTimestamp(value);
+    }
+    
+    function isList(value) { return value is list; }
+    function isMap(value) { return value is map; }
+    function isMapOrNull(value) { return value == null || value is map; }
+
+
+    function isStringArray(arr) {
+        return arr is list && (arr.size() == 0 || arr[0] is string);
+    }
+
+    //----------------------------------------------------------------------
+    //  Content Validation Functions
+    //----------------------------------------------------------------------
 
     function isValidUserWrite(data) {
-      return isString(data.name) && data.name.size() <= 50
-        && isString(data.username) && data.username.size() >= 3 && data.username.size() <= 30
-        && (isStringOrNull(data.bio) && (data.bio == null || data.bio.size() <= 160))
-        && isStringOrNull(data.avatarUrl)
-        && (isList(data.hashtags) && data.hashtags.size() <= 10)
-        && (isList(data.links) && data.links.size() <= 10)
-        && isMapOrNull(data.businessCard)
-        && isMapOrNull(data.notificationSettings)
-        && isMapOrNull(data.subscriptions)
-        && isMapOrNull(data.bookingSettings);
-    }
-    
-    function hasRequiredKeys(data, keys) {
-      return keys.hasAll(data.keys());
-    }
-    
-    function hasOnlyAllowedKeys(data, allowedKeys) {
-      return data.keys().hasOnly(allowedKeys);
+      return isString(data.name, 1, 50)
+        && isString(data.username, 3, 30)
+        && (isOptionalString(data.bio, 0, 160)) // bio can be null or empty
+        && isOptionalString(data.email, 0, 100) // email is optional
+        && isString(data.avatarUrl, 1, 500) // Assuming avatarUrl is always a string after initial setup
+        && isString(data.avatarFallback, 1, 10) // Assuming avatarFallback is always a string
+        && (isList(data.hashtags) && data.hashtags.size() <= 10) // Hashtags array size check
+        && (isList(data.following) && data.following.size() >= 0) // Following array type and presence
+        && isInt(data.followerCount) && data.followerCount >= 0 // Follower count
+        && isInt(data.postCount) && data.postCount >= 0 // Post count
+        && (isList(data.links) && data.links.size() <= 10) // Links array size check
+        && isMapOrNull(data.businessCard) // Map for business card settings
+        && isMapOrNull(data.notificationSettings) // Map for notification settings
+        && isMapOrNull(data.subscriptions) // Map for subscriptions
+        && isMapOrNull(data.bookingSettings) // Map for booking settings
+        && (isList(data.searchableKeywords) && data.searchableKeywords.size() >= 0); // Searchable keywords array
     }
 
-    // --- COLLECTION RULES ---
+    function isValidListing(data) {
+        return isString(data.title, 2, 100)
+            && isString(data.description, 10, 500)
+            && isString(data.price, 1, 100)
+            && isString(data.category, 2, 50)
+            && isOptionalString(data.subCategory, 1, 50)
+            && isOptionalString(data.imageUrl, 0, 500)
+            && (data.listingType == 'sale' || data.listingType == 'rental')
+            && isOptionalTimestamp(data.startDate)
+            && isOptionalTimestamp(data.endDate);
+    }
+
+    function isValidJob(data) {
+        return isString(data.title, 2, 100)
+            && isString(data.company, 2, 100)
+            && isString(data.description, 10, 5000)
+            && isString(data.location, 2, 100)
+            && (data.type == 'Full-time' || data.type == 'Part-time' || data.type == 'Contract' || data.type == 'Internship')
+            && isOptionalString(data.category, 1, 50)
+            && isOptionalString(data.subCategory, 1, 50)
+            && isOptionalString(data.remuneration, 1, 100)
+            && isOptionalTimestamp(data.closingDate)
+            && isOptionalString(data.imageUrl, 0, 500)
+            && isOptionalStringOrEmpty(data.applicationUrl, 10, 500)
+            && isOptionalString(data.contactInfo, 0, 1000);
+    }
+
+    function isValidEvent(data) {
+        return isString(data.title, 2, 100)
+            && isString(data.description, 10, 2000)
+            && isString(data.location, 2, 100)
+            && isTimestamp(data.startDate)
+            && isOptionalTimestamp(data.endDate)
+            && isOptionalString(data.subTitle, 0, 150)
+            && isOptionalString(data.category, 0, 50)
+            && isOptionalString(data.subCategory, 0, 50)
+            && isOptionalString(data.imageUrl, 0, 500)
+            && isOptionalString(data.couponCode, 0, 50)
+            && isOptionalStringOrEmpty(data.ctaLink, 0, 500)
+            && (data.itinerary is list || data.itinerary == null);
+    }
+
+    function isValidOffer(data) {
+        return isString(data.title, 2, 100)
+            && isString(data.description, 10, 500)
+            && isString(data.category, 2, 50)
+            && isOptionalString(data.subCategory, 1, 50)
+            && isTimestamp(data.startDate)
+            && isOptionalTimestamp(data.endDate)
+            && isOptionalString(data.imageUrl, 0, 500)
+            && isOptionalString(data.couponCode, 0, 50)
+            && isOptionalStringOrEmpty(data.ctaLink, 0, 500);
+    }
+
+    function isValidPromoPage(data) {
+        return isString(data.name, 2, 100)
+            && isString(data.description, 10, 500)
+            && isString(data.email, 5, 100)
+            && isOptionalString(data.category, 1, 50)
+            && isOptionalString(data.subCategory, 1, 50)
+            && isOptionalString(data.phone, 0, 50)
+            && isOptionalStringOrEmpty(data.website, 0, 500)
+            && isOptionalString(data.address, 0, 200)
+            && isOptionalString(data.imageUrl, 0, 500)
+            && isOptionalString(data.logoUrl, 0, 500);
+    }
+
+    // Generic Content Rules
+    function contentReadRules() {
+        return resource.data.status == 'active' || (isSignedIn() && isOwner(resource.data.authorId));
+    }
+    
+    function contentCreateRules(validationFunction) {
+        let data = request.resource.data;
+        return isSignedIn() && isOwner(data.authorId) && validationFunction(data);
+    }
+
+    //----------------------------------------------------------------------
+    //  Collection Rules
+    //----------------------------------------------------------------------
 
     match /users/{userId} {
-      allow read;
-      allow create: if isSignedIn() && isOwner(userId);
+      allow read: if true; // Publicly readable profiles
+      allow create: if isSignedIn() && isOwner(userId)
+                    && isValidUserWrite(request.resource.data)
+                    && request.resource.data.uid == userId
+                    && request.resource.data.following == []
+                    && request.resource.data.followerCount == 0
+                    && request.resource.data.postCount == 0; // Ensure initial counts are zero on creation
       allow update: if isSignedIn() && isOwner(userId) && isValidUserWrite(request.resource.data);
       allow delete: if isSignedIn() && isOwner(userId);
+      allow list: if isSignedIn(); // Allow signed-in users to list users (e.g., for search)
     }
 
     match /posts/{postId} {
-      allow read;
-      allow create: if isSignedIn();
-      allow update: if isSignedIn() && isOwner(resource.data.authorId);
-      allow delete: if isSignedIn() && isOwner(resource.data.authorId);
-    }
-
-    match /events/{eventId} {
-      allow read;
-      allow create: if isSignedIn();
-      allow update: if isSignedIn() && isOwner(resource.data.authorId);
-      allow delete: if isSignedIn() && isOwner(resource.data.authorId);
-    }
-
-    match /jobs/{jobId} {
-      allow read;
-      allow create: if isSignedIn();
-      allow update: if isSignedIn() && isOwner(resource.data.authorId);
-      allow delete: if isSignedIn() && isOwner(resource.data.authorId);
-    }
-    
-    match /listings/{listingId} {
-      allow read;
-      allow create: if isSignedIn();
-      allow update: if isSignedIn() && isOwner(resource.data.authorId);
-      allow delete: if isSignedIn() && isOwner(resource.data.authorId);
-    }
-    
-    match /offers/{offerId} {
-      allow read;
-      allow create: if isSignedIn();
-      allow update: if isSignedIn() && isOwner(resource.data.authorId);
-      allow delete: if isSignedIn() && isOwner(resource.data.authorId);
-    }
-    
-    match /promoPages/{promoPageId} {
-      allow read;
-      allow create: if isSignedIn();
-      allow update: if isSignedIn() && isOwner(resource.data.authorId);
-      allow delete: if isSignedIn() && isOwner(resource.data.authorId);
-    }
-
-    match /notifications/{notificationId} {
-      allow read, update: if isSignedIn() && isOwner(resource.data.userId);
-      allow create: if isSignedIn();
+        allow read: if resource.data.privacy == 'public'
+                    || (resource.data.privacy == 'followers' && isSignedIn() && request.auth.uid in get(/databases/$(database)/documents/users/$(resource.data.authorId)).data.followers)
+                    || (isSignedIn() && isOwner(resource.data.authorId));
+        allow create: if isSignedIn() && isOwner(request.resource.data.authorId)
+                      && request.resource.data.createdAt == request.time;
+        allow update: if isSignedIn() && (
+                            // Owner can edit their post, but not createdAt
+                            (isOwner(resource.data.authorId) && request.resource.data.createdAt == resource.data.createdAt)
+                            // Any signed in user can like/unlike (only 'likes' or 'likedBy' fields can be affected)
+                            || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes', 'likedBy']))
+                        );
+        allow delete: if isSignedIn() && isOwner(resource.data.authorId);
     }
     
     match /appointments/{appointmentId} {
-      allow read: if isSignedIn() && (isOwner(resource.data.ownerId) || isOwner(resource.data.bookerId));
-      allow create: if isSignedIn();
-      allow delete: if isSignedIn() && (isOwner(resource.data.ownerId) || isOwner(resource.data.bookerId));
+        allow read: if isSignedIn() && (isOwner(resource.data.ownerId) || isOwner(resource.data.bookerId));
+        allow create: if isSignedIn()
+                      && isOwner(request.resource.data.bookerId) // Booker must be authenticated user creating the appointment
+                      && request.resource.data.bookerId != request.resource.data.ownerId // Booker cannot book an appointment with themselves (owner)
+                      && request.resource.data.createdAt == request.time; // Ensure createdAt is server timestamp
+        allow delete: if isSignedIn() && (isOwner(resource.data.ownerId) || isOwner(resource.data.bookerId));
+    }
+    
+    match /notifications/{notificationId} {
+      allow read, update: if isSignedIn() && isOwner(resource.data.userId);
+      allow create: if true; // Allows system/other users to create notifications
+    }
+
+    match /listings/{listingId} {
+        allow read: if contentReadRules();
+        allow create: if contentCreateRules(isValidListing)
+                      && request.resource.data.createdAt == request.time
+                      && request.resource.data.views == 0
+                      && request.resource.data.clicks == 0
+                      && request.resource.data.followerCount == 0
+                      && request.resource.data.status == 'active';
+        allow update: if isSignedIn() && isOwner(resource.data.authorId)
+                      && isValidListing(request.resource.data)
+                      && request.resource.data.createdAt == resource.data.createdAt // createdAt cannot be changed on update
+                      && request.resource.data.views >= resource.data.views
+                      && request.resource.data.clicks >= resource.data.clicks
+                      && request.resource.data.followerCount >= resource.data.followerCount
+                      && request.resource.data.status == resource.data.status; // status cannot be changed via client update
+        allow delete: if isSignedIn() && isOwner(resource.data.authorId);
+    }
+    
+    match /jobs/{jobId} {
+        allow read: if contentReadRules();
+        allow create: if contentCreateRules(isValidJob)
+                      && request.resource.data.createdAt == request.time
+                      && request.resource.data.views == 0
+                      && request.resource.data.applicants == 0
+                      && request.resource.data.followerCount == 0
+                      && request.resource.data.status == 'active';
+        allow update: if isSignedIn() && isOwner(resource.data.authorId)
+                      && isValidJob(request.resource.data)
+                      && request.resource.data.createdAt == resource.data.createdAt
+                      && request.resource.data.views >= resource.data.views
+                      && request.resource.data.applicants >= resource.data.applicants
+                      && request.resource.data.followerCount >= resource.data.followerCount
+                      && request.resource.data.status == resource.data.status;
+        allow delete: if isSignedIn() && isOwner(resource.data.authorId);
+    }
+
+    match /events/{eventId} {
+        allow read: if contentReadRules();
+        allow create: if contentCreateRules(isValidEvent)
+                      && request.resource.data.createdAt == request.time
+                      && request.resource.data.views == 0
+                      && request.resource.data.rsvps == []
+                      && request.resource.data.followerCount == 0
+                      && request.resource.data.status == 'active';
+        allow update: if isSignedIn() && (
+                            (isOwner(resource.data.authorId)
+                            && isValidEvent(request.resource.data)
+                            && request.resource.data.createdAt == resource.data.createdAt
+                            && request.resource.data.views >= resource.data.views
+                            && request.resource.data.followerCount >= resource.data.followerCount
+                            && request.resource.data.status == resource.data.status)
+                            // Any signed in user can rsvp/un-rsvp
+                            || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['rsvps']))
+                        );
+        allow delete: if isSignedIn() && isOwner(resource.data.authorId);
+    }
+
+    match /offers/{offerId} {
+        allow read: if contentReadRules();
+        allow create: if contentCreateRules(isValidOffer)
+                      && request.resource.data.createdAt == request.time
+                      && request.resource.data.views == 0
+                      && request.resource.data.claims == 0
+                      && request.resource.data.followerCount == 0
+                      && request.resource.data.status == 'active';
+        allow update: if isSignedIn() && isOwner(resource.data.authorId)
+                      && isValidOffer(request.resource.data)
+                      && request.resource.data.createdAt == resource.data.createdAt
+                      && request.resource.data.views >= resource.data.views
+                      && request.resource.data.claims >= resource.data.claims
+                      && request.resource.data.followerCount >= resource.data.followerCount
+                      && request.resource.data.status == resource.data.status;
+        allow delete: if isSignedIn() && isOwner(resource.data.authorId);
+    }
+
+    match /promoPages/{promoPageId} {
+        allow read: if contentReadRules();
+        allow create: if contentCreateRules(isValidPromoPage)
+                      && request.resource.data.createdAt == request.time
+                      && request.resource.data.views == 0
+                      && request.resource.data.clicks == 0
+                      && request.resource.data.followerCount == 0
+                      && request.resource.data.status == 'active';
+        allow update: if isSignedIn() && isOwner(resource.data.authorId)
+                      && isValidPromoPage(request.resource.data)
+                      && request.resource.data.createdAt == resource.data.createdAt
+                      && request.resource.data.views >= resource.data.views
+                      && request.resource.data.clicks >= resource.data.clicks
+                      && request.resource.data.followerCount >= resource.data.followerCount
+                      && request.resource.data.status == resource.data.status;
+        allow delete: if isSignedIn() && isOwner(resource.data.authorId);
     }
   }
 }
