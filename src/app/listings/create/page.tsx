@@ -32,7 +32,7 @@ export default function CreateListingPage() {
             const listingId = await createListing(user.uid, dataToSave);
             
             toast({ title: "Listing Created!", description: "Your new listing has been created. Image is processing." });
-            router.push('/canvas');
+            router.push('/my-content');
 
             if (imageUrl && imageUrl.startsWith('data:image')) {
                 uploadImage(imageUrl, `listings/${user.uid}/${listingId}/image`)

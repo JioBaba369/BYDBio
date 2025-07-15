@@ -51,7 +51,7 @@ export default function CreateEventPage() {
                 title: "Event Created!",
                 description: "Your new event has been created. Image is processing if added.",
             });
-            router.push('/canvas');
+            router.push('/my-content');
 
             // If there's an image, upload it in the background
             if (imageUrl && imageUrl.startsWith('data:image')) {

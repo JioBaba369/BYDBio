@@ -1,5 +1,4 @@
 
-
 // The paths for authentication which are public but have special layout considerations.
 const AUTH_PATHS = [
     '/auth/sign-in',
@@ -12,7 +11,6 @@ const PROTECTED_ROUTE_BASES = [
     '/profile',
     '/settings',
     '/my-content',
-    '/diary',
     '/connections',
     '/feed',
     '/notifications',
@@ -55,6 +53,7 @@ export const isAuthPath = (path: string) => {
  * @returns `true` if the path is public, `false` otherwise.
  */
 export const isPublicPath = (path: string) => {
+    // Auth pages are public.
     if (isAuthPath(path)) {
         return true;
     }
@@ -64,15 +63,18 @@ export const isPublicPath = (path: string) => {
         return false;
     }
     
-    // Creation and editing pages are NOT public.
-    if (path.endsWith('/create') || path.includes('/edit')) {
+    // Creation and editing pages are NOT public. This is a more specific check to avoid false positives.
+    // e.g. /listings/create, /events/[id]/edit
+    if (path.endsWith('/create') || /\/edit$/.test(path)) {
         return false;
     }
     
     // Check if the path starts with any of the defined public base paths.
+    // This correctly handles dynamic routes like /u/username, /job/123, etc.
     if (PUBLIC_ROUTE_BASES.some(base => path.startsWith(base))) {
         return true;
     }
     
+    // If no other rule matches, default to not public for security.
     return false;
 };

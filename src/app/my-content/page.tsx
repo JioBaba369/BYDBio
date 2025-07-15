@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { getCalendarItems, toggleRsvp, deleteEvent, type CalendarItem } from '@/lib/events';
 import { useAuth } from '@/components/auth-provider';
-import { Search, MapPin, Tag, Briefcase, DollarSign, X, Clock, MoreHorizontal, Edit, Trash2, PlusCircle, List, LayoutGrid, CalendarPlus, UserCheck } from 'lucide-react';
+import { Search, MapPin, Tag, Briefcase, DollarSign, X, Clock, MoreHorizontal, Edit, Trash2, PlusCircle, List, LayoutGrid, CalendarPlus, UserCheck, Calendar as CalendarIcon, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
@@ -25,6 +25,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ClientFormattedDate } from '@/components/client-formatted-date';
 import { ClientFormattedCurrency } from '@/components/client-formatted-currency';
+import { DayPicker } from 'react-day-picker';
 import 'react-day-picker/dist/style.css';
 import { saveAs } from 'file-saver';
 import { KillChainTracker } from '@/components/kill-chain-tracker';
@@ -73,17 +74,31 @@ function useMyContentManagement(userId: string | undefined, toast: ReturnType<ty
         new Set(CONTENT_TYPES.map(type => type.name))
     );
 
-    useEffect(() => {
-        if (userId) {
+    const fetchContent = useCallback(() => {
+         if (userId) {
             setIsLoading(true);
-            getCalendarItems(userId, 'author')
-                .then(setAllItems)
-                .catch(err => {
-                    toast({ title: "Error", description: "Could not load content.", variant: "destructive" });
-                })
-                .finally(() => setIsLoading(false));
+            Promise.all([
+                getCalendarItems(userId, 'author'),
+                getCalendarItems(userId, 'schedule')
+            ]).then(([authoredItems, scheduleItems]) => {
+                // Combine and remove duplicates, giving preference to authored items
+                const combinedMap = new Map<string, CalendarItem>();
+                authoredItems.forEach(item => combinedMap.set(item.id, item));
+                scheduleItems.forEach(item => {
+                    if (!combinedMap.has(item.id)) {
+                        combinedMap.set(item.id, item);
+                    }
+                });
+                setAllItems(Array.from(combinedMap.values()));
+            }).catch(err => {
+                toast({ title: "Error", description: "Could not load content.", variant: "destructive" });
+            }).finally(() => setIsLoading(false));
         }
     }, [userId, toast]);
+
+    useEffect(() => {
+        fetchContent();
+    }, [fetchContent]);
 
     const filteredItems = useMemo(() => {
         return allItems.filter(item => {
@@ -141,6 +156,7 @@ function useMyContentManagement(userId: string | undefined, toast: ReturnType<ty
         filteredItems,
         areFiltersActive,
         handleClearFilters,
+        refetch: fetchContent,
     };
 }
 
@@ -162,12 +178,13 @@ export default function MyContentPage() {
       filteredItems,
       areFiltersActive,
       handleClearFilters,
+      refetch,
   } = useMyContentManagement(user?.uid, toast);
 
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [selectedItem, setSelectedItem] = useState<CalendarItem | null>(null);
-  const [view, setView] = useState<'grid' | 'list'>('grid');
+  const [view, setView] = useState<'grid' | 'list' | 'calendar'>('grid');
   
   const openDeleteDialog = (item: CalendarItem) => {
     setSelectedItem(item);
@@ -178,10 +195,6 @@ export default function MyContentPage() {
     if (!selectedItem || !user) return;
 
     setIsDeleting(true);
-
-    const previousItems = [...allItems];
-    // Optimistic UI update
-    setAllItems(prev => prev.filter(item => item.id !== selectedItem.id));
 
     try {
         switch (selectedItem.type) {
@@ -194,31 +207,15 @@ export default function MyContentPage() {
                     toast({ title: 'Event deleted!' });
                 }
                 break;
-            case 'Offer':
-                await deleteOffer(selectedItem.id);
-                toast({ title: 'Offer deleted!' });
-                break;
-            case 'Job':
-                await deleteJob(selectedItem.id);
-                toast({ title: 'Job deleted!' });
-                break;
-            case 'Listing':
-                await deleteListing(selectedItem.id);
-                toast({ title: 'Listing deleted!' });
-                break;
-            case 'Business Page':
-                await deletePromoPage(selectedItem.id);
-                toast({ title: 'Business Page deleted!' });
-                break;
-            case 'Appointment':
-                await deleteAppointment(selectedItem.id);
-                toast({ title: 'Appointment deleted!' });
-                break;
+            case 'Offer': await deleteOffer(selectedItem.id); toast({ title: 'Offer deleted!' }); break;
+            case 'Job': await deleteJob(selectedItem.id); toast({ title: 'Job deleted!' }); break;
+            case 'Listing': await deleteListing(selectedItem.id); toast({ title: 'Listing deleted!' }); break;
+            case 'Business Page': await deletePromoPage(selectedItem.id); toast({ title: 'Business Page deleted!' }); break;
+            case 'Appointment': await deleteAppointment(selectedItem.id); toast({ title: 'Appointment deleted!' }); break;
         }
+        refetch(); // Refetch all content after deletion
     } catch (error) {
         toast({ title: 'Error', description: `Failed to delete ${selectedItem.type}.`, variant: 'destructive' });
-        // Rollback on error
-        setAllItems(previousItems);
     } finally {
         setIsDeleting(false);
         setIsDeleteDialogOpen(false);
@@ -251,6 +248,23 @@ export default function MyContentPage() {
         toast({ title: "Error creating calendar file", variant: "destructive" });
     }
   };
+  
+    const daysWithEvents = useMemo(() => {
+        return allItems.map(item => new Date(item.date));
+    }, [allItems]);
+    
+    const [month, setMonth] = useState(new Date());
+    
+    const eventsForSelectedDay = useMemo(() => {
+        if (!month) return [];
+        return allItems.filter(item => {
+            const itemDate = new Date(item.date);
+            return itemDate.getFullYear() === month.getFullYear() &&
+                   itemDate.getMonth() === month.getMonth() &&
+                   itemDate.getDate() === month.getDate();
+        });
+    }, [allItems, month]);
+
 
   if (authLoading || isLoading) {
     return <ContentHubSkeleton />;
@@ -277,7 +291,7 @@ export default function MyContentPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold font-headline">My Content</h1>
-            <p className="text-muted-foreground">View, create, and manage all your content in one place.</p>
+            <p className="text-muted-foreground">View, create, and manage all your content and events in one place.</p>
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -366,18 +380,85 @@ export default function MyContentPage() {
         <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h2 className="text-xl font-bold font-headline">
-                    All Content ({filteredItems.length})
+                    {view === 'calendar' ? 'My Calendar' : `All Content (${filteredItems.length})`}
                 </h2>
                 <div className="flex items-center gap-1 rounded-md bg-muted p-1">
-                    <Button variant={view === 'list' ? 'secondary' : 'ghost'} size="icon" className="h-8 w-8" onClick={() => setView('list')}>
-                        <List className="h-4 w-4" />
-                    </Button>
                     <Button variant={view === 'grid' ? 'secondary' : 'ghost'} size="icon" className="h-8 w-8" onClick={() => setView('grid')}>
                         <LayoutGrid className="h-4 w-4" />
                     </Button>
+                    <Button variant={view === 'list' ? 'secondary' : 'ghost'} size="icon" className="h-8 w-8" onClick={() => setView('list')}>
+                        <List className="h-4 w-4" />
+                    </Button>
+                     <Button variant={view === 'calendar' ? 'secondary' : 'ghost'} size="icon" className="h-8 w-8" onClick={() => setView('calendar')}>
+                        <CalendarIcon className="h-4 w-4" />
+                    </Button>
                 </div>
               </div>
-              {filteredItems.length > 0 ? (
+              
+              {view === 'calendar' ? (
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <Card>
+                        <DayPicker
+                          mode="single"
+                          selected={month}
+                          onSelect={(day) => day && setMonth(day)}
+                          month={month}
+                          onMonthChange={setMonth}
+                          modifiers={{ withEvent: daysWithEvents }}
+                          modifiersClassNames={{ withEvent: 'day-with-event' }}
+                          className="p-4"
+                        />
+                    </Card>
+                    <div className="space-y-4">
+                        <h3 className="text-lg font-semibold font-headline">
+                          Schedule for <ClientFormattedDate date={month} />
+                        </h3>
+                        {eventsForSelectedDay.length > 0 ? (
+                            <div className="space-y-4">
+                                {eventsForSelectedDay.map(item => {
+                                   const typeMeta = getContentTypeMetadata(item.type);
+                                   if (!typeMeta) return null;
+                                   return (
+                                     <Card key={item.id}>
+                                         <CardContent className="p-4 flex items-start gap-4">
+                                            <div className="h-full w-1.5 rounded-full" style={{ backgroundColor: `hsl(var(--${typeMeta.variant === 'destructive' ? 'destructive' : typeMeta.variant === 'secondary' ? 'secondary' : 'primary'}))` }} />
+                                            <div className="flex-1">
+                                                <div className="flex justify-between items-start">
+                                                  <div>
+                                                    <p className="font-semibold">{item.title}</p>
+                                                    <p className="text-sm text-muted-foreground"><ClientFormattedDate date={item.date} formatStr="p" /></p>
+                                                  </div>
+                                                    <DropdownMenu>
+                                                      <DropdownMenuTrigger asChild>
+                                                          <Button variant="ghost" size="icon" className="h-7 w-7 flex-shrink-0">
+                                                          <MoreHorizontal className="h-4 w-4" />
+                                                          </Button>
+                                                      </DropdownMenuTrigger>
+                                                      <DropdownMenuContent align="end">
+                                                        {item.type === 'Appointment' ? (
+                                                            <DropdownMenuItem onClick={() => handleAddToCalendar(item)} className="cursor-pointer"><CalendarPlus className="mr-2 h-4 w-4" /> Add to Calendar</DropdownMenuItem>
+                                                        ) : (
+                                                            <DropdownMenuItem asChild><Link href={item.editPath} className="cursor-pointer"><Edit className="mr-2 h-4 w-4" /> {item.isExternal ? 'View' : 'Edit'}</Link></DropdownMenuItem>
+                                                        )}
+                                                          <DropdownMenuItem onClick={() => openDeleteDialog(item)} className="text-destructive cursor-pointer"><Trash2 className="mr-2 h-4 w-4" /> {item.isExternal ? 'Remove' : 'Delete'}</DropdownMenuItem>
+                                                      </DropdownMenuContent>
+                                                    </DropdownMenu>
+                                                </div>
+                                            </div>
+                                         </CardContent>
+                                     </Card>
+                                   )
+                                })}
+                            </div>
+                        ) : (
+                            <Card className="flex flex-col items-center justify-center p-8 text-center text-muted-foreground border-dashed">
+                                <Info className="h-8 w-8 mb-2"/>
+                                <p>No events or appointments scheduled for this day.</p>
+                            </Card>
+                        )}
+                    </div>
+                </div>
+              ) : filteredItems.length > 0 ? (
                   view === 'grid' ? (
                   <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                       {filteredItems.map((item) => {
@@ -500,7 +581,7 @@ export default function MyContentPage() {
                                     return (
                                     <TableRow key={item.id}>
                                         <TableCell className="font-medium">{item.title}</TableCell>
-                                        <TableCell><Badge variant={typeMeta.variant} className="capitalize">{typeMeta.label.replace(/s$/, '')}</Badge></TableCell>
+                                        <TableCell><Badge variant={typeMeta.variant} className="capitalize">{item.isExternal ? 'Attending' : typeMeta.label.replace(/s$/, '')}</Badge></TableCell>
                                         <TableCell><ClientFormattedDate date={item.date} formatStr="PPP"/></TableCell>
                                         <TableCell><Badge variant={item.status === 'active' ? 'secondary' : 'outline'}>{item.status}</Badge></TableCell>
                                         <TableCell className="text-right">

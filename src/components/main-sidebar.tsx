@@ -213,14 +213,6 @@ export function MainSidebar() {
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="My Diary" isActive={isActive('/diary')}>
-                <Link href="/diary">
-                  <BookUser />
-                  <span>My Diary</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
               <SidebarMenuButton asChild tooltip="My Content" isActive={isActive('/my-content')}>
                 <Link href="/my-content">
                   <Paintbrush />

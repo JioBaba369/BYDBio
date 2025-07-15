@@ -1,5 +1,4 @@
 
-
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
 export default function UrlTreePage() {
@@ -24,7 +23,7 @@ export default function UrlTreePage() {
                 <ul className="space-y-2">
                     <li><span className={leafStyle}>/</span> - Dashboard</li>
                     <li><span className={leafStyle}>/profile</span> - Profile Editor</li>
-                    <li><span className={leafStyle}>/canvas</span> - My Content Hub</li>
+                    <li><span className={leafStyle}>/my-content</span> - My Content Hub</li>
                     <li><span className={leafStyle}>/inbox</span> - Contact Message Inbox</li>
                     <li><span className={leafStyle}>/connections</span> - Connections Manager</li>
                     <li><span className={leafStyle}>/feed</span> - Status Feed</li>
