@@ -53,17 +53,11 @@ export function MainSidebar() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = React.useState('');
   const { user, loading, unreadNotificationCount } = useAuth();
-  const [currentPath, setCurrentPath] = React.useState('');
-
-  React.useEffect(() => {
-    setCurrentPath(pathname);
-  }, [pathname]);
-
+  
   const isActive = (path: string, exact: boolean = false) => {
-    if (!currentPath) return false;
-    if (exact) return currentPath === path;
-    if (path === '/') return currentPath === '/';
-    return currentPath.startsWith(path);
+    if (exact) return pathname === path;
+    if (path === '/') return pathname === '/';
+    return pathname.startsWith(path);
   };
 
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -138,7 +132,7 @@ export function MainSidebar() {
               <SidebarMenuButton asChild tooltip="Explore" isActive={isActive('/explore')}>
                 <Link href="/explore">
                   <Compass />
-                  <span>Explore Content</span>
+                  <span>Explore</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
