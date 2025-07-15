@@ -14,8 +14,7 @@ import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import { CONTENT_TYPES, getContentTypeMetadata, type ContentTypeMetadata } from '@/lib/content-types';
 
-type ContentType = 'listing' | 'job' | 'event' | 'offer' | 'promoPage';
-const ALL_CONTENT_TYPES = CONTENT_TYPES.filter(t => t.name !== 'Appointment').map(t => t.name as ContentType);
+const ALL_CONTENT_TYPE_NAMES = CONTENT_TYPES.filter(t => t.name !== 'Appointment').map(t => t.name);
 
 // Color mapping for active filter buttons.
 const TYPE_COLORS: Record<string, string> = {
@@ -26,9 +25,20 @@ const TYPE_COLORS: Record<string, string> = {
     'Business Page': 'bg-destructive text-destructive-foreground hover:bg-destructive/90',
 };
 
-const FilterButton = ({ typeMeta, isSelected, onClick }: { typeMeta: ContentTypeMetadata, isSelected: boolean, onClick: () => void }) => {
+// A reusable filter button component
+const FilterButton = ({
+    typeMeta,
+    isSelected,
+    onClick,
+}: {
+    typeMeta: ContentTypeMetadata | { name: 'All'; label: 'All'; icon: typeof Compass };
+    isSelected: boolean;
+    onClick: () => void;
+}) => {
     const Icon = typeMeta.icon;
-    const activeColorClass = TYPE_COLORS[typeMeta.name] || 'bg-primary text-primary-foreground hover:bg-primary/90';
+    const activeColorClass = typeMeta.name === 'All'
+        ? 'bg-secondary text-secondary-foreground hover:bg-secondary/90'
+        : TYPE_COLORS[typeMeta.name] || 'bg-primary text-primary-foreground hover:bg-primary/90';
 
     return (
         <Button
@@ -47,7 +57,7 @@ const FilterButton = ({ typeMeta, isSelected, onClick }: { typeMeta: ContentType
 
 export default function ExploreClient({ initialItems }: { initialItems: PublicContentItem[] }) {
   const [searchTerm, setSearchTerm] = useState('');
-  const [typeFilters, setTypeFilters] = useState<Set<string>>(new Set(ALL_CONTENT_TYPES));
+  const [typeFilters, setTypeFilters] = useState<Set<string>>(new Set(ALL_CONTENT_TYPE_NAMES));
   const [view, setView] = useState<'grid' | 'list'>('grid');
   const [isLoading, setIsLoading] = useState(true);
 
@@ -56,40 +66,40 @@ export default function ExploreClient({ initialItems }: { initialItems: PublicCo
     return () => clearTimeout(timer);
   }, []);
   
+  // Simplified filter toggle logic
   const handleTypeFilterChange = (type: string) => {
     setTypeFilters(prev => {
         const newSet = new Set(prev);
-        if (prev.size === ALL_CONTENT_TYPES.length) {
-            // If all are selected, deselect all and select just this one
-            newSet.clear();
-            newSet.add(type);
-        } else if (prev.has(type) && prev.size === 1) {
-            // If it's the only one selected, re-select all
-            ALL_CONTENT_TYPES.forEach(t => newSet.add(t));
-        } else if (prev.has(type)) {
-            // If it's one of many selected, just remove it
+        if (newSet.has(type)) {
             newSet.delete(type);
         } else {
-            // If it's not selected, add it
             newSet.add(type);
         }
         return newSet;
     });
   };
 
+  const handleSelectAll = () => {
+    if (typeFilters.size === ALL_CONTENT_TYPE_NAMES.length) {
+      setTypeFilters(new Set()); // Deselect all
+    } else {
+      setTypeFilters(new Set(ALL_CONTENT_TYPE_NAMES)); // Select all
+    }
+  };
+  
   const areFiltersActive = useMemo(() => {
-    return !!searchTerm || typeFilters.size < ALL_CONTENT_TYPES.length;
+    return !!searchTerm || typeFilters.size < ALL_CONTENT_TYPE_NAMES.length;
   }, [searchTerm, typeFilters]);
 
   const handleClearFilters = () => {
     setSearchTerm('');
-    setTypeFilters(new Set(ALL_CONTENT_TYPES));
+    setTypeFilters(new Set(ALL_CONTENT_TYPE_NAMES));
   };
 
 
   const filteredItems = useMemo(() => {
     return initialItems.filter(item => {
-        const typeMatch = typeFilters.size === ALL_CONTENT_TYPES.length || typeFilters.has(item.type);
+        const typeMatch = typeFilters.size === 0 || typeFilters.has(item.type);
         if (!typeMatch) return false;
 
         if (!searchTerm) return true;
@@ -137,12 +147,17 @@ export default function ExploreClient({ initialItems }: { initialItems: PublicCo
                  <div className="space-y-2">
                     <Label className="text-sm font-medium">Filter by type</Label>
                     <div className="flex flex-wrap gap-2">
+                         <FilterButton 
+                            typeMeta={{ name: 'All', label: 'All', icon: Compass }}
+                            isSelected={typeFilters.size === ALL_CONTENT_TYPE_NAMES.length}
+                            onClick={handleSelectAll}
+                         />
                         {CONTENT_TYPES.filter(type => type.name !== 'Appointment').map((typeMeta) => (
                            <FilterButton 
                                 key={typeMeta.name}
                                 typeMeta={typeMeta}
-                                isSelected={typeFilters.has(typeMeta.name as ContentType)}
-                                onClick={() => handleTypeFilterChange(typeMeta.name as ContentType)}
+                                isSelected={typeFilters.has(typeMeta.name)}
+                                onClick={() => handleTypeFilterChange(typeMeta.name)}
                            />
                         ))}
                     </div>
@@ -192,3 +207,4 @@ export default function ExploreClient({ initialItems }: { initialItems: PublicCo
     </div>
   );
 }
+
