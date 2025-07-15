@@ -7,7 +7,7 @@ import { useAuth } from './auth-provider';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from './ui/dropdown-menu';
 import { Button } from './ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar';
-import { ChevronDown, LogOut, Settings, User, Palette, Bell } from 'lucide-react';
+import { LogOut, Settings, User, Palette, Bell, Search } from 'lucide-react';
 import Link from 'next/link';
 import { signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
@@ -45,12 +45,12 @@ function Header() {
         return (
             <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background/80 backdrop-blur-sm px-4 md:px-6">
                  <div className="md:hidden">
-                    <Skeleton className="h-7 w-7" />
+                    <Skeleton className="h-8 w-8 rounded-full" />
                 </div>
-                <div className="flex-1">
-                    <Skeleton className="h-6 w-32" />
-                </div>
-                <Skeleton className="h-9 w-32 rounded-full" />
+                <div className="flex-1" />
+                <Skeleton className="h-8 w-8 rounded-full" />
+                <Skeleton className="h-8 w-8 rounded-full" />
+                <Skeleton className="h-8 w-8 rounded-full" />
             </header>
         )
     }
@@ -78,6 +78,13 @@ function Header() {
             
             <div className="flex-1" />
 
+            <Button asChild variant="ghost" size="icon">
+              <Link href="/search">
+                <Search className="h-5 w-5" />
+                <span className="sr-only">Search</span>
+              </Link>
+            </Button>
+            
             <Button asChild variant="ghost" size="icon" className="relative">
               <Link href="/notifications">
                 <Bell className="h-5 w-5" />
@@ -92,14 +99,12 @@ function Header() {
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="secondary" className="flex items-center gap-2 rounded-full h-9 px-3">
-                  <Avatar className="h-7 w-7">
+                <button className="rounded-full">
+                  <Avatar className="h-8 w-8">
                     <AvatarImage src={user.avatarUrl} alt={user.name} />
                     <AvatarFallback>{user.avatarFallback}</AvatarFallback>
                   </Avatar>
-                  <span className="hidden sm:inline">{user.name}</span>
-                  <ChevronDown className="h-4 w-4 hidden sm:inline text-muted-foreground" />
-                </Button>
+                </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel className="font-normal">

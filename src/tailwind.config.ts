@@ -12,9 +12,8 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['var(--font-pt-sans)', ...fontFamily.sans],
+        sans: ['var(--font-inter)', ...fontFamily.sans],
         headline: ['var(--font-poppins)', ...fontFamily.sans],
-        mono: ['var(--font-geist-mono)', ...fontFamily.mono],
       },
       colors: {
         border: 'hsl(var(--border))',
