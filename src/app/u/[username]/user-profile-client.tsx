@@ -29,16 +29,6 @@ interface UserProfilePageProps {
   userProfileData: UserProfilePayload;
 }
 
-// Dummy functions for initial state before client-side hydration
-const noOp = () => {};
-const initialDialogProps = {
-    open: false,
-    onOpenChange: noOp,
-    onConfirm: noOp,
-    isLoading: false,
-    itemName: 'post',
-};
-
 export default function UserProfileClientPage({ userProfileData }: UserProfilePageProps) {
   const { user: currentUser } = useAuth();
   const router = useRouter();
@@ -49,42 +39,17 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
   
   const [posts, setPosts] = useState<PostWithAuthor[]>([]);
   
-  // State for post actions, initialized to a safe default
-  const [postActions, setPostActions] = useState<{
-      handleLike: (postId: string) => void;
-      handleDelete: (post: PostWithAuthor) => void;
-      handleRepost: (postId: string) => void;
-      handleQuote: (post: PostWithAuthor) => void;
-      loadingAction: { postId: string; action: "like" | "repost" | "delete"; } | null;
-      dialogProps: any;
-  }>({
-      handleLike: noOp,
-      handleDelete: noOp,
-      handleRepost: noOp,
-      handleQuote: noOp,
-      loadingAction: null,
-      dialogProps: initialDialogProps,
-  });
-
   useEffect(() => {
     // This effect runs only on the client, after initial render, to prevent hydration errors.
     setPosts(userProfileData.posts || []);
   }, [userProfileData.posts]);
 
   // Hook for post actions is now initialized client-side only
-  const clientPostActions = usePostActions({
+  const { handleLike, handleDelete, handleRepost, handleQuote, loadingAction, dialogProps } = usePostActions({
     posts,
     setPosts,
     currentUser,
   });
-
-  useEffect(() => {
-    // Once the client has hydrated, we can set the real post action handlers.
-    setPostActions(clientPostActions);
-  }, [clientPostActions]);
-
-  const { handleLike, handleDelete, handleRepost, handleQuote, loadingAction, dialogProps } = postActions;
-
 
   const vCardData = useMemo(() => {
     if (!user) return '';
@@ -251,4 +216,3 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
     </>
   );
 }
-
