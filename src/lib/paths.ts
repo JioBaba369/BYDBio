@@ -54,6 +54,12 @@ export const isAuthPath = (path: string) => {
  * @returns `true` if the path is public, `false` otherwise.
  */
 export const isPublicPath = (path: string) => {
+    // Creation and editing pages are always private. This is the most specific check.
+    // e.g. /listings/create, /events/[id]/edit
+    if (path.endsWith('/create') || /\/edit$/.test(path)) {
+        return false;
+    }
+    
     // Auth pages are public.
     if (isAuthPath(path)) {
         return true;
@@ -61,12 +67,6 @@ export const isPublicPath = (path: string) => {
     
     // Any route that is explicitly a protected "app" route is NOT public.
     if (PROTECTED_ROUTE_BASES.some(base => path.startsWith(base))) {
-        return false;
-    }
-    
-    // Creation and editing pages are NOT public. This is a more specific check to avoid false positives.
-    // e.g. /listings/create, /events/[id]/edit
-    if (path.endsWith('/create') || /\/edit$/.test(path)) {
         return false;
     }
     
@@ -79,3 +79,5 @@ export const isPublicPath = (path: string) => {
     // If no other rule matches, default to not public for security.
     return false;
 };
+
+    
