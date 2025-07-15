@@ -20,9 +20,10 @@ import { createPost, getFeedPosts, getDiscoveryPosts } from "@/lib/posts";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FeedSkeleton } from "@/components/feed-skeleton";
-import { usePostActions } from "@/hooks/use-post-actions";
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
 import type { DocumentData } from 'firebase/firestore';
+import { usePathname, useRouter } from "next/navigation";
+import { handleDeletePost, handleRepost, handleToggleLike } from "../actions/posts";
 
 const FEED_PAGE_SIZE = 10;
 
@@ -72,6 +73,8 @@ const QuotedPostPreview = ({ post, onRemove }: { post: PostWithAuthor, onRemove:
 export default function FeedPage() {
   const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
+  const router = useRouter();
+  const pathname = usePathname();
 
   const [postContent, setPostContent] = useState('');
   const [postCategory, setPostCategory] = useState('');
@@ -106,6 +109,12 @@ export default function FeedPage() {
   const hasMorePosts = useMemo(() => {
     return activeTab === 'following' ? hasMoreFollowing : hasMoreDiscovery;
   }, [activeTab, hasMoreFollowing, hasMoreDiscovery]);
+
+  const setPosts = activeTab === 'following' ? setFollowingPosts : setDiscoveryPosts;
+  
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [postToDelete, setPostToDelete] = useState<PostWithAuthor | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
 
   const fetchFeed = useCallback(async (type: 'following' | 'discovery', loadMore: boolean = false) => {
@@ -161,25 +170,58 @@ export default function FeedPage() {
       setIsFetchingMore(false);
     }
   }, [user, toast, hasMorePosts, isFetchingMore, lastVisibleFollowingPost, lastVisibleDiscoveryPost]);
+  
+  const handleQuote = (post: PostWithAuthor) => {
+      setPostToQuote(post);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      document.getElementById('new-post')?.focus();
+  };
 
-  const {
-    handleLike,
-    handleDelete,
-    handleRepost,
-    handleQuote,
-    loadingAction,
-    dialogProps
-  } = usePostActions({
-    posts: combinedPosts,
-    setPosts: activeTab === 'following' ? setFollowingPosts : setDiscoveryPosts,
-    currentUser: user,
-    onAfterAction: () => fetchFeed(activeTab as 'following' | 'discovery', false),
-    onQuoteAction: (post) => {
-        setPostToQuote(post);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-        document.getElementById('new-post')?.focus();
+  const handleDelete = (post: PostWithAuthor) => {
+      setPostToDelete(post);
+      setIsDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!postToDelete || !user) return;
+    setIsDeleting(true);
+
+    const result = await handleDeletePost(postToDelete.id, pathname);
+
+    if (result.success) {
+        toast({ title: "Post Deleted" });
+        setPosts(prev => prev.filter(p => p.id !== postToDelete.id));
+    } else {
+        toast({ title: "Failed to delete post", description: result.error, variant: "destructive" });
     }
-  });
+
+    setIsDeleteDialogOpen(false);
+    setPostToDelete(null);
+    setIsDeleting(false);
+  };
+
+  const onLike = async (postId: string, userId: string) => {
+    if (!user) return;
+    setPosts(prev => prev.map(p => {
+        if (p.id === postId) {
+            return { ...p, isLiked: !p.isLiked, likes: p.isLiked ? p.likes - 1 : p.likes + 1 };
+        }
+        return p;
+    }));
+    await handleToggleLike(postId, userId, pathname);
+  };
+
+  const onRepost = async (postId: string, userId: string) => {
+    if (!user) return;
+    const result = await handleRepost(postId, userId, pathname);
+    if (result.success) {
+        toast({ title: "Post Reposted" });
+        fetchFeed(activeTab as 'following' | 'discovery', false);
+    } else {
+        toast({ title: "Failed to repost", description: result.error, variant: "destructive" });
+    }
+  };
+
 
   useEffect(() => {
     if (user?.uid && followingPosts.length === 0 && !isLoadingFeed && hasMoreFollowing) {
@@ -247,15 +289,15 @@ export default function FeedPage() {
           content: postToQuote.content,
           imageUrl: postToQuote.imageUrl,
           authorId: postToQuote.author.uid,
-          createdAt: postToQuote.createdAt,
+          createdAt: postToQuote.createdAt as any, // Server will handle timestamp
       } : undefined;
       
       await createPost(user.uid, {
         content: postContent,
         imageUrl: imageUrlToPost,
-        quotedPost: quotedPostData,
         privacy: postPrivacy,
-        category: postCategory
+        category: postCategory,
+        quotedPost: quotedPostData,
       });
       
       setPostContent('');
@@ -282,17 +324,15 @@ export default function FeedPage() {
           <PostCard
             key={item.id}
             item={item}
-            onLike={handleLike}
+            onLike={onLike}
             onDelete={() => handleDelete(item)}
-            onRepost={handleRepost}
+            onRepost={onRepost}
             onQuote={handleQuote}
-            isLoading={loadingAction?.postId === item.id}
-            loadingAction={loadingAction && loadingAction.postId === item.id ? loadingAction.action : undefined}
           />
         ))}
       </div>
     );
-  }, [isLoadingFeed, handleLike, handleDelete, handleRepost, handleQuote, loadingAction]);
+  }, [isLoadingFeed, onLike, handleDelete, onRepost, handleQuote]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -336,7 +376,14 @@ export default function FeedPage() {
         aspectRatio={16 / 9}
         isRound={false}
       />
-      <DeleteConfirmationDialog {...dialogProps} />
+      <DeleteConfirmationDialog 
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        onConfirm={handleConfirmDelete}
+        isLoading={isDeleting}
+        itemName="post"
+        confirmationText="DELETE"
+      />
       
       <div className="max-w-2xl mx-auto space-y-6">
         <h1 className="text-2xl sm:text-3xl font-bold font-headline">Status Feed</h1>

@@ -5,7 +5,6 @@ import type { PostWithAuthor, EmbeddedPostInfoWithAuthor } from '@/lib/posts';
 import { useAuth } from '@/components/auth-provider';
 import { Card, CardFooter } from "@/components/ui/card";
 import Link from "next/link";
-import { usePathname } from 'next/navigation';
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { ClientFormattedDate } from "@/components/client-formatted-date";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -17,7 +16,6 @@ import { useToast } from '@/hooks/use-toast';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
 import React, { useState } from 'react';
-import { handleToggleLike, handleRepost } from '@/app/actions/posts';
 
 // A sub-component for rendering a quoted post.
 const QuotedPostView = ({ post }: { post: EmbeddedPostInfoWithAuthor }) => (
@@ -81,13 +79,12 @@ interface PostCardProps {
     onQuote: (post: PostWithAuthor) => void;
     onLike: (postId: string, userId: string) => Promise<void>;
     onRepost: (originalPostId: string, reposterId: string) => Promise<void>;
-    isLoading: boolean;
-    loadingAction?: 'like' | 'repost' | 'delete';
 }
 
-export function PostCard({ item, onDelete, onQuote, onLike, onRepost, isLoading, loadingAction }: PostCardProps) {
+export function PostCard({ item, onDelete, onQuote, onLike, onRepost }: PostCardProps) {
     const { user } = useAuth();
     const { toast } = useToast();
+    const [isLoading, setIsLoading] = useState<{ action: 'like' | 'repost' | null }>({ action: null });
     const isOwner = user?.uid === item.author.uid;
     const isRepost = !!item.repostedPost;
 
@@ -116,6 +113,20 @@ export function PostCard({ item, onDelete, onQuote, onLike, onRepost, isLoading,
         return (
             <TooltipProvider><Tooltip><TooltipTrigger><IconComponent className="h-4 w-4 text-muted-foreground" /></TooltipTrigger><TooltipContent><p>{tooltipText}</p></TooltipContent></Tooltip></TooltipProvider>
         );
+    }
+
+    const handleLikeClick = async () => {
+        if (!user) return;
+        setIsLoading({ action: 'like' });
+        await onLike(item.id, user.uid);
+        setIsLoading({ action: null });
+    }
+
+    const handleRepostClick = async () => {
+        if (!user) return;
+        setIsLoading({ action: 'repost' });
+        await onRepost(item.originalPostId || item.id, user.uid);
+        setIsLoading({ action: null });
     }
 
     return (
@@ -165,23 +176,23 @@ export function PostCard({ item, onDelete, onQuote, onLike, onRepost, isLoading,
                         {item.category && <div className="pt-2"><Badge variant="outline">{item.category}</Badge></div>}
                     </div>
                      <CardFooter className="flex justify-between items-center p-0 pt-3 -ml-2">
-                        <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground hover:text-primary" onClick={() => user && onLike(item.id, user.uid)} disabled={isLoading || !user}>
-                            {(isLoading && loadingAction === 'like') ? <Loader2 className="h-4 w-4 animate-spin" /> : <Heart className={cn("h-4 w-4", item.isLiked && "fill-red-500 text-red-500")} />}
+                        <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground hover:text-primary" onClick={handleLikeClick} disabled={isLoading.action !== null || !user}>
+                            {(isLoading.action === 'like') ? <Loader2 className="h-4 w-4 animate-spin" /> : <Heart className={cn("h-4 w-4", item.isLiked && "fill-red-500 text-red-500")} />}
                             <span className="text-xs">{item.likes || 0}</span>
                         </Button>
                         <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground" disabled>
                             <MessageCircle className="h-4 w-4" />
                             <span className="text-xs">{item.comments || 0}</span>
                         </Button>
-                        <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground hover:text-green-500" onClick={() => user && onRepost(item.originalPostId || item.id, user.uid)} disabled={isLoading || !user}>
-                            {(isLoading && loadingAction === 'repost') ? <Loader2 className="h-4 w-4 animate-spin" /> : <Repeat className="h-4 w-4" />}
+                        <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground hover:text-green-500" onClick={handleRepostClick} disabled={isLoading.action !== null || !user}>
+                            {(isLoading.action === 'repost') ? <Loader2 className="h-4 w-4 animate-spin" /> : <Repeat className="h-4 w-4" />}
                             <span className="text-xs">{item.repostCount || 0}</span>
                         </Button>
-                        <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground hover:text-blue-500" onClick={() => onQuote(item)} disabled={isLoading || !user}>
+                        <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground hover:text-blue-500" onClick={() => onQuote(item)} disabled={isLoading.action !== null || !user}>
                             <QuoteIcon className="h-4 w-4" />
                             <span className="text-xs hidden sm:inline">Quote</span>
                         </Button>
-                        <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground" onClick={handleShare} disabled={isLoading}>
+                        <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground" onClick={handleShare} disabled={isLoading.action !== null}>
                             <Share2 className="h-4 w-4" />
                         </Button>
                     </CardFooter>
