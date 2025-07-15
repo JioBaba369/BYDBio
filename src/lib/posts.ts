@@ -26,7 +26,7 @@ import {
 import { db } from '@/lib/firebase';
 import type { User } from './users';
 import { createNotification } from './notifications';
-import { getUsersByIds, getSuggestedUsers } from './users';
+import { getUsersByIds } from './users';
 import { serializeDocument } from './firestore-utils';
 
 // This is the structure stored in Firestore for a quoted or reposted post.
@@ -102,7 +102,7 @@ export const getPostsByUser = async (userId: string, viewerId?: string | null): 
 // Function to create a new post
 export const createPost = async (userId: string, data: Pick<Post, 'content' | 'imageUrl' | 'privacy' | 'category'> & { quotedPost?: EmbeddedPostInfo }): Promise<Post> => {
   const userRef = doc(db, "users", userId);
-  const postRef = doc(collection(db, "posts"));
+  const postRef = doc(collection(db, "posts")); // Generate a new ref with a unique ID
 
   if (data.quotedPost && data.quotedPost.authorId === userId) {
     throw new Error("You cannot quote your own post.");
@@ -369,13 +369,11 @@ export const getDiscoveryPosts = async (userId: string, followingIds: string[], 
     const usersToExclude = [...new Set([userId, ...followingIds])];
     
     const queryConstraints = [
-        where('authorId', 'not-in', usersToExclude.length > 0 ? usersToExclude : ['']), // 'not-in' with empty array is invalid
         where('privacy', '==', 'public'),
-        orderBy('authorId'), // First order by a field not in the inequality
         orderBy('createdAt', 'desc'),
         limit(pageSize)
     ];
-
+    
     if (lastVisible) {
         queryConstraints.push(startAfter(lastVisible));
     }
@@ -383,10 +381,13 @@ export const getDiscoveryPosts = async (userId: string, followingIds: string[], 
     const postsQuery = query(collection(db, 'posts'), ...queryConstraints);
     const postSnapshots = await getDocs(postsQuery);
 
-    const posts = postSnapshots.docs
+    let posts = postSnapshots.docs
         .map(doc => serializeDocument<Post>(doc))
         .filter((post): post is Post => post !== null);
         
+    // Manual filtering for "not-in" behavior, as Firestore has limitations
+    posts = posts.filter(post => !usersToExclude.includes(post.authorId));
+
     const populatedPosts = await populatePostAuthors(posts, userId);
 
     return {
