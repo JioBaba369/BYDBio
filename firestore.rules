@@ -1,100 +1,161 @@
-
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // --- UTILITY FUNCTIONS ---
-    function isSignedIn() {
+  
+    // =============================================
+    // Helper Functions
+    // =============================================
+    
+    // Check if the user is authenticated
+    function isAuthenticated() {
       return request.auth != null;
     }
-
+    
+    // Check if the user is the owner of a document
     function isOwner(userId) {
       return request.auth.uid == userId;
     }
-
-    function isContentOwner() {
-      return request.auth.uid == resource.data.authorId;
+    
+    // Check if a document is being created
+    function isCreating() {
+      return resource == null;
     }
     
-    function isNewContentOwner() {
-      return request.auth.uid == request.resource.data.authorId;
-    }
-
-
-    // --- USERS ---
-    match /users/{userId} {
-      // Anyone can read a public profile
-      allow read: if true;
-      // Only the owner can write to their profile
-      allow create, update: if isOwner(userId);
-      // Deleting a user should be a privileged server-side action
-      allow delete: if false; 
+    // Check if a document is being updated
+    function isUpdating() {
+      return resource != null;
     }
 
-    // --- NOTIFICATIONS ---
-    match /notifications/{notificationId} {
-      // Only the user the notification is for can read or update it
-      allow read, update: if isOwner(resource.data.userId);
-      // Notifications are created by server-side logic, not directly by clients
-      allow create, delete: if false;
+    // Check if a user's followerCount is being incremented/decremented correctly
+    function isUpdatingFollowerCount(amount) {
+      return request.resource.data.followerCount == resource.data.followerCount + amount;
     }
     
-    // --- APPOINTMENTS ---
-    match /appointments/{appointmentId} {
-      allow read: if isOwner(resource.data.ownerId) || isOwner(resource.data.bookerId);
-      allow create: if isSignedIn(); // Any signed-in user can create
-      allow update, delete: if isOwner(resource.data.ownerId); // Only owner can modify/delete
+    // Ensure a resource is "active" for public viewing
+    function isActive() {
+      return resource.data.status == 'active';
     }
 
-    // --- POSTS ---
-    match /posts/{postId} {
-      allow read: if resource.data.privacy == 'public'
-                   || (resource.data.privacy == 'followers' && isSignedIn() && request.auth.uid in get(/databases/$(database)/documents/users/$(resource.data.authorId)).data.following)
-                   || isOwner(resource.data.authorId);
-      allow create: if isSignedIn() && isNewContentOwner();
-      allow update, delete: if isContentOwner();
+    // Check if the viewer is a follower of the author
+    function isFollower(authorId) {
+        return exists(/databases/$(database)/documents/users/$(authorId)) && request.auth.uid in get(/databases/$(database)/documents/users/$(authorId)).data.following;
     }
     
-    // --- EVENTS ---
-    match /events/{eventId} {
-      allow read: if resource.data.status == 'active';
-      allow create: if isSignedIn() && isNewContentOwner();
-      allow update: if isContentOwner();
-      allow delete: if isContentOwner();
-    }
-    
-    // --- JOBS ---
-    match /jobs/{jobId} {
-      allow read: if resource.data.status == 'active';
-      allow create: if isSignedIn() && isNewContentOwner();
-      allow update, delete: if isContentOwner();
-    }
-    
-    // --- LISTINGS ---
-    match /listings/{listingId} {
-      allow read: if resource.data.status == 'active';
-      allow create: if isSignedIn() && isNewContentOwner();
-      allow update, delete: if isContentOwner();
-    }
-    
-    // --- OFFERS ---
-    match /offers/{offerId} {
-      allow read: if resource.data.status == 'active';
-      allow create: if isSignedIn() && isNewContentOwner();
-      allow update, delete: if isContentOwner();
-    }
-    
-    // --- PROMO PAGES ---
-    match /promoPages/{promoPageId} {
-      allow read: if resource.data.status == 'active';
-      allow create: if isSignedIn() && isNewContentOwner();
-      allow update, delete: if isContentOwner();
-    }
-
-    // Default deny all other reads/writes
+    // =============================================
+    // Default Deny
+    // =============================================
+    // By default, deny all reads and writes
     match /{document=**} {
       allow read, write: if false;
+    }
+    
+    // =============================================
+    // Users Collection Rules
+    // =============================================
+    match /users/{userId} {
+      // Anyone can read a user's public profile data
+      allow read: if true;
+      
+      // A user can only create their own profile
+      allow create: if isOwner(userId)
+                    && request.resource.data.uid == userId;
+      
+      // A user can only update their own profile
+      // Protect fields like followerCount from direct client-side modification
+      allow update: if isOwner(userId)
+                     && request.resource.data.followerCount == resource.data.followerCount;
+    }
+
+    // =============================================
+    // Content Collections Rules (Generic)
+    // =============================================
+    function contentRules(collectionName) {
+      return {
+        // Public can read active content
+        "allow read": { "if": "isActive()" },
+        
+        // Authenticated users can create content for themselves
+        "allow create": { "if": "isAuthenticated() && isOwner(request.resource.data.authorId)" },
+        
+        // Owners can update their own content
+        "allow update": { "if": "isAuthenticated() && isOwner(resource.data.authorId)" },
+        
+        // Owners can delete their own content
+        "allow delete": { "if": "isAuthenticated() && isOwner(resource.data.authorId)" }
+      }
+    }
+    
+    match /listings/{listingId} {
+      allow read, create, update, delete: if contentRules('listings');
+    }
+    
+    match /jobs/{jobId} {
+      allow read, create, update, delete: if contentRules('jobs');
+    }
+    
+    match /events/{eventId} {
+      // Use standard content rules for CUD operations
+      allow create, update, delete: if contentRules('events');
+      
+      // Anyone can read an active event
+      allow read: if isActive();
+      
+      // Allow authenticated users to update the 'rsvps' array (for RSVPing)
+      match /events/{eventId} {
+        allow update: if isAuthenticated() && 
+                         (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['rsvps']));
+      }
+    }
+    
+    match /offers/{offerId} {
+      allow read, create, update, delete: if contentRules('offers');
+    }
+    
+    match /promoPages/{promoPageId} {
+      allow read, create, update, delete: if contentRules('promoPages');
+    }
+    
+    // =============================================
+    // Posts (Status Feed) Collection Rules
+    // =============================================
+    match /posts/{postId} {
+      // Allow read based on post privacy setting
+      allow read: if resource.data.privacy == 'public' || 
+                     (resource.data.privacy == 'followers' && (isOwner(resource.data.authorId) || isFollower(resource.data.authorId))) ||
+                     (resource.data.privacy == 'me' && isOwner(resource.data.authorId));
+
+      // Owners can create their own posts
+      allow create: if isOwner(request.resource.data.authorId);
+
+      // Owners can delete their own posts
+      allow delete: if isOwner(resource.data.authorId);
+      
+      // Allow authenticated users to update the 'likedBy' array (for liking)
+      allow update: if isAuthenticated() &&
+                       (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likedBy', 'likes']));
+    }
+    
+    // =============================================
+    // Private Collections Rules
+    // =============================================
+    
+    match /notifications/{notificationId} {
+      // A user can only read or write to their own notifications
+      allow read, write: if isAuthenticated() && isOwner(resource.data.userId);
+    }
+    
+    match /appointments/{appointmentId} {
+      // The owner of the profile or the booker of the appointment can read it
+      allow read: if isAuthenticated() && 
+                    (isOwner(resource.data.ownerId) || isOwner(resource.data.bookerId));
+                    
+      // The booker can create an appointment
+      allow create: if isAuthenticated() && isOwner(request.resource.data.bookerId);
+      
+      // The owner or booker can delete it
+      allow delete: if isAuthenticated() && 
+                      (isOwner(resource.data.ownerId) || isOwner(resource.data.bookerId));
     }
   }
 }
