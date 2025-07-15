@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useAuth } from '@/components/auth-provider';
-import { ArrowRight, ArrowLeft, RefreshCw, Download, Upload, Text, LayoutTemplate, Settings2, Nfc, Save, Loader2 } from 'lucide-react';
+import { ArrowRight, ArrowLeft, RefreshCw, Download, Upload, Text, LayoutTemplate, Settings2, Nfc, Save, Loader2, Paintbrush } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -163,7 +163,7 @@ const TagPreview = forwardRef<HTMLDivElement, { values: DesignFormValues; user: 
                 <div className="space-y-1">
                     <h3 className={cn("font-bold text-2xl leading-tight", textColor)}>{values.name || 'Your Name'}</h3>
                     <p className={cn("text-base leading-tight", subtitleColor)}>{values.title || 'Your Title'}</p>
-                    {values.company && <p className="text-sm leading-tight opacity-80 pt-1", subtitleColor)}>{values.company}</p>}
+                    {values.company && <p className={cn("text-sm leading-tight opacity-80 pt-1", subtitleColor)}>{values.company}</p>}
                 </div>
             </div>
         </div>
@@ -207,7 +207,6 @@ export default function BydTagDesignPage() {
         name: user.name || '',
         title: user.businessCard?.title || '',
         company: user.businessCard?.company || '',
-        // The logo on the card should be separate from the user's main avatar
         logoUrl: user.bioTagDesign?.logoUrl || user.avatarUrl || '',
         cardColor: user.bioTagDesign?.cardColor || 'black',
         backgroundImageUrl: user.bioTagDesign?.backgroundImageUrl || '',
