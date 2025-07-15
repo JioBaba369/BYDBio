@@ -24,7 +24,7 @@ export default function UrlTreePage() {
                 <ul className="space-y-2">
                     <li><span className={leafStyle}>/</span> - Dashboard</li>
                     <li><span className={leafStyle}>/profile</span> - Profile Editor</li>
-                    <li><span className={leafStyle}>/calendar</span> - My Content Hub</li>
+                    <li><span className={leafStyle}>/canvas</span> - My Content Hub</li>
                     <li><span className={leafStyle}>/inbox</span> - Contact Message Inbox</li>
                     <li><span className={leafStyle}>/connections</span> - Connections Manager</li>
                     <li><span className={leafStyle}>/feed</span> - Status Feed</li>
@@ -54,6 +54,27 @@ export default function UrlTreePage() {
                         <span className={groupStyle}>/bydtag</span> - BYDTAG Product Page
                         <ul className={treeStyle}>
                            <li className={itemStyle}><span className={leafStyle}>/design</span> - BYDTAG Design Page</li>
+                        </ul>
+                    </li>
+                     <li>
+                        <span className={groupStyle}>/support</span> - Support Center
+                        <ul className={treeStyle}>
+                           <li className={itemStyle}><span className={leafStyle}>/getting-started</span></li>
+                           <li className={itemStyle}><span className={leafStyle}>/features-and-how-tos</span></li>
+                           <li className={itemStyle}><span className={leafStyle}>/faqs</span></li>
+                           <li className={itemStyle}><span className={leafStyle}>/byd-bio-pro</span></li>
+                           <li className={itemStyle}><span className={leafStyle}>/report-a-violation</span></li>
+                        </ul>
+                    </li>
+                     <li>
+                        <span className={groupStyle}>/trust</span> - Trust Center
+                        <ul className={treeStyle}>
+                           <li className={itemStyle}><span className={leafStyle}>/terms</span></li>
+                           <li className={itemStyle}><span className={leafStyle}>/privacy</span></li>
+                           <li className={itemStyle}><span className={leafStyle}>/cookies</span></li>
+                           <li className={itemStyle}><span className={leafStyle}>/cookie-preferences</span></li>
+                           <li className={itemStyle}><span className={leafStyle}>/transparency</span></li>
+                           <li className={itemStyle}><span className={leafStyle}>/law-enforcement</span></li>
                         </ul>
                     </li>
                      <li><span className={leafStyle}>/p/[promoId]</span> - Public Promo Page</li>

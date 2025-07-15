@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -39,7 +38,8 @@ import {
   Link as LinkIcon,
   BookUser,
   Paintbrush,
-  BadgeHelp
+  BadgeHelp,
+  Shield,
 } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -305,6 +305,14 @@ export function MainSidebar() {
                 <Link href="/support">
                     <BadgeHelp />
                     <span>Support</span>
+                </Link>
+                </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Trust Center" isActive={isActive('/trust')}>
+                <Link href="/trust">
+                    <Shield />
+                    <span>Trust Center</span>
                 </Link>
                 </SidebarMenuButton>
             </SidebarMenuItem>
