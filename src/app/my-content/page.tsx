@@ -1,3 +1,4 @@
+// src/app/my-content/page.tsx
 
 'use client';
 
@@ -5,12 +6,11 @@ import { useState, useMemo, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Badge, badgeVariants } from '@/components/ui/badge';
-import { getCalendarItems, toggleRsvp, deleteEvent, type CalendarItem, deleteAppointment } from '@/lib/events';
+import { Badge } from '@/components/ui/badge';
+import { getCalendarItems, toggleRsvp, deleteEvent, type CalendarItem } from '@/lib/events';
 import { useAuth } from '@/components/auth-provider';
-import { Search, MapPin, Tag, Briefcase, DollarSign, X, Clock, MoreHorizontal, Edit, Trash2, PlusCircle, Tags, Calendar as CalendarIconLucide, Building2, List, LayoutGrid, Eye, MousePointerClick, Gift, Users, Megaphone, CalendarPlus, UserCheck } from 'lucide-react';
+import { Search, MapPin, Tag, Briefcase, DollarSign, X, Clock, MoreHorizontal, Edit, Trash2, PlusCircle, List, LayoutGrid, CalendarPlus, UserCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { VariantProps } from 'class-variance-authority';
 import Image from 'next/image';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialog';
@@ -30,8 +30,9 @@ import 'react-day-picker/dist/style.css';
 import { saveAs } from 'file-saver';
 import { KillChainTracker } from '@/components/kill-chain-tracker';
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
-import { generateIcsContent } from '@/lib/appointments';
-
+import { generateIcsContent, deleteAppointment } from '@/lib/appointments';
+import { CONTENT_TYPES, getContentTypeMetadata, ContentTypeMetadata } from '@/lib/content-types'; // Import centralized definitions
+import { parseISO } from 'date-fns'; // Import parseISO for date parsing
 
 const ContentHubSkeleton = () => (
     <div className="space-y-6 animate-pulse">
@@ -63,76 +64,112 @@ const ContentHubSkeleton = () => (
     </div>
 );
 
+// Custom hook for data fetching and filtering
+function useMyContentManagement(userId: string | undefined, toast: ReturnType<typeof useToast>['toast']) {
+    const [allItems, setAllItems] = useState<CalendarItem[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [locationFilter, setLocationFilter] = useState('');
+    const [typeFilters, setTypeFilters] = useState<Set<string>>(
+        new Set(CONTENT_TYPES.map(type => type.name))
+    );
+
+    useEffect(() => {
+        if (userId) {
+            setIsLoading(true);
+            getCalendarItems(userId, 'author')
+                .then(setAllItems)
+                .catch(err => {
+                    toast({ title: "Error", description: "Could not load content.", variant: "destructive" });
+                })
+                .finally(() => setIsLoading(false));
+        }
+    }, [userId, toast]);
+
+    const filteredItems = useMemo(() => {
+        return allItems.filter(item => {
+            if (!typeFilters.has(item.type)) {
+                return false;
+            }
+
+            const searchMatch = searchTerm.length > 0 ?
+                item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                (item.description && item.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                (item.company && item.company.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                (item.category && item.category.toLowerCase().includes(searchTerm.toLowerCase()))
+                : true;
+            
+            const locationMatch = locationFilter.length > 0 ?
+                (item.location && item.location.toLowerCase().includes(locationFilter.toLowerCase()))
+                : true;
+
+            return searchMatch && locationMatch;
+        });
+    }, [allItems, searchTerm, locationFilter, typeFilters]);
+
+    const areFiltersActive = useMemo(() => {
+      return !!searchTerm || !!locationFilter || typeFilters.size < CONTENT_TYPES.length;
+    }, [searchTerm, locationFilter, typeFilters]);
+
+    const handleClearFilters = useCallback(() => {
+        setSearchTerm('');
+        setLocationFilter('');
+        setTypeFilters(new Set(CONTENT_TYPES.map(type => type.name)));
+    }, []);
+
+    const handleTypeFilterChange = useCallback((type: string) => {
+        setTypeFilters(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(type)) {
+                newSet.delete(type);
+            } else {
+                newSet.add(type);
+            }
+            return newSet;
+        });
+    }, []);
+
+    return {
+        allItems,
+        setAllItems,
+        isLoading,
+        searchTerm,
+        setSearchTerm,
+        locationFilter,
+        setLocationFilter,
+        typeFilters,
+        handleTypeFilterChange,
+        filteredItems,
+        areFiltersActive,
+        handleClearFilters,
+    };
+}
+
 
 export default function MyContentPage() {
   const { user, loading: authLoading } = useAuth();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [locationFilter, setLocationFilter] = useState('');
-  const [typeFilters, setTypeFilters] = useState<Set<string>>(
-    new Set(['Event', 'Offer', 'Job', 'Listing', 'Business Page', 'Appointment'])
-  );
+  const { toast } = useToast();
+
+  const {
+      allItems,
+      setAllItems,
+      isLoading,
+      searchTerm,
+      setSearchTerm,
+      locationFilter,
+      setLocationFilter,
+      typeFilters,
+      handleTypeFilterChange,
+      filteredItems,
+      areFiltersActive,
+      handleClearFilters,
+  } = useMyContentManagement(user?.uid, toast);
+
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [selectedItem, setSelectedItem] = useState<CalendarItem | null>(null);
-  const { toast } = useToast();
-  const [allItems, setAllItems] = useState<CalendarItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [view, setView] = useState<'grid' | 'list'>('grid');
   
-  useEffect(() => {
-    if (user?.uid) {
-        setIsLoading(true);
-        getCalendarItems(user.uid, 'author')
-            .then(setAllItems)
-            .catch(err => {
-                toast({ title: "Error", description: "Could not load content.", variant: "destructive" });
-            })
-            .finally(() => setIsLoading(false));
-    }
-  }, [user?.uid, toast]);
-
-
-  const areFiltersActive = !!searchTerm || !!locationFilter || typeFilters.size < 6;
-
-  const filteredItems = useMemo(() => {
-    return allItems.filter(item => {
-      if (!typeFilters.has(item.type)) {
-        return false;
-      }
-
-      const searchMatch = searchTerm.length > 0 ?
-        item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (item.description && item.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (item.company && item.company.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (item.category && item.category.toLowerCase().includes(searchTerm.toLowerCase()))
-        : true;
-      
-      const locationMatch = locationFilter.length > 0 ?
-        (item.location && item.location.toLowerCase().includes(locationFilter.toLowerCase()))
-        : true;
-
-      return searchMatch && locationMatch;
-    });
-  }, [allItems, searchTerm, locationFilter, typeFilters]);
-  
-  const handleClearFilters = () => {
-    setSearchTerm('');
-    setLocationFilter('');
-    setTypeFilters(new Set(['Event', 'Offer', 'Job', 'Listing', 'Business Page', 'Appointment']));
-  }
-  
-  const handleTypeFilterChange = (type: string) => {
-    setTypeFilters(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(type)) {
-        newSet.delete(type);
-      } else {
-        newSet.add(type);
-      }
-      return newSet;
-    });
-  };
-
   const openDeleteDialog = (item: CalendarItem) => {
     setSelectedItem(item);
     setIsDeleteDialogOpen(true);
@@ -190,56 +227,29 @@ export default function MyContentPage() {
     }
   };
 
-  const getBadgeVariant = (itemType: CalendarItem['type']): VariantProps<typeof badgeVariants>['variant'] => {
-    switch (itemType) {
-        case 'Event': return 'default';
-        case 'Offer': return 'secondary';
-        case 'Job': return 'destructive';
-        case 'Listing': return 'outline';
-        case 'Business Page': return 'default';
-        case 'Appointment': return 'secondary';
-        default: return 'default';
-    }
-  }
-  
-  const contentTypes: { name: CalendarItem['type'], icon: React.ElementType, variant: VariantProps<typeof badgeVariants>['variant'] }[] = [
-    { name: 'Event', icon: CalendarIconLucide, variant: 'default' },
-    { name: 'Offer', icon: Gift, variant: 'secondary' },
-    { name: 'Job', icon: Briefcase, variant: 'destructive' },
-    { name: 'Listing', icon: Tags, variant: 'outline' },
-    { name: 'Business Page', icon: Megaphone, variant: 'default' },
-  ];
-  
-  const getStatsValue = (item: CalendarItem): number => {
-     switch (item.type) {
-        case 'Event': return item.rsvps?.length ?? 0;
-        case 'Offer': return item.claims ?? 0;
-        case 'Job': return item.applicants ?? 0;
-        case 'Listing': return item.clicks ?? 0;
-        case 'Business Page': return item.clicks ?? 0;
-        default: return 0;
-    }
-  }
-  
-  const getInteractionLabel = (itemType: CalendarItem['type']): string => {
-    switch (itemType) {
-        case 'Event': return 'RSVPs';
-        case 'Offer': return 'Claims';
-        case 'Job': return 'Applicants';
-        case 'Listing': return 'Clicks';
-        case 'Business Page': return 'Clicks';
-        default: return 'Interactions';
-    }
-  }
-
   const handleAddToCalendar = async (item: CalendarItem) => {
-    if (!user || !item.startTime || !item.endTime) return;
+    // Ensure item.startTime and item.endTime are Date objects
+    const startTime = typeof item.startTime === 'string' ? parseISO(item.startTime) : (item.startTime as Date);
+    const endTime = typeof item.endTime === 'string' ? parseISO(item.endTime) : (item.endTime as Date);
+
+    if (!user || !startTime || !endTime) {
+        toast({ title: "Error", description: "Missing event details or user info.", variant: "destructive" });
+        return;
+    }
     
     try {
-        const icsContent = await generateIcsContent(item.title, item.startTime, item.endTime, user.name, user.email || 'noreply@byd.bio', item.bookerName || 'Guest');
+        // Sanitize filename: replace non-alphanumeric characters with underscores
+        const safeTitle = item.title.replace(/[^a-zA-Z0-9]/g,"_");
+        // Ensure that `user.name` and `user.email` are not null/undefined for `generateIcsContent`
+        const userName = user.name || 'Anonymous User';
+        const userEmail = user.email || 'noreply@byd.bio';
+        const bookerName = item.bookerName || 'Guest';
+
+        const icsContent = await generateIcsContent(item.title, startTime.toISOString(), endTime.toISOString(), userName, userEmail, bookerName);
         if (icsContent) {
             const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
-            saveAs(blob, `${item.title.replace(/ /g,"_")}.ics`);
+            saveAs(blob, `${safeTitle}.ics`);
+            toast({ title: "Calendar file downloaded!", description: "Add this file to your preferred calendar app." });
         }
     } catch(e) {
         toast({ title: "Error creating calendar file", variant: "destructive" });
@@ -283,36 +293,19 @@ export default function MyContentPage() {
             <DropdownMenuContent align="end">
                 <DropdownMenuLabel>Create New Content</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                 <DropdownMenuItem asChild>
-                <Link href="/promo/create" className="cursor-pointer">
-                    <Megaphone className="mr-2 h-4 w-4" />
-                    <span>New Business Page</span>
-                </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                <Link href="/listings/create" className="cursor-pointer">
-                    <Tags className="mr-2 h-4 w-4" />
-                    <span>New Listing</span>
-                </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                <Link href="/job/create" className="cursor-pointer">
-                    <Briefcase className="mr-2 h-4 w-4" />
-                    <span>New Job</span>
-                </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                <Link href="/events/create" className="cursor-pointer">
-                    <CalendarIconLucide className="mr-2 h-4 w-4" />
-                    <span>New Event</span>
-                </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                <Link href="/offers/create" className="cursor-pointer">
-                    <Gift className="mr-2 h-4 w-4" />
-                    <span>New Offer</span>
-                </Link>
-                </DropdownMenuItem>
+                {CONTENT_TYPES.filter(type => type.name !== 'Appointment').map((typeMeta) => {
+                  const linkPath = `/${typeMeta.name.toLowerCase().replace(' ', '')}s/create`;
+                  const label = typeMeta.name === 'Business Page' ? typeMeta.name : `New ${typeMeta.name}`;
+                  const Icon = typeMeta.icon;
+                  return (
+                    <DropdownMenuItem asChild key={typeMeta.name}>
+                      <Link href={linkPath} className="cursor-pointer">
+                          <Icon className="mr-2 h-4 w-4" />
+                          <span>{label}</span>
+                      </Link>
+                    </DropdownMenuItem>
+                  );
+                })}
             </DropdownMenuContent>
         </DropdownMenu>
         </div>
@@ -347,19 +340,20 @@ export default function MyContentPage() {
                 <div className="space-y-2">
                     <Label className="text-sm font-medium">Filter by type</Label>
                     <div className="flex flex-wrap gap-2">
-                        {contentTypes.map(({ name, icon: Icon, variant }) => {
-                            const isSelected = typeFilters.has(name);
-                            const label = name === 'Business Page' ? name : `${name}s`;
+                        {CONTENT_TYPES.map((typeMeta: ContentTypeMetadata) => {
+                            const isSelected = typeFilters.has(typeMeta.name);
+                            const label = typeMeta.label; // Use label from metadata
+                            const Icon = typeMeta.icon;
                             return (
                                 <Badge
-                                    key={name}
-                                    variant={isSelected ? variant : 'outline'}
-                                    onClick={() => handleTypeFilterChange(name)}
-                                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleTypeFilterChange(name); }}
+                                    key={typeMeta.name}
+                                    variant={isSelected ? typeMeta.variant : 'outline'}
+                                    onClick={() => handleTypeFilterChange(typeMeta.name)}
+                                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleTypeFilterChange(typeMeta.name); }}
                                     className={cn(
                                         'cursor-pointer transition-all py-1.5 px-3 text-sm',
                                         !isSelected && 'hover:bg-accent/50',
-                                        variant === 'outline' && isSelected && 'bg-foreground text-background border-transparent hover:bg-foreground/90',
+                                        typeMeta.variant === 'outline' && isSelected && 'bg-foreground text-background border-transparent hover:bg-foreground/90',
                                     )}
                                     role="button"
                                     tabIndex={0}
@@ -391,13 +385,18 @@ export default function MyContentPage() {
                   view === 'grid' ? (
                   <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                       {filteredItems.map((item) => {
+                        const typeMeta = getContentTypeMetadata(item.type);
+                        if (!typeMeta) return null; // Should not happen with centralized types
+
+                        const BadgeIcon = typeMeta.icon;
+
                          if (item.type === 'Appointment') {
                              return (
                                  <Card key={item.id} className="shadow-sm flex flex-col bg-secondary/40">
                                      <CardHeader className="p-4 pb-2">
                                         <div className="flex justify-between items-start">
                                             <div>
-                                                <Badge variant={getBadgeVariant(item.type)}>{item.type}</Badge>
+                                                <Badge variant={typeMeta.variant}>{item.type}</Badge>
                                                 <CardTitle className="text-base mt-2">{item.title}</CardTitle>
                                             </div>
                                             <DropdownMenu>
@@ -442,7 +441,7 @@ export default function MyContentPage() {
                               <CardHeader className="p-4 pb-2">
                                   <div className="flex justify-between items-start">
                                       <div>
-                                        <Badge variant={getBadgeVariant(item.type)} className="capitalize">{item.isExternal ? 'Attending' : item.type}</Badge>
+                                        <Badge variant={typeMeta.variant} className="capitalize">{item.isExternal ? 'Attending' : typeMeta.label.replace(/s$/, '')}</Badge> { /* Remove plural 's' for display */ }
                                         <CardTitle className="text-base mt-2">{item.title}</CardTitle>
                                       </div>
                                       <DropdownMenu>
@@ -477,8 +476,8 @@ export default function MyContentPage() {
                               <CardFooter className="border-t pt-3 px-4 pb-3">
                                 <KillChainTracker 
                                     views={item.views ?? 0}
-                                    interactions={getStatsValue(item)}
-                                    interactionLabel={getInteractionLabel(item.type)}
+                                    interactions={typeMeta.getStatsValue(item)}
+                                    interactionLabel={typeMeta.getInteractionLabel(item.type)}
                                 />
                               </CardFooter>
                           </Card>
@@ -498,10 +497,14 @@ export default function MyContentPage() {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {filteredItems.map(item => (
+                                {filteredItems.map(item => {
+                                  const typeMeta = getContentTypeMetadata(item.type);
+                                  if (!typeMeta) return null; // Should not happen
+
+                                    return (
                                     <TableRow key={item.id}>
                                         <TableCell className="font-medium">{item.title}</TableCell>
-                                        <TableCell><Badge variant={getBadgeVariant(item.type)} className="capitalize">{item.type}</Badge></TableCell>
+                                        <TableCell><Badge variant={typeMeta.variant} className="capitalize">{typeMeta.label.replace(/s$/, '')}</Badge></TableCell> {/* Remove plural 's' for display */}
                                         <TableCell><ClientFormattedDate date={item.date} formatStr="PPP"/></TableCell>
                                         <TableCell><Badge variant={item.status === 'active' ? 'secondary' : 'outline'}>{item.status}</Badge></TableCell>
                                         <TableCell className="text-right">
@@ -530,7 +533,7 @@ export default function MyContentPage() {
                                             </DropdownMenu>
                                         </TableCell>
                                     </TableRow>
-                                ))}
+                                )})}
                             </TableBody>
                         </Table>
                     </Card>
