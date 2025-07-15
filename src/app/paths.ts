@@ -1,4 +1,5 @@
 
+
 // The paths for authentication which are public but have special layout considerations.
 const AUTH_PATHS = [
     '/auth/sign-in',

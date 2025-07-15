@@ -24,7 +24,6 @@ import {
   Bell,
   Compass,
   Megaphone,
-  Package,
   UserCircle,
   Building2,
   Share2,
