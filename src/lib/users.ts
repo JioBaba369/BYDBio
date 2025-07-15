@@ -1,5 +1,4 @@
 
-
 import { collection, query, where, getDocs, limit, doc, getDoc, setDoc, updateDoc, deleteDoc, arrayUnion, orderBy, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { deleteUser, type User as FirebaseUser } from "firebase/auth";
@@ -286,6 +285,8 @@ export const updateUser = async (uid: string, data: Partial<User>): Promise<User
         
         if (data.name && data.name.length > 0) {
             dataToUpdate.avatarFallback = data.name.charAt(0).toUpperCase();
+        } else if (data.name === '') {
+            dataToUpdate.avatarFallback = '?';
         }
     }
     
@@ -547,3 +548,5 @@ export const getAllPublicContent = async (): Promise<PublicContentItem[]> => {
 
     return contentWithAuthors;
 };
+
+    

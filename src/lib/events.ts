@@ -52,7 +52,10 @@ export type Event = {
   itinerary: ItineraryItem[];
   createdAt: string; // ISO 8601 string
   searchableKeywords: string[];
-  attendees?: { id: string, name: string, username: string, avatarUrl: string }[];
+};
+
+export type EventWithAttendees = Event & {
+    attendees: Pick<User, 'uid' | 'name' | 'username' | 'avatarUrl'>[];
 };
 
 export type EventWithAuthor = Event & { author: Pick<User, 'uid' | 'name' | 'username' | 'avatarUrl'> };
@@ -203,7 +206,7 @@ export const toggleRsvp = async (eventId: string, userId: string) => {
 
 
 // Helper function for public page to get event and its author
-export const getEventAndAuthor = async (eventId: string): Promise<{ event: Event; author: User } | null> => {
+export const getEventAndAuthor = async (eventId: string): Promise<{ event: EventWithAttendees; author: User } | null> => {
     const eventPromise = getDoc(doc(db, 'events', eventId));
     const [eventDoc] = await Promise.all([eventPromise]);
 
@@ -228,7 +231,7 @@ export const getEventAndAuthor = async (eventId: string): Promise<{ event: Event
     const rsvpIds = event.rsvps.slice(0, rsvpLimit);
     const attendees = rsvpIds.length > 0 ? await getUsersByIds(rsvpIds) : [];
     
-    const eventWithAttendees: Event = {
+    const eventWithAttendees: EventWithAttendees = {
       ...event,
       attendees: attendees.map(a => ({
           id: a.uid,
@@ -236,7 +239,7 @@ export const getEventAndAuthor = async (eventId: string): Promise<{ event: Event
           username: a.username,
           avatarUrl: a.avatarUrl,
       })),
-    } as any;
+    };
 
 
     return { event: eventWithAttendees, author };
@@ -386,3 +389,5 @@ export const getCalendarItems = async (userId: string, type: 'schedule' | 'autho
 
     return formattedItems.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 };
+
+    
