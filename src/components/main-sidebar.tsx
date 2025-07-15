@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -138,7 +139,15 @@ export function MainSidebar() {
               <SidebarMenuButton asChild tooltip="Explore" isActive={isActive('/explore')}>
                 <Link href="/explore">
                   <Compass />
-                  <span>Explore</span>
+                  <span>Explore Content</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+             <SidebarMenuItem>
+              <SidebarMenuButton asChild tooltip="Creators" isActive={isActive('/creators')}>
+                <Link href="/creators">
+                  <Users />
+                  <span>Creators</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>

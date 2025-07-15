@@ -31,7 +31,8 @@ function Header() {
 
         switch (base) {
             case 'feed': return 'Status Feed';
-            case 'explore': return 'Explore';
+            case 'explore': return 'Explore Content';
+            case 'creators': return 'Explore Creators';
             case 'connections': return 'Connections';
             case 'notifications': return 'Notifications';
             case 'inbox': return 'Inbox';
