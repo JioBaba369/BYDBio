@@ -26,7 +26,8 @@ import { Logo } from '@/components/logo';
 import ImageCropper from '@/components/image-cropper';
 import { Label } from '@/components/ui/label';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { updateUser } from '@/lib/users';
+import { updateUser, type User } from '@/lib/users';
+import { uploadImage } from '@/lib/storage';
 
 // Schema for the form
 const designSchema = z.object({
@@ -222,8 +223,8 @@ export default function BydTagDesignPage() {
     if (user) {
       form.reset({
         name: user.name || '',
-        title: user.businessCard?.title || '',
-        company: user.businessCard?.company || '',
+        title: user.businessCard?.title || user.bioTagDesign?.title || '',
+        company: user.businessCard?.company || user.bioTagDesign?.company || '',
         logoUrl: user.bioTagDesign?.logoUrl || '',
         cardColor: user.bioTagDesign?.cardColor || 'black',
         backgroundImageUrl: user.bioTagDesign?.backgroundImageUrl || '',
@@ -274,10 +275,7 @@ export default function BydTagDesignPage() {
 
   const handleSaveDesign = async (data: DesignFormValues) => {
     if (!user) {
-      toast({
-        title: "Create an Account to Continue",
-        description: "You need an account to save your design.",
-      });
+      toast({ title: "Create an Account to Continue", description: "You need an account to save your design.", });
       router.push('/auth/sign-up');
       return;
     }
@@ -285,19 +283,33 @@ export default function BydTagDesignPage() {
     setIsSaving(true);
     try {
         const { name, title, company, ...bioTagDesign } = data;
-        const businessCard = { title, company };
+        let finalBioTagDesign: Partial<User['bioTagDesign']> = { ...bioTagDesign };
+
+        // Upload BG Image if it's a new data URI
+        if (data.backgroundImageUrl && data.backgroundImageUrl.startsWith('data:image')) {
+            const uploadedBgUrl = await uploadImage(data.backgroundImageUrl, `users/${user.uid}/biotag-bg`);
+            finalBioTagDesign.backgroundImageUrl = uploadedBgUrl;
+        }
+
+        // Upload Logo if it's a new data URI
+        if (data.logoUrl && data.logoUrl.startsWith('data:image')) {
+            const uploadedLogoUrl = await uploadImage(data.logoUrl, `users/${user.uid}/biotag-logo`);
+            finalBioTagDesign.logoUrl = uploadedLogoUrl;
+        }
         
-        await updateUser(user.uid, {
-            name, // Update user's main name
-            businessCard, // Update business card info
-            bioTagDesign, // Save all other design fields to bioTagDesign
-        });
+        const dataToUpdate: Partial<User> = {
+            name,
+            businessCard: { title, company },
+            bioTagDesign: finalBioTagDesign,
+        };
         
-        form.reset(data); // This resets the "dirty" state of the form.
-        toast({
-            title: "Design Saved!",
-            description: "Your BioTAG design has been saved to your profile.",
-        });
+        await updateUser(user.uid, dataToUpdate);
+        
+        // Use the final uploaded URLs to reset the form
+        const finalFormData = { ...data, ...finalBioTagDesign };
+        form.reset(finalFormData);
+        
+        toast({ title: "Design Saved!", description: "Your BioTAG design has been saved to your profile." });
     } catch (e) {
         console.error(e);
         toast({ title: 'Failed to save design', variant: 'destructive' });
@@ -305,6 +317,7 @@ export default function BydTagDesignPage() {
         setIsSaving(false);
     }
   };
+
 
   const handleDownloadCardImage = () => {
     const targetRef = isFlipped ? backPreviewRef : frontPreviewRef;

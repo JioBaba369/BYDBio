@@ -31,6 +31,9 @@ export type BioTagDesign = {
   layout?: 'vertical' | 'horizontal-left' | 'horizontal-right' | 'lanyard';
   logoUrl?: string;
   showQrCode?: boolean;
+  // Legacy fields that are now part of businessCard
+  title?: string;
+  company?: string;
 };
 
 
@@ -544,4 +547,3 @@ export const getAllPublicContent = async (): Promise<PublicContentItem[]> => {
 
     return contentWithAuthors;
 };
-

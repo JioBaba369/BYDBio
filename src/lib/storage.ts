@@ -8,8 +8,11 @@ import { storage } from "@/lib/firebase";
  * @returns The public download URL of the uploaded file.
  */
 export async function uploadImage(dataUrl: string, path: string): Promise<string> {
+  // Add a timestamp to the path to ensure uniqueness for each upload
+  const uniquePath = `${path}-${Date.now()}`;
+  const imageRef = storageRef(storage, uniquePath);
+
   try {
-    const imageRef = storageRef(storage, path);
     // The 'url' is a data URL (e.g., 'data:image/jpeg;base64,...')
     const uploadResult = await uploadString(imageRef, dataUrl, 'data_url', {
         contentType: dataUrl.match(/data:(.*);/)?.[1]
