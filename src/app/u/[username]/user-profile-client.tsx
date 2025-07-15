@@ -1,18 +1,16 @@
 
 'use client';
 
-import { useState, useEffect, useMemo, useCallback, useTransition } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import type { User, PostWithAuthor, UserProfilePayload } from '@/lib/users';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { UserCheck, UserPlus, Edit, Loader2, Link as LinkIcon, Rss, Info, MessageSquare, Briefcase, QrCode, Mail, Users as UsersIcon } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { useAuth } from "@/components/auth-provider";
 import { PostCard } from "@/components/post-card";
 import { useRouter, usePathname } from "next/navigation";
-import { getPostsByUser, deletePost, toggleLikePost, repostPost } from "@/lib/posts";
-import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
+import { getPostsByUser } from "@/lib/posts";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import QRCode from "qrcode.react";
@@ -23,6 +21,7 @@ import { BookingDialog } from "@/components/booking-dialog";
 import { ContactForm } from "@/components/contact-form";
 import { AboutTab } from "@/components/profile/about-tab";
 import Image from "next/image";
+import { usePostActions } from "@/hooks/use-post-actions";
 import { toggleFollowAction } from "@/app/actions/follow";
 
 interface UserProfilePageProps {
@@ -40,13 +39,6 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
   const [posts, setPosts] = useState<PostWithAuthor[]>([]);
   const [postsLoading, setPostsLoading] = useState(true);
 
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [postToDelete, setPostToDelete] = useState<PostWithAuthor | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [loadingAction, setLoadingAction] = useState<{ postId: string; action: 'like' | 'repost' } | null>(null);
-
-  const { toast } = useToast();
-
   const vCardData = useMemo(() => {
     if (!user) return '';
     return generateVCard(user);
@@ -54,9 +46,8 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
 
   const handleFollowToggle = () => {
     if (!currentUser) {
-        toast({ title: "Please sign in to follow users.", variant: "destructive" });
-        router.push('/auth/sign-in');
-        return;
+      router.push('/auth/sign-in');
+      return;
     }
     if (isOwner) return;
 
@@ -76,87 +67,31 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
         const fetchedPosts = await getPostsByUser(user.uid, currentUser?.uid);
         setPosts(fetchedPosts);
     } catch (error) {
-        toast({ title: "Error loading posts", variant: "destructive" });
+        // toast({ title: "Error loading posts", variant: "destructive" });
     } finally {
         setPostsLoading(false);
     }
-  }, [user.uid, currentUser?.uid, toast]);
+  }, [user.uid, currentUser?.uid]);
 
   useEffect(() => {
     loadPosts();
   }, [loadPosts]);
+  
+  const {
+    handleLike,
+    handleDelete,
+    handleRepost,
+    handleQuote,
+    isDeleteDialogOpen,
+    setIsDeleteDialogOpen,
+    loadingAction
+  } = usePostActions({
+    posts,
+    setPosts,
+    currentUser,
+    onAfterAction: loadPosts,
+  });
 
-  const handleLike = async (postId: string) => {
-    if (!currentUser || loadingAction) return;
-    setLoadingAction({ postId, action: 'like' });
-
-    const originalPosts = [...posts];
-    setPosts(prevPosts =>
-      prevPosts.map(p => {
-        if (p.id === postId) {
-          const isLiked = !p.isLiked;
-          return {
-            ...p,
-            isLiked,
-            likes: (p.likes || 0) + (isLiked ? 1 : -1),
-          };
-        }
-        return p;
-      })
-    );
-
-    try {
-        await toggleLikePost(postId, currentUser.uid);
-    } catch (error) {
-        toast({ title: "Something went wrong", variant: "destructive" });
-        setPosts(originalPosts);
-    } finally {
-        setLoadingAction(null);
-    }
-  };
-
-  const handleRepost = async (postId: string) => {
-    if (!currentUser || loadingAction) return;
-    setLoadingAction({ postId, action: 'repost' });
-    try {
-      await repostPost(postId, user.uid);
-      toast({ title: "Reposted!" });
-      await loadPosts(); // Reload posts after reposting
-    } catch (error: any) {
-      toast({ title: error.message || "Failed to repost", variant: "destructive" });
-    } finally {
-        setLoadingAction(null);
-    }
-  };
-
-  const handleQuote = (post: any) => {
-    sessionStorage.setItem('postToQuote', JSON.stringify(post));
-    router.push('/feed');
-  };
-
-  const openDeleteDialog = (post: any) => {
-    setPostToDelete(post);
-    setIsDeleteDialogOpen(true);
-  };
-
-  const handleConfirmDelete = async () => {
-    if (!postToDelete || !currentUser) return;
-    setIsDeleting(true);
-    const originalPosts = [...posts];
-    setPosts(prev => prev.filter(item => item.id !== postToDelete.id));
-
-    try {
-        await deletePost(postToDelete.id);
-        toast({ title: "Post Deleted" });
-    } catch (error) {
-        toast({ title: "Failed to delete post", variant: "destructive" });
-        setPosts(originalPosts);
-    } finally {
-        setIsDeleteDialogOpen(false);
-        setPostToDelete(null);
-        setIsDeleting(false);
-    }
-  };
 
   const canViewPrivateContent = isOwner || isFollowedByCurrentUser;
 
@@ -171,14 +106,6 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
 
   return (
     <>
-      <DeleteConfirmationDialog
-        open={isDeleteDialogOpen}
-        onOpenChange={setIsDeleteDialogOpen}
-        onConfirm={handleConfirmDelete}
-        isLoading={isDeleting}
-        itemName="post"
-        confirmationText="DELETE"
-      />
       <div className="space-y-6">
         <Card className="overflow-hidden border-0 shadow-none -m-4 sm:-m-6 rounded-none">
             <div className="relative h-40 sm:h-48 md:h-56 bg-muted">
@@ -289,11 +216,11 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
                             key={`${item.id}-${item.author.uid}`}
                             item={item}
                             onLike={handleLike}
-                            onDelete={openDeleteDialog}
+                            onDelete={() => handleDelete(item)}
                             onRepost={handleRepost}
                             onQuote={handleQuote}
                             isLoading={loadingAction?.postId === item.id}
-                            loadingAction={loadingAction && loadingAction.postId === item.id ? loadingAction.action : null}
+                            loadingAction={loadingAction && loadingAction.postId === item.id ? loadingAction.action : undefined}
                         />
                     ))}
                     </div>

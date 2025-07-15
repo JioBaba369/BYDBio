@@ -5,8 +5,8 @@ import { useSearchParams, usePathname } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { UserPlus, UserCheck, Search as SearchIcon, Briefcase, MapPin, Tag, Calendar, Users, Tags, DollarSign, Gift, Eye, Building2, ExternalLink, Megaphone, Loader2, Rss, MousePointerClick, Heart, MessageCircle, Repeat, Quote, Share2 } from "lucide-react";
-import { useState, useEffect, useCallback, useTransition } from 'react';
+import { UserPlus, UserCheck, Search as SearchIcon, Briefcase, MapPin, Tags, Calendar, Users, Gift, Eye, Building2, ExternalLink, Megaphone, Loader2, Rss, MousePointerClick } from "lucide-react";
+import { useState, useEffect, useCallback, useTransition, useMemo } from 'react';
 import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -23,12 +23,13 @@ import type { Offer } from '@/lib/offers';
 import type { Job } from '@/lib/jobs';
 import type { Event } from '@/lib/events';
 import type { PromoPage } from '@/lib/promo-pages';
-import type { Post, EmbeddedPostInfoWithAuthor } from '@/lib/posts';
+import type { Post } from '@/lib/posts';
 import { ClientFormattedDate } from '@/components/client-formatted-date';
 import { ClientFormattedCurrency } from '@/components/client-formatted-currency';
 import { PostCard } from '@/components/post-card';
-import { populatePostAuthors, toggleLikePost, repostPost, deletePost } from '@/lib/posts';
+import { populatePostAuthors } from '@/lib/posts';
 import { toggleFollowAction } from '@/app/actions/follow';
+import { usePostActions } from '@/hooks/use-post-actions';
 
 type ItemWithAuthor<T> = T & { author: User };
 type SearchResults = {
@@ -89,7 +90,6 @@ export default function SearchPage() {
 
   const [isLoading, setIsLoading] = useState(false);
   const [results, setResults] = useState<SearchResults>({ users: [], listings: [], jobs: [], events: [], offers: [], promoPages: [], posts: [] });
-  const [loadingAction, setLoadingAction] = useState<{ postId: string; action: 'like' | 'repost' } | null>(null);
   const [isFollowPending, startFollowTransition] = useTransition();
 
   const performSearch = useCallback(async () => {
@@ -159,7 +159,7 @@ export default function SearchPage() {
         allContent.forEach(item => {
             const author = authorMap.get(item.authorId);
             if (!author) {
-                return; // Skip content if author is not found (e.g., deleted account)
+                return;
             }
             
             switch (item.type) {
@@ -173,7 +173,6 @@ export default function SearchPage() {
         });
         
         newResults.posts = await populatePostAuthors(postsToPopulate, user?.uid);
-
         setResults(newResults);
 
     } catch (err) {
@@ -189,6 +188,14 @@ export default function SearchPage() {
         performSearch();
     }
   }, [queryParam, authLoading, performSearch]);
+  
+  const { handleLike, handleDelete, handleRepost, handleQuote, loadingAction } = usePostActions({
+    posts: results.posts,
+    setPosts: (updater) => setResults(prev => ({...prev, posts: typeof updater === 'function' ? updater(prev.posts) : updater })),
+    currentUser: user,
+    onAfterAction: performSearch
+  });
+
 
   const handleToggleFollow = (targetUser: User) => {
     if (!user || isFollowPending) return;
@@ -202,51 +209,6 @@ export default function SearchPage() {
         await toggleFollowAction(formData);
     });
   };
-  
-    const handleLike = async (postId: string) => {
-    if (!user || loadingAction) return;
-    
-    setLoadingAction({ postId, action: 'like' });
-
-    setResults(prev => ({
-        ...prev,
-        posts: prev.posts.map(p => {
-            if (p.id === postId) {
-                const isLiked = !p.isLiked;
-                return {
-                    ...p,
-                    isLiked,
-                    likes: (p.likes || 0) + (isLiked ? 1 : -1),
-                };
-            }
-            return p;
-        })
-    }));
-
-    try {
-        await toggleLikePost(postId, user.uid);
-    } catch (error) {
-        toast({ title: "Something went wrong", variant: "destructive" });
-        performSearch(); // Re-fetch to be safe
-    } finally {
-        setLoadingAction(null);
-    }
-  };
-  
-  const handleRepost = async (postId: string) => {
-    if (!user || loadingAction) return;
-    setLoadingAction({ postId, action: 'repost' });
-    try {
-      await repostPost(postId, user.uid);
-      toast({ title: "Reposted!" });
-      performSearch();
-    } catch (error: any) {
-      toast({ title: error.message || "Failed to repost", variant: "destructive" });
-    } finally {
-      setLoadingAction(null);
-    }
-  };
-
 
   if (!queryParam) {
     return (
@@ -351,11 +313,11 @@ export default function SearchPage() {
                             key={post.id} 
                             item={post} 
                             onLike={handleLike}
-                            onDelete={() => {}}
+                            onDelete={() => handleDelete(post)}
                             onRepost={handleRepost}
-                            onQuote={() => {}}
+                            onQuote={handleQuote}
                             isLoading={loadingAction?.postId === post.id}
-                            loadingAction={loadingAction?.postId === post.id ? loadingAction.action : null}
+                            loadingAction={loadingAction?.postId === post.id ? loadingAction.action : undefined}
                         />
                     ))}
                 </div>

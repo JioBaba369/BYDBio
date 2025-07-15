@@ -11,18 +11,17 @@ import { useToast } from "@/hooks/use-toast"
 import Link from "next/link"
 import ImageCropper from "@/components/image-cropper"
 import { uploadImage } from "@/lib/storage"
-import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog"
 import { PostCard } from "@/components/post-card";
 import Image from "next/image";
 import type { PostWithAuthor } from "@/lib/posts";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { createPost, toggleLikePost, deletePost, repostPost, getFeedPosts, getDiscoveryPosts } from "@/lib/posts";
+import { createPost, getFeedPosts, getDiscoveryPosts } from "@/lib/posts";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FeedSkeleton } from "@/components/feed-skeleton";
-import { QuotedPostPreview } from "@/components/quoted-post-preview";
+import { usePostActions } from "@/hooks/use-post-actions";
 
-// --- Helper Components ---
+
 const EmptyFeedState = ({
   icon: Icon,
   title,
@@ -48,52 +47,52 @@ const EmptyFeedState = ({
   </Card>
 );
 
-// --- Main Component ---
+const QuotedPostPreview = ({ post, onRemove }: { post: any, onRemove: () => void }) => (
+    <div className="mt-2 p-3 border rounded-lg relative">
+        <Button variant="ghost" size="icon" className="absolute top-1 right-1 h-6 w-6" onClick={onRemove}>
+            <X className="h-4 w-4" />
+        </Button>
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Avatar className="h-5 w-5">
+                <AvatarImage src={post.author.avatarUrl} />
+                <AvatarFallback>{post.author.name.charAt(0)}</AvatarFallback>
+            </Avatar>
+            <span className="font-semibold">{post.author.name}</span>
+            <span>@{post.author.username}</span>
+        </div>
+        <p className="mt-2 text-sm whitespace-pre-wrap line-clamp-3">{post.content}</p>
+    </div>
+);
+
+
 export default function FeedPage() {
   const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
 
-  // --- State Management for Post Creation ---
   const [postContent, setPostContent] = useState('');
   const [postCategory, setPostCategory] = useState('');
   const [postPrivacy, setPostPrivacy] = useState<'public' | 'followers' | 'me'>('public');
   const [isPosting, setIsPosting] = useState(false);
 
-  // --- State Management for Feeds ---
   const [followingPosts, setFollowingPosts] = useState<PostWithAuthor[]>([]);
   const [discoveryPosts, setDiscoveryPosts] = useState<PostWithAuthor[]>([]);
   const [activeTab, setActiveTab] = useState('following');
-  const [isLoadingFeed, setIsLoadingFeed] = useState(true); // Indicates if feeds are initially loading
+  const [isLoadingFeed, setIsLoadingFeed] = useState(true);
 
-  // --- State Management for Image Upload ---
   const [imageToCrop, setImageToCrop] = useState<string | null>(null);
   const [croppedImageUrl, setCroppedImageUrl] = useState<string | null>(null);
   const [isCropperOpen, setIsCropperOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // --- State Management for Deletion ---
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [postToDelete, setPostToDelete] = useState<PostWithAuthor | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
-
-  // --- State Management for Quoting/Actions ---
   const [postToQuote, setPostToQuote] = useState<PostWithAuthor | null>(null);
-  const [loadingAction, setLoadingAction] = useState<{ postId: string; action: 'like' | 'repost' } | null>(null);
 
-  // --- Data Fetching Callbacks ---
-
-  /**
-   * Fetches posts for a specific feed type (following or discovery).
-   * @param type - The type of feed to fetch ('following' or 'discovery').
-   */
   const fetchFeed = useCallback(async (type: 'following' | 'discovery') => {
-    // Only fetch if user is defined
     if (!user) {
-      setIsLoadingFeed(false); // Ensure loading state is turned off if no user
+      setIsLoadingFeed(false);
       return;
     }
 
-    setIsLoadingFeed(true); // Set loading true before fetch
+    setIsLoadingFeed(true);
     try {
       let items: PostWithAuthor[];
       if (type === 'following') {
@@ -111,27 +110,45 @@ export default function FeedPage() {
         variant: "destructive"
       });
     } finally {
-      setIsLoadingFeed(false); // Set loading false after fetch (success or failure)
+      setIsLoadingFeed(false);
     }
-  }, [user, toast]); // Dependencies: user (for uid and following array), toast
+  }, [user, toast]);
+  
+  const combinedPosts = useMemo(() => {
+    return activeTab === 'following' ? followingPosts : discoveryPosts;
+  }, [activeTab, followingPosts, discoveryPosts]);
 
-  // --- Effects ---
+  const {
+    handleLike,
+    handleDelete,
+    handleRepost,
+    handleQuote,
+    loadingAction
+  } = usePostActions({
+    posts: combinedPosts,
+    setPosts: activeTab === 'following' ? setFollowingPosts : setDiscoveryPosts,
+    currentUser: user,
+    onAfterAction: () => fetchFeed(activeTab as 'following' | 'discovery'),
+    onQuoteAction: (post) => {
+        setPostToQuote(post);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        document.getElementById('new-post')?.focus();
+    }
+  });
 
-  // Effect to fetch the 'following' feed initially when the user object becomes available.
+
   useEffect(() => {
     if (user?.uid) {
       fetchFeed('following');
     }
-  }, [user?.uid, fetchFeed]); // Dependency on user.uid ensures this runs once user is loaded
+  }, [user?.uid, fetchFeed]);
 
-  // Effect to fetch the 'discovery' feed only when its tab is active and it hasn't been loaded yet.
   useEffect(() => {
     if (activeTab === 'discovery' && discoveryPosts.length === 0 && !isLoadingFeed) {
       fetchFeed('discovery');
     }
   }, [activeTab, discoveryPosts.length, fetchFeed, isLoadingFeed]);
 
-  // Effect to handle quoting a post from session storage (e.g., after navigating from a post detail page).
   useEffect(() => {
     const storedPostJson = sessionStorage.getItem('postToQuote');
     if (storedPostJson) {
@@ -139,20 +156,15 @@ export default function FeedPage() {
         const post = JSON.parse(storedPostJson) as PostWithAuthor;
         setPostToQuote(post);
         sessionStorage.removeItem('postToQuote');
-        window.scrollTo({ top: 0, behavior: 'smooth' }); // Scroll to top for new post input
-        document.getElementById('new-post')?.focus(); // Focus on the textarea
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        document.getElementById('new-post')?.focus();
       } catch (error) {
         console.error("Failed to parse quoted post from session storage:", error);
-        sessionStorage.removeItem('postToQuote'); // Clear invalid data
+        sessionStorage.removeItem('postToQuote');
       }
     }
-  }, []); // Empty dependency array means this runs once on mount
+  }, []);
 
-  // --- Event Handlers ---
-
-  /**
-   * Handles file selection for image upload, preparing it for cropping.
-   */
   const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];
@@ -162,33 +174,22 @@ export default function FeedPage() {
         setIsCropperOpen(true);
       });
       reader.readAsDataURL(file);
-      e.target.value = ''; // Clear input value so the same file can be selected again
+      e.target.value = '';
     }
   }, []);
 
-  /**
-   * Called when the image cropping is complete, setting the URL of the cropped image.
-   */
   const handleCropComplete = useCallback((url: string) => {
     setCroppedImageUrl(url);
     setIsCropperOpen(false);
   }, []);
 
-  /**
-   * Removes the currently selected image for the new post.
-   */
   const handleRemoveImage = useCallback(() => {
     setCroppedImageUrl(null);
   }, []);
 
-  /**
-   * Handles the submission of a new post.
-   */
   const handlePost = useCallback(async () => {
-    // Prevent posting if user is not logged in or a post is already in progress
     if (!user || isPosting) return;
 
-    // Validate if there's any content to post
     if (!postContent.trim() && !croppedImageUrl && !postToQuote) {
       toast({ title: "Cannot post empty update", description: "Please add some text, an image, or a quoted post.", variant: "destructive" });
       return;
@@ -198,13 +199,11 @@ export default function FeedPage() {
     try {
       let imageUrlToPost: string | null = null;
       if (croppedImageUrl) {
-        // Upload image if available
         imageUrlToPost = await uploadImage(croppedImageUrl, `posts/${user.uid}/${Date.now()}`);
       }
 
       let quotedPostData: { id: string; content: string; imageUrl: string | null; authorId: string; } | undefined = undefined;
       if (postToQuote) {
-        // Prepare quoted post data. Ensure `PostWithAuthor` type correctly maps to this structure.
         quotedPostData = {
           id: postToQuote.id,
           content: postToQuote.content,
@@ -212,16 +211,10 @@ export default function FeedPage() {
           authorId: postToQuote.author.uid,
         };
       }
-
-      // Create the new post in the database
+      
       await createPost(user.uid, { content: postContent, imageUrl: imageUrlToPost, quotedPost: quotedPostData, privacy: postPrivacy, category: postCategory });
+      await fetchFeed(activeTab as 'following' | 'discovery');
 
-      // Refresh the currently active feed to show the new post immediately
-      // Use Promise.all if refreshing both feeds simultaneously is desired after a new post,
-      // though refreshing only the active one is generally good for UX.
-      await fetchFeed(activeTab);
-
-      // Reset form fields
       setPostContent('');
       setCroppedImageUrl(null);
       setPostToQuote(null);
@@ -235,128 +228,7 @@ export default function FeedPage() {
       setIsPosting(false);
     }
   }, [user, isPosting, postContent, croppedImageUrl, postToQuote, postPrivacy, postCategory, fetchFeed, activeTab, toast]);
-
-  /**
-   * Handles toggling the like status of a post.
-   * @param postId - The ID of the post to like/unlike.
-   */
-  const handleLike = useCallback(async (postId: string) => {
-    if (!user || loadingAction) return;
-
-    setLoadingAction({ postId, action: 'like' });
-
-    // Update both feeds using a functional update to ensure latest state is used
-    // This is a robust way to handle state updates when depending on previous state.
-    const updatePostLikes = (prevPosts: PostWithAuthor[]) => prevPosts.map(p => {
-      if (p.id === postId) {
-        const isLiked = !p.isLiked;
-        return {
-          ...p,
-          isLiked,
-          likes: (p.likes || 0) + (isLiked ? 1 : -1),
-        };
-      }
-      return p;
-    });
-
-    setFollowingPosts(updatePostLikes);
-    setDiscoveryPosts(updatePostLikes);
-
-    try {
-      await toggleLikePost(postId, user.uid);
-      // No toast on success for likes to avoid notification spam, as per previous implementation
-    } catch (error) {
-      console.error("Failed to toggle like:", error);
-      toast({ title: "Something went wrong", description: "Could not update like status. Please try again.", variant: "destructive" });
-      // Rollback UI on error by re-fetching to ensure data consistency
-      await Promise.all([fetchFeed('following'), fetchFeed('discovery')]); // Re-fetch both just in case
-    } finally {
-      setLoadingAction(null);
-    }
-  }, [user, loadingAction, fetchFeed, toast]); // Removed followingPosts/discoveryPosts from deps as functional update handles it
-
-  /**
-   * Handles reposting a post.
-   * @param postId - The ID of the post to repost.
-   */
-  const handleRepost = useCallback(async (postId: string) => {
-    if (!user || loadingAction) return;
-    setLoadingAction({ postId, action: 'repost' });
-    try {
-      await repostPost(postId, user.uid);
-      toast({ title: "Reposted!", description: "The post has been successfully reposted." });
-      // Reposts can appear in both feeds, so refresh both to ensure consistency
-      await Promise.all([fetchFeed('following'), fetchFeed('discovery')]);
-    } catch (error: any) {
-      console.error("Failed to repost:", error);
-      toast({ title: error.message || "Failed to repost", description: "An error occurred while reposting. Please try again.", variant: "destructive" });
-    } finally {
-      setLoadingAction(null);
-    }
-  }, [user, loadingAction, fetchFeed, toast]);
-
-  /**
-   * Sets the post to be quoted in the new post creation area.
-   * @param post - The post to quote.
-   */
-  const handleQuote = useCallback((post: PostWithAuthor) => {
-    setPostToQuote(post);
-    window.scrollTo({ top: 0, behavior: 'smooth' }); // Scroll to top
-    document.getElementById('new-post')?.focus(); // Focus on the textarea
-  }, []);
-
-  /**
-   * Opens the delete confirmation dialog for a specific post.
-   * @param post - The post to be deleted.
-   */
-  const handleDeleteClick = useCallback((post: PostWithAuthor) => {
-    setPostToDelete(post);
-    setIsDeleteDialogOpen(true);
-  }, []);
-
-  /**
-   * Confirms and performs the deletion of a post.
-   */
-  const handleConfirmDelete = useCallback(async () => {
-    if (!postToDelete || !user) {
-      toast({ title: "Error", description: "No post selected for deletion.", variant: "destructive" });
-      return;
-    }
-    setIsDeleting(true);
-
-    const idToDelete = postToDelete.id;
-
-    // Optimistic UI update: filter out the deleted post from both feeds
-    // Ensure any reposts of this original post are also removed from the UI.
-    const filterDeletedPost = (prevPosts: PostWithAuthor[]) =>
-      prevPosts.filter(item => item.id !== idToDelete && item.originalPostId !== idToDelete);
-
-    setFollowingPosts(filterDeletedPost);
-    setDiscoveryPosts(filterDeletedPost);
-
-    try {
-      await deletePost(idToDelete);
-      toast({ title: "Post Deleted", description: "The post has been successfully removed." });
-    } catch (error) {
-      console.error("Failed to delete post:", error);
-      toast({ title: "Failed to delete post", description: "An error occurred while deleting the post. Please try again.", variant: "destructive" });
-      // Rollback UI on error by re-fetching both feeds
-      await Promise.all([fetchFeed('following'), fetchFeed('discovery')]);
-    } finally {
-      setIsDeleteDialogOpen(false);
-      setPostToDelete(null); // Clear selected post for deletion
-      setIsDeleting(false);
-    }
-  }, [postToDelete, user, fetchFeed, toast]);
-
-  // --- Render Logic ---
-
-  /**
-   * Renders the content of a feed tab (Following or Discovery).
-   * Displays a skeleton while loading, an empty state message if no posts, or the list of posts.
-   * @param posts - The array of posts to display.
-   * @param emptyState - The React node to render when the feed is empty.
-   */
+  
   const renderFeedContent = useCallback((posts: PostWithAuthor[], emptyState: React.ReactNode) => {
     if (isLoadingFeed) return <FeedSkeleton />;
     if (posts.length === 0) return emptyState;
@@ -365,21 +237,20 @@ export default function FeedPage() {
       <div className="space-y-6">
         {posts.map(item => (
           <PostCard
-            key={item.id} // Ensure unique key for list items
+            key={item.id}
             item={item}
             onLike={handleLike}
-            onDelete={handleDeleteClick}
+            onDelete={() => handleDelete(item)}
             onRepost={handleRepost}
             onQuote={handleQuote}
             isLoading={loadingAction?.postId === item.id}
-            loadingAction={loadingAction && loadingAction.postId === item.id ? loadingAction.action : null}
+            loadingAction={loadingAction && loadingAction.postId === item.id ? loadingAction.action : undefined}
           />
         ))}
       </div>
     );
-  }, [isLoadingFeed, handleLike, handleDeleteClick, handleRepost, handleQuote, loadingAction]); // Dependencies: various handlers and loading states
+  }, [isLoadingFeed, handleLike, handleDelete, handleRepost, handleQuote, loadingAction]);
 
-  // Display skeleton while authentication is in progress
   if (authLoading) {
     return (
       <div className="max-w-2xl mx-auto space-y-6">
@@ -388,40 +259,22 @@ export default function FeedPage() {
     );
   }
 
-  // If user is not authenticated after loading, return null (or redirect)
-  // This case implies user is not logged in and not in a loading state,
-  // so the component shouldn't render its content.
   if (!user) return null;
 
   return (
     <>
-      {/* Image Cropper Modal */}
       <ImageCropper
         imageSrc={imageToCrop}
         open={isCropperOpen}
         onOpenChange={setIsCropperOpen}
         onCropComplete={handleCropComplete}
-        aspectRatio={16 / 9} // Standard aspect ratio for most images
+        aspectRatio={16 / 9}
         isRound={false}
       />
-      {/* Delete Confirmation Dialog */}
-      <DeleteConfirmationDialog
-        open={isDeleteDialogOpen}
-        onOpenChange={(isOpen) => {
-          if (!isOpen) setPostToDelete(null); // Clear selected item if dialog is closed
-          setIsDeleteDialogOpen(isOpen);
-        }}
-        onConfirm={handleConfirmDelete}
-        isLoading={isDeleting}
-        itemName="post"
-        confirmationText="DELETE" // Standard confirmation text
-        confirmationLabel={`Are you sure you want to delete this post? This action cannot be undone.`}
-      />
-
+      
       <div className="max-w-2xl mx-auto space-y-6">
         <h1 className="text-2xl sm:text-3xl font-bold font-headline">Status Feed</h1>
 
-        {/* New Post Creation Card */}
         <Card>
           <CardHeader>
             <div className="flex gap-4">
@@ -481,7 +334,6 @@ export default function FeedPage() {
           </CardFooter>
         </Card>
 
-        {/* Feed Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="following">Following</TabsTrigger>
