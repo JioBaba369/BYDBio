@@ -1,79 +1,137 @@
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // Default deny all
-    match /{document=**} {
-      allow read, write: if false;
-    }
-
-    // Users collection
-    match /users/{userId} {
-      allow list, read: if true; // Anyone can list/read user profiles
-      allow create: if request.auth != null && request.auth.uid == userId;
-      allow update: if request.auth != null && request.auth.uid == userId;
-    }
-
-    // Public content collections
-    function isOwner(resourceId) {
-      return request.auth != null && request.auth.uid == get(/databases/$(database)/documents/$(resource.collection)/$(resourceId)).data.authorId;
-    }
-
-    match /listings/{listingId} {
-      allow read: if get(/databases/$(database)/documents/listings/$(listingId)).data.status == 'active';
-      allow list: if request.query.get("status") == "active";
-      allow create, update, delete: if isOwner(listingId);
-    }
-    match /jobs/{jobId} {
-      allow read: if get(/databases/$(database)/documents/jobs/$(jobId)).data.status == 'active';
-      allow list: if request.query.get("status") == "active";
-      allow create, update, delete: if isOwner(jobId);
-    }
-    match /events/{eventId} {
-      allow read: if get(/databases/$(database)/documents/events/$(eventId)).data.status == 'active';
-      allow list: if request.query.get("status") == "active";
-      allow create, update, delete: if isOwner(eventId);
-    }
-    match /offers/{offerId} {
-      allow read: if get(/databases/$(database)/documents/offers/$(offerId)).data.status == 'active';
-      allow list: if request.query.get("status") == "active";
-      allow create, update, delete: if isOwner(offerId);
-    }
-    match /promoPages/{promoId} {
-      allow read: if get(/databases/$(database)/documents/promoPages/$(promoId)).data.status == 'active';
-      allow list: if request.query.get("status") == "active";
-      allow create, update, delete: if isOwner(promoId);
-    }
-
-    // Posts collection
-    match /posts/{postId} {
-      allow read: if resource.data.privacy == 'public' || 
-                   (resource.data.privacy == 'followers' && isSignedIn() && isFollower(resource.data.authorId)) ||
-                   (resource.data.privacy == 'me' && isOwner(postId));
-      allow list: if request.query.get("privacy") == "public";
-      allow create, delete: if isOwner(postId);
-      allow update: if isOwner(postId) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likedBy', 'likes']); // Only allow liking
-    }
-
-    // Private/Authenticated Collections
+  
+    // --- Helper Functions ---
+    
+    // Is the user authenticated?
     function isSignedIn() {
       return request.auth != null;
     }
-    function isUser(userId) {
-      return isSignedIn() && request.auth.uid == userId;
+    
+    // Is the user the owner of the resource?
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+    
+    // Does the incoming data match the required schema for a given type?
+    function isValidPublicContent(data, type) {
+      let baseFields = {
+        'title': 'string', 'description': 'string',
+        'category': 'string', 'subCategory': 'string', 
+        'imageUrl': 'string', 'status': 'string',
+        'ctaLink': 'string', 'couponCode': 'string',
+        'company': 'string', 'location': 'string',
+        'remuneration': 'string', 'applicationUrl': 'string',
+        'contactInfo': 'string', 'price': 'string', 'listingType': 'string',
+        'itinerary': 'list'
+      };
+
+      let requiredFields = {
+        'listing': ['title', 'description', 'price', 'category', 'status'],
+        'offer': ['title', 'description', 'category', 'startDate', 'status'],
+        'job': ['title', 'description', 'company', 'location', 'type', 'status'],
+        'event': ['title', 'description', 'location', 'startDate', 'status'],
+        'promoPage': ['name', 'description', 'email', 'status']
+      };
+
+      let allValidations = [];
+      
+      // Check required fields exist
+      for (let field in requiredFields[type]) {
+        allValidations.push(field in data);
+      }
+      
+      // Check field types and constraints
+      allValidations.push(data.title is string && data.title.size() < 101);
+      allValidations.push(data.description is string && data.description.size() < 5001);
+      allValidations.push(data.status == 'active'); // Can only create active content
+
+      // Specific field validations
+      if (type == 'job') {
+      	allValidations.push(data.type in ['Full-time', 'Part-time', 'Contract', 'Internship']);
+      }
+       if (type == 'promoPage') {
+      	allValidations.push(data.name is string && data.name.size() < 101);
+        allValidations.push(data.email is string && data.email.size() < 101);
+      }
+      
+      // Return true if all validations pass
+      return allValidations.hasOnly(true);
+    }
+    
+    function isValidUserUpdate(data) {
+    	return 
+      	data.name is string && data.name.size() < 51 &&
+        data.username is string && data.username.size() < 31 &&
+        data.bio is string && data.bio.size() < 161 &&
+        (!('avatarUrl' in data) || data.avatarUrl is string) &&
+        (!('hashtags' in data) || data.hashtags is list) &&
+        (!('links' in data) || data.links is list) &&
+        (!('businessCard' in data) || data.businessCard is map) &&
+        (!('bookingSettings' in data) || data.bookingSettings is map);
     }
 
-    // Helper to check if the requesting user is a follower of another user.
-    function isFollower(authorId) {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.following.hasAny([authorId]);
+    // --- User Profiles ---
+    match /users/{userId} {
+      allow read, list;
+      allow create: if isSignedIn() && isOwner(userId);
+      allow update: if isSignedIn() && isOwner(userId) && isValidUserUpdate(request.resource.data)
+                    // Protect fields that should only be updated by server logic
+      							&& !('followerCount' in request.resource.data)
+                    && !('postCount' in request.resource.data)
+                    && !('following' in request.resource.data)
+                    && !('subscriptions' in request.resource.data);
+      allow delete: if isSignedIn() && isOwner(userId);
     }
 
+    // --- Public Content (Generic Rules) ---
+    match /{contentType}/{contentId} where contentType in ['listings', 'jobs', 'events', 'offers', 'promoPages'] {
+      // Allow read access for active content
+      allow get: if resource.data.status == 'active';
+      allow list: if request.query.get('status') == 'active' || request.query.where.get('status') == 'active';
+
+      // Allow create/update/delete only for the authenticated owner
+      allow create: if isSignedIn() && isOwner(request.resource.data.authorId) && isValidPublicContent(request.resource.data, contentType);
+      allow update: if isSignedIn() && isOwner(resource.data.authorId)
+                    // Prevent users from changing ownership or creation date
+                    && request.resource.data.authorId == resource.data.authorId
+                    && request.resource.data.createdAt == resource.data.createdAt
+                    // Prevent users from manipulating stats
+                    && !('views' in request.resource.data)
+                    && !('clicks' in request.resource.data)
+                    && !('claims' in request.resource.data)
+                    && !('applicants' in request.resource.data)
+                    && !('rsvps' in request.resource.data)
+                    && !('followerCount' in request.resource.data);
+      allow delete: if isSignedIn() && isOwner(resource.data.authorId);
+    }
+
+    // --- Posts ---
+    match /posts/{postId} {
+      // Allow reads based on privacy settings
+      allow get: if resource.data.privacy == 'public'
+                  || (resource.data.privacy == 'followers' && isSignedIn() && exists(/databases/$(database)/documents/users/$(resource.data.authorId)) && request.auth.uid in get(/databases/$(database)/documents/users/$(resource.data.authorId)).data.followers)
+                  || (resource.data.privacy == 'me' && isSignedIn() && isOwner(resource.data.authorId));
+      allow list: if request.query.get('privacy') == 'public' || request.query.where.get('privacy') == 'public';
+
+      // Allow create/update/delete only for the authenticated owner
+      allow create: if isSignedIn() && isOwner(request.resource.data.authorId);
+      allow update: if isSignedIn() && isOwner(resource.data.authorId)
+      							// Only allow updating likes and comments via server-side logic, not direct updates
+                    && !('likes' in request.resource.data)
+                    && !('comments' in request.resource.data);
+      allow delete: if isSignedIn() && isOwner(resource.data.authorId);
+    }
+    
+    // --- Private/User-Specific Collections ---
     match /notifications/{notificationId} {
-      allow read, write: if isUser(get(/databases/$(database)/documents/notifications/$(notificationId)).data.userId);
+        allow read, write: if isSignedIn() && isOwner(resource.data.userId);
     }
 
     match /appointments/{appointmentId} {
-      allow read, create, delete: if isSignedIn();
+        allow read, write: if isSignedIn() && (isOwner(resource.data.ownerId) || isOwner(resource.data.bookerId));
     }
   }
 }
