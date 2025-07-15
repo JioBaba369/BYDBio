@@ -6,12 +6,19 @@ import { SidebarProvider } from '@/components/ui/sidebar';
 import { ThemeProvider } from '@/components/theme-provider';
 import { AuthProvider } from '@/components/auth-provider';
 import { AppLayout } from '@/components/app-layout';
-import { Inter } from 'next/font/google'
+import { Inter, Montserrat } from 'next/font/google';
 
-const fontSans = Inter({
+const inter = Inter({
   subsets: ['latin'],
   variable: '--font-inter',
-})
+  display: 'swap',
+});
+
+const montserrat = Montserrat({
+  subsets: ['latin'],
+  variable: '--font-montserrat',
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
   title: 'BYD.Bio - Build Your Dream Bio',
@@ -24,8 +31,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={cn('font-sans antialiased min-h-screen bg-background', fontSans.variable)}>
+    <html lang="en" suppressHydrationWarning className={`${inter.variable} ${montserrat.variable}`}>
+      <body className={cn('font-sans antialiased min-h-screen bg-background')}>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
