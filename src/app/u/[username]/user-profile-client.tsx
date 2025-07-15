@@ -11,7 +11,6 @@ import Link from "next/link";
 import { useAuth } from "@/components/auth-provider";
 import { PostCard } from "@/components/post-card";
 import { useRouter, usePathname } from "next/navigation";
-import { getPostsByUser } from "@/lib/posts";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import QRCode from "qrcode.react";
@@ -166,13 +165,14 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
         </Card>
         
         <Tabs defaultValue="about" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="about">About</TabsTrigger>
                 <TabsTrigger value="posts">Posts</TabsTrigger>
+                <TabsTrigger value="gallery">Content Gallery</TabsTrigger>
             </TabsList>
             
             <TabsContent value="about" className="mt-6">
-                <AboutTab user={user} otherContent={userProfileData.otherContent} />
+                <AboutTab user={user} />
             </TabsContent>
 
             <TabsContent value="posts" className="mt-6">
@@ -197,6 +197,24 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
                             <Rss className="h-10 w-10 mx-auto" />
                             <h3 className="mt-4 font-semibold">No Posts Yet</h3>
                             <p>This user hasn't posted anything yet.</p>
+                        </CardContent>
+                    </Card>
+                )}
+            </TabsContent>
+
+            <TabsContent value="gallery" className="mt-6">
+                {userProfileData.otherContent && userProfileData.otherContent.length > 0 ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        {userProfileData.otherContent.map(item => (
+                            <PublicContentCard key={item.id} item={{...item, author: user}} />
+                        ))}
+                    </div>
+                ) : (
+                     <Card>
+                        <CardContent className="p-10 text-center text-muted-foreground">
+                            <Briefcase className="h-10 w-10 mx-auto" />
+                            <h3 className="mt-4 font-semibold">No Content Yet</h3>
+                            <p>This user hasn't created any listings, jobs, or events yet.</p>
                         </CardContent>
                     </Card>
                 )}

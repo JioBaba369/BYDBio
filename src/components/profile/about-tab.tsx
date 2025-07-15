@@ -12,10 +12,9 @@ import { Button } from '../ui/button';
 
 interface AboutTabProps {
   user: User;
-  otherContent: PublicContentItem[];
 }
 
-export function AboutTab({ user, otherContent }: AboutTabProps) {
+export function AboutTab({ user }: AboutTabProps) {
   const { bio, hashtags, businessCard, links } = user;
   const hasBusinessCardInfo = businessCard && Object.values(businessCard).some(Boolean);
 
@@ -37,17 +36,6 @@ export function AboutTab({ user, otherContent }: AboutTabProps) {
             )}
           </CardContent>
         </Card>
-        
-        {otherContent && otherContent.length > 0 && (
-            <div className="space-y-4">
-                <h3 className="text-xl font-bold font-headline">Content Gallery</h3>
-                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    {otherContent.map(item => (
-                        <PublicContentCard key={item.id} item={{...item, author: user}} />
-                    ))}
-                </div>
-            </div>
-        )}
       </div>
 
        <div className="lg:col-span-1 space-y-6">
