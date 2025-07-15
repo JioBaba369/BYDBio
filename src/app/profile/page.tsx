@@ -2,7 +2,7 @@
 'use client';
 
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { useForm, FormProvider, useFieldArray } from 'react-hook-form';
+import { useForm, FormProvider, useFieldArray, useFormContext } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
@@ -15,7 +15,7 @@ import { profileSchema, type ProfileFormValues } from '@/lib/schemas/profile';
 import { ProfilePageSkeleton } from '@/components/profile-skeleton';
 
 import { Button } from '@/components/ui/button';
-import { Save, Loader2, User, Link as LinkIcon, Hash, Edit, Upload, Sparkles, X, GripVertical } from 'lucide-react';
+import { Save, Loader2, User, Link as LinkIcon, Hash, Edit, Upload, Sparkles, X, GripVertical, Trash2, PlusCircle } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 import { ProfilePreview } from '@/components/profile/profile-preview';
@@ -30,9 +30,9 @@ import { AIBioGenerator } from '@/components/ai/bio-generator';
 import { suggestHashtags, type HashtagSuggestInput } from '@/ai/flows/hashtag-suggester-flow';
 import { Badge } from '@/components/ui/badge';
 import { AIAvatarGenerator } from '@/components/ai/avatar-generator';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { availableIconNames, linkIconData } from '@/lib/link-icons';
-import { cn } from '../lib/utils';
+import { cn } from '@/lib/utils';
 
 // --- Links DnD Subcomponent ---
 const SortableLinkItem = ({ index, remove }: { index: number, remove: (index: number) => void }) => {
@@ -428,4 +428,3 @@ export default function ProfilePage() {
     </FormProvider>
   );
 }
-
