@@ -1,4 +1,3 @@
-// src/app/my-content/page.tsx
 
 'use client';
 
@@ -31,8 +30,8 @@ import { saveAs } from 'file-saver';
 import { KillChainTracker } from '@/components/kill-chain-tracker';
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { generateIcsContent, deleteAppointment } from '@/lib/appointments';
-import { CONTENT_TYPES, getContentTypeMetadata, ContentTypeMetadata } from '@/lib/content-types'; // Import centralized definitions
-import { parseISO } from 'date-fns'; // Import parseISO for date parsing
+import { CONTENT_TYPES, getContentTypeMetadata, ContentTypeMetadata } from '@/lib/content-types';
+import { parseISO } from 'date-fns';
 
 const ContentHubSkeleton = () => (
     <div className="space-y-6 animate-pulse">
@@ -228,7 +227,6 @@ export default function MyContentPage() {
   };
 
   const handleAddToCalendar = async (item: CalendarItem) => {
-    // Ensure item.startTime and item.endTime are Date objects
     const startTime = typeof item.startTime === 'string' ? parseISO(item.startTime) : (item.startTime as Date);
     const endTime = typeof item.endTime === 'string' ? parseISO(item.endTime) : (item.endTime as Date);
 
@@ -238,9 +236,7 @@ export default function MyContentPage() {
     }
     
     try {
-        // Sanitize filename: replace non-alphanumeric characters with underscores
         const safeTitle = item.title.replace(/[^a-zA-Z0-9]/g,"_");
-        // Ensure that `user.name` and `user.email` are not null/undefined for `generateIcsContent`
         const userName = user.name || 'Anonymous User';
         const userEmail = user.email || 'noreply@byd.bio';
         const bookerName = item.bookerName || 'Guest';
@@ -294,7 +290,7 @@ export default function MyContentPage() {
                 <DropdownMenuLabel>Create New Content</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 {CONTENT_TYPES.filter(type => type.name !== 'Appointment').map((typeMeta) => {
-                  const linkPath = `/${typeMeta.name.toLowerCase().replace(' ', '')}s/create`;
+                  const linkPath = `/${typeMeta.name.toLowerCase().replace(/ /g, '')}s/create`;
                   const label = typeMeta.name === 'Business Page' ? typeMeta.name : `New ${typeMeta.name}`;
                   const Icon = typeMeta.icon;
                   return (
@@ -386,7 +382,7 @@ export default function MyContentPage() {
                   <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                       {filteredItems.map((item) => {
                         const typeMeta = getContentTypeMetadata(item.type);
-                        if (!typeMeta) return null; // Should not happen with centralized types
+                        if (!typeMeta) return null;
 
                         const BadgeIcon = typeMeta.icon;
 
@@ -441,7 +437,7 @@ export default function MyContentPage() {
                               <CardHeader className="p-4 pb-2">
                                   <div className="flex justify-between items-start">
                                       <div>
-                                        <Badge variant={typeMeta.variant} className="capitalize">{item.isExternal ? 'Attending' : typeMeta.label.replace(/s$/, '')}</Badge> { /* Remove plural 's' for display */ }
+                                        <Badge variant={typeMeta.variant} className="capitalize">{item.isExternal ? 'Attending' : typeMeta.label.replace(/s$/, '')}</Badge>
                                         <CardTitle className="text-base mt-2">{item.title}</CardTitle>
                                       </div>
                                       <DropdownMenu>
@@ -499,12 +495,12 @@ export default function MyContentPage() {
                             <TableBody>
                                 {filteredItems.map(item => {
                                   const typeMeta = getContentTypeMetadata(item.type);
-                                  if (!typeMeta) return null; // Should not happen
+                                  if (!typeMeta) return null;
 
                                     return (
                                     <TableRow key={item.id}>
                                         <TableCell className="font-medium">{item.title}</TableCell>
-                                        <TableCell><Badge variant={typeMeta.variant} className="capitalize">{typeMeta.label.replace(/s$/, '')}</Badge></TableCell> {/* Remove plural 's' for display */}
+                                        <TableCell><Badge variant={typeMeta.variant} className="capitalize">{typeMeta.label.replace(/s$/, '')}</Badge></TableCell>
                                         <TableCell><ClientFormattedDate date={item.date} formatStr="PPP"/></TableCell>
                                         <TableCell><Badge variant={item.status === 'active' ? 'secondary' : 'outline'}>{item.status}</Badge></TableCell>
                                         <TableCell className="text-right">
