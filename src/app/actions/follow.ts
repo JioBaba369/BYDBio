@@ -11,38 +11,36 @@ const followSchema = z.object({
   currentUserId: z.string(),
   targetUserId: z.string(),
   isFollowing: z.boolean(),
-  path: z.string(),
 });
 
-export async function toggleFollowAction(formData: FormData): Promise<{ success: boolean; error?: string; newFollowerCount?: number }> {
+export async function toggleFollowAction(currentUserId: string, targetUserId: string, isFollowing: boolean): Promise<{ success: boolean; error?: string; newFollowerCount?: number }> {
   const validatedFields = followSchema.safeParse({
-    currentUserId: formData.get('currentUserId'),
-    targetUserId: formData.get('targetUserId'),
-    isFollowing: formData.get('isFollowing') === 'true',
-    path: formData.get('path'),
+    currentUserId,
+    targetUserId,
+    isFollowing,
   });
 
   if (!validatedFields.success) {
     return { success: false, error: 'Invalid input.' };
   }
 
-  const { currentUserId, targetUserId, isFollowing, path } = validatedFields.data;
+  const { currentUserId: validatedCurrentUserId, targetUserId: validatedTargetUserId, isFollowing: validatedIsFollowing } = validatedFields.data;
 
   try {
-    if (isFollowing) {
-      await unfollowUser(currentUserId, targetUserId);
+    if (validatedIsFollowing) {
+      await unfollowUser(validatedCurrentUserId, validatedTargetUserId);
     } else {
-      await followUser(currentUserId, targetUserId);
+      await followUser(validatedCurrentUserId, validatedTargetUserId);
     }
     
     // Revalidate paths to update follower lists on other pages
-    revalidatePath(path);
+    revalidatePath(`/u/${validatedTargetUserId}`);
     revalidatePath('/connections');
 
     // Fetch the new follower count to return to the client
-    const targetUserRef = doc(db, 'users', targetUserId);
+    const targetUserRef = doc(db, 'users', validatedTargetUserId);
     const userDoc = await getDoc(targetUserRef);
-    const newFollowerCount = userDoc.exists() ? userDoc.data().followerCount : 0;
+    const newFollowerCount = userDoc.exists() ? userDoc.data().followerCount || 0 : 0;
 
     return { success: true, newFollowerCount };
   } catch (error) {

@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { UserPlus, UserCheck, Loader2 } from 'lucide-react';
 import { useAuth } from '@/components/auth-provider';
 import { useToast } from '@/hooks/use-toast';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { toggleFollowAction } from '@/app/actions/follow';
 
 interface FollowButtonProps {
@@ -19,7 +19,6 @@ export function FollowButton({ targetUserId, initialIsFollowing, initialFollower
     const { user: currentUser } = useAuth();
     const { toast } = useToast();
     const router = useRouter();
-    const pathname = usePathname();
     const [isPending, startTransition] = useTransition();
 
     const [isFollowing, setIsFollowing] = useState(initialIsFollowing);
@@ -39,14 +38,8 @@ export function FollowButton({ targetUserId, initialIsFollowing, initialFollower
             // Optimistic update
             setIsFollowing(!wasFollowing);
             setFollowerCount(c => c + (wasFollowing ? -1 : 1));
-
-            const formData = new FormData();
-            formData.append('currentUserId', currentUser.uid);
-            formData.append('targetUserId', targetUserId);
-            formData.append('isFollowing', String(wasFollowing));
-            formData.append('path', pathname);
             
-            const result = await toggleFollowAction(formData);
+            const result = await toggleFollowAction(currentUser.uid, targetUserId, wasFollowing);
 
             if (!result.success) {
                 // Revert on error
