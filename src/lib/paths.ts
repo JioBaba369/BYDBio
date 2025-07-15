@@ -12,7 +12,6 @@ const PROTECTED_ROUTE_BASES = [
     '/profile',
     '/settings',
     '/my-content',
-    '/diary',
     '/connections',
     '/feed',
     '/notifications',

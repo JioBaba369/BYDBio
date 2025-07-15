@@ -1,13 +1,9 @@
-
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // =============================================
-    //                Helper Functions
-    // =============================================
-    
+
+    // --- Helper Functions ---
     function isSignedIn() {
       return request.auth != null;
     }
@@ -16,135 +12,185 @@ service cloud.firestore {
       return request.auth.uid == userId;
     }
     
-    function isNewDoc() {
-      return !exists(path);
+    function isString(value) {
+      return value is string;
     }
 
-    function isExistingDoc() {
-      return exists(path);
-    }
-
-    function isAuthor() {
-      return request.auth.uid == request.resource.data.authorId;
+    function isStringOrNull(value) {
+      return value is string || value == null;
     }
     
-    function wasAuthor() {
-      return request.auth.uid == resource.data.authorId;
+    function isNumber(value) {
+      return value is number;
     }
 
-    // =============================================
-    //                 Collections
-    // =============================================
+    function isInt(value) {
+      return value is int;
+    }
+    
+    function isBool(value) {
+      return value is bool;
+    }
 
-    // User Profiles
+    function isTimestamp(value) {
+        return value is timestamp;
+    }
+    
+    function isTimestampOrNull(value) {
+        return value is timestamp || value == null;
+    }
+
+    function isArray(value) {
+      return value is list;
+    }
+    
+    function isMap(value) {
+      return value is map;
+    }
+    
+    function hasOnly(keys) {
+        return request.resource.data.keys().hasOnly(keys);
+    }
+
+    // --- Data Validation Functions ---
+
+    function isValidUser(data) {
+        return data.uid == request.auth.uid
+            && isString(data.name) && data.name.size() > 0
+            && isString(data.username) && data.username.size() >= 3
+            && isStringOrNull(data.email)
+            && isString(data.avatarUrl)
+            && isString(data.avatarFallback)
+            && isString(data.bio)
+            && isArray(data.hashtags)
+            && isArray(data.following)
+            && isInt(data.followerCount) && data.followerCount >= 0
+            && isInt(data.postCount) && data.postCount >= 0
+            && isArray(data.links)
+            && isMap(data.businessCard)
+            && isMap(data.notificationSettings)
+            && isMap(data.subscriptions)
+            && isMap(data.bookingSettings)
+            && isArray(data.searchableKeywords);
+    }
+
+    function isValidContent(data, requiredFields, optionalFields) {
+        let allKeys = requiredFields.concat(optionalFields);
+        return data.authorId == request.auth.uid
+            && data.status == 'active'
+            && isTimestamp(data.createdAt)
+            && hasOnly(allKeys);
+    }
+    
+    function isValidListing(data) {
+        let required = ['authorId', 'title', 'description', 'price', 'category', 'listingType', 'status', 'createdAt', 'views', 'clicks', 'followerCount', 'searchableKeywords'];
+        let optional = ['subCategory', 'imageUrl', 'startDate', 'endDate'];
+        return isValidContent(data, required, optional)
+            && isString(data.title) && data.title.size() > 0
+            && isString(data.description) && data.description.size() > 0
+            && isString(data.price)
+            && isString(data.category);
+    }
+    
+    function isValidJob(data) {
+        let required = ['authorId', 'title', 'company', 'description', 'location', 'type', 'status', 'createdAt', 'postingDate', 'views', 'applicants', 'followerCount', 'searchableKeywords'];
+        let optional = ['subCategory', 'remuneration', 'closingDate', 'imageUrl', 'applicationUrl', 'contactInfo'];
+        return isValidContent(data, required, optional)
+            && isString(data.title) && data.title.size() > 0
+            && isString(data.company) && data.company.size() > 0
+            && isString(data.description) && data.description.size() > 0
+            && isString(data.location) && data.location.size() > 0;
+    }
+
+    function isValidEvent(data) {
+        let required = ['authorId', 'title', 'description', 'location', 'startDate', 'status', 'createdAt', 'views', 'rsvps', 'followerCount', 'searchableKeywords', 'itinerary'];
+        let optional = ['subTitle', 'category', 'subCategory', 'imageUrl', 'couponCode', 'ctaLink', 'endDate'];
+        return isValidContent(data, required, optional)
+            && isString(data.title) && data.title.size() > 0
+            && isString(data.description) && data.description.size() > 0
+            && isString(data.location) && data.location.size() > 0
+            && isTimestamp(data.startDate);
+    }
+
+    function isValidOffer(data) {
+        let required = ['authorId', 'title', 'description', 'category', 'startDate', 'status', 'createdAt', 'views', 'claims', 'followerCount', 'searchableKeywords'];
+        let optional = ['subCategory', 'endDate', 'imageUrl', 'couponCode', 'ctaLink'];
+        return isValidContent(data, required, optional)
+            && isString(data.title) && data.title.size() > 0
+            && isString(data.description) && data.description.size() > 0
+            && isString(data.category) && data.category.size() > 0
+            && isTimestamp(data.startDate);
+    }
+
+    function isValidPromoPage(data) {
+        let required = ['authorId', 'name', 'description', 'email', 'status', 'createdAt', 'views', 'clicks', 'followerCount', 'searchableKeywords'];
+        let optional = ['category', 'subCategory', 'phone', 'website', 'address', 'imageUrl', 'logoUrl'];
+        return isValidContent(data, required, optional)
+            && isString(data.name) && data.name.size() > 0
+            && isString(data.description) && data.description.size() > 0
+            && isString(data.email) && data.email.size() > 0;
+    }
+
+
+    // --- Collection Rules ---
+
     match /users/{userId} {
-      // Anyone can view a user's public profile
-      allow get: if true;
-      
-      // Only the owner can update or delete their own profile. Creation is handled at sign-up.
-      allow write: if isOwner(userId);
-      
-      // Authenticated users can list users (for search/discovery)
-      allow list: if isSignedIn();
-    }
-    
-    // Notifications
-    match /notifications/{notificationId} {
-      // Only the recipient can read, update, or delete their notifications
-      allow read, update, delete: if isOwner(resource.data.userId);
-      
-      // Anyone signed in can create a notification (e.g., by following, liking)
-      allow create: if isSignedIn();
-    }
-    
-    // Appointments
-    match /appointments/{appointmentId} {
-      allow read, write: if isOwner(resource.data.ownerId) || isOwner(resource.data.bookerId);
-      allow create: if isSignedIn();
+      allow read;
+      allow create: if isSignedIn() && isValidUser(request.resource.data);
+      allow update: if isSignedIn() && isOwner(userId) && isValidUser(request.resource.data);
+      allow delete: if isSignedIn() && isOwner(userId);
     }
 
-    // Reminders
-    match /reminders/{reminderId} {
-      allow read, write, delete: if isSignedIn() && isOwner(resource.data.userId);
-      allow create: if isSignedIn();
-    }
-    
-    // Generic Content Rules
-    function canReadContent() {
-      return resource.data.status == 'active';
-    }
-    
-    function canCreateContent() {
-      return isSignedIn() && isAuthor();
-    }
-    
-    function canUpdateContent() {
-      return isSignedIn() && wasAuthor();
-    }
-    
-    function canDeleteContent() {
-      return isSignedIn() && wasAuthor();
-    }
-    
-    // Listings
-    match /listings/{listingId} {
-      allow get: if canReadContent();
-      allow list: if isSignedIn();
-      allow create: if canCreateContent();
-      allow update: if canUpdateContent();
-      allow delete: if canDeleteContent();
-    }
-    
-    // Jobs
-    match /jobs/{jobId} {
-      allow get: if canReadContent();
-      allow list: if isSignedIn();
-      allow create: if canCreateContent();
-      allow update: if canUpdateContent();
-      allow delete: if canDeleteContent();
-    }
-    
-    // Events
-    match /events/{eventId} {
-      allow get: if canReadContent();
-      allow list: if isSignedIn();
-      allow create: if canCreateContent();
-      allow update: if canUpdateContent();
-      allow delete: if canDeleteContent();
-    }
-    
-    // Offers
-    match /offers/{offerId} {
-      allow get: if canReadContent();
-      allow list: if isSignedIn();
-      allow create: if canCreateContent();
-      allow update: if canUpdateContent();
-      allow delete: if canDeleteContent();
-    }
-
-    // Promo Pages
-    match /promoPages/{pageId} {
-      allow get: if canReadContent();
-      allow list: if isSignedIn();
-      allow create: if canCreateContent();
-      allow update: if canUpdateContent();
-      allow delete: if canDeleteContent();
-    }
-
-    // Posts
     match /posts/{postId} {
-      // Allow read if public, or if signed in and the viewer is the author or a follower of the author.
-      allow get: if resource.data.privacy == 'public' 
-                  || (isSignedIn() && (
-                      isOwner(resource.data.authorId) || 
-                      get(/databases/$(database)/documents/users/$(request.auth.uid)).data.following.hasAny([resource.data.authorId])
-                    )
-                  );
+        allow read: if resource.data.privacy == 'public' || (isSignedIn() && resource.data.authorId == request.auth.uid) || (isSignedIn() && resource.data.privacy == 'followers' && request.auth.uid in get(/databases/$(database)/documents/users/$(resource.data.authorId)).data.following);
+        allow create: if isSignedIn();
+        allow update: if isSignedIn() && isOwner(resource.data.authorId);
+        allow delete: if isSignedIn() && isOwner(resource.data.authorId);
+    }
+    
+    match /listings/{listingId} {
+      allow read: if resource.data.status == 'active';
+      allow create: if isSignedIn() && isValidListing(request.resource.data);
+      allow update(listing): if isSignedIn() && isOwner(resource.data.authorId);
+      allow delete: if isSignedIn() && isOwner(resource.data.authorId);
+    }
 
-      allow list: if isSignedIn();
-      allow create: if canCreateContent();
-      allow update: if canUpdateContent(); // For liking
-      allow delete: if canDeleteContent();
+    match /jobs/{jobId} {
+      allow read: if resource.data.status == 'active';
+      allow create: if isSignedIn() && isValidJob(request.resource.data);
+      allow update: if isSignedIn() && isOwner(resource.data.authorId);
+      allow delete: if isSignedIn() && isOwner(resource.data.authorId);
+    }
+    
+    match /events/{eventId} {
+      allow read: if resource.data.status == 'active';
+      allow create: if isSignedIn() && isValidEvent(request.resource.data);
+      allow update: if isSignedIn() && (isOwner(resource.data.authorId) || request.auth.uid in resource.data.rsvps);
+      allow delete: if isSignedIn() && isOwner(resource.data.authorId);
+    }
+
+    match /offers/{offerId} {
+      allow read: if resource.data.status == 'active';
+      allow create: if isSignedIn() && isValidOffer(request.resource.data);
+      allow update: if isSignedIn() && isOwner(resource.data.authorId);
+      allow delete: if isSignedIn() && isOwner(resource.data.authorId);
+    }
+
+    match /promoPages/{promoId} {
+      allow read: if resource.data.status == 'active';
+      allow create: if isSignedIn() && isValidPromoPage(request.resource.data);
+      allow update: if isSignedIn() && isOwner(resource.data.authorId);
+      allow delete: if isSignedIn() && isOwner(resource.data.authorId);
+    }
+
+    match /notifications/{notificationId} {
+      allow read, update: if isSignedIn() && isOwner(resource.data.userId);
+      allow create: if isSignedIn() || request.resource.data.type == 'contact_form_submission';
+    }
+    
+    match /appointments/{appointmentId} {
+      allow read, delete: if isSignedIn() && (isOwner(resource.data.ownerId) || isOwner(resource.data.bookerId));
+      allow create: if isSignedIn();
     }
   }
 }
