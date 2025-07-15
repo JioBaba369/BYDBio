@@ -1,121 +1,123 @@
+
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // Helper functions
-    function isSignedIn() {
+  
+    // =============================================
+    // Helper Functions
+    // =============================================
+    
+    function isAuthenticated() {
       return request.auth != null;
     }
-
+    
     function isOwner(userId) {
       return request.auth.uid == userId;
     }
-
-    // Validation helpers
-    function isString(value, min, max) {
-      return value is string && value.size() >= min && value.size() <= max;
+    
+    function isGettingPublicData() {
+      return request.query.limit <= 50;
     }
 
-    function isOptionalString(value, max) {
-      return value == null || (value is string && value.size() <= max);
+    function isFollower(authorId) {
+        return exists(/databases/$(database)/documents/users/$(request.auth.uid)) && authorId in get(/databases/$(database)/documents/users/$(request.auth.uid)).data.following;
+    }
+
+    function isAuthorOf(doc) {
+      return request.auth.uid == doc.authorId;
+    }
+
+    // =============================================
+    // Default Deny
+    // =============================================
+    match /{document=**} {
+      allow read, write: if false;
     }
     
-    function isUrl(value) {
-       return value is string && value.matches('https?://[^\\s/$.?#].[^\\s]*');
-    }
-
-    function isOptionalUrl(value) {
-        return value == null || value == '' || isUrl(value);
-    }
-    
-    function isList(value, max) {
-        return value is list && value.size() <= max;
-    }
-    
-    function isValidTimestamp(value) {
-      return value is timestamp;
-    }
-    
-    function isValidStatus(value) {
-      return value == 'active' || value == 'archived';
-    }
-
-    // --- Start of rules ---
-
-    // Users:
-    // - Anyone can read user profiles
-    // - Only the owner can create/update their own profile
-    // - Nobody can delete a user profile directly through Firestore rules (handled by server function)
+    // =============================================
+    // Users Collection Rules
+    // =============================================
     match /users/{userId} {
       allow get: if true;
-      allow list: if request.query.limit <= 50;
+      allow list: if isGettingPublicData();
+      
       allow create: if isOwner(userId)
-                    && isString(request.resource.data.name, 1, 50)
-                    && isString(request.resource.data.username, 3, 30)
-                    && request.resource.data.email == request.auth.token.email;
+                    && request.resource.data.uid == userId;
+      
       allow update: if isOwner(userId)
-                     && isString(request.resource.data.name, 1, 50)
-                     && isString(request.resource.data.username, 3, 30);
-      allow delete: if false; // Deletion should be a server-side process
+                     && !(request.resource.data.followerCount != resource.data.followerCount);
     }
-    
-    // Generic rule for public content collections (jobs, events, listings, offers, promoPages)
-    function publicContentRules(collectionName) {
-      return {
-        // Anyone can get a document if its status is active
-        'allow get': if resource.data.status == 'active',
-        // Anyone can list documents, but limited to 50 per query
-        'allow list': if request.query.limit <= 50,
-        // Only authenticated owners can create, update, or delete their own documents
-        'allow write': if isSignedIn() && isOwner(request.resource.data.authorId)
-      };
-    }
-    
+
+    // =============================================
+    // Content Collections Rules
+    // =============================================
+
     match /listings/{listingId} {
-      rules: publicContentRules('listings');
+      allow get: if resource.data.status == 'active';
+      allow list: if isGettingPublicData();
+      allow create: if isAuthorOf(request.resource.data);
+      allow update, delete: if isAuthorOf(resource.data);
     }
     
     match /jobs/{jobId} {
-       rules: publicContentRules('jobs');
+      allow get: if resource.data.status == 'active';
+      allow list: if isGettingPublicData();
+      allow create: if isAuthorOf(request.resource.data);
+      allow update, delete: if isAuthorOf(resource.data);
     }
-
+    
     match /events/{eventId} {
-       rules: publicContentRules('events');
+      allow get: if resource.data.status == 'active';
+      allow list: if isGettingPublicData();
+      allow create: if isAuthorOf(request.resource.data);
+      allow delete: if isAuthorOf(resource.data);
+      allow update: if (isAuthorOf(resource.data)) || 
+                     (isAuthenticated() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['rsvps']));
     }
     
     match /offers/{offerId} {
-       rules: publicContentRules('offers');
+      allow get: if resource.data.status == 'active';
+      allow list: if isGettingPublicData();
+      allow create: if isAuthorOf(request.resource.data);
+      allow update, delete: if isAuthorOf(resource.data);
     }
     
-    match /promoPages/{promoId} {
-       rules: publicContentRules('promoPages');
+    match /promoPages/{promoPageId} {
+      allow get: if resource.data.status == 'active';
+      allow list: if isGettingPublicData();
+      allow create: if isAuthorOf(request.resource.data);
+      allow update, delete: if isAuthorOf(resource.data);
     }
     
-    // Posts:
-    // - Public posts are readable by anyone.
-    // - Follower-only posts are readable by followers.
-    // - "Me only" posts are readable only by the owner.
+    // =============================================
+    // Posts (Status Feed) Collection Rules
+    // =============================================
     match /posts/{postId} {
-      allow get: if resource.data.privacy == 'public'
-                  || (resource.data.privacy == 'followers' && exists(/databases/$(database)/documents/users/$(resource.data.authorId)) && request.auth.uid in get(/databases/$(database)/documents/users/$(resource.data.authorId)).data.followers)
-                  || (isSignedIn() && isOwner(resource.data.authorId));
-      allow list: if request.query.limit <= 50;
-      allow write: if isSignedIn() && isOwner(request.resource.data.authorId);
-    }
-    
-    // Notifications & Appointments (Private collections)
-    match /notifications/{notificationId} {
-      allow read, write: if isSignedIn() && isOwner(resource.data.userId);
-    }
+      allow list: if request.query.get("privacy") == "public";
+      allow get: if resource.data.privacy == 'public' || 
+                    (resource.data.privacy == 'followers' && (isOwner(resource.data.authorId) || isFollower(resource.data.authorId))) ||
+                    (resource.data.privacy == 'me' && isOwner(resource.data.authorId));
 
-    match /appointments/{appointmentId} {
-      allow read, write: if isSignedIn() && (isOwner(resource.data.ownerId) || isOwner(resource.data.bookerId));
+      allow create: if isOwner(request.resource.data.authorId);
+      allow delete: if isOwner(resource.data.authorId);
+      
+      allow update: if isAuthenticated() &&
+                       (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likedBy', 'likes']));
     }
     
-    // Default deny all other collections
-    match /{path=**} {
-      allow read, write: if false;
+    // =============================================
+    // Private Collections Rules
+    // =============================================
+    
+    match /notifications/{notificationId} {
+      allow read, write: if isOwner(resource.data.userId);
+    }
+    
+    match /appointments/{appointmentId} {
+      allow read: if isAuthenticated() && (isOwner(resource.data.ownerId) || isOwner(resource.data.bookerId));
+      allow create: if isAuthenticated() && isOwner(request.resource.data.bookerId);
+      allow delete: if isAuthenticated() && (isOwner(resource.data.ownerId) || isOwner(resource.data.bookerId));
     }
   }
 }
