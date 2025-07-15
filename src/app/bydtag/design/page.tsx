@@ -135,11 +135,16 @@ const TagPreview = forwardRef<HTMLDivElement, { values: DesignFormValues; user: 
         );
 
         return (
-             <div ref={ref} className={cn("w-full h-full rounded-2xl p-4 transition-colors relative flex", cardBgClass)} style={cardStyle}>
+             <div ref={ref} className={cn("w-full h-full rounded-2xl p-4 transition-colors relative flex flex-col", cardBgClass)} style={cardStyle}>
                 {values.backgroundImageUrl && <div className="absolute inset-0 bg-black/50 rounded-2xl" />}
-                <div className={cn("relative z-10 flex w-full items-center gap-4", layout === 'horizontal-right' ? 'flex-row-reverse' : '')}>
-                    {renderAvatar("h-16 w-16", "text-3xl")}
-                    {textElement}
+                 <div className="relative z-10 flex w-full flex-col justify-between h-full">
+                    <div className={cn("flex w-full items-center gap-4", layout === 'horizontal-right' ? 'flex-row-reverse' : '')}>
+                        {renderAvatar("h-16 w-16", "text-3xl")}
+                        {textElement}
+                    </div>
+                    <div className="mx-auto">
+                        <TapOrScanBanner textColor={values.textColor} />
+                    </div>
                 </div>
             </div>
         );
@@ -312,7 +317,6 @@ export default function BydTagDesignPage() {
   ];
   
   const isPortraitLayout = watchedValues.layout === 'vertical' || watchedValues.layout === 'lanyard';
-  const isHorizontalLayout = watchedValues.layout === 'horizontal-left' || watchedValues.layout === 'horizontal-right';
   const cropperAspectRatio = watchedValues.layout === 'lanyard' || watchedValues.layout === 'vertical' ? 53.98 / 85.6 : 85.6 / 53.98;
 
   return (
@@ -352,11 +356,6 @@ export default function BydTagDesignPage() {
                         </div>
                     </div>
                   </div>
-                  {isHorizontalLayout && !isFlipped && (
-                     <div className="mx-auto max-w-[323px]">
-                        <TapOrScanBanner textColor={watchedValues.textColor} />
-                     </div>
-                  )}
                   <div className="grid grid-cols-2 gap-2 mt-4 max-w-lg mx-auto">
                       <Button type="button" variant="outline" className="w-full" onClick={() => setIsFlipped(f => !f)}>
                           <RefreshCw className="mr-2 h-4 w-4" />
