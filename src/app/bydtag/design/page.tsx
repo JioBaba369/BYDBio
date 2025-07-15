@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useAuth } from '@/components/auth-provider';
-import { ArrowRight, ArrowLeft, RefreshCw, Download, Upload, Paintbrush, Text, LayoutTemplate, Settings2, Nfc, Save, Loader2 } from 'lucide-react';
+import { ArrowRight, ArrowLeft, RefreshCw, Download, Upload, Text, LayoutTemplate, Settings2, Nfc, Save, Loader2 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -44,8 +44,8 @@ const designSchema = z.object({
 type DesignFormValues = z.infer<typeof designSchema>;
 
 const TagPreview = forwardRef<HTMLDivElement, { values: DesignFormValues; user: any; side: 'front' | 'back' }>(({ values, user, side }, ref) => {
-    const textColor = values.textColor === 'light' ? 'text-primary-foreground' : 'text-foreground';
-    const subtitleColor = values.textColor === 'light' ? 'text-primary-foreground/80' : 'text-muted-foreground';
+    const textColor = values.textColor === 'light' ? 'text-white' : 'text-gray-900';
+    const subtitleColor = values.textColor === 'light' ? 'text-white/80' : 'text-gray-500';
     const layout = values.layout || 'vertical';
 
     const cardBgClass = values.backgroundImageUrl ? '' : {
@@ -163,7 +163,7 @@ const TagPreview = forwardRef<HTMLDivElement, { values: DesignFormValues; user: 
                 <div className="space-y-1">
                     <h3 className={cn("font-bold text-2xl leading-tight", textColor)}>{values.name || 'Your Name'}</h3>
                     <p className={cn("text-base leading-tight", subtitleColor)}>{values.title || 'Your Title'}</p>
-                    {values.company && <p className={cn("text-sm leading-tight opacity-80 pt-1", subtitleColor)}>{values.company}</p>}
+                    {values.company && <p className="text-sm leading-tight opacity-80 pt-1", subtitleColor)}>{values.company}</p>}
                 </div>
             </div>
         </div>
@@ -207,7 +207,8 @@ export default function BydTagDesignPage() {
         name: user.name || '',
         title: user.businessCard?.title || '',
         company: user.businessCard?.company || '',
-        logoUrl: user.avatarUrl || '',
+        // The logo on the card should be separate from the user's main avatar
+        logoUrl: user.bioTagDesign?.logoUrl || user.avatarUrl || '',
         cardColor: user.bioTagDesign?.cardColor || 'black',
         backgroundImageUrl: user.bioTagDesign?.backgroundImageUrl || '',
         textColor: user.bioTagDesign?.textColor || 'light',
@@ -249,14 +250,13 @@ export default function BydTagDesignPage() {
     
     setIsSaving(true);
     try {
-        const { name, title, company, logoUrl, ...bioTagDesign } = data;
+        const { name, title, company, ...bioTagDesign } = data;
         const businessCard = { title, company };
         
         await updateUser(user.uid, {
-            name,
-            businessCard,
-            avatarUrl: logoUrl,
-            bioTagDesign,
+            name, // Update user's main name
+            businessCard, // Update business card info
+            bioTagDesign, // Save all other design fields to bioTagDesign
         });
         
         form.reset(data); // This resets the "dirty" state of the form.
@@ -265,6 +265,7 @@ export default function BydTagDesignPage() {
             description: "Your BioTAG design has been saved to your profile.",
         });
     } catch (e) {
+        console.error(e);
         toast({ title: 'Failed to save design', variant: 'destructive' });
     } finally {
         setIsSaving(false);
@@ -373,7 +374,7 @@ export default function BydTagDesignPage() {
                                                   <RadioGroup
                                                       onValueChange={(value) => {
                                                           field.onChange(value);
-                                                          form.setValue('backgroundImageUrl', ''); // Clear background image
+                                                          form.setValue('backgroundImageUrl', '', { shouldDirty: true });
                                                           form.setValue('textColor', (value === 'white' ? 'dark' : 'light'));
                                                       }}
                                                       defaultValue={field.value}
