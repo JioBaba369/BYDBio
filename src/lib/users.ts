@@ -1,15 +1,17 @@
 
 'use client';
 
-import { collection, query, where, getDocs, limit, doc, getDoc, setDoc, updateDoc, deleteDoc, arrayUnion } from "firebase/firestore";
+import { collection, query, where, getDocs, limit, doc, getDoc, setDoc, updateDoc, deleteDoc, arrayUnion, orderBy, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { deleteUser, type User as FirebaseUser } from "firebase/auth";
-import type { Timestamp } from "firebase/firestore";
-import { getPostsByUser, type PostWithAuthor } from "./posts";
+import type { PostWithAuthor } from "./posts";
 import { serializeDocument } from "./firestore-utils";
 import { RESERVED_USERNAMES } from "./reserved-usernames";
-import type { PublicContentItem } from "./content";
-
+import type { Listing } from './listings';
+import type { Offer } from './offers';
+import type { Job } from './jobs';
+import type { Event } from './events';
+import type { PromoPage } from './promo-pages';
 
 export type BusinessCard = {
   title?: string;
@@ -94,6 +96,14 @@ export type User = {
   searchableKeywords: string[];
   bookingSettings: BookingSettings;
 };
+
+export type PublicContentItem = (
+  | (Listing & { type: 'listing' })
+  | (Offer & { type: 'offer' })
+  | (Job & { type: 'job' })
+  | (Event & { type: 'event' })
+  | (PromoPage & { type: 'promoPage' })
+) & { author: Pick<User, 'uid' | 'name' | 'username' | 'avatarUrl' | 'avatarFallback'>; date: string; title: string; };
 
 export type UserProfilePayload = {
     user: User;
@@ -451,4 +461,84 @@ export const getPublicContentByUser = async (userId: string) => {
     serializedContent.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
     return serializedContent;
+};
+
+export const getAllPublicContent = async (): Promise<PublicContentItem[]> => {
+    const listingsQuery = query(collection(db, 'listings'), where('status', '==', 'active'));
+    const jobsQuery = query(collection(db, 'jobs'), where('status', '==', 'active'));
+    const eventsQuery = query(collection(db, 'events'), where('status', '==', 'active'));
+    const offersQuery = query(collection(db, 'offers'), where('status', '==', 'active'));
+    const promoPagesQuery = query(collection(db, 'promoPages'), where('status', '==', 'active'));
+
+    const [
+        listingsSnap,
+        jobsSnap,
+        eventsSnap,
+        offersSnap,
+        promoPagesSnap,
+    ] = await Promise.all([
+        getDocs(listingsQuery),
+        getDocs(jobsQuery),
+        getDocs(eventsQuery),
+        getDocs(offersQuery),
+        getDocs(promoPagesQuery),
+    ]);
+
+    const allContent: any[] = [
+        ...listingsSnap.docs.map(doc => ({ ...doc.data(), id: doc.id, type: 'listing' })),
+        ...jobsSnap.docs.map(doc => ({ ...doc.data(), id: doc.id, type: 'job' })),
+        ...eventsSnap.docs.map(doc => ({ ...doc.data(), id: doc.id, type: 'event' })),
+        ...offersSnap.docs.map(doc => ({ ...doc.data(), id: doc.id, type: 'offer' })),
+        ...promoPagesSnap.docs.map(doc => ({ ...doc.data(), id: doc.id, type: 'promoPage' })),
+    ];
+    
+    const authorIds = [...new Set(allContent.map(item => item.authorId))];
+    if (authorIds.length === 0) {
+        return [];
+    }
+    const authors = await getUsersByIds(authorIds);
+    const authorMap = new Map(authors.map(author => [author.uid, author]));
+
+    const contentWithAuthors = allContent.map(item => {
+        const author = authorMap.get(item.authorId);
+        if (!author) {
+            return null; 
+        }
+        
+        let primaryDate = item.createdAt; 
+        if (item.type === 'event' || item.type === 'offer') {
+            primaryDate = item.startDate;
+        } else if (item.type === 'job') {
+            primaryDate = item.postingDate;
+        }
+
+        if (!primaryDate) {
+            return null;
+        }
+
+        const serializedItem = serializeDocument<any>({ data: () => item, id: item.id });
+        if (!serializedItem) return null;
+        
+        if (serializedItem.type === 'promoPage' && serializedItem.name) {
+            serializedItem.title = serializedItem.name;
+        }
+
+        return {
+            ...serializedItem,
+            author: {
+                uid: author.uid,
+                name: author.name,
+                username: author.username,
+                avatarUrl: author.avatarUrl,
+                avatarFallback: author.avatarFallback,
+            },
+            date: primaryDate instanceof Timestamp
+                ? primaryDate.toDate().toISOString()
+                : String(primaryDate),
+        };
+    }).filter((item): item is PublicContentItem => item !== null && !!item.title);
+
+    contentWithAuthors.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    return contentWithAuthors;
 };

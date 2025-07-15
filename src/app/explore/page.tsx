@@ -1,5 +1,5 @@
 
-import { getAllPublicContent } from '@/lib/content';
+import { getAllPublicContent } from '@/lib/users';
 import ExploreClient from './explore-client';
 
 export default async function ExplorePage() {

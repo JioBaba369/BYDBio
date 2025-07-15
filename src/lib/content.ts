@@ -1,107 +1,63 @@
 
-'use server';
+'use client';
 
-import {
-  collection,
-  query,
-  where,
-  getDocs,
-  Timestamp,
-} from 'firebase/firestore';
-import { db } from '@/lib/firebase';
-import { getUsersByIds, type User } from './users';
-import { serializeDocument } from './firestore-utils';
-import type { Listing } from './listings';
-import type { Offer } from './offers';
-import type { Job } from './jobs';
-import type { Event } from './events';
-import type { PromoPage } from './promo-pages';
+import { query, where, getDocs, collection } from "firebase/firestore";
+import { db } from "./firebase";
+import { type Listing } from "./listings";
+import { type Offer } from "./offers";
+import { type Job } from "./jobs";
+import { type Event } from "./events";
+import { type PromoPage } from "./promo-pages";
 
 export type PublicContentItem = (
-  | (Listing & { type: 'listing' })
-  | (Offer & { type: 'offer' })
-  | (Job & { type: 'job' })
-  | (Event & { type: 'event' })
-  | (PromoPage & { type: 'promoPage' })
-) & { author: Pick<User, 'uid' | 'name' | 'username' | 'avatarUrl' | 'avatarFallback'>; date: string; title: string; };
+    | (Listing & { type: 'listing' })
+    | (Offer & { type: 'offer' })
+    | (Job & { type: 'job' })
+    | (Event & { type: 'event' })
+    | (PromoPage & { type: 'promoPage' })
+) & { title: string; date: string; };
 
-
-export const getAllPublicContent = async (): Promise<PublicContentItem[]> => {
-    const listingsQuery = query(collection(db, 'listings'), where('status', '==', 'active'));
-    const jobsQuery = query(collection(db, 'jobs'), where('status', '==', 'active'));
-    const eventsQuery = query(collection(db, 'events'), where('status', '==', 'active'));
-    const offersQuery = query(collection(db, 'offers'), where('status', '==', 'active'));
-    const promoPagesQuery = query(collection(db, 'promoPages'), where('status', '==', 'active'));
-
-    const [
-        listingsSnap,
-        jobsSnap,
-        eventsSnap,
-        offersSnap,
-        promoPagesSnap,
-    ] = await Promise.all([
-        getDocs(listingsQuery),
-        getDocs(jobsQuery),
-        getDocs(eventsQuery),
-        getDocs(offersQuery),
-        getDocs(promoPagesQuery),
-    ]);
-
-    const allContent: any[] = [
-        ...listingsSnap.docs.map(doc => ({ ...doc.data(), id: doc.id, type: 'listing' })),
-        ...jobsSnap.docs.map(doc => ({ ...doc.data(), id: doc.id, type: 'job' })),
-        ...eventsSnap.docs.map(doc => ({ ...doc.data(), id: doc.id, type: 'event' })),
-        ...offersSnap.docs.map(doc => ({ ...doc.data(), id: doc.id, type: 'offer' })),
-        ...promoPagesSnap.docs.map(doc => ({ ...doc.data(), id: doc.id, type: 'promoPage' })),
-    ];
-    
-    const authorIds = [...new Set(allContent.map(item => item.authorId))];
-    if (authorIds.length === 0) {
+export const searchPublicContent = async (searchText: string) => {
+    const searchKeywords = searchText.toLowerCase().split(' ').filter(Boolean).slice(0, 10);
+    if (searchKeywords.length === 0) {
         return [];
     }
-    const authors = await getUsersByIds(authorIds);
-    const authorMap = new Map(authors.map(author => [author.uid, author]));
 
-    const contentWithAuthors = allContent.map(item => {
-        const author = authorMap.get(item.authorId);
-        if (!author) {
-            return null; 
-        }
-        
-        let primaryDate = item.createdAt; 
-        if (item.type === 'event' || item.type === 'offer') {
-            primaryDate = item.startDate;
-        } else if (item.type === 'job') {
-            primaryDate = item.postingDate;
-        }
+    const collectionsToSearch = ['listings', 'jobs', 'events', 'offers', 'promoPages'];
 
-        if (!primaryDate) {
-            return null;
-        }
+    const searchPromises = collectionsToSearch.map(colName => {
+        const q = query(
+            collection(db, colName),
+            where('searchableKeywords', 'array-contains-any', searchKeywords),
+            where('status', '==', 'active')
+        );
+        return getDocs(q);
+    });
 
-        const serializedItem = serializeDocument<any>({ data: () => item, id: item.id });
-        if (!serializedItem) return null;
-        
-        if (serializedItem.type === 'promoPage' && serializedItem.name) {
-            serializedItem.title = serializedItem.name;
-        }
+    const snapshots = await Promise.all(searchPromises);
 
-        return {
-            ...serializedItem,
-            author: {
-                uid: author.uid,
-                name: author.name,
-                username: author.username,
-                avatarUrl: author.avatarUrl,
-                avatarFallback: author.avatarFallback,
-            },
-            date: primaryDate instanceof Timestamp
-                ? primaryDate.toDate().toISOString()
-                : String(primaryDate),
-        };
-    }).filter((item): item is PublicContentItem => item !== null && !!item.title);
+    const allContent: PublicContentItem[] = [];
 
-    contentWithAuthors.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    snapshots.forEach((snapshot, index) => {
+        const type = collectionsToSearch[index].slice(0, -1) as PublicContentItem['type']; // 'listings' -> 'listing'
+        snapshot.forEach(doc => {
+            const data = doc.data() as any;
+            
+            let primaryDate = data.createdAt;
+            if (type === 'event' || type === 'offer') primaryDate = data.startDate;
+            else if (type === 'job') primaryDate = data.postingDate;
 
-    return contentWithAuthors;
+            allContent.push({
+                ...data,
+                id: doc.id,
+                type: type,
+                title: data.title || data.name,
+                date: primaryDate.toDate().toISOString(),
+            });
+        });
+    });
+
+    allContent.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    return allContent;
 };
