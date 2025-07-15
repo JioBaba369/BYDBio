@@ -39,7 +39,6 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
   const [isFollowPending, startFollowTransition] = useTransition();
   
   const [posts, setPosts] = useState<PostWithAuthor[]>([]);
-  const [postsLoading, setPostsLoading] = useState(false);
   
   useEffect(() => {
     // Safely set the initial state from props on the client side
@@ -69,18 +68,6 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
     });
   };
   
-  const loadPosts = useCallback(async () => {
-    setPostsLoading(true);
-    try {
-        const fetchedPosts = await getPostsByUser(user.uid, currentUser?.uid, isFollowedByCurrentUser);
-        setPosts(fetchedPosts);
-    } catch (error) {
-        // toast({ title: "Error loading posts", variant: "destructive" });
-    } finally {
-        setPostsLoading(false);
-    }
-  }, [user.uid, currentUser?.uid, isFollowedByCurrentUser]);
-  
   const {
     handleLike,
     handleDelete,
@@ -92,7 +79,6 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
     posts,
     setPosts,
     currentUser,
-    onAfterAction: loadPosts,
   });
 
 
@@ -190,11 +176,7 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
             </TabsContent>
 
             <TabsContent value="posts" className="mt-6">
-                {postsLoading ? (
-                    <div className="flex justify-center items-center h-48">
-                        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                    </div>
-                ) : visiblePosts.length > 0 ? (
+                 {visiblePosts.length > 0 ? (
                     <div className="space-y-6">
                     {visiblePosts.map(item => (
                         <PostCard

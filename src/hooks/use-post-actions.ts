@@ -95,7 +95,8 @@ export function usePostActions({
         try {
             await deletePost(postToDelete.id);
             toast({ title: "Post Deleted" });
-            if (onAfterAction) await onAfterAction();
+            // Optimistically remove the post from the local state
+            setPosts(prev => prev.filter(p => p.id !== postToDelete.id));
         } catch (error) {
             toast({ title: "Failed to delete post", variant: "destructive" });
         } finally {
@@ -104,7 +105,7 @@ export function usePostActions({
             setIsDeleting(false);
             setLoadingAction(null);
         }
-    }, [postToDelete, currentUser, onAfterAction, toast]);
+    }, [postToDelete, currentUser, setPosts, toast]);
     
     // Props to be spread onto the DeleteConfirmationDialog component
     const dialogProps: Omit<DeleteConfirmationDialogProps, 'children'> = {
