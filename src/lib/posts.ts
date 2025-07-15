@@ -1,4 +1,3 @@
-// src/lib/posts.ts
 
 'use server';
 
@@ -115,29 +114,24 @@ export const getPostsByUser = async (userId: string, viewerId?: string | null, i
 };
 
 // Function to create a new post
-export const createPost = async (userId: string, data: Pick<Post, 'content' | 'imageUrl' | 'privacy' | 'category'> & { quotedPost?: Omit<EmbeddedPostInfo, 'createdAt'> & { createdAt: string } }): Promise<Post> => {
+export const createPost = async (userId: string, data: Pick<Post, 'content' | 'imageUrl' | 'privacy' | 'category'> & { quotedPost?: EmbeddedPostInfo }): Promise<string> => {
   const userRef = doc(db, "users", userId);
-  const postRef = doc(collection(db, "posts")); // Generate a new ref with a unique ID
-
-  if (data.quotedPost && data.quotedPost.authorId === userId) {
-    throw new Error("You cannot quote your own post.");
-  }
-
-  const batch = writeBatch(db);
+  const postsRef = collection(db, "posts");
 
   const userDoc = await getDoc(userRef);
   if (!userDoc.exists()) {
       throw new Error("User performing the action not found.");
   }
+  
   const postCount = userDoc.data().postCount || 0;
   const newPostNumber = postCount + 1;
-
+  
   const keywords = [
     ...new Set(data.content.toLowerCase().split(' ').filter(Boolean)),
     ...(data.category ? data.category.toLowerCase().split(' ').filter(Boolean) : []),
   ];
 
-  const postData: any = {
+  const postData = {
     authorId: userId,
     content: data.content,
     imageUrl: data.imageUrl,
@@ -150,16 +144,13 @@ export const createPost = async (userId: string, data: Pick<Post, 'content' | 'i
     comments: 0,
     repostCount: 0,
     searchableKeywords: keywords,
-    quotedPost: data.quotedPost ? { ...data.quotedPost, createdAt: Timestamp.fromDate(new Date(data.quotedPost.createdAt)) } : null,
+    quotedPost: data.quotedPost || null,
   };
   
-  batch.set(postRef, postData);
-  batch.update(userRef, { postCount: increment(1) });
+  const postRef = await addDoc(postsRef, postData);
+  await updateDoc(userRef, { postCount: newPostNumber });
   
-  await batch.commit();
-
-  const newPostDoc = await getDoc(postRef);
-  return serializeDocument<Post>(newPostDoc) as Post;
+  return postRef.id;
 };
 
 
