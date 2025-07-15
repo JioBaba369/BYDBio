@@ -32,6 +32,7 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
   const router = useRouter();
 
   const [posts, setPosts] = useState<PostWithAuthor[]>([]);
+  const [isContactFormOpen, setIsContactFormOpen] = useState(false);
   
   useEffect(() => {
     setPosts(userProfileData.posts || []);
@@ -99,12 +100,12 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
                                 initialFollowerCount={user.followerCount}
                             />
                         )}
-                        <Dialog>
+                        <Dialog open={isContactFormOpen} onOpenChange={setIsContactFormOpen}>
                             <DialogTrigger asChild>
                                 <Button variant="outline"><Mail className="mr-2 h-4 w-4"/>Contact</Button>
                             </DialogTrigger>
                             <DialogContent>
-                                <ContactForm recipientId={user.uid} />
+                                {isContactFormOpen && <ContactForm recipientId={user.uid} />}
                             </DialogContent>
                         </Dialog>
                         {user.bookingSettings?.acceptingAppointments && (
