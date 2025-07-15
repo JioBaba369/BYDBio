@@ -145,7 +145,7 @@ export function MainSidebar() {
               </SidebarMenuButton>
             </SidebarMenuItem>
              <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Business Pages">
+              <SidebarMenuButton asChild tooltip="Business Pages" isActive={isActive('/promo') && !pathname.includes('/create')}>
                 <Link href="/promo">
                   <Megaphone />
                   <span>Business Pages</span>
@@ -153,7 +153,7 @@ export function MainSidebar() {
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Listings">
+              <SidebarMenuButton asChild tooltip="Listings" isActive={isActive('/listings') && !pathname.includes('/create')}>
                 <Link href="/listings">
                   <Tags />
                   <span>Listings</span>
@@ -161,7 +161,7 @@ export function MainSidebar() {
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Jobs">
+              <SidebarMenuButton asChild tooltip="Jobs" isActive={isActive('/job') && !pathname.includes('/create')}>
                 <Link href="/job">
                   <Briefcase />
                   <span>Jobs</span>
@@ -169,7 +169,7 @@ export function MainSidebar() {
               </SidebarMenuButton>
             </SidebarMenuItem>
              <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Events">
+              <SidebarMenuButton asChild tooltip="Events" isActive={isActive('/events') && !pathname.includes('/create')}>
                 <Link href="/events">
                   <Calendar />
                   <span>Events</span>
@@ -177,7 +177,7 @@ export function MainSidebar() {
               </SidebarMenuButton>
             </SidebarMenuItem>
              <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Offers">
+              <SidebarMenuButton asChild tooltip="Offers" isActive={isActive('/offers') && !pathname.includes('/create')}>
                 <Link href="/offers">
                   <Gift />
                   <span>Offers</span>
