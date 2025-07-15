@@ -40,10 +40,18 @@ const ContentHubSkeleton = () => (
             <div className="h-4 bg-muted rounded w-3/4 mt-2"></div>
         </div>
         <Card>
-            <CardContent className="p-4 grid sm:grid-cols-2 md:grid-cols-3 gap-4">
-                <div className="h-10 bg-muted rounded"></div>
-                <div className="h-10 bg-muted rounded"></div>
-                <div className="h-10 bg-muted rounded"></div>
+            <CardContent className="p-4 space-y-4">
+                <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
+                    <div className="h-10 bg-muted rounded md:col-span-2"></div>
+                    <div className="h-10 bg-muted rounded"></div>
+                </div>
+                 <Separator className="bg-muted"/>
+                <div className="space-y-2">
+                    <div className="h-4 bg-muted rounded w-1/4"></div>
+                    <div className="flex flex-wrap gap-2">
+                         {[...Array(6)].map((_, i) => <div key={i} className="h-7 w-24 bg-muted rounded-full"></div>)}
+                    </div>
+                </div>
             </CardContent>
         </Card>
         <div className="flex items-center justify-between">
@@ -68,7 +76,6 @@ function useMyContentManagement(userId: string | undefined, toast: ReturnType<ty
     const [allItems, setAllItems] = useState<CalendarItem[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
-    const [locationFilter, setLocationFilter] = useState('');
     const [typeFilters, setTypeFilters] = useState<Set<string>>(
         new Set(CONTENT_TYPES.map(type => type.name))
     );
@@ -82,10 +89,11 @@ function useMyContentManagement(userId: string | undefined, toast: ReturnType<ty
             ]).then(([authoredItems, scheduleItems]) => {
                 // Combine and remove duplicates, giving preference to authored items
                 const combinedMap = new Map<string, CalendarItem>();
-                authoredItems.forEach(item => combinedMap.set(item.id, item));
+                authoredItems.forEach(item => combinedMap.set(`${item.type}-${item.id}`, item));
                 scheduleItems.forEach(item => {
-                    if (!combinedMap.has(item.id)) {
-                        combinedMap.set(item.id, item);
+                    const key = `${item.type}-${item.id}`;
+                    if (!combinedMap.has(key)) {
+                        combinedMap.set(key, item);
                     }
                 });
                 setAllItems(Array.from(combinedMap.values()));
@@ -101,9 +109,8 @@ function useMyContentManagement(userId: string | undefined, toast: ReturnType<ty
 
     const filteredItems = useMemo(() => {
         return allItems.filter(item => {
-            if (!typeFilters.has(item.type)) {
-                return false;
-            }
+            const typeMatch = typeFilters.size === CONTENT_TYPES.length || typeFilters.has(item.type);
+            if (!typeMatch) return false;
 
             const searchMatch = searchTerm.length > 0 ?
                 item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -112,29 +119,30 @@ function useMyContentManagement(userId: string | undefined, toast: ReturnType<ty
                 (item.category && item.category.toLowerCase().includes(searchTerm.toLowerCase()))
                 : true;
             
-            const locationMatch = locationFilter.length > 0 ?
-                (item.location && item.location.toLowerCase().includes(locationFilter.toLowerCase()))
-                : true;
-
-            return searchMatch && locationMatch;
+            return searchMatch;
         });
-    }, [allItems, searchTerm, locationFilter, typeFilters]);
+    }, [allItems, searchTerm, typeFilters]);
 
     const areFiltersActive = useMemo(() => {
-      return !!searchTerm || !!locationFilter || typeFilters.size < CONTENT_TYPES.length;
-    }, [searchTerm, locationFilter, typeFilters]);
+      return !!searchTerm || typeFilters.size < CONTENT_TYPES.length;
+    }, [searchTerm, typeFilters]);
 
     const handleClearFilters = useCallback(() => {
         setSearchTerm('');
-        setLocationFilter('');
         setTypeFilters(new Set(CONTENT_TYPES.map(type => type.name)));
     }, []);
 
     const handleTypeFilterChange = useCallback((type: string) => {
         setTypeFilters(prev => {
             const newSet = new Set(prev);
-            if (newSet.has(type)) {
+            if (newSet.size === CONTENT_TYPES.length) {
+                newSet.clear();
+                newSet.add(type);
+            } else if (newSet.has(type)) {
                 newSet.delete(type);
+                if (newSet.size === 0) {
+                    CONTENT_TYPES.forEach(t => newSet.add(t.name));
+                }
             } else {
                 newSet.add(type);
             }
@@ -148,8 +156,6 @@ function useMyContentManagement(userId: string | undefined, toast: ReturnType<ty
         isLoading,
         searchTerm,
         setSearchTerm,
-        locationFilter,
-        setLocationFilter,
         typeFilters,
         handleTypeFilterChange,
         filteredItems,
@@ -166,12 +172,9 @@ export default function MyContentPage() {
 
   const {
       allItems,
-      setAllItems,
       isLoading,
       searchTerm,
       setSearchTerm,
-      locationFilter,
-      setLocationFilter,
       typeFilters,
       handleTypeFilterChange,
       filteredItems,
@@ -321,34 +324,25 @@ export default function MyContentPage() {
 
         <Card>
             <CardContent className="p-4 space-y-4">
-                <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
-                    <div className="relative md:col-span-1">
+                 <div className="flex flex-col md:flex-row gap-4">
+                    <div className="relative flex-1">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input 
                             placeholder="Search by keyword..."
-                            className="pl-10"
+                            className="pl-10 h-11"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
-                    <div className="relative md:col-span-1">
-                        <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input
-                            placeholder="Filter by location..."
-                            className="pl-10"
-                            value={locationFilter}
-                            onChange={(e) => setLocationFilter(e.target.value)}
-                        />
-                    </div>
-                    {areFiltersActive ? (
-                        <Button variant="ghost" onClick={handleClearFilters} className="w-full md:col-span-1">
+                    {areFiltersActive && (
+                        <Button variant="ghost" onClick={handleClearFilters} className="w-full md:w-auto">
                             <X className="mr-2 h-4 w-4" />
-                            Clear All Filters
+                            Clear Filters
                         </Button>
-                    ) : ( <div className="hidden md:block"></div> )}
+                    )}
                 </div>
                 <Separator />
-                <div className="space-y-2">
+                 <div className="space-y-2">
                     <Label className="text-sm font-medium">Filter by type</Label>
                     <div className="flex flex-wrap gap-2">
                         {CONTENT_TYPES.map((typeMeta: ContentTypeMetadata) => {
@@ -364,7 +358,6 @@ export default function MyContentPage() {
                                     className={cn(
                                         'cursor-pointer transition-all py-1.5 px-3 text-sm',
                                         !isSelected && 'hover:bg-accent/50',
-                                        typeMeta.variant === 'outline' && isSelected && 'bg-foreground text-background border-transparent hover:bg-foreground/90',
                                     )}
                                     role="button"
                                     tabIndex={0}
@@ -422,7 +415,7 @@ export default function MyContentPage() {
                                    return (
                                      <Card key={item.id}>
                                          <CardContent className="p-4 flex items-start gap-4">
-                                            <div className="h-full w-1.5 rounded-full" style={{ backgroundColor: `hsl(var(--${typeMeta.variant === 'destructive' ? 'destructive' : typeMeta.variant === 'secondary' ? 'secondary' : 'primary'}))` }} />
+                                            <div className={cn("h-full w-1.5 rounded-full", `bg-${typeMeta.variant}`)}></div>
                                             <div className="flex-1">
                                                 <div className="flex justify-between items-start">
                                                   <div>

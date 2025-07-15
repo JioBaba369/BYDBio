@@ -1,214 +1,209 @@
-
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    //----------------------------------------------------------------------
-    //  Helper Functions
-    //----------------------------------------------------------------------
-
-    function isSignedIn() {
+    // ==== UTILITY FUNCTIONS ====
+    function isAuthenticated() {
       return request.auth != null;
     }
-
     function isOwner(userId) {
       return request.auth.uid == userId;
     }
-
-    // Function to check if a value is a string and within length constraints
-    function isString(value, min, max) {
-      return value is string && value.size() >= min && value.size() <= max;
+    function isNew() {
+      return !exists(path);
+    }
+    function isUpdating() {
+      return exists(path);
     }
 
-    function isOptionalString(value, min, max) {
-      return value == null || isString(value, min, max);
+    // ==== VALIDATION FUNCTIONS ====
+    // Validates a string with min/max length constraints.
+    function isValidString(str, min, max) {
+      return str is string && str.size() >= min && str.size() <= max;
+    }
+    // Validates an optional string.
+    function isOptionalString(str, max) {
+      return str == null || (str is string && str.size() <= max);
+    }
+    // Validates a URL string.
+    function isUrl(str) {
+      return str is string && str.matches('https?://.+');
+    }
+    // Validates an optional URL string.
+    function isOptionalUrl(str) {
+      return str == null || isUrl(str);
+    }
+    // Validates that a number is a non-negative integer.
+    function isNonNegativeInt(num) {
+        return num is int && num >= 0;
+    }
+    // Validates that a value is one of a given list of strings.
+    function isOneOf(val, list) {
+        return val is string && val in list;
+    }
+
+
+    // ==== DATA TYPE VALIDATION ====
+
+    function isValidUser(data) {
+        return
+            isValidString(data.uid, 1, 50) &&
+            isValidString(data.name, 1, 50) &&
+            isValidString(data.username, 3, 30) &&
+            (data.email == null || data.email is string) &&
+            isValidString(data.avatarUrl, 1, 255) &&
+            isValidString(data.avatarFallback, 1, 1) &&
+            (data.bio == null || isValidString(data.bio, 0, 160)) &&
+            (data.hashtags == null || data.hashtags is list) &&
+            (data.following == null || data.following is list) &&
+            isNonNegativeInt(data.followerCount) &&
+            isNonNegativeInt(data.postCount);
+    }
+
+    function isValidPost(data) {
+        return
+            isValidString(data.authorId, 1, 50) &&
+            isOptionalString(data.content, 2000) &&
+            isOptionalString(data.imageUrl, 255) &&
+            isOneOf(data.privacy, ['public', 'followers', 'me']) &&
+            isNonNegativeInt(data.likes) &&
+            isNonNegativeInt(data.comments) &&
+            data.likedBy is list &&
+            data.createdAt is timestamp;
     }
     
-    function isOptionalStringOrEmpty(value, min, max) {
-      return value == null || value == "" || isString(value, min, max);
+    function isValidContent(data, type) {
+        let commonRules =
+            isValidString(data.authorId, 1, 50) &&
+            isValidString(data.title, 2, 100) &&
+            isValidString(data.description, 10, (type == 'job' ? 5000 : 2000)) &&
+            isOptionalString(data.category, 50) &&
+            isOptionalString(data.subCategory, 50) &&
+            isOptionalUrl(data.imageUrl, 255) &&
+            isOneOf(data.status, ['active', 'archived']) &&
+            isNonNegativeInt(data.views) &&
+            isNonNegativeInt(data.followerCount) &&
+            data.createdAt is timestamp;
+            
+        if (type == 'listing') {
+           return commonRules &&
+                isValidString(data.price, 1, 50) &&
+                isNonNegativeInt(data.clicks);
+        }
+        if (type == 'job') {
+            return commonRules &&
+                isValidString(data.company, 2, 100) &&
+                isValidString(data.location, 2, 100) &&
+                isOneOf(data.type, ['Full-time', 'Part-time', 'Contract', 'Internship']) &&
+                isOptionalString(data.remuneration, 100) &&
+                isOptionalUrl(data.applicationUrl, 255) &&
+                isNonNegativeInt(data.applicants);
+        }
+        if (type == 'event') {
+            return commonRules &&
+                isValidString(data.location, 2, 100) &&
+                data.startDate is timestamp &&
+                isNonNegativeInt(data.rsvps.size());
+        }
+        if (type == 'offer') {
+             return commonRules &&
+                data.startDate is timestamp &&
+                isNonNegativeInt(data.claims);
+        }
+        if (type == 'promoPage') {
+            return
+                isValidString(data.authorId, 1, 50) &&
+                isValidString(data.name, 2, 100) && // name instead of title
+                isValidString(data.description, 10, 500) && // shorter description
+                isOptionalString(data.category, 50) &&
+                isOptionalString(data.subCategory, 50) &&
+                data.email is string &&
+                isOneOf(data.status, ['active', 'archived']) &&
+                isNonNegativeInt(data.views) &&
+                isNonNegativeInt(data.followerCount) &&
+                isNonNegativeInt(data.clicks) &&
+                data.createdAt is timestamp;
+        }
+
+        return false;
     }
 
-    // Function to check if a value is a boolean
-    function isBoolean(value) {
-      return value is bool;
+    function isValidNotification(data) {
+        return
+            isValidString(data.userId, 1, 50) &&
+            (data.actorId == null || isValidString(data.actorId, 1, 50)) &&
+            isOneOf(data.type, ['new_follower', 'new_like', 'event_rsvp', 'contact_form_submission', 'new_content_follower', 'new_appointment']) &&
+            data.read is bool &&
+            data.createdAt is timestamp;
     }
     
-    function isOptionalBoolean(value) {
-      return value == null || isBoolean(value);
+    function isValidAppointment(data) {
+        return
+            isValidString(data.ownerId, 1, 50) &&
+            isValidString(data.bookerId, 1, 50) &&
+            isValidString(data.bookerName, 1, 100) &&
+            data.startTime is timestamp &&
+            data.endTime is timestamp;
     }
 
-    // Function to check if a value is a number
-    function isNumber(value) {
-      return value is number;
-    }
 
-    // Function to check if a value is a timestamp
-    function isTimestamp(value) {
-        return value is timestamp;
-    }
+    // ==== RULES ====
 
-    function isOptionalTimestamp(value) {
-        return value == null || isTimestamp(value);
-    }
-    
-    function isStringArray(arr) {
-        return arr is list && (arr.size() == 0 || arr[0] is string);
-    }
-
-    //----------------------------------------------------------------------
-    //  Content Validation Functions
-    //----------------------------------------------------------------------
-    function isValidListing(data) {
-        return isString(data.title, 2, 100)
-            && isString(data.description, 10, 500)
-            && isString(data.price, 1, 100)
-            && isString(data.category, 2, 50)
-            && isOptionalString(data.subCategory, 1, 50)
-            && isOptionalString(data.imageUrl, 0, 500)
-            && (data.listingType == 'sale' || data.listingType == 'rental')
-            && isOptionalTimestamp(data.startDate)
-            && isOptionalTimestamp(data.endDate);
-    }
-
-    function isValidJob(data) {
-        return isString(data.title, 2, 100)
-            && isString(data.company, 2, 100)
-            && isString(data.description, 10, 5000)
-            && isString(data.location, 2, 100)
-            && (data.type == 'Full-time' || data.type == 'Part-time' || data.type == 'Contract' || data.type == 'Internship')
-            && isOptionalString(data.category, 1, 50)
-            && isOptionalString(data.subCategory, 1, 50)
-            && isOptionalString(data.remuneration, 1, 100)
-            && isOptionalTimestamp(data.closingDate)
-            && isOptionalString(data.imageUrl, 0, 500)
-            && isOptionalStringOrEmpty(data.applicationUrl, 10, 500)
-            && isOptionalString(data.contactInfo, 0, 1000);
-    }
-
-    function isValidEvent(data) {
-        return isString(data.title, 2, 100)
-            && isString(data.description, 10, 2000)
-            && isString(data.location, 2, 100)
-            && isTimestamp(data.startDate)
-            && isOptionalTimestamp(data.endDate)
-            && isOptionalString(data.subTitle, 0, 150)
-            && isOptionalString(data.category, 0, 50)
-            && isOptionalString(data.subCategory, 0, 50)
-            && isOptionalString(data.imageUrl, 0, 500)
-            && isOptionalString(data.couponCode, 0, 50)
-            && isOptionalStringOrEmpty(data.ctaLink, 0, 500)
-            && (data.itinerary is list || data.itinerary == null);
-    }
-
-    function isValidOffer(data) {
-        return isString(data.title, 2, 100)
-            && isString(data.description, 10, 500)
-            && isString(data.category, 2, 50)
-            && isOptionalString(data.subCategory, 1, 50)
-            && isTimestamp(data.startDate)
-            && isOptionalTimestamp(data.endDate)
-            && isOptionalString(data.imageUrl, 0, 500)
-            && isOptionalString(data.couponCode, 0, 50)
-            && isOptionalStringOrEmpty(data.ctaLink, 0, 500);
-    }
-
-    function isValidPromoPage(data) {
-        return isString(data.name, 2, 100)
-            && isString(data.description, 10, 500)
-            && isString(data.email, 5, 100)
-            && isOptionalString(data.category, 1, 50)
-            && isOptionalString(data.subCategory, 1, 50)
-            && isOptionalString(data.phone, 0, 50)
-            && isOptionalStringOrEmpty(data.website, 0, 500)
-            && isOptionalString(data.address, 0, 200)
-            && isOptionalString(data.imageUrl, 0, 500)
-            && isOptionalString(data.logoUrl, 0, 500);
-    }
-
-    //----------------------------------------------------------------------
-    //  Collection Rules
-    //----------------------------------------------------------------------
     match /users/{userId} {
-      allow read: if true;
-      allow write: if isOwner(userId);
-      allow list: if isSignedIn();
-    }
+      // Anyone can read a user profile.
+      allow read;
 
-    match /notifications/{notificationId} {
-      allow read: if isSignedIn() && isOwner(resource.data.userId);
-      allow create: if true; // Allows system/other users to create notifications
+      // Only the owner can create or update their own profile.
+      allow write: if isOwner(userId) && isValidUser(request.resource.data);
+      
+      // The user can delete their own profile.
+      allow delete: if isOwner(userId);
     }
-
+    
     match /posts/{postId} {
-        allow read: if resource.data.privacy == 'public' 
-                    || (resource.data.privacy == 'followers' && isSignedIn() && request.auth.uid in get(/databases/$(database)/documents/users/$(resource.data.authorId)).data.followers)
-                    || (isSignedIn() && isOwner(resource.data.authorId));
-        allow create: if isSignedIn() && isOwner(request.resource.data.authorId);
-        allow update: if isSignedIn() && (
-                        // Owner can edit their post
-                        isOwner(resource.data.authorId)
-                        // Any signed in user can like/unlike
-                        || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes', 'likedBy']))
-                      );
-        allow delete: if isSignedIn() && isOwner(resource.data.authorId);
+        // Allow reading posts based on privacy settings.
+        allow read: if
+            (resource.data.privacy == 'public') ||
+            (resource.data.privacy == 'followers' && isAuthenticated() && resource.data.authorId in get(/databases/$(database)/documents/users/$(request.auth.uid)).data.following) ||
+            (isAuthenticated() && isOwner(resource.data.authorId));
+
+        // Allow owner to create, update, and delete their own posts.
+        allow create: if isAuthenticated() && isOwner(request.resource.data.authorId) && isValidPost(request.resource.data);
+        allow update: if isAuthenticated() && isOwner(resource.data.authorId) && isValidPost(request.resource.data);
+        allow delete: if isAuthenticated() && isOwner(resource.data.authorId);
+    }
+    
+    // Generic Rules for Content Types (Listings, Jobs, Events, Offers, PromoPages)
+    match /{contentType}/{contentId} where contentType in ['listings', 'jobs', 'events', 'offers', 'promoPages'] {
+        // Anyone can read active content.
+        allow read: if resource.data.status == 'active';
+        
+        // Only authenticated users can create content.
+        allow create: if isAuthenticated() && isOwner(request.resource.data.authorId) && isValidContent(request.resource.data, contentType);
+        
+        // Only the owner can update or delete their content.
+        allow update: if isAuthenticated() && isOwner(resource.data.authorId) && isValidContent(request.resource.data, contentType);
+        allow delete: if isAuthenticated() && isOwner(resource.data.authorId);
+    }
+    
+    match /notifications/{notificationId} {
+        // Only the recipient can read, update (mark as read), or delete their notifications.
+        allow read, update, delete: if isAuthenticated() && isOwner(resource.data.userId);
+
+        // Anyone authenticated can create a notification (e.g., by following, liking, etc.).
+        allow create: if isAuthenticated() && isValidNotification(request.resource.data);
     }
     
     match /appointments/{appointmentId} {
-        allow read: if isSignedIn() && (isOwner(resource.data.ownerId) || isOwner(resource.data.bookerId));
-        allow create: if isSignedIn() && isOwner(request.resource.data.bookerId) && request.resource.data.bookerId != request.resource.data.ownerId;
-        allow delete: if isSignedIn() && (isOwner(resource.data.ownerId) || isOwner(resource.data.bookerId));
-    }
-    
-    // Generic Content Rules
-    function contentReadRules() {
-        return resource.data.status == 'active' || (isSignedIn() && isOwner(resource.data.authorId));
-    }
-    
-    function contentWriteRules(validationFunction) {
-        let data = request.resource.data;
-        return isSignedIn() && isOwner(data.authorId) && validationFunction(data);
-    }
+        // Only the owner or the booker can view an appointment.
+        allow read: if isAuthenticated() && (isOwner(resource.data.ownerId) || isOwner(resource.data.bookerId));
 
-    match /listings/{listingId} {
-        allow read: if contentReadRules();
-        allow create: if contentWriteRules(isValidListing);
-        allow update: if isSignedIn() && isOwner(resource.data.authorId) && isValidListing(request.resource.data);
-        allow delete: if isSignedIn() && isOwner(resource.data.authorId);
-    }
-    
-    match /jobs/{jobId} {
-        allow read: if contentReadRules();
-        allow create: if contentWriteRules(isValidJob);
-        allow update: if isSignedIn() && isOwner(resource.data.authorId) && isValidJob(request.resource.data);
-        allow delete: if isSignedIn() && isOwner(resource.data.authorId);
-    }
+        // Any authenticated user can create an appointment (book a meeting).
+        allow create: if isAuthenticated() && isValidAppointment(request.resource.data);
 
-    match /events/{eventId} {
-        allow read: if contentReadRules();
-        allow create: if contentWriteRules(isValidEvent);
-        allow update: if isSignedIn() && (
-                        (isOwner(resource.data.authorId) && isValidEvent(request.resource.data))
-                        // Any signed in user can rsvp/un-rsvp
-                        || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['rsvps']))
-                    );
-        allow delete: if isSignedIn() && isOwner(resource.data.authorId);
-    }
-
-    match /offers/{offerId} {
-        allow read: if contentReadRules();
-        allow create: if contentWriteRules(isValidOffer);
-        allow update: if isSignedIn() && isOwner(resource.data.authorId) && isValidOffer(request.resource.data);
-        allow delete: if isSignedIn() && isOwner(resource.data.authorId);
-    }
-
-    match /promoPages/{promoPageId} {
-        allow read: if contentReadRules();
-        allow create: if contentWriteRules(isValidPromoPage);
-        allow update: if isSignedIn() && isOwner(resource.data.authorId) && isValidPromoPage(request.resource.data);
-        allow delete: if isSignedIn() && isOwner(resource.data.authorId);
+        // Only the owner or booker can delete (cancel) an appointment.
+        allow delete: if isAuthenticated() && (isOwner(resource.data.ownerId) || isOwner(resource.data.bookerId));
     }
   }
 }
-
-    
