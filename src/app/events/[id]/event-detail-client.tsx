@@ -125,7 +125,6 @@ export default function EventDetailClient({ event, author }: EventDetailClientPr
                                             authorId={author.uid}
                                             entityTitle={event.title}
                                             initialIsFollowing={isFollowing}
-                                            initialFollowerCount={event.followerCount || 0}
                                             />
                                         )}
                                         <ShareButton variant="outline" />

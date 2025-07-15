@@ -134,7 +134,6 @@ export default function JobDetailClient({ job, author }: JobDetailClientProps) {
                                             authorId={author.uid}
                                             entityTitle={`${job.title} at ${job.company}`}
                                             initialIsFollowing={isFollowing}
-                                            initialFollowerCount={job.followerCount || 0}
                                         />
                                     )}
                                 </div>

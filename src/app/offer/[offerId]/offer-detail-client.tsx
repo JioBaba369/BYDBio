@@ -111,7 +111,6 @@ export default function OfferDetailClient({ offer, author }: OfferDetailClientPr
                                             authorId={author.uid}
                                             entityTitle={offer.title}
                                             initialIsFollowing={isFollowing}
-                                            initialFollowerCount={offer.followerCount || 0}
                                         />
                                     )}
                                 </div>

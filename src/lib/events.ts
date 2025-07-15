@@ -52,6 +52,7 @@ export type Event = {
   itinerary: ItineraryItem[];
   createdAt: string; // ISO 8601 string
   searchableKeywords: string[];
+  attendees?: { id: string, name: string, username: string, avatarUrl: string }[];
 };
 
 export type EventWithAuthor = Event & { author: Pick<User, 'uid' | 'name' | 'username' | 'avatarUrl'> };
@@ -359,7 +360,7 @@ export const getCalendarItems = async (userId: string, type: 'schedule' | 'autho
                 'event': `/events/${id}/edit`, 'offer': `/offers/${id}/edit`, 'job': `/job/${id}/edit`,
                 'listing': `/listings/${id}/edit`, 'promoPage': `/promo/${id}/edit`,
             };
-            return pathMap[itemType] || '/canvas';
+            return pathMap[itemType] || '/my-content';
         };
 
         return {

@@ -101,7 +101,6 @@ export default function ListingDetailClient({ listing, author }: ListingDetailCl
                                             authorId={author.uid}
                                             entityTitle={listing.title}
                                             initialIsFollowing={isFollowing}
-                                            initialFollowerCount={listing.followerCount || 0}
                                         />
                                     )}
                                 </div>

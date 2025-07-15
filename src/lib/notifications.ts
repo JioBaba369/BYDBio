@@ -183,7 +183,7 @@ const getNotificationLink = (notification: NotificationWithActor): string => {
         case 'event_rsvp':
             return `/events/${notification.entityId}`;
         case 'new_appointment':
-            return `/diary`;
+            return `/my-content?tab=calendar`;
         case 'new_content_follower':
             if (notification.entityType && notification.entityId) {
                 const prefix = entityTypePathMap[notification.entityType];

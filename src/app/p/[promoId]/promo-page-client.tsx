@@ -78,7 +78,6 @@ export default function PromoPageClient({ promoPage, author }: PromoPageClientPr
                                                         authorId={author.uid}
                                                         entityTitle={promoPage.name}
                                                         initialIsFollowing={isFollowing}
-                                                        initialFollowerCount={promoPage.followerCount || 0}
                                                     />
                                                 )}
                                                 <ShareButton variant="outline" />
