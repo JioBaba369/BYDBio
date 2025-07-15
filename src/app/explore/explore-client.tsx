@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
@@ -183,13 +184,13 @@ export default function ExploreClient({ initialItems }: { initialItems: PublicCo
             view === 'grid' ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     {filteredItems.map(item => (
-                        <PublicContentCard key={`${item.type}-${item.id}`} item={item} />
+                        <PublicContentCard key={`${item.type}-${item.id}`} item={item} view="grid" />
                     ))}
                 </div>
             ) : (
                 <div className="space-y-4">
                      {filteredItems.map(item => (
-                        <PublicContentCard key={`${item.type}-${item.id}`} item={item} />
+                        <PublicContentCard key={`${item.type}-${item.id}`} item={item} view="list" />
                     ))}
                 </div>
             )
@@ -207,4 +208,3 @@ export default function ExploreClient({ initialItems }: { initialItems: PublicCo
     </div>
   );
 }
-

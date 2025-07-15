@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,6 +12,7 @@ import Link from 'next/link';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import type { VariantProps } from 'class-variance-authority';
 import { ClientFormattedDate } from "./client-formatted-date";
+import { cn } from "@/lib/utils";
 
 const getBadgeVariant = (itemType: string): VariantProps<typeof badgeVariants>['variant'] => {
     switch (itemType) {
@@ -52,7 +54,7 @@ const getPrimaryStat = (item: PublicContentItem) => {
     return { icon, value };
 }
 
-export function PublicContentCard({ item }: { item: PublicContentItem }) {
+export function PublicContentCard({ item, view = 'grid' }: { item: PublicContentItem, view?: 'grid' | 'list' }) {
     if (!item.author) {
       return null;
     }
@@ -62,6 +64,52 @@ export function PublicContentCard({ item }: { item: PublicContentItem }) {
     const itemTypeLabel = item.type === 'promoPage' ? 'Business Page' : item.type;
     const itemLink = getLink(item);
 
+    if (view === 'list') {
+        return (
+            <Card className="shadow-sm group hover:shadow-lg transition-shadow duration-200">
+                <div className="flex items-center gap-4 p-4">
+                    {item.imageUrl && (
+                        <Link href={itemLink} className="block shrink-0">
+                            <Image 
+                                src={item.imageUrl} 
+                                alt={title} 
+                                width={128} 
+                                height={96} 
+                                className="w-32 h-24 object-cover rounded-md transition-transform duration-300 group-hover:scale-105" 
+                                data-ai-hint="office laptop" 
+                            />
+                        </Link>
+                    )}
+                    <div className="flex-1 min-w-0">
+                        <div className="flex justify-between items-start gap-2">
+                             <div>
+                                <Badge variant={getBadgeVariant(item.type)} className="capitalize mb-1">{itemTypeLabel}</Badge>
+                                <CardTitle className="text-base truncate"><Link href={itemLink} className="hover:underline">{title}</Link></CardTitle>
+                            </div>
+                            <Button asChild variant="secondary" size="sm" className="hidden sm:inline-flex">
+                                <Link href={itemLink}>
+                                    View Details
+                                </Link>
+                            </Button>
+                        </div>
+                         <div className="flex items-center gap-2 text-xs text-muted-foreground pt-2">
+                            <Link href={`/u/${item.author.username}`} className="flex items-center gap-2 hover:underline">
+                                <Avatar className="h-5 w-5">
+                                    <AvatarImage src={item.author.avatarUrl} alt={item.author.name} data-ai-hint="person portrait"/>
+                                    <AvatarFallback>{item.author.name.charAt(0)}</AvatarFallback>
+                                </Avatar>
+                                <span>{item.author.name}</span>
+                            </Link>
+                             <span>·</span>
+                             <ClientFormattedDate date={item.date} relative/>
+                        </div>
+                    </div>
+                </div>
+            </Card>
+        )
+    }
+
+    // Grid View (default)
     return (
         <Card className="shadow-sm flex flex-col group hover:shadow-lg transition-shadow duration-200">
             {item.imageUrl && (
