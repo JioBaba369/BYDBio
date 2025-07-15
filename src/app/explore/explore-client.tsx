@@ -1,13 +1,12 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import type { PublicContentItem } from '@/lib/content';
 import { Search, Compass } from 'lucide-react';
 import { PublicContentCard } from '@/components/public-content-card';
-import { useMemo } from 'react';
 
 export default function ExploreClient({ initialItems }: { initialItems: PublicContentItem[] }) {
   const [searchTerm, setSearchTerm] = useState('');
