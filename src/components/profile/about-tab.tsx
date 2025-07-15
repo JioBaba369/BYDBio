@@ -9,14 +9,55 @@ import { Building2, Globe, Linkedin, Mail, MapPin, Phone, Link as LinkIcon, Brie
 import { linkIconData } from '@/lib/link-icons';
 import { PublicContentCard } from '../public-content-card';
 import { Button } from '../ui/button';
+import { useAuth } from '../auth-provider';
 
 interface AboutTabProps {
   user: User;
+  contentOnly?: boolean;
+  noContentMode?: 'posts' | 'gallery';
 }
 
-export function AboutTab({ user }: AboutTabProps) {
-  const { bio, hashtags, businessCard, links } = user;
+export function AboutTab({ user, contentOnly = false, noContentMode }: AboutTabProps) {
+  const { user: currentUser } = useAuth();
+  const { bio, hashtags, businessCard, links, otherContent } = user as User & { otherContent?: PublicContentItem[] };
   const hasBusinessCardInfo = businessCard && Object.values(businessCard).some(Boolean);
+
+  if (contentOnly) {
+      if (otherContent && otherContent.length > 0) {
+          return (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {otherContent.map(item => (
+                      <PublicContentCard key={`${item.type}-${item.id}`} item={item} />
+                  ))}
+              </div>
+          )
+      } else {
+          return (
+              <Card className="text-center">
+                  <CardContent className="p-10 text-muted-foreground flex flex-col items-center gap-4">
+                      <Briefcase className="h-12 w-12" />
+                      <h3 className="font-semibold text-foreground">No Content Yet</h3>
+                      <p>This user hasn't created any public content like listings or events.</p>
+                  </CardContent>
+              </Card>
+          )
+      }
+  }
+  
+  if (noContentMode === 'posts') {
+    return (
+        <Card className="text-center">
+            <CardContent className="p-10 text-muted-foreground flex flex-col items-center gap-4">
+                <Briefcase className="h-12 w-12" />
+                <h3 className="font-semibold text-foreground">No Posts Yet</h3>
+                <p>This user hasn't posted any status updates.</p>
+                {currentUser?.uid === user.uid && (
+                    <Button asChild><Link href="/feed">Create a Post</Link></Button>
+                )}
+            </CardContent>
+        </Card>
+    );
+  }
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

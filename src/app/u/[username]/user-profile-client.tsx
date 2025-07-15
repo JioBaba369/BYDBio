@@ -38,7 +38,7 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
     setPosts(userProfileData.posts || []);
   }, [userProfileData.posts]);
 
-  const { handleLike, handleDelete, handleRepost, handleQuote, loadingAction, dialogProps } = usePostActions({
+  const postActions = usePostActions({
     posts,
     setPosts,
     currentUser,
@@ -62,7 +62,7 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
 
   return (
     <>
-      <DeleteConfirmationDialog {...dialogProps} />
+      <DeleteConfirmationDialog {...postActions.dialogProps} />
       <div className="space-y-6">
         <Card className="overflow-hidden border-0 shadow-none -m-4 sm:-m-6 rounded-none">
             <div className="relative h-40 sm:h-48 md:h-56 bg-muted">
@@ -151,12 +151,12 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
                         <PostCard
                             key={`${item.id}-${item.author.uid}`}
                             item={item}
-                            onLike={handleLike}
-                            onDelete={() => handleDelete(item)}
-                            onRepost={handleRepost}
-                            onQuote={handleQuote}
-                            isLoading={loadingAction?.postId === item.id}
-                            loadingAction={loadingAction && loadingAction.postId === item.id ? loadingAction.action : undefined}
+                            onLike={postActions.handleLike}
+                            onDelete={() => postActions.handleDelete(item)}
+                            onRepost={postActions.handleRepost}
+                            onQuote={postActions.handleQuote}
+                            isLoading={postActions.loadingAction?.postId === item.id}
+                            loadingAction={postActions.loadingAction && postActions.loadingAction.postId === item.id ? postActions.loadingAction.action : undefined}
                         />
                     ))}
                     </div>
