@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useAuth } from '@/components/auth-provider';
-import { ArrowRight, ArrowLeft, RefreshCw, Download, Upload, Text, LayoutTemplate, Settings2, Nfc, Save, Loader2, Paintbrush } from 'lucide-react';
+import { ArrowRight, ArrowLeft, RefreshCw, Download, Upload, Text, LayoutTemplate, Settings2, Nfc, Save, Loader2, Paintbrush, Image as ImageIcon } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -111,13 +111,15 @@ const TagPreview = forwardRef<HTMLDivElement, { values: DesignFormValues; user: 
          <div className="shrink-0">
             {values.logoUrl ? (
                 <Image src={values.logoUrl} alt="Logo" width={96} height={96} className={cn(sizeClass, "rounded-full object-cover")} />
-            ) : user ? (
+            ) : user?.avatarUrl ? (
                 <Avatar className={cn(sizeClass)}>
                     <AvatarImage src={user.avatarUrl} alt={user.name} />
                     <AvatarFallback className={cn("bg-transparent", fallbackClass)}>{user.name.charAt(0)}</AvatarFallback>
                 </Avatar>
             ) : (
-                <div className={cn(sizeClass, "rounded-full bg-muted flex items-center justify-center")} />
+                <div className={cn(sizeClass, "rounded-full bg-muted flex items-center justify-center")} >
+                    <ImageIcon className="h-1/2 w-1/2 text-muted-foreground" />
+                </div>
             )}
         </div>
     );
@@ -196,6 +198,10 @@ export default function BydTagDesignPage() {
   const [bgImageToCrop, setBgImageToCrop] = useState<string | null>(null);
   const [isBgCropperOpen, setIsBgCropperOpen] = useState(false);
   const bgFileInputRef = useRef<HTMLInputElement>(null);
+  
+  const [logoImageToCrop, setLogoImageToCrop] = useState<string | null>(null);
+  const [isLogoCropperOpen, setIsLogoCropperOpen] = useState(false);
+  const logoFileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<DesignFormValues>({
     resolver: zodResolver(designSchema),
@@ -218,7 +224,7 @@ export default function BydTagDesignPage() {
         name: user.name || '',
         title: user.businessCard?.title || '',
         company: user.businessCard?.company || '',
-        logoUrl: user.bioTagDesign?.logoUrl || user.avatarUrl || '',
+        logoUrl: user.bioTagDesign?.logoUrl || '',
         cardColor: user.bioTagDesign?.cardColor || 'black',
         backgroundImageUrl: user.bioTagDesign?.backgroundImageUrl || '',
         textColor: user.bioTagDesign?.textColor || 'light',
@@ -241,9 +247,27 @@ export default function BydTagDesignPage() {
     }
   };
 
+  const onLogoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+        const file = e.target.files[0];
+        const reader = new FileReader();
+        reader.addEventListener('load', () => {
+            setLogoImageToCrop(reader.result as string);
+            setIsLogoCropperOpen(true);
+        });
+        reader.readAsDataURL(file);
+        e.target.value = '';
+    }
+  };
+
   const handleBgCropComplete = (url: string) => {
     form.setValue('backgroundImageUrl', url, { shouldDirty: true });
     setIsBgCropperOpen(false);
+  };
+  
+  const handleLogoCropComplete = (url: string) => {
+    form.setValue('logoUrl', url, { shouldDirty: true });
+    setIsLogoCropperOpen(false);
   };
 
   const watchedValues = form.watch();
@@ -328,6 +352,15 @@ export default function BydTagDesignPage() {
         isRound={false}
         maxSize={{ width: 1200, height: 1200 }}
       />
+      <ImageCropper
+        imageSrc={logoImageToCrop}
+        open={isLogoCropperOpen}
+        onOpenChange={setIsLogoCropperOpen}
+        onCropComplete={handleLogoCropComplete}
+        aspectRatio={1}
+        isRound={true}
+        maxSize={{ width: 400, height: 400 }}
+      />
       <div className="space-y-6">
           <div>
               <Button asChild variant="ghost" size="sm" className="mb-4 -ml-4">
@@ -406,12 +439,21 @@ export default function BydTagDesignPage() {
                                               </FormItem>
                                           )}
                                       />
-                                      <div>
-                                          <Label>Custom Background</Label>
-                                          <Button type="button" variant="outline" className="w-full mt-2" onClick={() => bgFileInputRef.current?.click()}>
-                                              <Upload className="mr-2 h-4 w-4" /> Upload Background
-                                          </Button>
-                                          <input type="file" ref={bgFileInputRef} className="hidden" accept="image/png, image/jpeg" onChange={onBgFileChange} />
+                                      <div className="grid grid-cols-2 gap-4">
+                                          <div>
+                                              <Label>Custom Background</Label>
+                                              <Button type="button" variant="outline" className="w-full mt-2" onClick={() => bgFileInputRef.current?.click()}>
+                                                  <Upload className="mr-2 h-4 w-4" /> Upload BG
+                                              </Button>
+                                              <input type="file" ref={bgFileInputRef} className="hidden" accept="image/png, image/jpeg" onChange={onBgFileChange} />
+                                          </div>
+                                          <div>
+                                              <Label>Custom Logo</Label>
+                                              <Button type="button" variant="outline" className="w-full mt-2" onClick={() => logoFileInputRef.current?.click()}>
+                                                  <Upload className="mr-2 h-4 w-4" /> Upload Logo
+                                              </Button>
+                                              <input type="file" ref={logoFileInputRef} className="hidden" accept="image/png, image/jpeg" onChange={onLogoFileChange} />
+                                          </div>
                                       </div>
                                       <FormField
                                           control={form.control}
