@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo, useEffect, useCallback, useTransition } from "react";
 import type { PostWithAuthor, UserProfilePayload } from '@/lib/users';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -28,9 +28,8 @@ interface UserProfilePageProps {
 
 export default function UserProfileClientPage({ userProfileData }: UserProfilePageProps) {
   const { user: currentUser } = useAuth();
-  
   const { isOwner, user, isFollowedByCurrentUser } = userProfileData;
-  
+
   const [posts, setPosts] = useState<PostWithAuthor[]>([]);
   
   useEffect(() => {
@@ -141,7 +140,7 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
             </TabsList>
             
             <TabsContent value="gallery" className="mt-6">
-                <AboutTab user={user} contentOnly={true} />
+                <AboutTab userProfileData={userProfileData} contentOnly={true} />
             </TabsContent>
 
             <TabsContent value="posts" className="mt-6">
@@ -157,12 +156,12 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
                     ))}
                     </div>
                 ) : (
-                    <AboutTab user={user} noContentMode="posts" />
+                    <AboutTab userProfileData={userProfileData} noContentMode="posts" />
                 )}
             </TabsContent>
 
             <TabsContent value="about" className="mt-6">
-                <AboutTab user={user} />
+                <AboutTab userProfileData={userProfileData} />
             </TabsContent>
         </Tabs>
       </div>

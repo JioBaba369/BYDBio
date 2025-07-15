@@ -2,24 +2,26 @@
 
 'use client';
 
-import type { User, PublicContentItem } from '@/lib/users';
+import type { UserProfilePayload } from '@/lib/users';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Building2, Globe, Linkedin, Mail, MapPin, Phone, Link as LinkIcon, Briefcase } from 'lucide-react';
 import { linkIconData } from '@/lib/link-icons';
 import { PublicContentCard } from '../public-content-card';
 import { Button } from '../ui/button';
+import Link from 'next/link';
 import { useAuth } from '../auth-provider';
 
 interface AboutTabProps {
-  user: User;
+  userProfileData: UserProfilePayload;
   contentOnly?: boolean;
   noContentMode?: 'posts' | 'gallery';
 }
 
-export function AboutTab({ user, contentOnly = false, noContentMode }: AboutTabProps) {
+export function AboutTab({ userProfileData, contentOnly = false, noContentMode }: AboutTabProps) {
   const { user: currentUser } = useAuth();
-  const { bio, hashtags, businessCard, links, otherContent } = user as User & { otherContent?: PublicContentItem[] };
+  const { user, otherContent } = userProfileData;
+  const { bio, hashtags, businessCard, links } = user;
   const hasBusinessCardInfo = businessCard && Object.values(businessCard).some(Boolean);
 
   if (contentOnly) {
