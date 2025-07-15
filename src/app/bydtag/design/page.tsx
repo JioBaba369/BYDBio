@@ -530,8 +530,10 @@ export default function BydTagDesignPage() {
                             )}
                             {isSaving ? "Saving Design..." : "Save Design"}
                           </Button>
-                          <Button type="button" variant="outline" size="lg" className="w-full mt-2">
-                             Proceed to Order <ArrowRight className="ml-2 h-5 w-5" />
+                          <Button type="button" size="lg" className="w-full mt-2" asChild>
+                             <Link href="/bydtag/order">
+                                Proceed to Order <ArrowRight className="ml-2 h-5 w-5" />
+                             </Link>
                           </Button>
                       </form>
                   </FormProvider>
