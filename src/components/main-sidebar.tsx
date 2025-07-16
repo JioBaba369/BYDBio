@@ -288,27 +288,46 @@ export function MainSidebar() {
                 </SidebarMenu>
             </SidebarGroup>
         )}
+          
       </SidebarContent>
       <SidebarFooter>
-         <SidebarSeparator />
-         <SidebarMenu>
-            <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip="My Profile & Settings" size="lg" className="h-auto p-2" isActive={isActive('/settings')}>
-                    <Link href="/settings">
-                        <span className="flex w-full items-center gap-2 text-left">
-                            <Avatar className="size-8">
-                                <AvatarImage src={user.avatarUrl} />
-                                <AvatarFallback>{user.avatarFallback}</AvatarFallback>
-                            </Avatar>
-                            <span className="min-w-0 flex-1">
-                                <p className="truncate font-semibold">{user.name}</p>
-                                <p className="truncate text-xs text-muted-foreground">@{user.username}</p>
-                            </span>
-                        </span>
-                    </Link>
+        <SidebarMenu>
+             <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Support" isActive={isActive('/support')}>
+                <Link href="/support">
+                    <BadgeHelp />
+                    <span>Support</span>
+                </Link>
                 </SidebarMenuButton>
             </SidebarMenuItem>
-         </SidebarMenu>
+            <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Trust Center" isActive={isActive('/trust')}>
+                <Link href="/trust">
+                    <Shield />
+                    <span>Trust Center</span>
+                </Link>
+                </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Settings" isActive={isActive('/settings')}>
+                <Link href="/settings">
+                    <Settings />
+                    <span>Settings</span>
+                </Link>
+                </SidebarMenuButton>
+            </SidebarMenuItem>
+        </SidebarMenu>
+         <SidebarSeparator />
+         <div className="flex w-full items-center gap-2 rounded-md p-2">
+            <Avatar className="size-8">
+                <AvatarImage src={user.avatarUrl} />
+                <AvatarFallback>{user.avatarFallback}</AvatarFallback>
+            </Avatar>
+            <span className="min-w-0 flex-1 text-left">
+                <p className="truncate font-semibold text-sm">{user.name}</p>
+                <p className="truncate text-xs text-muted-foreground">@{user.username}</p>
+            </span>
+        </div>
       </SidebarFooter>
     </Sidebar>
   );
