@@ -315,38 +315,6 @@ export function MainSidebar() {
          <SidebarSeparator />
          <SidebarMenu>
             <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip="Support" isActive={isActive('/support')}>
-                <Link href="/support">
-                    <BadgeHelp />
-                    <span>Support</span>
-                </Link>
-                </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip="Trust Center" isActive={isActive('/trust')}>
-                <Link href="/trust">
-                    <Shield />
-                    <span>Trust Center</span>
-                </Link>
-                </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip="What's New" isActive={isActive('/whats-new')}>
-                <Link href="/whats-new">
-                    <Megaphone />
-                    <span>What's New</span>
-                </Link>
-                </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip="URL Tree" isActive={isActive('/url-tree')}>
-                <Link href="/url-tree">
-                    <Share2 />
-                    <span>URL Tree</span>
-                </Link>
-                </SidebarMenuButton>
-            </SidebarMenuItem>
-             <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip="Settings" isActive={isActive('/settings')}>
                 <Link href="/settings">
                     <Settings />
