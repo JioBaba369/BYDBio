@@ -511,7 +511,7 @@ const SidebarMenuItem = React.forwardRef<
 SidebarMenuItem.displayName = "SidebarMenuItem"
 
 const sidebarMenuButtonVariants = cva(
-  "peer/menu-button relative flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm outline-none ring-ring transition-[width,height,padding] hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 active:bg-accent active:text-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-[[data-sidebar=menu-action]]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-accent data-[active=true]:font-medium data-[active=true]:text-accent-foreground data-[state=open]:hover:bg-accent data-[state=open]:hover:text-accent-foreground group-data-[collapsible=icon]:!size-8 group-data-[collapsible=icon]:!p-2 [&>span:last-child]:truncate",
+  "peer/menu-button relative flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left outline-none ring-ring transition-[width,height,padding] hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 active:bg-accent active:text-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-[[data-sidebar=menu-action]]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-accent data-[active=true]:font-medium data-[active=true]:text-accent-foreground data-[state=open]:hover:bg-accent data-[state=open]:hover:text-accent-foreground group-data-[collapsible=icon]:!size-8 group-data-[collapsible=icon]:!p-2 [&>span:last-child]:truncate",
   {
     variants: {
       variant: {
@@ -537,6 +537,7 @@ const SidebarMenuButton = React.forwardRef<
   React.ComponentProps<typeof Button> & {
     isActive?: boolean
     tooltip?: string | React.ComponentProps<typeof TooltipContent>
+    asChild?: boolean
   }
 >(
   (
@@ -553,15 +554,15 @@ const SidebarMenuButton = React.forwardRef<
     ref
   ) => {
     const { isMobile, state } = useSidebar()
+    
+    const Comp = asChild ? Slot : "button"
 
     const button = (
-      <Button
+       <Comp
         ref={ref}
-        asChild={asChild}
         data-sidebar="menu-button"
         data-size={size}
         data-active={isActive}
-        variant="ghost"
         className={cn(sidebarMenuButtonVariants({ variant, size }), className)}
         {...props}
       >
@@ -569,7 +570,7 @@ const SidebarMenuButton = React.forwardRef<
           {isActive && <div className="absolute left-0 h-6 w-1 rounded-r-full bg-primary" />}
           {children}
         </>
-      </Button>
+      </Comp>
     )
 
     if (!tooltip) {
