@@ -1,91 +1,81 @@
+
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // By default, deny all reads and writes.
+    // Deny all reads/writes by default
     match /{document=**} {
       allow read, write: if false;
     }
 
-    // Helper function to check if a user is authenticated.
-    function isAuthenticated() {
-      return request.auth != null;
-    }
-
-    // Helper function to check if the user is the owner of a document.
-    function isOwner(userId) {
-      return request.auth.uid == userId;
-    }
-
-    // Helper function to check if a user is an admin.
-    function isAdmin() {
-      return request.auth.token.email == 'admin@byd.bio';
-    }
-
-    // Rules for the 'users' collection.
+    // USERS
+    // Users can read any profile
+    // Users can only write to their own profile
     match /users/{userId} {
-      // Anyone can read a user's public profile.
       allow read: if true;
-      // Only the user themselves can update their own profile.
-      allow update: if isOwner(userId);
-      // An authenticated user can create their own user document.
-      allow create: if isOwner(userId);
+      allow create, update, delete: if request.auth.uid == userId;
     }
     
-    // Generic rules for public content collections.
-    function publicContentRules(isPublicField, isPost) {
-      return {
-        // Read is allowed if the content is marked as public/active.
-        // For posts, we also need to check the privacy field.
-        "allow read": {
-          "if": isPublicField() || (isPost && resource.data.privacy == 'followers' && isAuthenticated() && exists(/databases/$(database)/documents/users/$(resource.data.authorId)) && request.auth.uid in get(/databases/$(database)/documents/users/$(resource.data.authorId)).data.following)
-        },
-        // Authenticated users can create content.
-        "allow create": {
-          "if": isAuthenticated() && isOwner(request.resource.data.authorId)
-        },
-        // Only the owner can update or delete their content.
-        "allow update, delete": {
-          "if": isOwner(resource.data.authorId)
-        }
-      }
+    // CONTENT COLLECTIONS (listings, jobs, events, offers, promoPages)
+    // - Anyone can read active content.
+    // - Only the author can create, update, or delete their own content.
+    function isAuthor(resourceId, collectionName) {
+      return request.auth.uid == get(/databases/$(database)/documents/$(collectionName)/$(resourceId)).data.authorId;
     }
 
-    // Apply rules to all public content collections.
     match /listings/{listingId} {
-      allow read, create, update, delete: if publicContentRules(() => resource.data.status == 'active', false);
-    }
-    match /jobs/{jobId} {
-      allow read, create, update, delete: if publicContentRules(() => resource.data.status == 'active', false);
-    }
-    match /events/{eventId} {
-      allow read, create, update, delete: if publicContentRules(() => resource.data.status == 'active', false);
-    }
-    match /offers/{offerId} {
-      allow read, create, update, delete: if publicContentRules(() => resource.data.status == 'active', false);
-    }
-    match /promoPages/{promoPageId} {
-      allow read, create, update, delete: if publicContentRules(() => resource.data.status == 'active', false);
-    }
-    match /posts/{postId} {
-       allow read, create, update, delete: if publicContentRules(() => resource.data.privacy == 'public', true);
+      allow read: if resource.data.status == 'active';
+      allow create: if request.auth.uid == request.resource.data.authorId;
+      allow update, delete: if isAuthor(listingId, 'listings');
     }
     
-    // Rules for user-specific collections.
-    match /notifications/{notificationId} {
-        // Only the recipient can read their notifications.
-        allow read: if isOwner(resource.data.userId);
-        // Anyone can create a notification (for contact forms), but only owners can update 'read' status.
-        allow create: if true;
-        allow update: if isOwner(resource.data.userId);
+    match /jobs/{jobId} {
+      allow read: if resource.data.status == 'active';
+      allow create: if request.auth.uid == request.resource.data.authorId;
+      allow update, delete: if isAuthor(jobId, 'jobs');
     }
 
+    match /events/{eventId} {
+      allow read: if resource.data.status == 'active';
+      allow create: if request.auth.uid == request.resource.data.authorId;
+      allow update, delete: if isAuthor(eventId, 'events');
+      // Allow any authenticated user to RSVP (update the rsvps array)
+      allow update: if request.auth.uid != null && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['rsvps']);
+    }
+
+    match /offers/{offerId} {
+      allow read: if resource.data.status == 'active';
+      allow create: if request.auth.uid == request.resource.data.authorId;
+      allow update, delete: if isAuthor(offerId, 'offers');
+    }
+    
+    match /promoPages/{promoPageId} {
+      allow read: if resource.data.status == 'active';
+      allow create: if request.auth.uid == request.resource.data.authorId;
+      allow update, delete: if isAuthor(promoPageId, 'promoPages');
+    }
+    
+    // NOTIFICATIONS
+    // Users can only read their own notifications
+    // Server-side logic (or other rules) must handle creation
+    match /notifications/{notificationId} {
+        allow read, update: if request.auth.uid == resource.data.userId;
+        allow create: if request.auth.uid != null; // Allow logged-in users to trigger notification creation
+    }
+
+    // APPOINTMENTS
+    // Only the owner or the booker can access an appointment
+    match /appointments/{appointmentId} {
+      allow read, delete: if request.auth.uid == resource.data.ownerId || request.auth.uid == resource.data.bookerId;
+      allow create: if request.auth.uid == request.resource.data.bookerId;
+    }
+    
+    // ORDERS (Admin only)
+    // Only an admin user can read all orders
     match /orders/{orderId} {
-      // Only the user who placed the order or an admin can read it.
-      allow read: if isOwner(resource.data.userId) || isAdmin();
-      // Only authenticated users can create orders for themselves.
-      allow create: if isAuthenticated() && isOwner(request.resource.data.userId);
+        allow read, write: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.email == 'admin@byd.bio';
+        allow create: if request.auth.uid != null;
     }
   }
 }
