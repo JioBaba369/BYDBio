@@ -294,17 +294,16 @@ export default function MyContentPage() {
         return filteredItems.map(item => new Date(item.date));
     }, [filteredItems]);
     
-    const [month, setMonth] = useState(new Date());
+    const [selectedDay, setSelectedDay] = useState<Date>(new Date());
     
     const eventsForSelectedDay = useMemo(() => {
-        if (!month) return [];
         return filteredItems.filter(item => {
             const itemDate = new Date(item.date);
-            return itemDate.getFullYear() === month.getFullYear() &&
-                   itemDate.getMonth() === month.getMonth() &&
-                   itemDate.getDate() === month.getDate();
+            return itemDate.getFullYear() === selectedDay.getFullYear() &&
+                   itemDate.getMonth() === selectedDay.getMonth() &&
+                   itemDate.getDate() === selectedDay.getDate();
         });
-    }, [filteredItems, month]);
+    }, [filteredItems, selectedDay]);
 
 
   if (authLoading || isLoading) {
@@ -441,10 +440,10 @@ export default function MyContentPage() {
                     <Card>
                         <DayPicker
                           mode="single"
-                          selected={month}
-                          onSelect={(day) => day && setMonth(day)}
-                          month={month}
-                          onMonthChange={setMonth}
+                          selected={selectedDay}
+                          onSelect={(day) => day && setSelectedDay(day)}
+                          month={selectedDay}
+                          onMonthChange={setSelectedDay}
                           modifiers={{ withEvent: daysWithEvents }}
                           modifiersClassNames={{ withEvent: 'day-with-event' }}
                           className="p-4"
@@ -452,7 +451,7 @@ export default function MyContentPage() {
                     </Card>
                     <div className="space-y-4">
                         <h3 className="text-lg font-semibold font-headline">
-                          Schedule for <ClientFormattedDate date={month} />
+                          Schedule for <ClientFormattedDate date={selectedDay} />
                         </h3>
                         {eventsForSelectedDay.length > 0 ? (
                             <div className="space-y-4">
