@@ -32,9 +32,13 @@ export const followUser = async (currentUserId: string, targetUserId: string) =>
   });
 
   const targetUserRef = doc(db, 'users', targetUserId);
-  batch.update(targetUserRef, {
-      followerCount: increment(1)
-  });
+  const targetUserDoc = await getDoc(targetUserRef);
+  
+  if (targetUserDoc.exists() && typeof targetUserDoc.data().followerCount === 'number') {
+      batch.update(targetUserRef, { followerCount: increment(1) });
+  } else {
+      batch.update(targetUserRef, { followerCount: 1 });
+  }
 
   await batch.commit();
   await createNotification(targetUserId, 'new_follower', currentUserId);
@@ -50,9 +54,13 @@ export const unfollowUser = async (currentUserId: string, targetUserId: string) 
   });
 
   const targetUserRef = doc(db, 'users', targetUserId);
-  batch.update(targetUserRef, {
-      followerCount: increment(-1)
-  });
+  const targetUserDoc = await getDoc(targetUserRef);
+  
+  if (targetUserDoc.exists() && targetUserDoc.data().followerCount > 0) {
+      batch.update(targetUserRef, { followerCount: increment(-1) });
+  } else {
+      batch.update(targetUserRef, { followerCount: 0 });
+  }
   
   await batch.commit();
 };

@@ -10,15 +10,15 @@ import { db } from '@/lib/firebase';
 const followSchema = z.object({
   currentUserId: z.string(),
   targetUserId: z.string(),
-  isFollowing: z.boolean(),
+  newIsFollowingState: z.boolean(),
   path: z.string(),
 });
 
-export async function toggleFollowAction(currentUserId: string, targetUserId: string, isFollowing: boolean, path: string): Promise<{ success: boolean; error?: string; newFollowerCount?: number }> {
+export async function toggleFollowAction(currentUserId: string, targetUserId: string, newIsFollowingState: boolean, path: string): Promise<{ success: boolean; error?: string; newFollowerCount?: number }> {
   const validatedFields = followSchema.safeParse({
     currentUserId,
     targetUserId,
-    isFollowing,
+    newIsFollowingState,
     path,
   });
 
@@ -26,13 +26,13 @@ export async function toggleFollowAction(currentUserId: string, targetUserId: st
     return { success: false, error: 'Invalid input.' };
   }
 
-  const { currentUserId: validatedCurrentUserId, targetUserId: validatedTargetUserId, isFollowing: validatedIsFollowing, path: revalidationPath } = validatedFields.data;
+  const { currentUserId: validatedCurrentUserId, targetUserId: validatedTargetUserId, newIsFollowingState: validatedIsFollowing, path: revalidationPath } = validatedFields.data;
 
   try {
     if (validatedIsFollowing) {
-      await unfollowUser(validatedCurrentUserId, validatedTargetUserId);
-    } else {
       await followUser(validatedCurrentUserId, validatedTargetUserId);
+    } else {
+      await unfollowUser(validatedCurrentUserId, validatedTargetUserId);
     }
     
     // Revalidate paths to update follower lists on other pages
