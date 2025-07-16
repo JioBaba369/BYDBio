@@ -77,7 +77,7 @@ export const createPost = async (
     const newPostNumber = postCount + 1;
 
     const keywords = [...new Set([
-        ...(data.content || '').toLowerCase().split(' ').filter(Boolean),
+        ...(data.content ? data.content.toLowerCase().split(' ').filter(Boolean) : []),
         ...(data.category ? data.category.toLowerCase().split(' ').filter(Boolean) : []),
     ])];
     

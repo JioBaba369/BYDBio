@@ -229,7 +229,7 @@ export default function FeedPage() {
           content: postToQuote.content,
           imageUrl: postToQuote.imageUrl,
           authorId: postToQuote.author.uid,
-          createdAt: postToQuote.createdAt,
+          createdAt: postToQuote.createdAt, // Send as ISO string
       } : undefined;
       
       await createPost({
@@ -248,10 +248,9 @@ export default function FeedPage() {
       setPostPrivacy('public');
       toast({ title: "Update Posted!" });
       
+      // Refetch both feeds to ensure data consistency
       fetchPosts('following');
-      if(activeTab === 'discovery') {
-          fetchPosts('discovery');
-      }
+      fetchPosts('discovery');
 
     } catch (error) {
       console.error(error);
@@ -259,7 +258,7 @@ export default function FeedPage() {
     } finally {
       setIsPosting(false);
     }
-  }, [user, isPosting, postContent, croppedImageUrl, postToQuote, postPrivacy, postCategory, fetchPosts, activeTab, toast]);
+  }, [user, isPosting, postContent, croppedImageUrl, postToQuote, postPrivacy, postCategory, fetchPosts, toast]);
 
   const renderFeedContent = (posts: PostWithAuthor[], emptyState: React.ReactNode, hasMore: boolean) => {
     if (isLoadingFeed && posts.length === 0) return <FeedSkeleton />;
