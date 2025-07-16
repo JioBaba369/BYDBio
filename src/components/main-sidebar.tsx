@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -14,6 +15,9 @@ import {
   SidebarMenuButton,
   SidebarMenuBadge,
   SidebarSeparator,
+  SidebarMenuSub,
+  SidebarMenuSubItem,
+  SidebarMenuSubButton,
 } from '@/components/ui/sidebar';
 import { Logo } from './logo';
 import {
@@ -24,6 +28,9 @@ import {
   Bell,
   Compass,
   Megaphone,
+  UserCircle,
+  Building2,
+  Share2,
   LayoutDashboard,
   Rss,
   Mail,
@@ -32,6 +39,8 @@ import {
   Gift,
   Calendar,
   Nfc,
+  Link as LinkIcon,
+  BookUser,
   Paintbrush,
   Package,
 } from 'lucide-react';
@@ -183,8 +192,8 @@ export function MainSidebar() {
           </SidebarMenu>
         </SidebarGroup>
         
-        <SidebarSeparator />
-
+        <SidebarSeparator/>
+        
         <SidebarGroup>
           <SidebarGroupLabel>My Hub</SidebarGroupLabel>
           <SidebarMenu>
@@ -242,8 +251,6 @@ export function MainSidebar() {
           </SidebarMenu>
         </SidebarGroup>
 
-        <SidebarSeparator />
-
         <SidebarGroup>
             <SidebarGroupLabel>Manage</SidebarGroupLabel>
             <SidebarMenu>
@@ -263,7 +270,7 @@ export function MainSidebar() {
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
-            <SidebarMenuItem>
+              <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip="Settings" isActive={isActive('/settings')}>
                 <Link href="/settings">
                     <Settings className="h-4 w-4" />
