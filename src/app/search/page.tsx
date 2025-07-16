@@ -6,13 +6,13 @@ import { useSearchParams, usePathname } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { UserPlus, UserCheck, Search as SearchIcon, Briefcase, MapPin, Tags, Calendar, Users, Gift, Eye, Building2, ExternalLink, Megaphone, Loader2, Rss, MousePointerClick } from "lucide-react";
+import { UserPlus, UserCheck, Search as SearchIcon, Briefcase, MapPin, Tags, Calendar, Users, Gift, Eye, Building2, ExternalLink, Megaphone, Loader2, MousePointerClick, DollarSign } from "lucide-react";
 import { useState, useEffect, useCallback, useTransition, useMemo } from 'react';
 import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import Image from "next/image";
-import type { User, PostWithAuthor } from '@/lib/users';
+import type { User } from '@/lib/users';
 import { useAuth } from '@/components/auth-provider';
 import { searchUsers, getUsersByIds } from '@/lib/users';
 import { useToast } from '@/hooks/use-toast';
@@ -24,11 +24,8 @@ import type { Offer } from '@/lib/offers';
 import type { Job } from '@/lib/jobs';
 import type { Event } from '@/lib/events';
 import type { PromoPage } from '@/lib/promo-pages';
-import type { Post } from '@/lib/posts';
 import { ClientFormattedDate } from '@/components/client-formatted-date';
 import { ClientFormattedCurrency } from '@/components/client-formatted-currency';
-import { PostCard } from '@/components/post-card';
-import { populatePostAuthors } from '@/lib/posts';
 import { useRouter } from 'next/navigation';
 import { FollowButton } from '@/components/follow-button';
 
@@ -40,7 +37,6 @@ type SearchResults = {
     events: ItemWithAuthor<Event>[];
     offers: ItemWithAuthor<Offer>[];
     promoPages: ItemWithAuthor<PromoPage>[];
-    posts: PostWithAuthor[];
 }
 
 const SearchPageSkeleton = () => (
@@ -50,9 +46,8 @@ const SearchPageSkeleton = () => (
             <Skeleton className="h-4 w-80" />
         </div>
         <Tabs defaultValue="users" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-7">
+            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-6">
                 <TabsTrigger value="users" disabled><Skeleton className="h-5 w-20" /></TabsTrigger>
-                <TabsTrigger value="posts" disabled><Skeleton className="h-5 w-20" /></TabsTrigger>
                 <TabsTrigger value="promoPages" disabled><Skeleton className="h-5 w-24" /></TabsTrigger>
                 <TabsTrigger value="listings" disabled><Skeleton className="h-5 w-20" /></TabsTrigger>
                 <TabsTrigger value="jobs" disabled><Skeleton className="h-5 w-16" /></TabsTrigger>
@@ -91,7 +86,7 @@ export default function SearchPage() {
   const router = useRouter();
 
   const [isLoading, setIsLoading] = useState(false);
-  const [results, setResults] = useState<SearchResults>({ users: [], listings: [], jobs: [], events: [], offers: [], promoPages: [], posts: [] });
+  const [results, setResults] = useState<SearchResults>({ users: [], listings: [], jobs: [], events: [], offers: [], promoPages: [] });
 
   const performSearch = useCallback(async () => {
     if (!queryParam) return;
@@ -100,32 +95,27 @@ export default function SearchPage() {
     try {
         const searchKeywords = queryParam.toLowerCase().split(' ').filter(Boolean).slice(0, 10);
         if (searchKeywords.length === 0) {
-            setResults({ users: [], listings: [], jobs: [], events: [], offers: [], promoPages: [], posts: [] });
+            setResults({ users: [], listings: [], jobs: [], events: [], offers: [], promoPages: [] });
             setIsLoading(false);
             return;
         }
 
         const userResults = await searchUsers(queryParam);
         
-        const collectionsToSearch = ['listings', 'jobs', 'events', 'offers', 'promoPages', 'posts'];
+        const collectionsToSearch = ['listings', 'jobs', 'events', 'offers', 'promoPages'];
         
         const contentPromises = collectionsToSearch.map(colName => {
             const queryConstraints: any[] = [
                 where('searchableKeywords', 'array-contains-any', searchKeywords),
+                where('status', '==', 'active'),
                 limit(50)
             ];
-
-            if (colName === 'posts') {
-                queryConstraints.push(where('privacy', '==', 'public'));
-            } else {
-                queryConstraints.push(where('status', '==', 'active'));
-            }
             
             const finalQuery = query(collection(db, colName), ...queryConstraints);
             return getDocs(finalQuery);
         });
         
-        const [listingsSnap, jobsSnap, eventsSnap, offersSnap, promoPagesSnap, postsSnap] = await Promise.all(contentPromises);
+        const [listingsSnap, jobsSnap, eventsSnap, offersSnap, promoPagesSnap] = await Promise.all(contentPromises);
 
         const allContent: (any & { type: string })[] = [
             ...listingsSnap.docs.map(doc => ({ ...doc.data(), id: doc.id, type: 'listing' })),
@@ -133,13 +123,11 @@ export default function SearchPage() {
             ...eventsSnap.docs.map(doc => ({ ...doc.data(), id: doc.id, type: 'event' })),
             ...offersSnap.docs.map(doc => ({ ...doc.data(), id: doc.id, type: 'offer' })),
             ...promoPagesSnap.docs.map(doc => ({ ...doc.data(), id: doc.id, type: 'promoPage' })),
-            ...postsSnap.docs.map(doc => ({ ...doc.data(), id: doc.id, type: 'post' })),
         ];
 
         const authorIds = new Set<string>();
         allContent.forEach(item => {
             if (item.authorId) authorIds.add(item.authorId);
-            if (item.repostedPost?.authorId) authorIds.add(item.repostedPost.authorId);
         });
         
         const authors = await getUsersByIds(Array.from(authorIds));
@@ -152,11 +140,8 @@ export default function SearchPage() {
             events: [],
             offers: [],
             promoPages: [],
-            posts: [],
         };
         
-        const postsToPopulate: Post[] = [];
-
         allContent.forEach(item => {
             const author = authorMap.get(item.authorId);
             if (!author) {
@@ -169,11 +154,9 @@ export default function SearchPage() {
                 case 'event': newResults.events.push({ ...item, author }); break;
                 case 'offer': newResults.offers.push({ ...item, author }); break;
                 case 'promoPage': newResults.promoPages.push({ ...item, author }); break;
-                case 'post': postsToPopulate.push(item); break;
             }
         });
         
-        newResults.posts = await populatePostAuthors(postsToPopulate, user?.uid);
         setResults(newResults);
 
     } catch (err) {
@@ -189,15 +172,6 @@ export default function SearchPage() {
         performSearch();
     }
   }, [queryParam, authLoading, performSearch]);
-  
-  const handleQuote = (post: PostWithAuthor) => {
-    sessionStorage.setItem('postToQuote', JSON.stringify(post));
-    router.push('/feed');
-  };
-
-  const handlePostDeleted = (deletedPostId: string) => {
-    setResults(prev => ({ ...prev, posts: prev.posts.filter(p => p.id !== deletedPostId) }));
-  };
 
   if (!queryParam) {
     return (
@@ -248,9 +222,8 @@ export default function SearchPage() {
       </div>
 
       <Tabs defaultValue="users" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-7">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-6">
             <TabsTrigger value="users">Users ({results.users.length})</TabsTrigger>
-            <TabsTrigger value="posts">Posts ({results.posts.length})</TabsTrigger>
             <TabsTrigger value="promoPages">Business Pages ({results.promoPages.length})</TabsTrigger>
             <TabsTrigger value="listings">Listings ({results.listings.length})</TabsTrigger>
             <TabsTrigger value="jobs">Jobs ({results.jobs.length})</TabsTrigger>
@@ -296,29 +269,6 @@ export default function SearchPage() {
             )}
         </TabsContent>
         
-        <TabsContent value="posts" className="pt-4">
-            {results.posts.length > 0 ? (
-                <div className="space-y-4">
-                    {results.posts.map(post => (
-                        <PostCard 
-                            key={post.id} 
-                            item={post} 
-                            onQuote={handleQuote}
-                            onDeleted={handlePostDeleted}
-                        />
-                    ))}
-                </div>
-            ) : (
-                <Card>
-                    <CardContent className="p-10 text-center text-muted-foreground">
-                        <Rss className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                        <h3 className="text-lg font-semibold text-foreground">No Posts Found</h3>
-                        <p>We couldn't find any posts matching "{queryParam}". Try a different search.</p>
-                    </CardContent>
-                </Card>
-            )}
-        </TabsContent>
-
         <TabsContent value="promoPages" className="pt-4">
              {results.promoPages.length > 0 ? (
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">

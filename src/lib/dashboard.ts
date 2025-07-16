@@ -7,7 +7,6 @@ import type { Offer } from './offers';
 import type { Job } from './jobs';
 import type { Event } from './events';
 import type { PromoPage } from './promo-pages';
-import type { Post } from './posts';
 import { serializeDocument } from './firestore-utils';
 
 export type ActivityItem = (
@@ -16,7 +15,6 @@ export type ActivityItem = (
     | (Job & { type: 'Job' })
     | (Event & { type: 'Event' })
     | (PromoPage & { type: 'Business Page' })
-    | (Post & { type: 'Post' })
 ) & {
     id: string;
     createdAt: string; // Serialized date
@@ -24,14 +22,13 @@ export type ActivityItem = (
 };
 
 export const getRecentActivity = async (userId: string): Promise<ActivityItem[]> => {
-    const collections = ['listings', 'jobs', 'events', 'offers', 'promoPages', 'posts'];
+    const collections = ['listings', 'jobs', 'events', 'offers', 'promoPages'];
     const typeMap: { [key: string]: string } = {
         'listings': 'Listing',
         'jobs': 'Job',
         'events': 'Event',
         'offers': 'Offer',
         'promoPages': 'Business Page',
-        'posts': 'Post',
     };
 
     const promises = collections.map(col => {
@@ -63,8 +60,6 @@ export const getRecentActivity = async (userId: string): Promise<ActivityItem[]>
                 title = data.title;
             } else if (data.name) { // For promoPages
                 title = data.name;
-            } else if (data.content) { // For posts
-                title = data.content.substring(0, 50) + (data.content.length > 50 ? '...' : '');
             }
 
             allItems.push({

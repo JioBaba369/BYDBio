@@ -2,7 +2,6 @@
 import { collection, query, where, getDocs, limit, doc, getDoc, setDoc, updateDoc, deleteDoc, arrayUnion, orderBy, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { deleteUser, type User as FirebaseUser } from "firebase/auth";
-import { getPostsByUser, type PostWithAuthor } from "./posts";
 import { serializeDocument } from "./firestore-utils";
 import { RESERVED_USERNAMES } from "./reserved-usernames";
 import type { Listing } from './listings';
@@ -11,7 +10,7 @@ import type { Job } from './jobs';
 import type { Event, CalendarItem } from './events';
 import { getCalendarItems } from "./events";
 import type { PromoPage } from './promo-pages';
-import type { Post } from "./posts";
+
 
 export type BusinessCard = {
   title?: string;
@@ -110,7 +109,6 @@ export type PublicContentItem = (
 
 export type UserProfilePayload = {
     user: User;
-    posts: PostWithAuthor[];
     otherContent: PublicContentItem[];
     isOwner: boolean;
     isFollowedByCurrentUser: boolean;
@@ -354,10 +352,7 @@ export async function getUserProfileData(username: string, viewerId: string | nu
         }
     }
     
-    const [posts, otherContent] = await Promise.all([
-        getPostsByUser(user.uid, viewerId, isFollowedByCurrentUser),
-        getCalendarItems(user.uid, 'author'),
-    ]);
+    const otherContent = await getCalendarItems(user.uid, 'author');
     
     const otherContentWithAuthor = otherContent
     .filter(item => item.type !== 'Appointment') // Filter out private appointments
@@ -375,7 +370,6 @@ export async function getUserProfileData(username: string, viewerId: string | nu
     
     return {
         user,
-        posts,
         otherContent: otherContentWithAuthor as PublicContentItem[],
         isOwner,
         isFollowedByCurrentUser

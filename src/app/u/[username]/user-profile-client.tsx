@@ -3,7 +3,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from "react";
-import type { PostWithAuthor, UserProfilePayload } from '@/lib/users';
+import type { UserProfilePayload } from '@/lib/users';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Edit, Link as LinkIcon, QrCode, Mail, Users, Globe, Lock } from "lucide-react";
