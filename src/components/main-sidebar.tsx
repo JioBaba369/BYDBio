@@ -270,6 +270,14 @@ export function MainSidebar() {
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Settings" isActive={isActive('/settings')}>
+                <Link href="/settings">
+                    <Settings />
+                    <span>Settings</span>
+                </Link>
+                </SidebarMenuButton>
+            </SidebarMenuItem>
             </SidebarMenu>
         </SidebarGroup>
         
@@ -291,34 +299,7 @@ export function MainSidebar() {
           
       </SidebarContent>
       <SidebarFooter>
-        <SidebarMenu>
-             <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip="Support" isActive={isActive('/support')}>
-                <Link href="/support">
-                    <BadgeHelp />
-                    <span>Support</span>
-                </Link>
-                </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip="Trust Center" isActive={isActive('/trust')}>
-                <Link href="/trust">
-                    <Shield />
-                    <span>Trust Center</span>
-                </Link>
-                </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip="Settings" isActive={isActive('/settings')}>
-                <Link href="/settings">
-                    <Settings />
-                    <span>Settings</span>
-                </Link>
-                </SidebarMenuButton>
-            </SidebarMenuItem>
-        </SidebarMenu>
-         <SidebarSeparator />
-         <div className="flex w-full items-center gap-2 rounded-md p-2">
+         <div className="flex w-full items-center gap-2 rounded-md p-2 text-left">
             <Avatar className="size-8">
                 <AvatarImage src={user.avatarUrl} />
                 <AvatarFallback>{user.avatarFallback}</AvatarFallback>
