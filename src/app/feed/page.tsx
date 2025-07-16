@@ -239,7 +239,7 @@ export default function FeedPage() {
           content: postToQuote.content,
           imageUrl: postToQuote.imageUrl,
           authorId: postToQuote.author.uid,
-          createdAt: new Date(postToQuote.createdAt) as unknown as Timestamp,
+          createdAt: new Date(postToQuote.createdAt).toISOString(),
       } : undefined;
       
       await createPost(user.uid, {

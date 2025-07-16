@@ -35,7 +35,7 @@ export type EmbeddedPostInfo = {
   content: string;
   imageUrl: string | null;
   authorId: string;
-  createdAt: Timestamp; // Store as Timestamp
+  createdAt: Timestamp | string; // Accept ISO string from client
 };
 
 // This is the structure used on the client, with author details populated.
@@ -131,6 +131,16 @@ export const createPost = async (userId: string, data: Pick<Post, 'content' | 'i
     ...(data.category ? data.category.toLowerCase().split(' ').filter(Boolean) : []),
   ];
 
+  let quotedPostData: EmbeddedPostInfo | null = null;
+  if (data.quotedPost) {
+    quotedPostData = {
+      ...data.quotedPost,
+      createdAt: typeof data.quotedPost.createdAt === 'string' 
+        ? Timestamp.fromDate(new Date(data.quotedPost.createdAt)) 
+        : data.quotedPost.createdAt,
+    };
+  }
+
   const postData = {
     authorId: userId,
     content: data.content,
@@ -144,7 +154,7 @@ export const createPost = async (userId: string, data: Pick<Post, 'content' | 'i
     comments: 0,
     repostCount: 0,
     searchableKeywords: keywords,
-    quotedPost: data.quotedPost || null,
+    quotedPost: quotedPostData,
   };
   
   const postRef = await addDoc(postsRef, postData);
