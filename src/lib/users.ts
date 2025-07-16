@@ -548,5 +548,3 @@ export const getAllPublicContent = async (): Promise<PublicContentItem[]> => {
 
     return contentWithAuthors;
 };
-
-    
