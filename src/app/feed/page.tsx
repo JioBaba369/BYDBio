@@ -20,7 +20,7 @@ import { createPost, getFeedPosts, getDiscoveryPosts } from "@/lib/posts";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FeedSkeleton } from "@/components/feed-skeleton";
-import type { DocumentData } from 'firebase/firestore';
+import type { DocumentData, Timestamp } from 'firebase/firestore';
 import { useRouter } from "next/navigation";
 
 const FEED_PAGE_SIZE = 10;
@@ -159,7 +159,7 @@ export default function FeedPage() {
       setIsLoadingFeed(false);
       setIsFetchingMore(false);
     }
-  }, [user, toast]);
+  }, [user, toast, hasMorePosts, isFetchingMore, activeTab]);
   
   const handleQuote = (post: PostWithAuthor) => {
       setPostToQuote(post);
@@ -239,7 +239,7 @@ export default function FeedPage() {
           content: postToQuote.content,
           imageUrl: postToQuote.imageUrl,
           authorId: postToQuote.author.uid,
-          createdAt: postToQuote.createdAt as any, // Server will handle timestamp
+          createdAt: new Date(postToQuote.createdAt) as unknown as Timestamp,
       } : undefined;
       
       await createPost(user.uid, {
@@ -256,12 +256,13 @@ export default function FeedPage() {
       setPostCategory('');
       setPostPrivacy('public');
       toast({ title: "Update Posted!" });
-      // Refetch both feeds to ensure data is fresh everywhere.
+      
       fetchFeed('following');
       if (activeTab === 'discovery') {
         fetchFeed('discovery');
       }
     } catch (error) {
+      console.error(error);
       toast({ title: "Failed to post update", variant: "destructive" });
     } finally {
       setIsPosting(false);
