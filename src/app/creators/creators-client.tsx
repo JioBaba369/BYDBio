@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import type { User } from '@/lib/users';
@@ -14,18 +14,23 @@ import { useAuth } from '@/components/auth-provider';
 export default function CreatorsClient({ initialUsers }: { initialUsers: User[] }) {
   const { user: currentUser } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
+  const [users, setUsers] = useState(initialUsers);
+
+  useEffect(() => {
+    setUsers(initialUsers);
+  }, [initialUsers]);
 
   const filteredUsers = useMemo(() => {
     if (!searchTerm) {
-      return initialUsers;
+      return users;
     }
     const lowercasedTerm = searchTerm.toLowerCase();
-    return initialUsers.filter(user => 
+    return users.filter(user => 
       user.name.toLowerCase().includes(lowercasedTerm) ||
       user.username.toLowerCase().includes(lowercasedTerm) ||
       (user.bio && user.bio.toLowerCase().includes(lowercasedTerm))
     );
-  }, [searchTerm, initialUsers]);
+  }, [searchTerm, users]);
   
   return (
     <div className="space-y-6">
@@ -44,7 +49,7 @@ export default function CreatorsClient({ initialUsers }: { initialUsers: User[] 
             />
         </div>
 
-        {filteredUsers.length > 0 ? (
+        {filteredItems.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                 {filteredUsers.map(user => (
                     <Card key={user.uid} className="text-center transition-shadow hover:shadow-md">
