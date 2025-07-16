@@ -191,6 +191,8 @@ export function MainSidebar() {
           </SidebarMenu>
         </SidebarGroup>
         
+        <SidebarSeparator />
+
         <SidebarGroup>
           <SidebarGroupLabel>My Hub</SidebarGroupLabel>
           <SidebarMenu>
@@ -247,6 +249,8 @@ export function MainSidebar() {
             </SidebarMenuItem>
           </SidebarMenu>
         </SidebarGroup>
+
+        <SidebarSeparator />
 
         <SidebarGroup>
             <SidebarGroupLabel>Manage Profile</SidebarGroupLabel>
