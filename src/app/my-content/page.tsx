@@ -296,6 +296,7 @@ export default function MyContentPage() {
     }, [allItems]);
     
     const [selectedDay, setSelectedDay] = useState<Date>(new Date());
+    const [month, setMonth] = useState<Date>(new Date());
     
     const eventsForSelectedDay = useMemo(() => {
         return filteredItems.filter(item => {
@@ -399,7 +400,7 @@ export default function MyContentPage() {
                             return (
                                 <Badge
                                     key={typeMeta.name}
-                                    variant={isSelected ? typeMeta.variant : 'outline'}
+                                    variant={isSelected ? 'default' : 'outline'}
                                     onClick={() => handleTypeFilterChange(typeMeta.name)}
                                     onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleTypeFilterChange(typeMeta.name); }}
                                     className={cn(
@@ -444,8 +445,8 @@ export default function MyContentPage() {
                           mode="single"
                           selected={selectedDay}
                           onSelect={(day) => day && setSelectedDay(day)}
-                          month={selectedDay}
-                          onMonthChange={setSelectedDay}
+                          month={month}
+                          onMonthChange={setMonth}
                           modifiers={{ withEvent: daysWithEvents }}
                           modifiersClassNames={{ withEvent: 'day-with-event' }}
                           className="p-4"
