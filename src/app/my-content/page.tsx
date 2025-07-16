@@ -209,6 +209,7 @@ export default function MyContentPage() {
   const { toast } = useToast();
 
   const {
+      allItems,
       isLoading,
       searchTerm,
       setSearchTerm,
@@ -291,8 +292,8 @@ export default function MyContentPage() {
   };
   
     const daysWithEvents = useMemo(() => {
-        return filteredItems.map(item => new Date(item.date));
-    }, [filteredItems]);
+        return allItems.map(item => new Date(item.date));
+    }, [allItems]);
     
     const [selectedDay, setSelectedDay] = useState<Date>(new Date());
     
@@ -398,12 +399,13 @@ export default function MyContentPage() {
                             return (
                                 <Badge
                                     key={typeMeta.name}
-                                    variant={isSelected ? "default" : 'outline'}
+                                    variant={isSelected ? typeMeta.variant : 'outline'}
                                     onClick={() => handleTypeFilterChange(typeMeta.name)}
                                     onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleTypeFilterChange(typeMeta.name); }}
                                     className={cn(
                                         'cursor-pointer transition-all py-1.5 px-3 text-sm',
                                         !isSelected && 'hover:bg-accent/50',
+                                        isSelected && `bg-${typeMeta.variant} text-${typeMeta.variant}-foreground hover:bg-${typeMeta.variant}/90`
                                     )}
                                     role="button"
                                     tabIndex={0}
@@ -558,7 +560,7 @@ export default function MyContentPage() {
                               <CardHeader className="p-4 pb-2">
                                   <div className="flex justify-between items-start">
                                       <div>
-                                        <Badge variant={"secondary"} className="capitalize">{item.isExternal ? 'Attending' : typeMeta.label.replace(/s$/, '')}</Badge>
+                                        <Badge variant={typeMeta.variant} className="capitalize">{item.isExternal ? 'Attending' : typeMeta.label.replace(/s$/, '')}</Badge>
                                         <CardTitle className="text-base mt-2">{item.title}</CardTitle>
                                       </div>
                                       <DropdownMenu>
@@ -614,7 +616,7 @@ export default function MyContentPage() {
                                     return (
                                     <TableRow key={item.id}>
                                         <TableCell className="font-medium">{item.title}</TableCell>
-                                        <TableCell><Badge variant={"secondary"} className="capitalize">{item.isExternal ? 'Attending' : typeMeta.label.replace(/s$/, '')}</Badge></TableCell>
+                                        <TableCell><Badge variant={typeMeta.variant} className="capitalize">{item.isExternal ? 'Attending' : typeMeta.label.replace(/s$/, '')}</Badge></TableCell>
                                         <TableCell><ClientFormattedDate date={item.date} formatStr="PPP"/></TableCell>
                                         <TableCell><Badge variant={item.status === 'active' ? 'secondary' : 'outline'}>{item.status}</Badge></TableCell>
                                         <TableCell className="text-right">
