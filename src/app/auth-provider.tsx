@@ -14,6 +14,7 @@ interface AuthContextType {
   firebaseUser: FirebaseUser | null;
   loading: boolean;
   unreadNotificationCount: number;
+  isAdmin: boolean;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -21,6 +22,7 @@ const AuthContext = createContext<AuthContextType>({
   firebaseUser: null,
   loading: true,
   unreadNotificationCount: 0,
+  isAdmin: false,
 });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -28,6 +30,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
+  const [isAdmin, setIsAdmin] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
 
@@ -49,8 +52,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     const count = snapshot.docs.filter(doc => !doc.data().read && doc.data().type !== 'contact_form_submission').length;
                     setUnreadNotificationCount(count);
                 });
+                
+                const appUser = { ...userData, email: fbUser.email };
+                setUser(appUser);
+                setIsAdmin(appUser.email === 'admin@byd.bio');
 
-                setUser({ ...userData, email: fbUser.email });
             } else {
                 try {
                     await createUserProfileIfNotExists(fbUser);
@@ -61,6 +67,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setLoading(false);
         }, (error) => {
             setUser(null);
+            setIsAdmin(false);
             setLoading(false);
         });
 
@@ -68,6 +75,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setFirebaseUser(null);
         setUser(null);
         setUnreadNotificationCount(0);
+        setIsAdmin(false);
         setLoading(false);
       }
       
@@ -96,7 +104,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 
   return (
-    <AuthContext.Provider value={{ user, firebaseUser, loading, unreadNotificationCount }}>
+    <AuthContext.Provider value={{ user, firebaseUser, loading, unreadNotificationCount, isAdmin }}>
       {children}
     </AuthContext.Provider>
   );
