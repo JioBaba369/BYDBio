@@ -29,7 +29,6 @@ import {
   Building2,
   Share2,
   LayoutDashboard,
-  Rss,
   Mail,
   Briefcase,
   Tags,
@@ -196,14 +195,6 @@ export function MainSidebar() {
                 <Link href="/">
                   <LayoutDashboard />
                   <span>Dashboard</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Status Feed" isActive={isActive('/feed')}>
-                <Link href="/feed">
-                  <Rss />
-                  <span>Status Feed</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>

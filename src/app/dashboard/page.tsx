@@ -1,4 +1,5 @@
 
+
 "use client"
 
 import {
@@ -11,7 +12,7 @@ import {
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
-import { Briefcase, Calendar, PenSquare, PlusCircle, Tags, Users, UserCheck, Package, Sparkles, Megaphone, Rss, Gift, Edit } from "lucide-react"
+import { Briefcase, Calendar, PlusCircle, Tags, Users, UserCheck, Package, Sparkles, Megaphone, Gift, Edit } from "lucide-react"
 import Link from "next/link"
 import {
   DropdownMenu,
@@ -43,7 +44,6 @@ interface ContentCounts {
   events: number;
   offers: number;
   listings: number;
-  posts: number;
   promoPages: number;
 }
 
@@ -62,14 +62,14 @@ export default function Dashboard() {
 
     // Fetch counts
     try {
-      const collections = ['jobs', 'events', 'offers', 'listings', 'posts', 'promoPages'];
+      const collections = ['jobs', 'events', 'offers', 'listings', 'promoPages'];
       const countPromises = collections.map(col => {
         const collRef = collection(db, col);
         const q = query(collRef, where("authorId", "==", user.uid));
         return getDocs(q).then(snapshot => snapshot.size);
       });
-      const [jobs, events, offers, listings, posts, promoPages] = await Promise.all(countPromises);
-      setCounts({ jobs, events, offers, listings, posts, promoPages });
+      const [jobs, events, offers, listings, promoPages] = await Promise.all(countPromises);
+      setCounts({ jobs, events, offers, listings, promoPages });
     } catch (error) {
       console.error("Error fetching content counts:", error);
       setCounts(null);
@@ -104,7 +104,6 @@ export default function Dashboard() {
                   (counts?.events || 0) + 
                   (counts?.offers || 0) + 
                   (counts?.listings || 0) +
-                  (counts?.posts || 0) +
                   (counts?.promoPages || 0);
     
     let completion = 0;
@@ -132,7 +131,6 @@ export default function Dashboard() {
         case 'Event': return `/events/${item.id}`;
         case 'Offer': return `/offer/${item.id}`;
         case 'Business Page': return `/p/${item.id}`;
-        case 'Post': return `/feed`;
         default: return '/';
     }
   };
@@ -155,14 +153,6 @@ export default function Dashboard() {
             <DropdownMenuContent align="end">
                 <DropdownMenuLabel>Create New Content</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link href="/feed" className="cursor-pointer">
-                    <>
-                      <Rss className="mr-2 h-4 w-4" />
-                      <span>New Post</span>
-                    </>
-                  </Link>
-                </DropdownMenuItem>
                  <DropdownMenuItem asChild>
                   <Link href="/promo/create" className="cursor-pointer">
                     <>

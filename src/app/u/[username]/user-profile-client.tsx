@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import { Edit, Link as LinkIcon, QrCode, Mail, Users, Globe, Lock } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/components/auth-provider";
-import { PostCard } from "@/components/post-card";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import QRCode from "qrcode.react";
@@ -31,38 +30,13 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
   const { isOwner, user, isFollowedByCurrentUser } = userProfileData;
   const router = useRouter();
 
-  const [posts, setPosts] = useState<PostWithAuthor[]>([]);
   const [isContactFormOpen, setIsContactFormOpen] = useState(false);
-  
-  useEffect(() => {
-    setPosts(userProfileData.posts || []);
-  }, [userProfileData.posts]);
-
-  const handleQuote = (post: PostWithAuthor) => {
-    sessionStorage.setItem('postToQuote', JSON.stringify(post));
-    router.push('/feed');
-  };
-  
-  const onPostDeleted = (deletedPostId: string) => {
-    setPosts(prev => prev.filter(p => p.id !== deletedPostId));
-  };
   
   const vCardData = useMemo(() => {
     if (!user) return '';
     return generateVCard(user);
   }, [user]);
 
-  const canViewPrivateContent = isOwner || isFollowedByCurrentUser;
-
-  const visiblePosts = useMemo(() => {
-    return posts.filter(post => {
-        if (post.privacy === 'public') return true;
-        if (post.privacy === 'followers') return canViewPrivateContent;
-        if (post.privacy === 'me') return isOwner;
-        return false;
-    });
-  }, [posts, canViewPrivateContent, isOwner]);
-  
   return (
     <>
       <div className="space-y-6">
@@ -130,37 +104,18 @@ export default function UserProfileClientPage({ userProfileData }: UserProfilePa
                  <div className="flex items-center gap-4 mt-4 text-sm">
                     <p><span className="font-bold">{(user.followerCount || 0).toLocaleString()}</span> Followers</p>
                     <p><span className="font-bold">{(user.following?.length || 0).toLocaleString()}</span> Following</p>
-                    <p><span className="font-bold">{user.postCount || 0}</span> Posts</p>
                 </div>
             </CardContent>
         </Card>
         
         <Tabs defaultValue="gallery" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="gallery">Gallery</TabsTrigger>
-                <TabsTrigger value="posts">Posts</TabsTrigger>
                 <TabsTrigger value="about">About</TabsTrigger>
             </TabsList>
             
             <TabsContent value="gallery" className="mt-6">
                 <AboutTab userProfileData={userProfileData} contentOnly={true} />
-            </TabsContent>
-
-            <TabsContent value="posts" className="mt-6">
-                 {visiblePosts.length > 0 ? (
-                    <div className="space-y-6">
-                    {visiblePosts.map(item => (
-                        <PostCard
-                            key={`${item.id}-${item.author.uid}`}
-                            item={item}
-                            onQuote={handleQuote}
-                            onDeleted={onPostDeleted}
-                        />
-                    ))}
-                    </div>
-                ) : (
-                    <AboutTab userProfileData={userProfileData} noContentMode="posts" />
-                )}
             </TabsContent>
 
             <TabsContent value="about" className="mt-6">
