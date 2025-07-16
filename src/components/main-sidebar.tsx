@@ -270,7 +270,7 @@ export function MainSidebar() {
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
-              <SidebarMenuItem>
+               <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip="Settings" isActive={isActive('/settings')}>
                 <Link href="/settings">
                     <Settings className="h-4 w-4" />
@@ -278,6 +278,31 @@ export function MainSidebar() {
                 </Link>
                 </SidebarMenuButton>
             </SidebarMenuItem>
+              <SidebarSeparator/>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Public Bio Page" isActive={isActive(`/u/${user.username}`) && !pathname.includes('/card') && !pathname.includes('/links')}>
+                  <Link href={`/u/${user.username}`}>
+                    <UserCircle className="h-4 w-4" />
+                    <span>Public Bio Page</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Digital Business Card" isActive={isActive(`/u/${user.username}/card`)}>
+                  <Link href={`/u/${user.username}/card`}>
+                    <Building2 className="h-4 w-4" />
+                    <span>Digital Card</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Links Page" isActive={isActive(`/u/${user.username}/links`)}>
+                  <Link href={`/u/${user.username}/links`}>
+                    <LinkIcon className="h-4 w-4" />
+                    <span>Links Page</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
         </SidebarGroup>
         
