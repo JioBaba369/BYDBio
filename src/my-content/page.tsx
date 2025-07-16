@@ -72,6 +72,43 @@ const ContentHubSkeleton = () => (
     </div>
 );
 
+type SortableKeys = keyof Pick<CalendarItem, 'title' | 'type' | 'date' | 'status'>;
+
+const useSortableData = (items: CalendarItem[], initialSortKey: SortableKeys) => {
+    const [sortKey, setSortKey] = useState<SortableKeys>(initialSortKey);
+    const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+
+    const sortedItems = useMemo(() => {
+        return [...items].sort((a, b) => {
+            const aValue = a[sortKey];
+            const bValue = b[sortKey];
+
+            if (aValue === undefined || aValue === null) return 1;
+            if (bValue === undefined || bValue === null) return -1;
+            
+            if (aValue < bValue) {
+                return sortDirection === 'asc' ? -1 : 1;
+            }
+            if (aValue > bValue) {
+                return sortDirection === 'asc' ? 1 : -1;
+            }
+            return 0;
+        });
+    }, [items, sortKey, sortDirection]);
+
+    const requestSort = (key: SortableKeys) => {
+        let direction: 'asc' | 'desc' = 'asc';
+        if (sortKey === key && sortDirection === 'asc') {
+            direction = 'desc';
+        }
+        setSortKey(key);
+        setSortDirection(direction);
+    };
+
+    return { items: sortedItems, requestSort, sortKey, sortDirection };
+};
+
+
 // Custom hook for data fetching and filtering
 function useMyContentManagement(userId: string | undefined, toast: ReturnType<typeof useToast>['toast']) {
     const [allItems, setAllItems] = useState<CalendarItem[]>([]);
@@ -183,6 +220,8 @@ export default function MyContentPage() {
       handleClearFilters,
       refetch,
   } = useMyContentManagement(user?.uid, toast);
+  
+  const { items: sortedItems, requestSort, sortKey, sortDirection } = useSortableData(filteredItems, 'date');
 
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -256,22 +295,30 @@ export default function MyContentPage() {
         return allItems.map(item => new Date(item.date));
     }, [allItems]);
     
-    const [month, setMonth] = useState(new Date());
+    const [selectedDay, setSelectedDay] = useState<Date>(new Date());
+    const [month, setMonth] = useState<Date>(new Date());
     
     const eventsForSelectedDay = useMemo(() => {
-        if (!month) return [];
-        return allItems.filter(item => {
+        return filteredItems.filter(item => {
             const itemDate = new Date(item.date);
-            return itemDate.getFullYear() === month.getFullYear() &&
-                   itemDate.getMonth() === month.getMonth() &&
-                   itemDate.getDate() === month.getDate();
+            return itemDate.getFullYear() === selectedDay.getFullYear() &&
+                   itemDate.getMonth() === selectedDay.getMonth() &&
+                   itemDate.getDate() === selectedDay.getDate();
         });
-    }, [allItems, month]);
+    }, [filteredItems, selectedDay]);
 
 
   if (authLoading || isLoading) {
     return <ContentHubSkeleton />;
   }
+  
+  const SortableHeader = ({ tkey, label }: { tkey: SortableKeys, label: string }) => (
+        <Button variant="ghost" onClick={() => requestSort(tkey)} className="px-2">
+            {label}
+            <ArrowUpDown className={cn("ml-2 h-4 w-4", sortKey !== tkey && "text-muted-foreground/50")} />
+        </Button>
+    );
+
 
   return (
     <>
@@ -353,12 +400,13 @@ export default function MyContentPage() {
                             return (
                                 <Badge
                                     key={typeMeta.name}
-                                    variant={isSelected ? typeMeta.variant : 'outline'}
+                                    variant={isSelected ? 'default' : 'outline'}
                                     onClick={() => handleTypeFilterChange(typeMeta.name)}
                                     onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleTypeFilterChange(typeMeta.name); }}
                                     className={cn(
                                         'cursor-pointer transition-all py-1.5 px-3 text-sm',
                                         !isSelected && 'hover:bg-accent/50',
+                                        isSelected && `bg-${typeMeta.variant} text-${typeMeta.variant}-foreground hover:bg-${typeMeta.variant}/90`
                                     )}
                                     role="button"
                                     tabIndex={0}
@@ -395,8 +443,8 @@ export default function MyContentPage() {
                     <Card>
                         <DayPicker
                           mode="single"
-                          selected={month}
-                          onSelect={(day) => day && setMonth(day)}
+                          selected={selectedDay}
+                          onSelect={(day) => day && setSelectedDay(day)}
                           month={month}
                           onMonthChange={setMonth}
                           modifiers={{ withEvent: daysWithEvents }}
@@ -406,7 +454,7 @@ export default function MyContentPage() {
                     </Card>
                     <div className="space-y-4">
                         <h3 className="text-lg font-semibold font-headline">
-                          Schedule for <ClientFormattedDate date={month} />
+                          Schedule for <ClientFormattedDate date={selectedDay} />
                         </h3>
                         {eventsForSelectedDay.length > 0 ? (
                             <div className="space-y-4">
@@ -416,7 +464,7 @@ export default function MyContentPage() {
                                    return (
                                      <Card key={item.id}>
                                          <CardContent className="p-4 flex items-start gap-4">
-                                            <div className={cn("h-full w-1.5 rounded-full", `bg-${typeMeta.variant}`)}></div>
+                                            <div className={cn("h-full w-1.5 rounded-full", `bg-primary`)}></div>
                                             <div className="flex-1">
                                                 <div className="flex justify-between items-start">
                                                   <div>
@@ -456,7 +504,7 @@ export default function MyContentPage() {
               ) : filteredItems.length > 0 ? (
                   view === 'grid' ? (
                   <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {filteredItems.map((item) => {
+                      {sortedItems.map((item) => {
                         const typeMeta = getContentTypeMetadata(item.type);
                         if (!typeMeta) return null;
 
@@ -468,7 +516,7 @@ export default function MyContentPage() {
                                      <CardHeader className="p-4 pb-2">
                                         <div className="flex justify-between items-start">
                                             <div>
-                                                <Badge variant={typeMeta.variant}>{item.type}</Badge>
+                                                <Badge variant={"secondary"}>{item.type}</Badge>
                                                 <CardTitle className="text-base mt-2">{item.title}</CardTitle>
                                             </div>
                                             <DropdownMenu>
@@ -554,15 +602,15 @@ export default function MyContentPage() {
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead>Title</TableHead>
-                                    <TableHead>Type</TableHead>
-                                    <TableHead>Date</TableHead>
-                                    <TableHead>Status</TableHead>
+                                    <TableHead><SortableHeader tkey="title" label="Title" /></TableHead>
+                                    <TableHead><SortableHeader tkey="type" label="Type" /></TableHead>
+                                    <TableHead><SortableHeader tkey="date" label="Date" /></TableHead>
+                                    <TableHead><SortableHeader tkey="status" label="Status" /></TableHead>
                                     <TableHead className="text-right">Actions</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {filteredItems.map(item => {
+                                {sortedItems.map(item => {
                                   const typeMeta = getContentTypeMetadata(item.type);
                                   if (!typeMeta) return null;
 
@@ -580,6 +628,8 @@ export default function MyContentPage() {
                                                     </Button>
                                                 </DropdownMenuTrigger>
                                                 <DropdownMenuContent align="end">
+                                                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                                    <DropdownMenuSeparator />
                                                     {item.type === 'Appointment' ? (
                                                         <DropdownMenuItem onClick={() => handleAddToCalendar(item)} className="cursor-pointer">
                                                             <CalendarPlus className="mr-2 h-4 w-4" /> Add to Calendar
@@ -618,5 +668,3 @@ export default function MyContentPage() {
     </>
   );
 }
-
-    

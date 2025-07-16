@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import type { User } from './users';
@@ -24,7 +25,7 @@ export const escapeVCardField = (str: string | undefined | null): string => {
  * @returns A formatted vCard string.
  */
 export const generateVCard = (user: User): string => {
-    const { name, businessCard, avatarUrl } = user;
+    const { name, username, businessCard, avatarUrl } = user;
     const {
         title = '',
         company = '',
@@ -48,7 +49,7 @@ export const generateVCard = (user: User): string => {
     
     // Note: Embedding photos in vCards can be complex and is not universally supported.
     // A link to the profile is a more reliable approach.
-    vCard += `URL;type=pref:${process.env.NEXT_PUBLIC_BASE_URL}/u/${user.username}\n`;
+    vCard += `URL;type=pref:${process.env.NEXT_PUBLIC_BASE_URL || 'https://byd.bio'}/u/${username}\n`;
     vCard += 'END:VCARD\n';
 
     return vCard;

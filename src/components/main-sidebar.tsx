@@ -60,7 +60,7 @@ export function MainSidebar() {
   const isActive = (path: string, exact: boolean = false) => {
     if (exact) return pathname === path;
     if (path === '/') return pathname === '/';
-    return pathname.startsWith(path);
+    return pathname.startsWith(path) && path.length > 1;
   };
 
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -150,7 +150,7 @@ export function MainSidebar() {
               </SidebarMenuButton>
             </SidebarMenuItem>
              <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Business Pages" isActive={isActive('/promo') && !pathname.includes('/create')}>
+              <SidebarMenuButton asChild tooltip="Business Pages" isActive={isActive('/promo')}>
                 <Link href="/promo">
                   <Megaphone className="h-4 w-4" />
                   <span>Business Pages</span>
@@ -158,7 +158,7 @@ export function MainSidebar() {
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Listings" isActive={isActive('/listings') && !pathname.includes('/create')}>
+              <SidebarMenuButton asChild tooltip="Listings" isActive={isActive('/listings')}>
                 <Link href="/listings">
                   <Tags className="h-4 w-4" />
                   <span>Listings</span>
@@ -166,7 +166,7 @@ export function MainSidebar() {
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Jobs" isActive={isActive('/job') && !pathname.includes('/create')}>
+              <SidebarMenuButton asChild tooltip="Jobs" isActive={isActive('/job')}>
                 <Link href="/job">
                   <Briefcase className="h-4 w-4" />
                   <span>Jobs</span>
@@ -174,7 +174,7 @@ export function MainSidebar() {
               </SidebarMenuButton>
             </SidebarMenuItem>
              <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Events" isActive={isActive('/events') && !pathname.includes('/create')}>
+              <SidebarMenuButton asChild tooltip="Events" isActive={isActive('/events')}>
                 <Link href="/events">
                   <Calendar className="h-4 w-4" />
                   <span>Events</span>
@@ -182,7 +182,7 @@ export function MainSidebar() {
               </SidebarMenuButton>
             </SidebarMenuItem>
              <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Offers" isActive={isActive('/offers') && !pathname.includes('/create')}>
+              <SidebarMenuButton asChild tooltip="Offers" isActive={isActive('/offers')}>
                 <Link href="/offers">
                   <Gift className="h-4 w-4" />
                   <span>Offers</span>
@@ -280,7 +280,7 @@ export function MainSidebar() {
             </SidebarMenuItem>
               <SidebarSeparator/>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip="Public Bio Page" isActive={isActive(`/u/${user.username}`) && !pathname.includes('/card') && !pathname.includes('/links')}>
+                <SidebarMenuButton asChild tooltip="Public Bio Page" isActive={isActive(`/u/${user.username}`, true)}>
                   <Link href={`/u/${user.username}`}>
                     <UserCircle className="h-4 w-4" />
                     <span>Public Bio Page</span>
