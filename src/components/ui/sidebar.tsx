@@ -534,9 +534,10 @@ const sidebarMenuButtonVariants = cva(
 
 const SidebarMenuButton = React.forwardRef<
   HTMLButtonElement,
-  React.ComponentProps<typeof Button> & {
+  React.ComponentPropsWithoutRef<typeof Button> & {
     isActive?: boolean
     tooltip?: string | React.ComponentProps<typeof TooltipContent>
+    asChild?: boolean
   }
 >(
   (
@@ -545,6 +546,7 @@ const SidebarMenuButton = React.forwardRef<
       variant = "default",
       size = "default",
       tooltip,
+      asChild = false,
       className,
       children,
       ...props
@@ -552,10 +554,12 @@ const SidebarMenuButton = React.forwardRef<
     ref
   ) => {
     const { isMobile, state } = useSidebar()
+    const Comp = asChild ? Slot : "button"
 
     const button = (
       <Button
         ref={ref}
+        asChild={asChild}
         data-sidebar="menu-button"
         data-size={size}
         data-active={isActive}
@@ -563,10 +567,23 @@ const SidebarMenuButton = React.forwardRef<
         className={cn(sidebarMenuButtonVariants({ variant, size }), className)}
         {...props}
       >
-        {isActive && (
-          <div className="absolute left-0 h-6 w-1 rounded-r-full bg-primary" />
+        {asChild ? (
+            React.isValidElement(children) ? (
+            React.cloneElement(children as React.ReactElement, {
+              children: (
+                <>
+                  {isActive && <div className="absolute left-0 h-6 w-1 rounded-r-full bg-primary" />}
+                  {children.props.children}
+                </>
+              ),
+            })
+            ) : null
+        ) : (
+          <>
+            {isActive && <div className="absolute left-0 h-6 w-1 rounded-r-full bg-primary" />}
+            {children}
+          </>
         )}
-        {children}
       </Button>
     )
 
