@@ -82,7 +82,7 @@ export function FollowButton({
                     setFollowerCount(result.newFollowerCount);
                     toast({
                         title: wasFollowing ? 'Unfollowed' : 'Following',
-                        description: wasFollowing ? 'You are no longer following this user.' : 'You are now following this user.',
+                        description: wasFollowing ? `You are no longer following this user.` : `You are now following this user.`,
                     });
                 }
             } catch (error) {
