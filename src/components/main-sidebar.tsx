@@ -316,14 +316,16 @@ export function MainSidebar() {
          <SidebarSeparator />
          <SidebarMenuButton asChild tooltip="My Profile & Settings" size="lg" className="h-auto p-2">
             <Link href="/settings">
-                <Avatar className="size-8">
-                    <AvatarImage src={user.avatarUrl} />
-                    <AvatarFallback>{user.avatarFallback}</AvatarFallback>
-                </Avatar>
-                <div className="min-w-0 flex-1 text-left">
-                    <p className="truncate font-semibold">{user.name}</p>
-                    <p className="truncate text-xs text-muted-foreground">@{user.username}</p>
-                </div>
+                <span className="flex w-full items-center gap-2">
+                    <Avatar className="size-8">
+                        <AvatarImage src={user.avatarUrl} />
+                        <AvatarFallback>{user.avatarFallback}</AvatarFallback>
+                    </Avatar>
+                    <div className="min-w-0 flex-1 text-left">
+                        <p className="truncate font-semibold">{user.name}</p>
+                        <p className="truncate text-xs text-muted-foreground">@{user.username}</p>
+                    </div>
+                </span>
             </Link>
          </SidebarMenuButton>
          <SidebarSeparator />
@@ -357,6 +359,14 @@ export function MainSidebar() {
                 <Link href="/url-tree">
                     <Share2 />
                     <span>URL Tree</span>
+                </Link>
+                </SidebarMenuButton>
+            </SidebarMenuItem>
+             <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Settings" isActive={isActive('/settings')}>
+                <Link href="/settings">
+                    <Settings />
+                    <span>Settings</span>
                 </Link>
                 </SidebarMenuButton>
             </SidebarMenuItem>
