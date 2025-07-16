@@ -310,27 +310,11 @@ export function MainSidebar() {
                 </SidebarMenu>
             </SidebarGroup>
         )}
-          
       </SidebarContent>
       <SidebarFooter>
          <SidebarSeparator />
-         <SidebarMenuButton asChild tooltip="My Profile & Settings" size="lg" className="h-auto p-2">
-            <Link href="/settings">
-                <span className="flex w-full items-center gap-2">
-                    <Avatar className="size-8">
-                        <AvatarImage src={user.avatarUrl} />
-                        <AvatarFallback>{user.avatarFallback}</AvatarFallback>
-                    </Avatar>
-                    <div className="min-w-0 flex-1 text-left">
-                        <p className="truncate font-semibold">{user.name}</p>
-                        <p className="truncate text-xs text-muted-foreground">@{user.username}</p>
-                    </div>
-                </span>
-            </Link>
-         </SidebarMenuButton>
-         <SidebarSeparator />
-        <SidebarMenu>
-             <SidebarMenuItem>
+         <SidebarMenu>
+            <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip="Support" isActive={isActive('/support')}>
                 <Link href="/support">
                     <BadgeHelp />
@@ -371,6 +355,25 @@ export function MainSidebar() {
                 </SidebarMenuButton>
             </SidebarMenuItem>
         </SidebarMenu>
+         <SidebarSeparator />
+         <SidebarMenu>
+            <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="My Profile & Settings" size="lg" className="h-auto p-2" isActive={isActive('/settings')}>
+                    <Link href="/settings">
+                        <span className="flex w-full items-center gap-2 text-left">
+                            <Avatar className="size-8">
+                                <AvatarImage src={user.avatarUrl} />
+                                <AvatarFallback>{user.avatarFallback}</AvatarFallback>
+                            </Avatar>
+                            <span className="min-w-0 flex-1">
+                                <p className="truncate font-semibold">{user.name}</p>
+                                <p className="truncate text-xs text-muted-foreground">@{user.username}</p>
+                            </span>
+                        </span>
+                    </Link>
+                </SidebarMenuButton>
+            </SidebarMenuItem>
+         </SidebarMenu>
       </SidebarFooter>
     </Sidebar>
   );
