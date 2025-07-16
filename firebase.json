@@ -5,7 +5,18 @@
     "ignore": [
       "firebase.json",
       "**/.*",
-      "**/node_modules/**"
+      "**/node_modules/**",
+      "**/.next/**",
+      "**/.cache/**",
+      "**/.sass-cache/**",
+      "**/.devtools/**",
+      "**/.DS_Store",
+      "**/.Trashes",
+      "**/.Spotlight-V100",
+      "**/.AppleDouble",
+      "**/.LSOverride",
+      "**/Icon",
+      "**/._*"
     ],
     "appAssociation": "AUTO",
     "headers": [
