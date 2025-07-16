@@ -159,7 +159,7 @@ export default function FeedPage() {
       setIsLoadingFeed(false);
       setIsFetchingMore(false);
     }
-  }, [user, toast, hasMorePosts, isFetchingMore, lastVisibleFollowingPost, lastVisibleDiscoveryPost]);
+  }, [user, toast]);
   
   const handleQuote = (post: PostWithAuthor) => {
       setPostToQuote(post);
@@ -256,7 +256,11 @@ export default function FeedPage() {
       setPostCategory('');
       setPostPrivacy('public');
       toast({ title: "Update Posted!" });
-      fetchFeed(activeTab as 'following' | 'discovery'); // Refetch after posting
+      // Refetch both feeds to ensure data is fresh everywhere.
+      fetchFeed('following');
+      if (activeTab === 'discovery') {
+        fetchFeed('discovery');
+      }
     } catch (error) {
       toast({ title: "Failed to post update", variant: "destructive" });
     } finally {

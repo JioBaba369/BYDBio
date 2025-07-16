@@ -235,13 +235,19 @@ export const repostPost = async (originalPostId: string, reposterId: string): Pr
     const originalPostData = serializeDocument<Post>(postDoc)!;
     
     let createdAtTimestamp: Timestamp;
-    if (originalPostData.repostedPost?.createdAt instanceof Timestamp) {
-        createdAtTimestamp = originalPostData.repostedPost.createdAt;
-    } else if (typeof originalPostData.repostedPost?.createdAt === 'string') {
-        createdAtTimestamp = Timestamp.fromDate(new Date(originalPostData.repostedPost.createdAt));
+    // Check if the original post is itself a repost to get the ultimate original's timestamp
+    const sourcePost = originalPostData.repostedPost || originalPostData;
+    const sourceCreatedAt = sourcePost.createdAt as unknown; // Comes in as string or Timestamp
+
+    if (sourceCreatedAt instanceof Timestamp) {
+        createdAtTimestamp = sourceCreatedAt;
+    } else if (typeof sourceCreatedAt === 'string') {
+        createdAtTimestamp = Timestamp.fromDate(new Date(sourceCreatedAt));
     } else {
-        createdAtTimestamp = Timestamp.fromDate(new Date(originalPostData.createdAt));
+        // Fallback if timestamp is somehow missing or invalid
+        createdAtTimestamp = Timestamp.now();
     }
+
 
     const ultimateOriginalPostId = originalPostData.originalPostId || originalPostId;
     const ultimateOriginalPostContent: EmbeddedPostInfo = originalPostData.repostedPost || {
