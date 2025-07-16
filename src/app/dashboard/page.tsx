@@ -85,7 +85,7 @@ export default function Dashboard() {
         console.error("Error fetching recent activity:", error);
         setActivity([]);
     } finally {
-        setIsActivityLoading(false);
+      setIsActivityLoading(false);
     }
   }, [user?.uid]);
 
@@ -248,8 +248,10 @@ export default function Dashboard() {
           <CardFooter>
             <Button asChild variant="secondary" size="sm" className="w-full">
               <Link href="/profile">
-                <Edit className="mr-2 h-4 w-4" />
-                {profileCompletion < 100 ? "Complete Profile" : "Edit Profile"}
+                <span>
+                  <Edit className="mr-2 h-4 w-4 inline-block" />
+                  {profileCompletion < 100 ? "Complete Profile" : "Edit Profile"}
+                </span>
               </Link>
             </Button>
           </CardFooter>
