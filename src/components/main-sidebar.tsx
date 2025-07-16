@@ -132,57 +132,57 @@ export function MainSidebar() {
           <SidebarGroupLabel>Community</SidebarGroupLabel>
           <SidebarMenu>
              <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Explore" isActive={isActive('/explore')}>
+              <SidebarMenuButton asChild tooltip="Explore" isActive={isActive('/explore')} inset>
                 <Link href="/explore">
-                  <Compass />
+                  <Compass className="h-4 w-4" />
                   <span>Explore</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
              <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Creators" isActive={isActive('/creators')}>
+              <SidebarMenuButton asChild tooltip="Creators" isActive={isActive('/creators')} inset>
                 <Link href="/creators">
-                  <Users />
+                  <Users className="h-4 w-4" />
                   <span>Creators</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
              <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Business Pages" isActive={isActive('/promo') && !pathname.includes('/create')}>
+              <SidebarMenuButton asChild tooltip="Business Pages" isActive={isActive('/promo') && !pathname.includes('/create')} inset>
                 <Link href="/promo">
-                  <Megaphone />
+                  <Megaphone className="h-4 w-4" />
                   <span>Business Pages</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Listings" isActive={isActive('/listings') && !pathname.includes('/create')}>
+              <SidebarMenuButton asChild tooltip="Listings" isActive={isActive('/listings') && !pathname.includes('/create')} inset>
                 <Link href="/listings">
-                  <Tags />
+                  <Tags className="h-4 w-4" />
                   <span>Listings</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Jobs" isActive={isActive('/job') && !pathname.includes('/create')}>
+              <SidebarMenuButton asChild tooltip="Jobs" isActive={isActive('/job') && !pathname.includes('/create')} inset>
                 <Link href="/job">
-                  <Briefcase />
+                  <Briefcase className="h-4 w-4" />
                   <span>Jobs</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
              <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Events" isActive={isActive('/events') && !pathname.includes('/create')}>
+              <SidebarMenuButton asChild tooltip="Events" isActive={isActive('/events') && !pathname.includes('/create')} inset>
                 <Link href="/events">
-                  <Calendar />
+                  <Calendar className="h-4 w-4" />
                   <span>Events</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
              <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Offers" isActive={isActive('/offers') && !pathname.includes('/create')}>
+              <SidebarMenuButton asChild tooltip="Offers" isActive={isActive('/offers') && !pathname.includes('/create')} inset>
                 <Link href="/offers">
-                  <Gift />
+                  <Gift className="h-4 w-4" />
                   <span>Offers</span>
                 </Link>
               </SidebarMenuButton>
@@ -196,41 +196,41 @@ export function MainSidebar() {
           <SidebarGroupLabel>My Hub</SidebarGroupLabel>
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Dashboard" isActive={isActive('/', true)}>
+              <SidebarMenuButton asChild tooltip="Dashboard" isActive={isActive('/', true)} inset>
                 <Link href="/">
-                  <LayoutDashboard />
+                  <LayoutDashboard className="h-4 w-4" />
                   <span>Dashboard</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Status Feed" isActive={isActive('/feed')}>
+              <SidebarMenuButton asChild tooltip="Status Feed" isActive={isActive('/feed')} inset>
                 <Link href="/feed">
-                  <Rss />
+                  <Rss className="h-4 w-4" />
                   <span>Status Feed</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="My Content" isActive={isActive('/my-content')}>
+              <SidebarMenuButton asChild tooltip="My Content" isActive={isActive('/my-content')} inset>
                 <Link href="/my-content">
-                  <Paintbrush />
+                  <Paintbrush className="h-4 w-4" />
                   <span>My Content</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Connections" isActive={isActive('/connections')}>
+              <SidebarMenuButton asChild tooltip="Connections" isActive={isActive('/connections')} inset>
                 <Link href="/connections">
-                  <Users />
+                  <Users className="h-4 w-4" />
                   <span>Connections</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Notifications" isActive={isActive('/notifications')}>
+              <SidebarMenuButton asChild tooltip="Notifications" isActive={isActive('/notifications')} inset>
                 <Link href="/notifications">
-                  <Bell />
+                  <Bell className="h-4 w-4" />
                   <span>Notifications</span>
                    {unreadNotificationCount > 0 && (
                     <SidebarMenuBadge>{unreadNotificationCount}</SidebarMenuBadge>
@@ -239,9 +239,9 @@ export function MainSidebar() {
               </SidebarMenuButton>
             </SidebarMenuItem>
              <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Inbox" isActive={isActive('/inbox')}>
+              <SidebarMenuButton asChild tooltip="Inbox" isActive={isActive('/inbox')} inset>
                 <Link href="/inbox">
-                  <Mail />
+                  <Mail className="h-4 w-4" />
                   <span>Inbox</span>
                 </Link>
               </SidebarMenuButton>
@@ -255,25 +255,25 @@ export function MainSidebar() {
             <SidebarGroupLabel>Manage Profile</SidebarGroupLabel>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip="Profile Editor" isActive={isActive('/profile')}>
+                <SidebarMenuButton asChild tooltip="Profile Editor" isActive={isActive('/profile')} inset>
                   <Link href="/profile">
-                    <User />
+                    <User className="h-4 w-4" />
                     <span>Profile Editor</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip="BYD BioTAG" isActive={isActive('/bydtag')}>
+                <SidebarMenuButton asChild tooltip="BYD BioTAG" isActive={isActive('/bydtag')} inset>
                   <Link href="/bydtag">
-                    <Nfc />
+                    <Nfc className="h-4 w-4" />
                     <span>BYD BioTAG</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip="Settings" isActive={isActive('/settings')}>
+            <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Settings" isActive={isActive('/settings')} inset>
                 <Link href="/settings">
-                    <Settings />
+                    <Settings className="h-4 w-4" />
                     <span>Settings</span>
                 </Link>
                 </SidebarMenuButton>
@@ -286,9 +286,9 @@ export function MainSidebar() {
                 <SidebarGroupLabel>Admin</SidebarGroupLabel>
                 <SidebarMenu>
                     <SidebarMenuItem>
-                    <SidebarMenuButton asChild tooltip="Orders" isActive={isActive('/admin/orders')}>
+                    <SidebarMenuButton asChild tooltip="Orders" isActive={isActive('/admin/orders')} inset>
                         <Link href="/admin/orders">
-                        <Package />
+                        <Package className="h-4 w-4" />
                         <span>Orders</span>
                         </Link>
                     </SidebarMenuButton>
