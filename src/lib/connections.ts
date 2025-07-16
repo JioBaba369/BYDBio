@@ -18,6 +18,18 @@ import type { User } from './users';
 import { createNotification } from './notifications';
 import { serializeDocument } from './firestore-utils';
 
+// Check if a user is following another
+export const isFollowing = async (currentUserId: string, targetUserId: string): Promise<boolean> => {
+    const userRef = doc(db, 'users', currentUserId);
+    const userSnap = await getDoc(userRef);
+    if (!userSnap.exists()) {
+        return false;
+    }
+    const followingIds = userSnap.data().following || [];
+    return followingIds.includes(targetUserId);
+};
+
+
 // Follow a user
 export const followUser = async (currentUserId: string, targetUserId: string) => {
   if (currentUserId === targetUserId) {
@@ -34,10 +46,11 @@ export const followUser = async (currentUserId: string, targetUserId: string) =>
   const targetUserRef = doc(db, 'users', targetUserId);
   const targetUserDoc = await getDoc(targetUserRef);
   
-  if (targetUserDoc.exists() && typeof targetUserDoc.data().followerCount === 'number') {
+  if (targetUserDoc.exists()) {
       batch.update(targetUserRef, { followerCount: increment(1) });
   } else {
-      batch.update(targetUserRef, { followerCount: 1 });
+      // This case should ideally not happen if users are created correctly
+      batch.set(targetUserRef, { followerCount: 1 }, { merge: true });
   }
 
   await batch.commit();
@@ -56,10 +69,10 @@ export const unfollowUser = async (currentUserId: string, targetUserId: string) 
   const targetUserRef = doc(db, 'users', targetUserId);
   const targetUserDoc = await getDoc(targetUserRef);
   
-  if (targetUserDoc.exists() && targetUserDoc.data().followerCount > 0) {
+  if (targetUserDoc.exists() && (targetUserDoc.data().followerCount || 0) > 0) {
       batch.update(targetUserRef, { followerCount: increment(-1) });
   } else {
-      batch.update(targetUserRef, { followerCount: 0 });
+      batch.set(targetUserRef, { followerCount: 0 }, { merge: true });
   }
   
   await batch.commit();

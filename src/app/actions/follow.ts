@@ -1,7 +1,7 @@
 
 'use server';
 
-import { followUser, unfollowUser } from '@/lib/connections';
+import { followUser, unfollowUser, isFollowing } from '@/lib/connections';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { doc, getDoc } from 'firebase/firestore';
@@ -10,15 +10,13 @@ import { db } from '@/lib/firebase';
 const followSchema = z.object({
   currentUserId: z.string(),
   targetUserId: z.string(),
-  newIsFollowingState: z.boolean(),
   path: z.string(),
 });
 
-export async function toggleFollowAction(currentUserId: string, targetUserId: string, newIsFollowingState: boolean, path: string): Promise<{ success: boolean; error?: string; newFollowerCount?: number }> {
+export async function toggleFollowAction(currentUserId: string, targetUserId: string, path: string): Promise<{ success: boolean; error?: string; newFollowerCount?: number }> {
   const validatedFields = followSchema.safeParse({
     currentUserId,
     targetUserId,
-    newIsFollowingState,
     path,
   });
 
@@ -26,13 +24,15 @@ export async function toggleFollowAction(currentUserId: string, targetUserId: st
     return { success: false, error: 'Invalid input.' };
   }
 
-  const { currentUserId: validatedCurrentUserId, targetUserId: validatedTargetUserId, newIsFollowingState: validatedIsFollowing, path: revalidationPath } = validatedFields.data;
+  const { currentUserId: validatedCurrentUserId, targetUserId: validatedTargetUserId, path: revalidationPath } = validatedFields.data;
 
   try {
-    if (validatedIsFollowing) {
-      await followUser(validatedCurrentUserId, validatedTargetUserId);
-    } else {
+    const currentlyFollowing = await isFollowing(validatedCurrentUserId, validatedTargetUserId);
+
+    if (currentlyFollowing) {
       await unfollowUser(validatedCurrentUserId, validatedTargetUserId);
+    } else {
+      await followUser(validatedCurrentUserId, validatedTargetUserId);
     }
     
     // Revalidate paths to update follower lists on other pages

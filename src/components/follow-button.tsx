@@ -35,16 +35,17 @@ export function FollowButton({ targetUserId, initialIsFollowing, initialFollower
         if (isPending) return;
 
         startTransition(async () => {
-            const newIsFollowing = !isFollowing;
-            setIsFollowing(newIsFollowing); // Optimistic update
-            setFollowerCount(c => c + (newIsFollowing ? 1 : -1));
+            const wasFollowing = isFollowing;
+            // Optimistic update
+            setIsFollowing(prev => !prev);
+            setFollowerCount(c => c + (wasFollowing ? -1 : 1));
             
-            const result = await toggleFollowAction(currentUser.uid, targetUserId, newIsFollowing, pathname);
+            const result = await toggleFollowAction(currentUser.uid, targetUserId, pathname);
 
             if (!result.success) {
                 // Revert on error
-                setIsFollowing(!newIsFollowing);
-                setFollowerCount(c => c + (newIsFollowing ? -1 : 1));
+                setIsFollowing(wasFollowing);
+                setFollowerCount(c => c + (wasFollowing ? 1 : -1));
                 toast({ title: result.error || 'Something went wrong', variant: 'destructive' });
             } else if (result.newFollowerCount !== undefined) {
                 // Sync with server state
