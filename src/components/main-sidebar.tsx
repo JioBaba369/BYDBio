@@ -24,9 +24,6 @@ import {
   Bell,
   Compass,
   Megaphone,
-  UserCircle,
-  Building2,
-  Share2,
   LayoutDashboard,
   Rss,
   Mail,
@@ -35,11 +32,7 @@ import {
   Gift,
   Calendar,
   Nfc,
-  Link as LinkIcon,
-  BookUser,
   Paintbrush,
-  BadgeHelp,
-  Shield,
   Package,
 } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
