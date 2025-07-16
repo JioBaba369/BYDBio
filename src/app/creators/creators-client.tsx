@@ -49,7 +49,7 @@ export default function CreatorsClient({ initialUsers }: { initialUsers: User[] 
             />
         </div>
 
-        {filteredItems.length > 0 ? (
+        {filteredUsers.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                 {filteredUsers.map(user => (
                     <Card key={user.uid} className="text-center transition-shadow hover:shadow-md">
