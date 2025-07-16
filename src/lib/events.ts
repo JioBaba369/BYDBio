@@ -1,4 +1,6 @@
 
+'use server';
+
 import {
   collection,
   query,
@@ -234,7 +236,7 @@ export const getEventAndAuthor = async (eventId: string): Promise<{ event: Event
     const eventWithAttendees: EventWithAttendees = {
       ...event,
       attendees: attendees.map(a => ({
-          id: a.uid,
+          uid: a.uid,
           name: a.name,
           username: a.username,
           avatarUrl: a.avatarUrl,

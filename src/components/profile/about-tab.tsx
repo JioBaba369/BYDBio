@@ -8,18 +8,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Building2, Globe, Linkedin, Mail, MapPin, Phone, Link as LinkIcon, Briefcase } from 'lucide-react';
 import { linkIconData } from '@/lib/link-icons';
 import { PublicContentCard } from '../public-content-card';
-import { Button } from '../ui/button';
-import Link from 'next/link';
-import { useAuth } from '../auth-provider';
 
 interface AboutTabProps {
   userProfileData: UserProfilePayload;
   contentOnly?: boolean;
-  noContentMode?: 'posts' | 'gallery';
 }
 
-export function AboutTab({ userProfileData, contentOnly = false, noContentMode }: AboutTabProps) {
-  const { user: currentUser } = useAuth();
+export function AboutTab({ userProfileData, contentOnly = false }: AboutTabProps) {
   const { user, otherContent } = userProfileData;
   const { bio, hashtags, businessCard, links } = user;
   const hasBusinessCardInfo = businessCard && Object.values(businessCard).some(Boolean);
@@ -44,21 +39,6 @@ export function AboutTab({ userProfileData, contentOnly = false, noContentMode }
               </Card>
           )
       }
-  }
-  
-  if (noContentMode === 'posts') {
-    return (
-        <Card className="text-center">
-            <CardContent className="p-10 text-muted-foreground flex flex-col items-center gap-4">
-                <Briefcase className="h-12 w-12" />
-                <h3 className="font-semibold text-foreground">No Posts Yet</h3>
-                <p>This user hasn't posted any status updates.</p>
-                {currentUser?.uid === user.uid && (
-                    <Button asChild><Link href="/feed">Create a Post</Link></Button>
-                )}
-            </CardContent>
-        </Card>
-    );
   }
 
   return (
