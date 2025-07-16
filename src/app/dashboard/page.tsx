@@ -156,40 +156,52 @@ export default function Dashboard() {
                 <DropdownMenuLabel>Create New Content</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                <Link href="/feed" className="cursor-pointer">
-                    <Rss className="mr-2 h-4 w-4" />
-                    <span>New Post</span>
-                </Link>
+                  <Link href="/feed" className="cursor-pointer">
+                    <>
+                      <Rss className="mr-2 h-4 w-4" />
+                      <span>New Post</span>
+                    </>
+                  </Link>
                 </DropdownMenuItem>
                  <DropdownMenuItem asChild>
-                <Link href="/promo/create" className="cursor-pointer">
-                    <Megaphone className="mr-2 h-4 w-4" />
-                    <span>New Business Page</span>
-                </Link>
+                  <Link href="/promo/create" className="cursor-pointer">
+                    <>
+                      <Megaphone className="mr-2 h-4 w-4" />
+                      <span>New Business Page</span>
+                    </>
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                <Link href="/listings/create" className="cursor-pointer">
-                    <Tags className="mr-2 h-4 w-4" />
-                    <span>New Listing</span>
-                </Link>
+                  <Link href="/listings/create" className="cursor-pointer">
+                    <>
+                      <Tags className="mr-2 h-4 w-4" />
+                      <span>New Listing</span>
+                    </>
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                <Link href="/job/create" className="cursor-pointer">
-                    <Briefcase className="mr-2 h-4 w-4" />
-                    <span>New Job</span>
-                </Link>
+                  <Link href="/job/create" className="cursor-pointer">
+                    <>
+                      <Briefcase className="mr-2 h-4 w-4" />
+                      <span>New Job</span>
+                    </>
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                <Link href="/events/create" className="cursor-pointer">
-                    <Calendar className="mr-2 h-4 w-4" />
-                    <span>New Event</span>
-                </Link>
+                  <Link href="/events/create" className="cursor-pointer">
+                    <>
+                      <Calendar className="mr-2 h-4 w-4" />
+                      <span>New Event</span>
+                    </>
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                <Link href="/offers/create" className="cursor-pointer">
-                    <Gift className="mr-2 h-4 w-4" />
-                    <span>New Offer</span>
-                </Link>
+                  <Link href="/offers/create" className="cursor-pointer">
+                    <>
+                      <Gift className="mr-2 h-4 w-4" />
+                      <span>New Offer</span>
+                    </>
+                  </Link>
                 </DropdownMenuItem>
             </DropdownMenuContent>
         </DropdownMenu>
