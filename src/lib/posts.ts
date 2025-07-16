@@ -28,299 +28,177 @@ import { createNotification } from './notifications';
 import { getUsersByIds } from './users';
 import { serializeDocument } from './firestore-utils';
 
-// This is the structure stored in Firestore for a quoted or reposted post.
-// It also serves as the structure for the original post when a post is a repost.
 export type EmbeddedPostInfo = {
   id: string;
   content: string;
   imageUrl: string | null;
   authorId: string;
-  createdAt: Timestamp | string; // Accept ISO string from client
+  createdAt: string; // ISO string from client
 };
 
-// This is the structure used on the client, with author details populated.
-export type EmbeddedPostInfoWithAuthor = Omit<EmbeddedPostInfo, 'createdAt'> & {
-  author: {
-    uid: string;
-    name: string;
-    username: string;
-    avatarUrl: string;
-  };
-  createdAt: string; // Serialized as ISO string for client
+export type EmbeddedPostInfoWithAuthor = Omit<EmbeddedPostInfo, 'authorId' | 'createdAt'> & {
+  author: User;
+  createdAt: string;
 };
 
 export type Post = {
-  id: string; // Document ID from Firestore
-  authorId: string; // UID of the user who created it
+  id: string;
+  authorId: string;
   content: string;
   imageUrl: string | null;
   category?: string;
   postNumber: number;
   likes: number;
-  likedBy: string[]; // Array of user IDs who liked the post
+  likedBy: string[];
   comments: number;
-  createdAt: string; // ISO 8601 string
+  createdAt: string; // ISO string
   repostCount?: number;
   privacy: 'public' | 'followers' | 'me';
   quotedPost?: EmbeddedPostInfo;
-  // If this post is a repost, this field will contain the *original* post's data.
-  // The top-level authorId will be the user who did the reposting.
-  repostedPost?: EmbeddedPostInfo;
-  // If this post is a repost, this is the ID of the original post document.
-  originalPostId?: string;
-  searchableKeywords?: string[];
+  originalPostId?: string; // If this is a repost, this is the ID of the original post
 };
 
 export type PostWithAuthor = Post & {
   author: User;
   isLiked?: boolean;
   quotedPost?: EmbeddedPostInfoWithAuthor;
-  repostedPost?: EmbeddedPostInfoWithAuthor;
+  repost?: PostWithAuthor; // If it's a repost, the original post is nested here
 };
 
-// Function to fetch a single post by its ID
-export const getPost = async (id: string): Promise<Post | null> => {
-  const postDocRef = doc(db, 'posts', id);
-  const postDoc = await getDoc(postDocRef);
-  if (!postDoc.exists()) return null;
-  return serializeDocument<Post>(postDoc);
-};
 
-// Function to fetch all posts for a specific user, respecting privacy.
-export const getPostsByUser = async (userId: string, viewerId?: string | null, isFollower?: boolean): Promise<PostWithAuthor[]> => {
-  const postsRef = collection(db, 'posts');
-  
-  const privacyLevels: string[] = ['public'];
-  if (viewerId === userId) {
-    privacyLevels.push('followers', 'me');
-  } else if (isFollower) {
-    privacyLevels.push('followers');
-  }
+export const createPost = async (
+  data: Pick<Post, 'authorId' | 'content' | 'imageUrl' | 'privacy' | 'category'> & { quotedPost?: EmbeddedPostInfo }
+): Promise<string> => {
+    const userRef = doc(db, "users", data.authorId);
+    const userDoc = await getDoc(userRef);
+    if (!userDoc.exists()) throw new Error("User not found.");
 
-  const q = query(
-    postsRef, 
-    where('authorId', '==', userId), 
-    where('privacy', 'in', privacyLevels),
-    orderBy('createdAt', 'desc')
-  );
-  
-  const querySnapshot = await getDocs(q);
-  
-  const posts = querySnapshot.docs
-    .map(doc => serializeDocument<Post>(doc))
-    .filter((post): post is Post => post !== null);
-  
-  return populatePostAuthors(posts, viewerId);
-};
+    const postCount = userDoc.data().postCount || 0;
+    const newPostNumber = postCount + 1;
 
-// Function to create a new post
-export const createPost = async (userId: string, data: Pick<Post, 'content' | 'imageUrl' | 'privacy' | 'category'> & { quotedPost?: EmbeddedPostInfo }): Promise<string> => {
-  const userRef = doc(db, "users", userId);
-  const postsRef = collection(db, "posts");
-
-  const userDoc = await getDoc(userRef);
-  if (!userDoc.exists()) {
-      throw new Error("User performing the action not found.");
-  }
-  
-  const postCount = userDoc.data().postCount || 0;
-  const newPostNumber = postCount + 1;
-  
-  const keywords = [
-    ...new Set((data.content || '').toLowerCase().split(' ').filter(Boolean)),
-    ...(data.category ? data.category.toLowerCase().split(' ').filter(Boolean) : []),
-  ];
-
-  let quotedPostData: EmbeddedPostInfo | null = null;
-  if (data.quotedPost) {
-    quotedPostData = {
-      ...data.quotedPost,
-      createdAt: typeof data.quotedPost.createdAt === 'string' 
-        ? Timestamp.fromDate(new Date(data.quotedPost.createdAt)) 
-        : data.quotedPost.createdAt,
+    const keywords = [...new Set([
+        ...(data.content || '').toLowerCase().split(' ').filter(Boolean),
+        ...(data.category ? data.category.toLowerCase().split(' ').filter(Boolean) : []),
+    ])];
+    
+    const postData = {
+        authorId: data.authorId,
+        content: data.content,
+        imageUrl: data.imageUrl,
+        privacy: data.privacy,
+        category: data.category,
+        quotedPost: data.quotedPost ? {
+            ...data.quotedPost,
+            createdAt: Timestamp.fromDate(new Date(data.quotedPost.createdAt))
+        } : null,
+        postNumber: newPostNumber,
+        createdAt: serverTimestamp(),
+        likes: 0,
+        likedBy: [],
+        comments: 0,
+        repostCount: 0,
+        searchableKeywords: keywords,
     };
-  }
 
-  const postData = {
-    authorId: userId,
-    content: data.content,
-    imageUrl: data.imageUrl,
-    privacy: data.privacy || 'public',
-    category: data.category || '',
-    postNumber: newPostNumber,
-    createdAt: serverTimestamp(),
-    likes: 0,
-    likedBy: [],
-    comments: 0,
-    repostCount: 0,
-    searchableKeywords: keywords,
-    quotedPost: quotedPostData,
-  };
-  
-  const postRef = await addDoc(postsRef, postData);
-  await updateDoc(userRef, { postCount: newPostNumber });
-  
-  return postRef.id;
+    const postRef = await addDoc(collection(db, 'posts'), postData);
+    await updateDoc(userRef, { postCount: newPostNumber });
+    return postRef.id;
 };
 
-
-// Function to delete a post
 export const deletePost = async (id: string) => {
-  const postRef = doc(db, 'posts', id);
-  const postDoc = await getDoc(postRef);
+    const postRef = doc(db, 'posts', id);
+    const postDoc = await getDoc(postRef);
+    if (!postDoc.exists()) throw new Error("Post not found.");
+    
+    const postData = postDoc.data() as Post;
+    const batch = writeBatch(db);
 
-  if (!postDoc.exists()) {
-    throw new Error("Post not found.");
-  }
-  
-  const postData = postDoc.data() as Post;
-  const isRepost = !!postData.repostedPost;
-  
-  const batch = writeBatch(db);
+    batch.delete(postRef);
+    
+    if (postData.originalPostId) {
+        // It's a repost, decrement the original's repost count
+        const originalPostRef = doc(db, 'posts', postData.originalPostId);
+        batch.update(originalPostRef, { repostCount: increment(-1) });
+    } else {
+        // It's an original post, decrement the user's post count
+        const authorRef = doc(db, 'users', postData.authorId);
+        batch.update(authorRef, { postCount: increment(-1) });
+    }
 
-  batch.delete(postRef);
-  
-  if (!isRepost) {
-    const authorRef = doc(db, 'users', postData.authorId);
-    batch.update(authorRef, { postCount: increment(-1) });
-  }
-
-  if (postData.originalPostId) {
-    const originalPostRef = doc(db, 'posts', postData.originalPostId);
-    batch.update(originalPostRef, { repostCount: increment(-1) });
-  }
-  
-  await batch.commit();
+    await batch.commit();
 };
 
 export const toggleLikePost = async (postId: string, userId: string) => {
     const postRef = doc(db, 'posts', postId);
     const postDoc = await getDoc(postRef);
-
-    if (!postDoc.exists()) {
-        throw new Error("Post not found");
-    }
+    if (!postDoc.exists()) throw new Error("Post not found");
 
     const postData = postDoc.data() as Post;
     const isLiked = postData.likedBy.includes(userId);
 
     if (isLiked) {
-        await updateDoc(postRef, {
-            likedBy: arrayRemove(userId),
-            likes: increment(-1)
-        });
+        await updateDoc(postRef, { likedBy: arrayRemove(userId), likes: increment(-1) });
     } else {
-        await updateDoc(postRef, {
-            likedBy: arrayUnion(userId),
-            likes: increment(1)
-        });
-        
-        const contentForNotification = postData.repostedPost?.content || postData.content;
-        const contentSnippet = contentForNotification.substring(0, 40) + (contentForNotification.length > 40 ? '...' : '');
-
-        await createNotification(postData.authorId, 'new_like', userId, { entityId: postId, entityTitle: contentSnippet });
+        await updateDoc(postRef, { likedBy: arrayUnion(userId), likes: increment(1) });
+        await createNotification(postData.authorId, 'new_like', userId, { entityId: postId, entityTitle: postData.content });
     }
-
     return !isLiked;
-}
+};
 
-export const repostPost = async (originalPostId: string, reposterId: string): Promise<Post> => {
-    const postRef = doc(db, 'posts', originalPostId);
-    const postDoc = await getDoc(postRef);
+export const repostPost = async (originalPostId: string, reposterId: string): Promise<string> => {
+    const originalPostRef = doc(db, 'posts', originalPostId);
+    const originalPostDoc = await getDoc(originalPostRef);
+    if (!originalPostDoc.exists()) throw new Error("Post does not exist.");
 
-    if (!postDoc.exists()) {
-        throw new Error("Cannot repost a post that does not exist.");
-    }
-    
-    const repostQuery = query(
-        collection(db, 'posts'),
-        where('authorId', '==', reposterId),
-        where('originalPostId', '==', originalPostId)
-    );
-    const existingRepost = await getDocs(repostQuery);
-    if (!existingRepost.empty) {
-        throw new Error("You have already reposted this.");
-    }
+    const originalPostData = originalPostDoc.data() as Post;
+    if (originalPostData.authorId === reposterId) throw new Error("You cannot repost your own post.");
 
-    const originalPostData = serializeDocument<Post>(postDoc)!;
-    
-    let createdAtTimestamp: Timestamp;
-    // Check if the original post is itself a repost to get the ultimate original's timestamp
-    const sourcePost = originalPostData.repostedPost || originalPostData;
-    const sourceCreatedAt = sourcePost.createdAt as unknown; // Comes in as string or Timestamp
-
-    if (sourceCreatedAt instanceof Timestamp) {
-        createdAtTimestamp = sourceCreatedAt;
-    } else if (typeof sourceCreatedAt === 'string') {
-        createdAtTimestamp = Timestamp.fromDate(new Date(sourceCreatedAt));
-    } else {
-        // Fallback if timestamp is somehow missing or invalid
-        createdAtTimestamp = Timestamp.now();
-    }
-
-
-    const ultimateOriginalPostId = originalPostData.originalPostId || originalPostId;
-    const ultimateOriginalPostContent: EmbeddedPostInfo = originalPostData.repostedPost || {
-        id: originalPostId,
-        content: originalPostData.content,
-        imageUrl: originalPostData.imageUrl,
-        authorId: originalPostData.authorId,
-        createdAt: createdAtTimestamp,
-    };
-    
-    if (ultimateOriginalPostContent.authorId === reposterId) {
-        throw new Error("You cannot repost your own post.");
-    }
-
-    const keywords = [...new Set(ultimateOriginalPostContent.content.toLowerCase().split(' ').filter(Boolean))];
-
-    const batch = writeBatch(db);
-
-    batch.update(doc(db, 'posts', ultimateOriginalPostId), {
-        repostCount: increment(1)
-    });
-
-    const newPostRef = doc(collection(db, 'posts'));
-    const newPostData = {
+    const repostData = {
         authorId: reposterId,
         content: '',
         imageUrl: null,
-        repostedPost: ultimateOriginalPostContent,
-        originalPostId: ultimateOriginalPostId,
         privacy: originalPostData.privacy,
+        originalPostId: originalPostId,
         createdAt: serverTimestamp(),
         likes: 0,
         likedBy: [],
         comments: 0,
         repostCount: 0,
         postNumber: 0,
-        category: originalPostData.category,
-        searchableKeywords: keywords,
     };
-    batch.set(newPostRef, newPostData);
     
+    const batch = writeBatch(db);
+    batch.update(originalPostRef, { repostCount: increment(1) });
+    const newPostRef = doc(collection(db, 'posts'));
+    batch.set(newPostRef, repostData);
     await batch.commit();
 
-    const newDoc = await getDoc(newPostRef);
-    return serializeDocument<Post>(newDoc) as Post;
+    return newPostRef.id;
 };
 
 export const populatePostAuthors = async (posts: Post[], viewerId?: string | null): Promise<PostWithAuthor[]> => {
     if (posts.length === 0) return [];
-
+    
     const authorIds = new Set<string>();
+    const originalPostIds = new Set<string>();
+
     posts.forEach(post => {
         authorIds.add(post.authorId);
-        if (post.quotedPost?.authorId) {
-            authorIds.add(post.quotedPost.authorId);
-        }
-        if (post.repostedPost?.authorId) {
-            authorIds.add(post.repostedPost.authorId);
-        }
+        if (post.quotedPost) authorIds.add(post.quotedPost.authorId);
+        if (post.originalPostId) originalPostIds.add(post.originalPostId);
     });
-
+    
+    let originalPosts: Post[] = [];
+    if(originalPostIds.size > 0) {
+        const originalPostsQuery = query(collection(db, 'posts'), where('__name__', 'in', Array.from(originalPostIds)));
+        const originalPostsSnapshot = await getDocs(originalPostsQuery);
+        originalPosts = originalPostsSnapshot.docs.map(doc => serializeDocument<Post>(doc)).filter((p): p is Post => p !== null);
+        originalPosts.forEach(p => authorIds.add(p.authorId));
+    }
+    const originalPostsMap = new Map(originalPosts.map(p => [p.id, p]));
+    
     const authors = await getUsersByIds(Array.from(authorIds));
-    const authorMap = new Map(authors.map(author => [author.uid, author]));
+    const authorMap = new Map(authors.map(a => [a.uid, a]));
 
     return posts.map(post => {
         const author = authorMap.get(post.authorId);
@@ -336,101 +214,96 @@ export const populatePostAuthors = async (posts: Post[], viewerId?: string | nul
             const quotedAuthor = authorMap.get(post.quotedPost.authorId);
             if (quotedAuthor) {
                 populatedPost.quotedPost = {
-                    ...(serializeDocument({ data: () => post.quotedPost, id: post.quotedPost.id }) as EmbeddedPostInfoWithAuthor),
-                    author: {
-                        uid: quotedAuthor.uid,
-                        name: quotedAuthor.name,
-                        username: quotedAuthor.username,
-                        avatarUrl: quotedAuthor.avatarUrl,
-                    }
+                    ...post.quotedPost,
+                    author: quotedAuthor
                 };
             }
         }
         
-        if (post.repostedPost) {
-            const repostedAuthor = authorMap.get(post.repostedPost.authorId);
-            if (repostedAuthor) {
-                populatedPost.repostedPost = {
-                     ...(serializeDocument({ data: () => post.repostedPost, id: post.repostedPost.id }) as EmbeddedPostInfoWithAuthor),
-                    author: {
-                        uid: repostedAuthor.uid,
-                        name: repostedAuthor.name,
-                        username: repostedAuthor.username,
-                        avatarUrl: repostedAuthor.avatarUrl,
-                    }
-                };
+        if (post.originalPostId) {
+            const originalPost = originalPostsMap.get(post.originalPostId);
+            if (originalPost) {
+                const originalAuthor = authorMap.get(originalPost.authorId);
+                if (originalAuthor) {
+                    populatedPost.repost = {
+                        ...originalPost,
+                        author: originalAuthor,
+                        isLiked: viewerId ? originalPost.likedBy.includes(viewerId) : false
+                    };
+                }
             }
         }
-
+        
         return populatedPost;
-    }).filter((post): post is PostWithAuthor => post !== null);
-}
-
-export const getFeedPosts = async (userId: string, followingIds: string[], lastVisible: DocumentData | null, pageSize: number) => {
-    const authorsToFetch = [...new Set([userId, ...followingIds])];
-    
-    if (authorsToFetch.length === 0) {
-        return { posts: [], lastVisible: null };
-    }
-    
-    const queryConstraints: any[] = [
-        where('authorId', 'in', authorsToFetch),
-        orderBy('createdAt', 'desc'),
-        limit(pageSize)
-    ];
-
-    if (lastVisible) {
-        queryConstraints.push(startAfter(lastVisible));
-    }
-    
-    const postsQuery = query(collection(db, 'posts'), ...queryConstraints);
-    const postSnapshots = await getDocs(postsQuery);
-
-    const posts = postSnapshots.docs
-        .map(doc => serializeDocument<Post>(doc))
-        .filter((post): post is Post => post !== null);
-    
-    const populatedPosts = await populatePostAuthors(posts, userId);
-    
-    return {
-        posts: populatedPosts,
-        lastVisible: postSnapshots.docs[postSnapshots.docs.length - 1] || null
-    };
+    }).filter((p): p is PostWithAuthor => p !== null);
 };
 
-export const getDiscoveryPosts = async (userId: string, followingIds: string[], lastVisible: DocumentData | null, pageSize: number) => {
-    const usersToExclude = [...new Set([userId, ...followingIds])];
-    
-    const queryConstraints: any[] = [
-        where('privacy', '==', 'public'),
-        orderBy('createdAt', 'desc'),
-        limit(pageSize)
-    ];
-    
-    if (lastVisible) {
-        queryConstraints.push(startAfter(lastVisible));
-    }
-    
-    let postsQuery = query(collection(db, 'posts'), ...queryConstraints);
-    
-    // We may need to fetch more and filter in memory if the user follows a lot of people,
-    // as Firestore's 'not-in' is limited to 10.
-    // For now, this approach is simpler and will work for most cases.
-    if (usersToExclude.length > 0) {
-        const tempQuery = query(collection(db, 'posts'), ...queryConstraints, where('authorId', 'not-in', usersToExclude.slice(0, 10)));
-        postsQuery = tempQuery;
+
+interface GetPostsParams {
+    userId: string;
+    feedType: 'following' | 'discovery';
+    followingIds: string[];
+    pageSize: number;
+    lastPostDate: string | null;
+}
+
+export const getPosts = async ({ userId, feedType, followingIds, pageSize, lastPostDate }: GetPostsParams): Promise<PostWithAuthor[]> => {
+    let q = query(collection(db, 'posts'), orderBy('createdAt', 'desc'), limit(pageSize));
+
+    if (lastPostDate) {
+        q = query(q, startAfter(Timestamp.fromDate(new Date(lastPostDate))));
     }
 
-    const postSnapshots = await getDocs(postsQuery);
+    if (feedType === 'following') {
+        const authorsToFetch = [...new Set([userId, ...followingIds])];
+        if (authorsToFetch.length > 0) {
+            q = query(q, where('authorId', 'in', authorsToFetch));
+        } else {
+            return []; // User follows no one, feed is empty
+        }
+    } else { // 'discovery'
+        q = query(q, where('privacy', '==', 'public'));
+        if (followingIds.length > 0) {
+            // Firestore 'not-in' is limited, but we can exclude the user themselves
+            q = query(q, where('authorId', '!=', userId));
+        }
+    }
+    
+    const postSnapshots = await getDocs(q);
+    const posts = postSnapshots.docs.map(doc => serializeDocument<Post>(doc)).filter((p): p is Post => p !== null);
 
-    let posts = postSnapshots.docs
-        .map(doc => serializeDocument<Post>(doc))
-        .filter((post): post is Post => post !== null);
-        
-    const populatedPosts = await populatePostAuthors(posts, userId);
+    // For discovery feed, we need to manually filter out posts from users the current user follows
+    const finalPosts = feedType === 'discovery' 
+        ? posts.filter(p => !followingIds.includes(p.authorId)) 
+        : posts;
+    
+    return populatePostAuthors(finalPosts, userId);
+};
 
-    return {
-        posts: populatedPosts,
-        lastVisible: postSnapshots.docs[postSnapshots.docs.length - 1] || null
-    };
+export const getPostsByUser = async (userId: string, viewerId?: string | null): Promise<PostWithAuthor[]> => {
+  const isOwner = viewerId === userId;
+  
+  const q = query(
+    collection(db, 'posts'), 
+    where('authorId', '==', userId),
+    orderBy('createdAt', 'desc')
+  );
+  
+  const querySnapshot = await getDocs(q);
+  
+  const allPosts = querySnapshot.docs
+    .map(doc => serializeDocument<Post>(doc))
+    .filter((post): post is Post => post !== null);
+    
+  // Filter by privacy based on viewer
+  const visiblePosts = allPosts.filter(post => {
+      if (post.privacy === 'public') return true;
+      if (isOwner) return true; // Owner can see all their own posts
+      // A non-owner follower can't see 'me' posts, so no special check needed here yet.
+      // Logic for followers seeing 'followers' posts would be applied in getProfile, not here.
+      // For a direct user page view, we assume public only for non-owners.
+      return false;
+  })
+  
+  return populatePostAuthors(visiblePosts, viewerId);
 };
