@@ -1,7 +1,5 @@
 
 
-'use server';
-
 import type { User } from './users';
 
 /**
