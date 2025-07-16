@@ -19,8 +19,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ['var(--font-inter)', ...fontFamily.sans],
-        headline: ['var(--font-montserrat)', ...fontFamily.sans],
+        sans: ['var(--font-pt-sans)', ...fontFamily.sans],
+        headline: ['var(--font-poppins)', ...fontFamily.sans],
       },
       colors: {
         border: 'hsl(var(--border))',

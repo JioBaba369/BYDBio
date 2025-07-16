@@ -1,3 +1,4 @@
+
 import type { Metadata } from 'next';
 import './globals.css';
 import { cn } from '@/lib/utils';
@@ -6,17 +7,19 @@ import { SidebarProvider } from '@/components/ui/sidebar';
 import { ThemeProvider } from '@/components/theme-provider';
 import { AuthProvider } from '@/components/auth-provider';
 import { AppLayout } from '@/components/app-layout';
-import { Inter, Montserrat } from 'next/font/google';
+import { Poppins, PT_Sans } from 'next/font/google';
 
-const inter = Inter({
+const poppins = Poppins({
   subsets: ['latin'],
-  variable: '--font-inter',
+  weight: ['400', '600', '700'],
+  variable: '--font-poppins',
   display: 'swap',
 });
 
-const montserrat = Montserrat({
+const ptSans = PT_Sans({
   subsets: ['latin'],
-  variable: '--font-montserrat',
+  weight: ['400', '700'],
+  variable: '--font-pt-sans',
   display: 'swap',
 });
 
@@ -31,7 +34,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning className={`${inter.variable} ${montserrat.variable}`}>
+    <html lang="en" suppressHydrationWarning className={`${poppins.variable} ${ptSans.variable}`}>
       <body className={cn('font-sans antialiased min-h-screen bg-background')}>
         <ThemeProvider
           attribute="class"
