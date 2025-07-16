@@ -19,7 +19,6 @@ import { ContactForm } from "@/components/contact-form";
 import { AboutTab } from "@/components/profile/about-tab";
 import Image from "next/image";
 import { FollowButton } from "@/components/follow-button";
-import { useRouter } from "next/navigation";
 
 interface UserProfilePageProps {
   userProfileData: UserProfilePayload;
@@ -28,7 +27,6 @@ interface UserProfilePageProps {
 export default function UserProfileClientPage({ userProfileData }: UserProfilePageProps) {
   const { user: currentUser } = useAuth();
   const { isOwner, user, isFollowedByCurrentUser } = userProfileData;
-  const router = useRouter();
 
   const [isContactFormOpen, setIsContactFormOpen] = useState(false);
   
